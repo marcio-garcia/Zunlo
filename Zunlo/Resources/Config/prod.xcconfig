@@ -1,0 +1,4 @@
+#include "Base.xcconfig"
+ENVIRONMENT = PRODUCTION
+API_BASE_URL = https://api.example.com
+

@@ -1,0 +1,4 @@
+#include "Base.xcconfig"
+ENVIRONMENT = STAGING
+API_BASE_URL = https://staging.api.example.com
+

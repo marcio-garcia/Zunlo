@@ -1,0 +1,4 @@
+#include "Base.xcconfig"
+ENVIRONMENT = DEVELOPMENT
+API_BASE_URL = https://dev.api.example.com
+
