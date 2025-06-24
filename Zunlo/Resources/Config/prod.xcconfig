@@ -1,4 +1,4 @@
 #include "Base.xcconfig"
 ENVIRONMENT = PRODUCTION
-API_BASE_URL = https://api.example.com
-
+API_BASE_URL = vfogikyoxhkubtjnztke.supabase.co
+API_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2dpa3lveGhrdWJ0am56dGtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2ODUxMzMsImV4cCI6MjA2NjI2MTEzM30.HRCBp5l8PWNej9hmuQ7RK5s0qSHhPYhcDCSQqNiLfrY

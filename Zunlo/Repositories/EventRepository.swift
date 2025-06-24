@@ -11,7 +11,7 @@ import SwiftData
 class EventRepository: ObservableObject {
     private let context: ModelContext
     
-    @Published private(set) var events: [Event] = []
+    @Published private(set) var events: [EventEntity] = []
     
     init(context: ModelContext) {
         self.context = context
@@ -21,7 +21,7 @@ class EventRepository: ObservableObject {
     func loadUpcomingEvents() {
         let today = Calendar.current.startOfDay(for: Date())
         
-        let predicate = #Predicate<Event> { event in
+        let predicate = #Predicate<EventEntity> { event in
             event.dueDate != nil && event.dueDate! >= today
         }
         
@@ -37,19 +37,19 @@ class EventRepository: ObservableObject {
     }
     
     func addEvent(title: String, dueDate: Date?) {
-        let event = Event(title: title, dueDate: dueDate)
+        let event = EventEntity(title: title, dueDate: dueDate)
         context.insert(event)
         try? context.save()
         print("Inserted event:", event.title, event.dueDate as Any)
         loadUpcomingEvents()
     }
     
-    func deleteEvent(_ event: Event) {
+    func deleteEvent(_ event: EventEntity) {
         context.delete(event)
         loadUpcomingEvents()
     }
 
-    func toggleCompleted(event: Event) {
+    func toggleCompleted(event: EventEntity) {
         event.isCompleted.toggle()
         loadUpcomingEvents()
     }

@@ -7,11 +7,22 @@
 
 import Foundation
 
-enum EnvConfig {
-    static var current: String {
+class EnvConfig {
+    static let shared = EnvConfig()
+    
+    private init() {}
+    
+    var current: String {
         Bundle.main.infoDictionary?["ENVIRONMENT"] as? String ?? "UNKNOWN"
     }
-    static var apiBaseUrl: String {
-        Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? ""
+    
+    var apiBaseUrl: String {
+        let apiProtocol = Bundle.main.infoDictionary?["API_PROTOCOL"] as? String ?? ""
+        let apiUrl =  Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? ""
+        return "\(apiProtocol)://\(apiUrl)"
+    }
+    
+    var apiKey: String {
+        Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
     }
 }

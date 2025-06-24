@@ -120,24 +120,24 @@ struct TimelineScrollView: View {
     }
     
     // Dummy events by date for illustration
-    func events(for date: Date) -> [Event] {
+    func events(for date: Date) -> [EventEntity] {
         let cal = Calendar.current
         if cal.isDateInToday(date) {
             return [
-                Event(title: "☕ Breakfast", dueDate: Date()),
-                Event(title: "Meeting with Jen", dueDate: Date()),
-                Event(title: "Lunch", dueDate: Date()),
-                Event(title: "Doctor", dueDate: Date())
+                EventEntity(title: "☕ Breakfast", dueDate: Date()),
+                EventEntity(title: "Meeting with Jen", dueDate: Date()),
+                EventEntity(title: "Lunch", dueDate: Date()),
+                EventEntity(title: "Doctor", dueDate: Date())
             ]
         } else if cal.isDate(date, inSameDayAs: cal.date(byAdding: .day, value: 1, to: Date())!) {
             return [
-                Event(title: "Gym", dueDate: Date()),
-                Event(title: "Study", dueDate: Date())
+                EventEntity(title: "Gym", dueDate: Date()),
+                EventEntity(title: "Study", dueDate: Date())
             ]
         } else {
             return [
-                Event(title: "Open day!", dueDate: Date()),
-                Event(title: "Wind down", dueDate: Date())
+                EventEntity(title: "Open day!", dueDate: Date()),
+                EventEntity(title: "Wind down", dueDate: Date())
             ]
         }
     }
