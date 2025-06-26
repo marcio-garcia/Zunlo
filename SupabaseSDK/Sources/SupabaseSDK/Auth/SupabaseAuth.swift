@@ -7,31 +7,39 @@
 
 import Foundation
 
-public class SupabaseAuth {
+public class SupabaseAuth: @unchecked Sendable {
     private let config: SupabaseConfig
     
     public init(config: SupabaseConfig) {
         self.config = config
     }
     
-    public func signUp(email: String, password: String) async -> Result<SBAuth, Error> {
+    public func signUp(email: String, password: String) async throws -> SBAuth {
         let url = config.baseURL.appending(path: "auth/v1/signup")
-        return await authenticate(url: url, email: email, password: password)
+        do {
+            return try await authenticate(url: url, email: email, password: password)
+        } catch {
+            throw error
+        }
     }
 
-    public func signIn(email: String, password: String) async -> Result<SBAuth, Error> {
+    public func signIn(email: String, password: String) async throws -> SBAuth {
         let url = config.baseURL.appending(path: "auth/v1/token")
-        return await authenticate(url: url, email: email, password: password)
+        do {
+            return try await authenticate(url: url, email: email, password: password)
+        } catch {
+            throw error
+        }
     }
 
-    private func authenticate(url: URL, email: String, password: String) async -> Result<SBAuth, Error> {
+    private func authenticate(url: URL, email: String, password: String) async throws -> SBAuth {
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "grant_type", value: "password")
         ]
 
         guard let url = components.url else {
-            return .failure(SBAuthError.invalidRequest)
+            throw SBAuthError.invalidRequest
         }
 
         var request = URLRequest(url: url)
@@ -46,17 +54,17 @@ public class SupabaseAuth {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse else {
-                return .failure(SBAuthError.invalidResponse)
+                throw SBAuthError.invalidResponse
             }
             guard (200..<300).contains(http.statusCode) else {
                 let sbAuthErrorMsg = try JSONDecoder().decode(SBAuthErrorMsg.self, from: data)
-                return .failure(SBAuthError.authError(sbAuthErrorMsg))
+                throw SBAuthError.authError(sbAuthErrorMsg)
             }
             
             let sbAuth = try JSONDecoder().decode(SBAuth.self, from: data)
-            return .success(sbAuth)
+            return sbAuth
         } catch {
-            return .failure(error)
+            throw error
         }
     }
 }

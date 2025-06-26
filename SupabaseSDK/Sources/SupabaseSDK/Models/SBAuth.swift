@@ -5,11 +5,11 @@
 //  Created by Marcio Garcia on 6/24/25.
 //
 
-public struct SBAuth: Codable {
+public struct SBAuth: Codable, Sendable {
     public let accessToken: String
     public let tokenType: String
     public let expiresIn: Int
-    public let expiresAt: Int
+    public let expiresAt: String
     public let refreshToken: String
     public let user: SBUser
     

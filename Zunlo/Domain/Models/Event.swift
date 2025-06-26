@@ -6,28 +6,12 @@
 //
 
 import Foundation
-import SwiftData
-
-@Model
-class EventEntity: Identifiable {
-    @Attribute(.unique) var id: UUID
-    var title: String
-    var dueDate: Date?
-    var isCompleted: Bool
-
-    internal init(id: UUID = UUID(), title: String, dueDate: Date?, isCompleted: Bool = false) {
-        self.id = id
-        self.title = title
-        self.dueDate = dueDate
-        self.isCompleted = isCompleted
-    }
-}
-
 
 struct Event: Codable, Identifiable {
     let id: UUID
     let title: String
     let createdAt: Date
+    let dueDate: Date
     let isComplete: Bool
     let userId: UUID
     
@@ -35,6 +19,7 @@ struct Event: Codable, Identifiable {
         case id
         case title
         case createdAt = "created_at"
+        case dueDate = "due_date"
         case isComplete = "is_complete"
         case userId = "user_id"
     }

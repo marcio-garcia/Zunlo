@@ -5,7 +5,7 @@
 //  Created by Marcio Garcia on 6/24/25.
 //
 
-public struct SBUser: Codable {
+public struct SBUser: Codable, Sendable {
     public let id: String    // The unique id of the identity of the user.
     public let aud: String    // The audience claim.
     public let role: String    // The role claim used by Postgres to perform Row Level Security (RLS) checks.

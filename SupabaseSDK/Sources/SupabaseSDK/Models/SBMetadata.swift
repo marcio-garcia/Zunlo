@@ -5,7 +5,7 @@
 //  Created by Marcio Garcia on 6/24/25.
 //
 
-public struct SBMetadata: Codable {
+public struct SBMetadata: Codable, Sendable {
     public let email: String
     public let emailVerified: Bool
     public let phoneVerified: Bool

@@ -38,13 +38,11 @@ struct TimelineScrollView: View {
                                     }
                                     Divider()
                                     VStack(alignment: .leading, spacing: 24) {
-                                        ForEach(repository.events) { event in
+                                        ForEach(repository.eventsStartingFromToday()) { event in
                                             HStack {
-                                                if let date = event.dueDate?.formatted() {
-                                                    Text(date.isEmpty ? "Not set" : date)
-                                                        .font(.headline)
-                                                        .frame(width: 60, alignment: .trailing)
-                                                }
+                                                Text(event.dueDate.formattedDate(dateFormat: "HH:mm"))
+                                                    .font(.headline)
+                                                    .frame(width: 60, alignment: .trailing)
                                                 Text(event.title)
                                                     .font(.body)
                                             }
@@ -105,40 +103,17 @@ struct TimelineScrollView: View {
     private func addEventIfNeeded() {
         // Only add if fields are filled in, or implement custom validation
         if !newEvent.title.isEmpty {
-            repository.addEvent(title: newEvent.title, dueDate: newEvent.dueDate)
+//            repository.addEvent(title: newEvent.title, dueDate: newEvent.dueDate)
             newEvent.title = ""
         }
     }
     
     private func dateString(_ date: Date) -> String {
-        return date.formatted(dateFormat: "E, MMM d")
+        return date.formattedDate(dateFormat: "E, MMM d")
     }
     
     // Stable section IDs for ScrollViewReader
     private func sectionID(_ date: Date) -> String {
-        return date.formatted(dateFormat: "yyyy-MM-dd")
-    }
-    
-    // Dummy events by date for illustration
-    func events(for date: Date) -> [EventEntity] {
-        let cal = Calendar.current
-        if cal.isDateInToday(date) {
-            return [
-                EventEntity(title: "☕ Breakfast", dueDate: Date()),
-                EventEntity(title: "Meeting with Jen", dueDate: Date()),
-                EventEntity(title: "Lunch", dueDate: Date()),
-                EventEntity(title: "Doctor", dueDate: Date())
-            ]
-        } else if cal.isDate(date, inSameDayAs: cal.date(byAdding: .day, value: 1, to: Date())!) {
-            return [
-                EventEntity(title: "Gym", dueDate: Date()),
-                EventEntity(title: "Study", dueDate: Date())
-            ]
-        } else {
-            return [
-                EventEntity(title: "Open day!", dueDate: Date()),
-                EventEntity(title: "Wind down", dueDate: Date())
-            ]
-        }
+        return date.formattedDate(dateFormat: "yyyy-MM-dd")
     }
 }

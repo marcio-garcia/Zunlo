@@ -11,10 +11,13 @@ extension Date {
     
     static var formatter: DateFormatter = {
         let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
         return df
     }()
     
-    func formatted(dateFormat: String) -> String {
+    static let isoFormatter = ISO8601DateFormatter()
+    
+    func formattedDate(dateFormat: String) -> String {
         Date.formatter.dateFormat = dateFormat
         return Date.formatter.string(from: self)
     }

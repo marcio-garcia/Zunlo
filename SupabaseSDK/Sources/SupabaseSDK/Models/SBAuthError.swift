@@ -5,13 +5,13 @@
 //  Created by Marcio Garcia on 6/24/25.
 //
 
-public enum SBAuthError: Error {
+public enum SBAuthError: Error, Sendable {
     case authError(SBAuthErrorMsg)
     case invalidResponse
     case invalidRequest
 }
 
-public struct SBAuthErrorMsg: Error, Codable {
+public struct SBAuthErrorMsg: Error, Codable, Sendable {
     public let code: Int
     public let errorCode: String
     public let msg: String
