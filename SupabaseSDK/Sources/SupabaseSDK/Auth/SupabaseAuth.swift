@@ -64,6 +64,9 @@ public class SupabaseAuth: @unchecked Sendable {
             let sbAuth = try JSONDecoder().decode(SBAuth.self, from: data)
             return sbAuth
         } catch {
+            if let err = error as? DecodingError {
+                debugPrint("Decoding error: \(err.errorDescription ?? "")")
+            }
             throw error
         }
     }

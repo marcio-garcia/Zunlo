@@ -10,7 +10,7 @@ import SupabaseSDK
 
 extension SBAuth {
     func toDomain() -> Auth {
-        let expiresAt = Date.isoFormatter.date(from: self.expiresAt) ?? Date()
+//        let expiresAt = Date.isoFormatter.date(from: self.expiresAt) ?? Date()
         return Auth(token: AuthToken(accessToken: self.accessToken,
                                      refreshToken: self.refreshToken,
                                      expiresAt: expiresAt),

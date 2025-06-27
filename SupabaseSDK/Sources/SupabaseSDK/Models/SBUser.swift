@@ -5,6 +5,8 @@
 //  Created by Marcio Garcia on 6/24/25.
 //
 
+import Foundation
+
 public struct SBUser: Codable, Sendable {
     public let id: String    // The unique id of the identity of the user.
     public let aud: String    // The audience claim.

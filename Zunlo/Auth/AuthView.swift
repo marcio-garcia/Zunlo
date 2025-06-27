@@ -41,12 +41,12 @@ struct AuthView: View {
                 Button("Sign Up") {
                     Task {
                         isLoading = true
-                                defer { isLoading = false }
-                                do {
-                                    try await authCoordinator.signUp(email: email, password: password)
-                                } catch {
-                                    self.error = error.localizedDescription
-                                }
+                        defer { isLoading = false }
+                        do {
+                            try await authCoordinator.signUp(email: email, password: password)
+                        } catch {
+                            self.error = error.localizedDescription
+                        }
                     }
                     //                        Task { await repository.signUp(email: email, password: password) }
                 }
@@ -57,12 +57,8 @@ struct AuthView: View {
                     Task {
                         do {
                             isLoading = true
-                                    defer { isLoading = false }
-                                    do {
-                                        try await authCoordinator.signIn(email: email, password: password)
-                                    } catch {
-                                        self.error = error.localizedDescription
-                                    }
+                            defer { isLoading = false }
+                            try await authCoordinator.signIn(email: email, password: password)
                         } catch {
                             self.error = error.localizedDescription
                         }

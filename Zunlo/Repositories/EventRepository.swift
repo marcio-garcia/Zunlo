@@ -11,11 +11,11 @@ import SupabaseSDK
 
 @MainActor
 class EventRepository: ObservableObject {
-    @Published private(set) var events: [EventEntity] = []
+    @Published private(set) var events: [EventLocal] = []
 
     private var modelContext: ModelContext
     private var refreshTimer: Timer?
-    private let refreshInterval: TimeInterval = 60
+    private let refreshInterval: TimeInterval = 5
     private let supabase: SupabaseSDK
     
     init(modelContext: ModelContext) {
@@ -31,7 +31,7 @@ class EventRepository: ObservableObject {
     }
 
     func fetchLocalEvents() {
-        let fetchDescriptor = FetchDescriptor<EventEntity>(
+        let fetchDescriptor = FetchDescriptor<EventLocal>(
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         do {
@@ -42,7 +42,7 @@ class EventRepository: ObservableObject {
         }
     }
 
-    func saveEvents(_ newEvents: [EventEntity]) {
+    func saveEvents(_ newEvents: [EventLocal]) {
         var updated = false
         for event in newEvents {
             if !events.contains(where: { $0.id == event.id }) {
@@ -72,21 +72,24 @@ class EventRepository: ObservableObject {
         }
     }
 
-    // MARK: - Supabase Fetch (replace with your real endpoint)
     func fetchEventsFromSupabase() async {
-        // Replace with your real URL
-        guard let url = URL(string: "https://YOUR_PROJECT.supabase.co/rest/v1/events?select=*") else { return }
-        var request = URLRequest(url: url)
-        request.addValue("Bearer YOUR_SUPABASE_ANON_KEY", forHTTPHeaderField: "Authorization")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-
         do {
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let remoteEvents = try JSONDecoder().decode([Event].self, from: data)
-            let localEvents = remoteEvents.map { $0.toEventEntity() }
+            let remoteEvents = try await supabase.database.fetch(from: "events",
+                                                                 as: EventRemote.self,
+                                                                 query: ["select": "*"])
+            let localEvents = remoteEvents.map { $0.toLocal() }
             saveEvents(localEvents)
         } catch {
             print("Supabase fetch error: \(error)")
+        }
+    }
+    
+    func addEvent(_ event: Event) async throws {
+        do {
+            let remoteEvent = event.toRemote()
+            try await supabase.database.insert(remoteEvent, into: "events")
+        } catch {
+            throw error
         }
     }
 
@@ -98,7 +101,7 @@ class EventRepository: ObservableObject {
     }
 
     // MARK: - Events from Today
-    func eventsStartingFromToday() -> [EventEntity] {
+    func eventsStartingFromToday() -> [EventLocal] {
         let startOfToday = Calendar.current.startOfDay(for: Date())
         return events.filter { $0.dueDate >= startOfToday }
     }

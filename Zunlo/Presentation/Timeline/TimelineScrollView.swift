@@ -11,7 +11,7 @@ struct TimelineScrollView: View {
     @EnvironmentObject var repository: EventRepository
     @State private var showAddEvent = false
     @State private var hasScrolledToToday = false
-    @State private var newEvent = NewEventDraft()
+    @State private var newEvent = Event.empty
     
     // Generate a list of days: [-2, -1, 0, +1, +2] around today
     let days: [Date] = ( -3...3 ).map { Calendar.current.date(byAdding: .day, value: $0, to: Date())! }
@@ -101,10 +101,15 @@ struct TimelineScrollView: View {
     }
     
     private func addEventIfNeeded() {
-        // Only add if fields are filled in, or implement custom validation
         if !newEvent.title.isEmpty {
-//            repository.addEvent(title: newEvent.title, dueDate: newEvent.dueDate)
-            newEvent.title = ""
+            Task {
+                do {
+                    try await repository.addEvent(newEvent)
+                    newEvent.title = ""
+                } catch {
+                    throw error
+                }
+            }
         }
     }
     

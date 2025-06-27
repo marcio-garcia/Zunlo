@@ -40,7 +40,7 @@ struct ZunloApp: App {
     @StateObject private var authCoordinator = AppAuthCoordinator()
 
     init() {
-        let schema = Schema([EventEntity.self])
+        let schema = Schema([EventLocal.self])
         do {
             let container = try ModelContainer(for: schema)
             self.sharedModelContainer = container

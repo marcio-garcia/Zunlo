@@ -7,16 +7,16 @@
 
 import SwiftUI
 
-struct NewEventDraft {
-    var title: String = ""
-    var dueDate: Date = Date()
-    var reminder: Int = 5
-    // add other fields
-}
+//struct NewEventDraft {
+//    var title: String = ""
+//    var dueDate: Date = Date()
+//    var reminder: Int = 5
+//    // add other fields
+//}
 
 struct AddEventView: View {
     @Environment(\.presentationMode) var presentationMode
-    @Binding var newEvent: NewEventDraft
+    @Binding var newEvent: Event
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -30,14 +30,14 @@ struct AddEventView: View {
             DatePicker("Time", selection: $newEvent.dueDate, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.compact)
             
-            Text("Remind me")
-            Picker("Reminder", selection: $newEvent.reminder) {
-                Text("None").tag(0)
-                Text("5 min before").tag(5)
-                Text("10 min before").tag(10)
-                Text("30 min before").tag(30)
-            }
-            .pickerStyle(MenuPickerStyle())
+//            Text("Remind me")
+//            Picker("Reminder", selection: $newEvent.reminder) {
+//                Text("None").tag(0)
+//                Text("5 min before").tag(5)
+//                Text("10 min before").tag(10)
+//                Text("30 min before").tag(30)
+//            }
+//            .pickerStyle(MenuPickerStyle())
 
             HStack {
                 Button("Save") {
