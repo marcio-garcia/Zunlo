@@ -16,6 +16,6 @@ struct Event: Identifiable, Sendable {
     var isComplete: Bool
     
     static var empty: Event {
-        return Event(id: nil, userId: nil, title: "Event", createdAt: Date(), dueDate: Date(), isComplete: false)
+        return Event(id: nil, userId: nil, title: "", createdAt: Date(), dueDate: Date(), isComplete: false)
     }
 }

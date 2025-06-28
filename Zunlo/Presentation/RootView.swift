@@ -16,7 +16,8 @@ struct RootView: View {
             case .loading:
                 ProgressView("Loading...")
             case .authenticated(let token):
-                TimelineScrollView()
+//                TimelineScrollView()
+                TimelinePagedView()
             case .unauthenticated:
                 AuthView()
             }
