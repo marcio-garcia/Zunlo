@@ -7,51 +7,49 @@
 
 import SwiftUI
 
-//struct NewEventDraft {
-//    var title: String = ""
-//    var dueDate: Date = Date()
-//    var reminder: Int = 5
-//    // add other fields
-//}
-
 struct AddEventView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @Binding var newEvent: Event
+    @EnvironmentObject var repository: EventRepository
+    @Environment(\.dismiss) private var dismiss
+    @State private var eventTitle: String = ""
+    @State private var eventDate: Date = Date()
+    @State private var isSaving = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("+ Add Event")
-                .font(.title)
-            Text("Title:")
-            TextField("Event name", text: $newEvent.title)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-            
-            Text("Time:")
-            DatePicker("Time", selection: $newEvent.dueDate, displayedComponents: .hourAndMinute)
-                .datePickerStyle(.compact)
-            
-//            Text("Remind me")
-//            Picker("Reminder", selection: $newEvent.reminder) {
-//                Text("None").tag(0)
-//                Text("5 min before").tag(5)
-//                Text("10 min before").tag(10)
-//                Text("30 min before").tag(30)
-//            }
-//            .pickerStyle(MenuPickerStyle())
-
-            HStack {
-                Button("Save") {
-                    presentationMode.wrappedValue.dismiss()
+        NavigationView {
+            Form {
+                Section(header: Text("Event Details")) {
+                    TextField("Title", text: $eventTitle)
+                    DatePicker("Due Date", selection: $eventDate)
                 }
-                .buttonStyle(.borderedProminent)
-                Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
-                }
-                .buttonStyle(.bordered)
             }
-            .padding(.top)
-            Spacer()
+            .navigationTitle("Add Event")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveEvent()
+                    }
+                    .disabled(eventTitle.isEmpty || isSaving)
+                }
+            }
         }
-        .padding()
+    }
+
+    private func saveEvent() {
+        guard !eventTitle.isEmpty else { return }
+        isSaving = true
+        Task {
+            let newEvent = Event(id: nil, userId: nil, title: eventTitle, dueDate: eventDate, isComplete: false)
+            do {
+                try await repository.addEvent(newEvent)
+                dismiss()
+            } catch {
+                // Add error handling UI
+                print("Failed to add event: \(error)")
+            }
+            isSaving = false
+        }
     }
 }

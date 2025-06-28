@@ -25,7 +25,6 @@ class EventRepository: ObservableObject {
         supabase = SupabaseSDK(config: config)
         self.modelContext = modelContext
         self.authManager = authManager
-        fetchLocalEvents()
         startAutoRefresh()
     }
 
@@ -34,19 +33,28 @@ class EventRepository: ObservableObject {
     }
 
     func fetchLocalEvents() {
+        print("Repo address: \(Unmanaged.passUnretained(self).toOpaque())")
+
         let fetchDescriptor = FetchDescriptor<EventLocal>(
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            sortBy: [SortDescriptor(\.dueDate, order: .forward)]
         )
         do {
             let localEvents = try modelContext.fetch(fetchDescriptor)
-            events = localEvents.compactMap({ $0.toDomain() })
+            print("Fetched events: \(localEvents.count)")
+            DispatchQueue.main.async {
+                print("Assigning events on main thread? \(Thread.isMainThread)")
+                self.events = localEvents.compactMap({ $0.toDomain() })
+                print("Domain events: \(self.events.count)")
+            }
+            
+            
         } catch {
             print("Failed to fetch events: \(error)")
             events = []
         }
     }
 
-    func saveEvents(_ newEvents: [EventLocal]) {
+    func saveLocalEvents(_ newEvents: [EventLocal]) {
         var updated = false
         for event in newEvents {
             if !events.contains(where: { $0.id == event.id }) {
@@ -62,6 +70,15 @@ class EventRepository: ObservableObject {
                 print("Failed to save events: \(error)")
             }
         }
+    }
+    
+    func deleteAllLocalEvents() throws {
+        let fetchDescriptor = FetchDescriptor<EventLocal>()
+        let allTasks = try modelContext.fetch(fetchDescriptor)
+        
+        allTasks.forEach { modelContext.delete($0) }
+        
+        try modelContext.save()
     }
 
     func clearCache() {
@@ -87,7 +104,7 @@ class EventRepository: ObservableObject {
                     query: ["select": "*"])
             
             let localEvents = remoteEvents.map { $0.toLocal() }
-            saveEvents(localEvents)
+            saveLocalEvents(localEvents)
         } catch {
             print("Supabase fetch error: \(error)")
         }
@@ -108,9 +125,12 @@ class EventRepository: ObservableObject {
     }
 
     func startAutoRefresh() {
-//        refreshTimer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
-//            Task { await self?.fetchEventsFromSupabase() }
-//        }
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
+            Task { await self?.fetchEventsFromSupabase() }
+        }
+        // Just for testing - remove it later
+//        try? deleteAllLocalEvents()
+        
         Task { await self.fetchEventsFromSupabase() }
     }
 

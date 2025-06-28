@@ -9,17 +9,34 @@ import SwiftUI
 
 struct TimelinePagedView: View {
     @EnvironmentObject var repository: EventRepository
-    @State private var newEvent = Event.empty
     @State private var showAddEvent = false
-    @State private var groupedEvents: [String: [Event]] = [:]
     @State private var currentIndex = 3 // 3 is "Today" in -3...3
 
     // Display days from -3 to +3 around today
     private let days: [Date] = (-3...3)
-        .compactMap { Calendar.current.date(byAdding: .day, value: $0, to: Date()) }
+        .compactMap { Calendar.current.date(byAdding: .day, value: $0, to: Calendar.current.startOfDay(for: Date())) }
         .sorted()
+    
+    private var groupedEvents: [String: [Event]] {
+        Dictionary(grouping: repository.events) { event in
+            sectionID(Calendar.current.startOfDay(for: event.dueDate))
+        }
+    }
 
     var body: some View {
+        VStack {
+            // Debug info at the top
+//            Text("Repo address: \(Unmanaged.passUnretained(repository).toOpaque())")
+//
+//            Text("Events count: \(repository.events.count)")
+//                Text("Grouped: \(groupedEvents.count) groups")
+//                ForEach(repository.events) { event in
+//                    Text("Event: \(event.title) due \(event.dueDate) sectionID \(sectionID(event.dueDate))")
+//                }
+//                ForEach(days, id: \.self) { date in
+//                    Text("Day sectionID: \(sectionID(date))")
+//                }
+        
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $currentIndex) {
                 ForEach(Array(days.enumerated()), id: \.offset) { index, date in
@@ -68,9 +85,9 @@ struct TimelinePagedView: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .onAppear(perform: updateGroupedEvents)
-            .sheet(isPresented: $showAddEvent, onDismiss: addEventIfNeeded) {
-                AddEventView(newEvent: $newEvent)
+            .sheet(isPresented: $showAddEvent) {
+                AddEventView()
+                    .environmentObject(repository)
             }
 
             // Floating buttons (Add + Today)
@@ -104,29 +121,11 @@ struct TimelinePagedView: View {
             }
             .padding()
         }
+        .onAppear(perform: repository.fetchLocalEvents)
+        }
     }
 
     // MARK: - Helpers
-
-    private func addEventIfNeeded() {
-        guard !newEvent.title.isEmpty else { return }
-        Task {
-            do {
-                try await repository.addEvent(newEvent)
-                newEvent = .empty
-                updateGroupedEvents()
-            } catch {
-                print("Error adding event: \(error)")
-            }
-        }
-    }
-
-    private func updateGroupedEvents() {
-        let events: [Event] = repository.eventsStartingFromToday()
-        groupedEvents = Dictionary(grouping: events) { (event: Event) in
-            sectionID(event.dueDate)
-        }
-    }
 
     private func sectionID(_ date: Date) -> String {
         date.formattedDate(dateFormat: "yyyy-MM-dd")

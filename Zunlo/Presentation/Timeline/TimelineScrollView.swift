@@ -7,13 +7,10 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct TimelineScrollView: View {
     @EnvironmentObject var repository: EventRepository
     @State private var showAddEvent = false
     @State private var hasScrolledToToday = false
-    @State private var newEvent = Event.empty
     @State private var groupedEvents: [String: [Event]] = [:]
 
     // Generate sorted list of days: [-3...+3] around today
@@ -104,8 +101,8 @@ struct TimelineScrollView: View {
                     }
                     .padding()
                 }
-                .sheet(isPresented: $showAddEvent, onDismiss: addEventIfNeeded) {
-                    AddEventView(newEvent: $newEvent)
+                .sheet(isPresented: $showAddEvent) {
+                    AddEventView()
                 }
                 .onAppear {
                     updateGroupedEvents()
@@ -122,20 +119,6 @@ struct TimelineScrollView: View {
     }
 
     // MARK: - Helpers
-
-    private func addEventIfNeeded() {
-        guard !newEvent.title.isEmpty else { return }
-
-        Task {
-            do {
-                try await repository.addEvent(newEvent)
-                newEvent = .empty
-                updateGroupedEvents()
-            } catch {
-                print("Failed to add event: \(error.localizedDescription)")
-            }
-        }
-    }
     
     private func updateGroupedEvents() {
         let events = repository.eventsStartingFromToday()
