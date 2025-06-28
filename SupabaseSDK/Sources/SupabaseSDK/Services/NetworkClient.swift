@@ -11,6 +11,8 @@ final class NetworkClient {
     private let session: URLSession
     private let config: SupabaseConfig
     
+    var authToken: String?
+    
     init(config: SupabaseConfig, session: URLSession = .shared) {
         self.config = config
         self.session = session
@@ -30,9 +32,11 @@ final class NetworkClient {
         
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.setValue("Bearer \(config.anonKey)", forHTTPHeaderField: "Authorization")
+        if let token = authToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("Bearer \(config.anonKey)", forHTTPHeaderField: "apikey")
+        request.setValue("\(config.anonKey)", forHTTPHeaderField: "apikey")
         additionalHeaders?.forEach { key, value in
             request.setValue(value, forHTTPHeaderField: key)
         }

@@ -1,5 +1,5 @@
 //
-//  AppAuthCoordinator.swift
+//  AuthManager.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 6/25/25.
@@ -14,19 +14,19 @@ enum AuthState: Equatable {
 }
 
 @MainActor
-final class AppAuthCoordinator: ObservableObject {
+final class AuthManager: ObservableObject {
     @Published private(set) var state: AuthState = .loading
 
     private let tokenStorage: TokenStorage
-    private let authService: Authenticating
+    private let authService: AuthServicing
 
     var currentToken: AuthToken? {
         if case .authenticated(let token) = state { return token }
         return nil
     }
-
+    
     init(tokenStorage: TokenStorage = KeychainTokenStorage(),
-         authService: Authenticating = AuthService(envConfig: EnvConfig.shared)) {
+         authService: AuthServicing = AuthService(envConfig: EnvConfig.shared)) {
         self.tokenStorage = tokenStorage
         self.authService = authService
         Task { await self.bootstrap() }
@@ -40,8 +40,12 @@ final class AppAuthCoordinator: ObservableObject {
                 } else if let refreshToken = token.refreshToken {
                     do {
                         let auth = try await authService.refreshToken(refreshToken)
-                        try tokenStorage.save(token: auth.token)
-                        self.state = .authenticated(auth.token)
+                        if authService.validateToken(auth.token) {
+                            try tokenStorage.save(token: auth.token)
+                            self.state = .authenticated(auth.token)
+                        }
+                        try? tokenStorage.clear()
+                        self.state = .unauthenticated
                     } catch {
                         try? tokenStorage.clear()
                         self.state = .unauthenticated

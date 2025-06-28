@@ -36,15 +36,13 @@ import SwiftData
 @main
 struct ZunloApp: App {
     let sharedModelContainer: ModelContainer
-    @StateObject private var eventRepository: EventRepository
-    @StateObject private var authCoordinator = AppAuthCoordinator()
+    @StateObject private var authManager = AuthManager()
 
     init() {
         let schema = Schema([EventLocal.self])
         do {
             let container = try ModelContainer(for: schema)
             self.sharedModelContainer = container
-            _eventRepository = StateObject(wrappedValue: EventRepository(modelContext: container.mainContext))
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
@@ -52,8 +50,10 @@ struct ZunloApp: App {
 
     var body: some Scene {
         WindowGroup {
+            let eventRepository = EventRepository(modelContext: sharedModelContainer.mainContext,
+                                                  authManager: authManager)
             RootView()
-                .environmentObject(authCoordinator)
+                .environmentObject(authManager)
                 .environmentObject(eventRepository)
         }
         .modelContainer(sharedModelContainer)

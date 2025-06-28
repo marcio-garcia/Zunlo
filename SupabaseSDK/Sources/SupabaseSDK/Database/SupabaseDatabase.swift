@@ -12,6 +12,12 @@ public final class SupabaseDatabase: @unchecked Sendable {
     private let session: URLSession
     private let httpClient: NetworkClient
     
+    var authToken: String? {
+        didSet {
+            httpClient.authToken = authToken
+        }
+    }
+    
     public init(config: SupabaseConfig, session: URLSession = .shared) {
         self.config = config
         self.session = session
@@ -31,12 +37,13 @@ public final class SupabaseDatabase: @unchecked Sendable {
             throw URLError(.badServerResponse)
         }
         
-        return try JSONDecoder().decode([T].self, from: data)
+        return try decode(data)
+//        return try JSONDecoder().decode([T].self, from: data)
     }
     
     public func insert<T: Encodable>(_ object: T,
                                      into table: String) async throws {
-        let body = try JSONEncoder().encode(object)
+        let body = try encode(object)
         let (_, response) = try await httpClient.sendRequest(
             path: "/rest/v1/\(table)",
             method: "POST",
@@ -51,7 +58,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
     public func update<T: Encodable>(_ object: T,
                                      in table: String,
                                      filter: [String: String]) async throws {
-        let body = try JSONEncoder().encode(object)
+        let body = try encode(object)
         let (_, response) = try await httpClient.sendRequest(
             path: "/rest/v1/\(table)",
             method: "PATCH",
@@ -74,5 +81,16 @@ public final class SupabaseDatabase: @unchecked Sendable {
         guard 200..<300 ~= response.statusCode else {
             throw URLError(.badServerResponse)
         }
+    }
+    
+    private func encode<T: Encodable>(_ object: T) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(object)
+    }
+    
+    private func decode<T: Decodable>(_ data: Data) throws -> T {
+        let decoder = JSONDecoder()
+        return try decoder.decode(T.self, from: data)
     }
 }

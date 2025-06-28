@@ -13,15 +13,18 @@ import SupabaseSDK
 class EventRepository: ObservableObject {
     @Published private(set) var events: [EventLocal] = []
 
+    private unowned let authManager: AuthManager
+    
     private var modelContext: ModelContext
     private var refreshTimer: Timer?
     private let refreshInterval: TimeInterval = 5
     private let supabase: SupabaseSDK
     
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, authManager: AuthManager) {
         let config = SupabaseConfig(anonKey: EnvConfig.shared.apiKey, baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!)
         supabase = SupabaseSDK(config: config)
         self.modelContext = modelContext
+        self.authManager = authManager
         fetchLocalEvents()
         startAutoRefresh()
     }
@@ -73,10 +76,15 @@ class EventRepository: ObservableObject {
     }
 
     func fetchEventsFromSupabase() async {
+        guard let token = authManager.currentToken else { return }
+        
         do {
-            let remoteEvents = try await supabase.database.fetch(from: "events",
-                                                                 as: EventRemote.self,
-                                                                 query: ["select": "*"])
+            let remoteEvents = try await supabase.database(
+                authToken: token.accessToken
+            ).fetch(from: "events",
+                    as: EventRemote.self,
+                    query: ["select": "*"])
+            
             let localEvents = remoteEvents.map { $0.toLocal() }
             saveEvents(localEvents)
         } catch {
@@ -85,18 +93,23 @@ class EventRepository: ObservableObject {
     }
     
     func addEvent(_ event: Event) async throws {
+        guard let token = authManager.currentToken else { return }
+        
         do {
-            let remoteEvent = event.toRemote()
-            try await supabase.database.insert(remoteEvent, into: "events")
+            var remoteEvent = event.toRemote()
+            remoteEvent.id = nil
+            remoteEvent.userId = nil
+            remoteEvent.createdAt = nil
+            try await supabase.database(authToken: token.accessToken).insert(remoteEvent, into: "events")
         } catch {
             throw error
         }
     }
 
     func startAutoRefresh() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
-            Task { await self?.fetchEventsFromSupabase() }
-        }
+//        refreshTimer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
+//            Task { await self?.fetchEventsFromSupabase() }
+//        }
         Task { await self.fetchEventsFromSupabase() }
     }
 

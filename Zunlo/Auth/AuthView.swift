@@ -8,21 +8,17 @@
 import SwiftUI
 
 struct AuthView: View {
-    //    @StateObject private var repository = AuthService(envConfig: EnvConfig.shared)
-    //    @State var email = "marcio.ca.garcia@gmail.com"
-    //    @State var password = ""
-    
-    @EnvironmentObject var authCoordinator: AppAuthCoordinator
+    @EnvironmentObject var authManager: AuthManager
     @State private var email = "marcio.ca.garcia@gmail.com"
     @State private var password = ""
     @State private var error: String?
     @State private var isLoading = false
     
     // To logout in any other view
-    //    @EnvironmentObject var authCoordinator: AppAuthCoordinator
+    //    @EnvironmentObject var authManager: AuthManager
     //
     //    Button("Log out") {
-    //        authCoordinator.logout()
+    //        authManager.logout()
     //    }
     
     var body: some View {
@@ -43,7 +39,7 @@ struct AuthView: View {
                         isLoading = true
                         defer { isLoading = false }
                         do {
-                            try await authCoordinator.signUp(email: email, password: password)
+                            try await authManager.signUp(email: email, password: password)
                         } catch {
                             self.error = error.localizedDescription
                         }
@@ -58,7 +54,7 @@ struct AuthView: View {
                         do {
                             isLoading = true
                             defer { isLoading = false }
-                            try await authCoordinator.signIn(email: email, password: password)
+                            try await authManager.signIn(email: email, password: password)
                         } catch {
                             self.error = error.localizedDescription
                         }

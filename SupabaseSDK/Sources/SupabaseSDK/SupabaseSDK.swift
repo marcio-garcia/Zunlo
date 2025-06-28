@@ -10,4 +10,9 @@ public class SupabaseSDK {
         auth = SupabaseAuth(config: config)
         database = SupabaseDatabase(config: config)
     }
+    
+    public func database(authToken: String? = nil) -> SupabaseDatabase {
+        database.authToken = authToken
+        return database
+    }
 }

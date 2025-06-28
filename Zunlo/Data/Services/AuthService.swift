@@ -9,14 +9,14 @@ import SwiftUI
 import SwiftData
 import SupabaseSDK
 
-protocol Authenticating {
+protocol AuthServicing {
     func signIn(email: String, password: String) async throws -> Auth
     func signUp(email: String, password: String) async throws -> Auth
     func refreshToken(_ refreshToken: String) async throws -> Auth
     func validateToken(_ token: AuthToken) -> Bool
 }
 
-class AuthService: Authenticating {
+class AuthService: AuthServicing {
     
     private var supabase: SupabaseSDK
     
@@ -44,10 +44,15 @@ class AuthService: Authenticating {
     }
     
     func refreshToken(_ refreshToken: String) async throws -> Auth {
-        return Auth.empty
+        do {
+            let sbAuth = try await supabase.auth.refreshSession(refreshToken: refreshToken)
+            return sbAuth.toDomain()
+        } catch {
+            throw error
+        }
     }
     
     func validateToken(_ token: AuthToken) -> Bool {
-        return token.expiresAt > Date()
+        return !token.accessToken.isEmpty && token.expiresAt > Date()
     }
 }

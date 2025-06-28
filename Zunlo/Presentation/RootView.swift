@@ -8,20 +8,20 @@
 import SwiftUI
 
 struct RootView: View {
-    @EnvironmentObject var authCoordinator: AppAuthCoordinator
+    @EnvironmentObject var authManager: AuthManager
 
     var body: some View {
         Group {
-            switch authCoordinator.state {
+            switch authManager.state {
             case .loading:
                 ProgressView("Loading...")
-            case .authenticated:
+            case .authenticated(let token):
                 TimelineScrollView()
             case .unauthenticated:
                 AuthView()
             }
         }
-        .animation(.easeInOut, value: authCoordinator.state)
+        .animation(.easeInOut, value: authManager.state)
         .transition(.opacity)
     }
 }
