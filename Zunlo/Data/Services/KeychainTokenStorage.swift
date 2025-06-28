@@ -8,17 +8,11 @@
 import Foundation
 import Security
 
-protocol TokenStorage {
-    func save(token: AuthToken) throws
-    func loadToken() throws -> AuthToken?
-    func clear() throws
-}
-
 final class KeychainTokenStorage: TokenStorage {
     private let service = "com.zunlo.app.token"
     private let account = "auth"
 
-    func save(token: AuthToken) throws {
+    func save(token: Auth) throws {
         let data = try JSONEncoder().encode(token)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -35,7 +29,7 @@ final class KeychainTokenStorage: TokenStorage {
         guard status == errSecSuccess else { throw NSError(domain: "Keychain", code: Int(status)) }
     }
 
-    func loadToken() throws -> AuthToken? {
+    func loadToken() throws -> Auth? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -49,7 +43,7 @@ final class KeychainTokenStorage: TokenStorage {
         guard status == errSecSuccess, let data = dataRef as? Data else {
             throw NSError(domain: "Keychain", code: Int(status))
         }
-        return try JSONDecoder().decode(AuthToken.self, from: data)
+        return try JSONDecoder().decode(Auth.self, from: data)
     }
 
     func clear() throws {

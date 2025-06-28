@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Auth: Sendable {
+struct Auth: Codable, Sendable, Equatable {
     let token: AuthToken
     let user: User
 }

@@ -76,11 +76,11 @@ class EventRepository: ObservableObject {
     }
 
     func fetchEventsFromSupabase() async {
-        guard let token = authManager.currentToken else { return }
+        guard let auth = authManager.auth else { return }
         
         do {
             let remoteEvents = try await supabase.database(
-                authToken: token.accessToken
+                authToken: auth.token.accessToken
             ).fetch(from: "events",
                     as: EventRemote.self,
                     query: ["select": "*"])
@@ -93,14 +93,14 @@ class EventRepository: ObservableObject {
     }
     
     func addEvent(_ event: Event) async throws {
-        guard let token = authManager.currentToken else { return }
+        guard let auth = authManager.auth else { return }
         
         do {
             var remoteEvent = event.toRemote()
             remoteEvent.id = nil
             remoteEvent.userId = nil
             remoteEvent.createdAt = nil
-            try await supabase.database(authToken: token.accessToken).insert(remoteEvent, into: "events")
+            try await supabase.database(authToken: auth.token.accessToken).insert(remoteEvent, into: "events")
         } catch {
             throw error
         }

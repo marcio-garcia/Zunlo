@@ -9,8 +9,14 @@ import Combine
 
 enum AuthState: Equatable {
     case loading
-    case authenticated(AuthToken)
+    case authenticated(Auth)
     case unauthenticated
+}
+
+protocol TokenStorage {
+    func save(token: Auth) throws
+    func loadToken() throws -> Auth?
+    func clear() throws
 }
 
 @MainActor
@@ -19,9 +25,9 @@ final class AuthManager: ObservableObject {
 
     private let tokenStorage: TokenStorage
     private let authService: AuthServicing
-
-    var currentToken: AuthToken? {
-        if case .authenticated(let token) = state { return token }
+    
+    var auth: Auth? {
+        if case .authenticated(let auth) = state { return auth }
         return nil
     }
     
@@ -34,15 +40,15 @@ final class AuthManager: ObservableObject {
 
     private func bootstrap() async {
         do {
-            if let token = try tokenStorage.loadToken() {
-                if authService.validateToken(token) {
-                    self.state = .authenticated(token)
-                } else if let refreshToken = token.refreshToken {
+            if let auth = try tokenStorage.loadToken() {
+                if authService.validateToken(auth.token) {
+                    self.state = .authenticated(auth)
+                } else if let refreshToken = auth.token.refreshToken {
                     do {
                         let auth = try await authService.refreshToken(refreshToken)
                         if authService.validateToken(auth.token) {
-                            try tokenStorage.save(token: auth.token)
-                            self.state = .authenticated(auth.token)
+                            try tokenStorage.save(token: auth)
+                            self.state = .authenticated(auth)
                         }
                         try? tokenStorage.clear()
                         self.state = .unauthenticated
@@ -62,10 +68,10 @@ final class AuthManager: ObservableObject {
         }
     }
     
-    private func handleLogin(token: AuthToken) {
+    private func handleAuth(auth: Auth) {
         do {
-            try tokenStorage.save(token: token)
-            self.state = .authenticated(token)
+            try tokenStorage.save(token: auth)
+            self.state = .authenticated(auth)
         } catch {
             self.state = .unauthenticated
         }
@@ -73,12 +79,12 @@ final class AuthManager: ObservableObject {
 
     func signIn(email: String, password: String) async throws {
         let auth = try await authService.signIn(email: email, password: password)
-        handleLogin(token: auth.token)
+        handleAuth(auth: auth)
     }
     
     func signUp(email: String, password: String) async throws {
         let auth = try await authService.signUp(email: email, password: password)
-        handleLogin(token: auth.token)
+        handleAuth(auth: auth)
     }
 
     func logout() {
