@@ -7,17 +7,22 @@
 
 import SwiftUI
 
+import SwiftUI
+
 struct TimelineScrollView: View {
     @EnvironmentObject var repository: EventRepository
     @State private var showAddEvent = false
     @State private var hasScrolledToToday = false
     @State private var newEvent = Event.empty
-    
-    // Generate a list of days: [-2, -1, 0, +1, +2] around today
-    let days: [Date] = ( -3...3 ).map { Calendar.current.date(byAdding: .day, value: $0, to: Date())! }
+    @State private var groupedEvents: [String: [Event]] = [:]
+
+    // Generate sorted list of days: [-3...+3] around today
+    private let days: [Date] = (-3...3)
+        .compactMap { Calendar.current.date(byAdding: .day, value: $0, to: Date()) }
+        .sorted()
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollViewReader { proxy in
                 ZStack(alignment: .bottomTrailing) {
                     ScrollView {
@@ -37,26 +42,27 @@ struct TimelineScrollView: View {
                                         }
                                     }
                                     Divider()
-                                    VStack(alignment: .leading, spacing: 24) {
-                                        ForEach(repository.eventsStartingFromToday()) { event in
-                                            HStack {
-                                                Text(event.dueDate.formattedDate(dateFormat: "HH:mm"))
-                                                    .font(.headline)
-                                                    .frame(width: 60, alignment: .trailing)
-                                                Text(event.title)
-                                                    .font(.body)
+
+                                    // Events for this date
+                                    let events = groupedEvents[sectionID(date)] ?? []
+                                    
+                                    if events.isEmpty {
+                                        Text("No events")
+                                            .foregroundColor(.secondary)
+                                            .padding(.vertical, 16)
+                                    } else {
+                                        VStack(alignment: .leading, spacing: 24) {
+                                            ForEach(events) { event in
+                                                HStack {
+                                                    Text(event.dueDate.formattedDate(dateFormat: "HH:mm"))
+                                                        .font(.headline)
+                                                        .frame(width: 60, alignment: .trailing)
+                                                    Text(event.title)
+                                                        .font(.body)
+                                                }
                                             }
                                         }
-                                    }
-                                    .padding(.vertical)
-                                    Button(action: { showAddEvent = true }) {
-                                        Text("+ Add event")
-                                            .font(.headline)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .background(Color(.systemGray6))
-                                            .cornerRadius(12)
-                                            .padding(.top)
+                                        .padding(.vertical)
                                     }
                                 }
                                 .padding(.horizontal)
@@ -66,21 +72,35 @@ struct TimelineScrollView: View {
                         }
                         .padding(.vertical, 32)
                     }
-                    // Floating "Today" button
-                    Button(action: {
-                        hasScrolledToToday = true
-                        withAnimation {
-                            proxy.scrollTo(sectionID(Date()), anchor: .top)
+
+                    VStack(spacing: 12) {
+                        // Floating Add Event Button
+                        Button(action: { showAddEvent = true }) {
+                            Image(systemName: "plus")
+                                .font(.title2)
+                                .padding()
+                                .background(Color.accentColor)
+                                .foregroundColor(.white)
+                                .clipShape(Circle())
+                                .shadow(radius: 3)
                         }
-                    }) {
-                        Text("⬤ Today")
-                            .font(.headline)
-                            .padding(.vertical, 8)  
-                            .padding(.horizontal, 20)
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(24)
-                            .shadow(radius: 3)
+
+                        // Floating "Today" Button
+                        Button(action: {
+                            hasScrolledToToday = true
+                            withAnimation {
+                                proxy.scrollTo(sectionID(Date()), anchor: .top)
+                            }
+                        }) {
+                            Text("⬤ Today")
+                                .font(.headline)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 20)
+                                .background(Color.accentColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(24)
+                                .shadow(radius: 3)
+                        }
                     }
                     .padding()
                 }
@@ -88,6 +108,7 @@ struct TimelineScrollView: View {
                     AddEventView(newEvent: $newEvent)
                 }
                 .onAppear {
+                    updateGroupedEvents()
                     if !hasScrolledToToday {
                         DispatchQueue.main.async {
                             proxy.scrollTo(sectionID(Date()), anchor: .top)
@@ -99,26 +120,34 @@ struct TimelineScrollView: View {
             .navigationBarHidden(true)
         }
     }
-    
+
+    // MARK: - Helpers
+
     private func addEventIfNeeded() {
-        if !newEvent.title.isEmpty {
-            Task {
-                do {
-                    try await repository.addEvent(newEvent)
-                    newEvent.title = ""
-                } catch {
-                    throw error
-                }
+        guard !newEvent.title.isEmpty else { return }
+
+        Task {
+            do {
+                try await repository.addEvent(newEvent)
+                newEvent = .empty
+                updateGroupedEvents()
+            } catch {
+                print("Failed to add event: \(error.localizedDescription)")
             }
         }
     }
     
-    private func dateString(_ date: Date) -> String {
-        return date.formattedDate(dateFormat: "E, MMM d")
+    private func updateGroupedEvents() {
+        let events = repository.eventsStartingFromToday()
+        groupedEvents = Dictionary(grouping: events,
+                                   by: { sectionID($0.dueDate) })
     }
-    
-    // Stable section IDs for ScrollViewReader
+
+    private func dateString(_ date: Date) -> String {
+        date.formattedDate(dateFormat: "E, MMM d")
+    }
+
     private func sectionID(_ date: Date) -> String {
-        return date.formattedDate(dateFormat: "yyyy-MM-dd")
+        date.formattedDate(dateFormat: "yyyy-MM-dd")
     }
 }

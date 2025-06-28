@@ -11,7 +11,7 @@ import SupabaseSDK
 
 @MainActor
 class EventRepository: ObservableObject {
-    @Published private(set) var events: [EventLocal] = []
+    @Published private(set) var events: [Event] = []
 
     private unowned let authManager: AuthManager
     
@@ -38,7 +38,8 @@ class EventRepository: ObservableObject {
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         do {
-            events = try modelContext.fetch(fetchDescriptor)
+            let localEvents = try modelContext.fetch(fetchDescriptor)
+            events = localEvents.compactMap({ $0.toDomain() })
         } catch {
             print("Failed to fetch events: \(error)")
             events = []
@@ -64,8 +65,8 @@ class EventRepository: ObservableObject {
     }
 
     func clearCache() {
-        for event in events {
-            modelContext.delete(event)
+        events.forEach {
+            modelContext.delete($0.toLocal())
         }
         do {
             try modelContext.save()
@@ -114,7 +115,7 @@ class EventRepository: ObservableObject {
     }
 
     // MARK: - Events from Today
-    func eventsStartingFromToday() -> [EventLocal] {
+    func eventsStartingFromToday() -> [Event] {
         let startOfToday = Calendar.current.startOfDay(for: Date())
         return events.filter { $0.dueDate >= startOfToday }
     }
