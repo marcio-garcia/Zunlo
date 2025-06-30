@@ -104,8 +104,8 @@ struct TimelineScrollView: View {
                 .sheet(isPresented: $showAddEvent) {
                     AddEventView()
                 }
-                .onAppear {
-                    updateGroupedEvents()
+                .task {
+                    await updateGroupedEvents()
                     if !hasScrolledToToday {
                         DispatchQueue.main.async {
                             proxy.scrollTo(sectionID(Date()), anchor: .top)
@@ -120,9 +120,9 @@ struct TimelineScrollView: View {
 
     // MARK: - Helpers
     
-    private func updateGroupedEvents() {
-        let events = repository.eventsStartingFromToday()
-        groupedEvents = Dictionary(grouping: events,
+    private func updateGroupedEvents() async {
+        await repository.fetchAll()
+        groupedEvents = Dictionary(grouping: repository.events,
                                    by: { sectionID($0.dueDate) })
     }
 

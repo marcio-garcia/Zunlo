@@ -19,16 +19,24 @@ protocol TokenStorage {
     func clear() throws
 }
 
-@MainActor
-final class AuthManager: ObservableObject {
-    @Published private(set) var state: AuthState = .loading
+protocol AuthSession {
+    var auth: Auth? { get }
+    var accessToken: String? { get }
+}
 
+final class AuthManager: AuthSession, ObservableObject {
+    @Published private(set) var state: AuthState = .loading
+    
     private let tokenStorage: TokenStorage
     private let authService: AuthServicing
     
     var auth: Auth? {
         if case .authenticated(let auth) = state { return auth }
         return nil
+    }
+    
+    var accessToken: String? {
+        auth?.token.accessToken
     }
     
     init(tokenStorage: TokenStorage = KeychainTokenStorage(),
@@ -40,55 +48,67 @@ final class AuthManager: ObservableObject {
 
     private func bootstrap() async {
         do {
-            if let auth = try tokenStorage.loadToken() {
-                if authService.validateToken(auth.token) {
-                    self.state = .authenticated(auth)
-                } else if let refreshToken = auth.token.refreshToken {
-                    do {
-                        let auth = try await authService.refreshToken(refreshToken)
-                        if authService.validateToken(auth.token) {
-                            try tokenStorage.save(token: auth)
-                            self.state = .authenticated(auth)
-                        }
-                        try? tokenStorage.clear()
-                        self.state = .unauthenticated
-                    } catch {
-                        try? tokenStorage.clear()
-                        self.state = .unauthenticated
-                    }
-                } else {
-                    try? tokenStorage.clear()
-                    self.state = .unauthenticated
-                }
-            } else {
-                self.state = .unauthenticated
+            guard let auth = try tokenStorage.loadToken() else {
+                await unauthenticated()
+                return
             }
+
+            if authService.validateToken(auth.token) {
+                await updateState(.authenticated(auth))
+                return
+            }
+
+            guard let refreshToken = auth.token.refreshToken else {
+                await unauthenticated()
+                return
+            }
+
+            do {
+                let newAuth = try await authService.refreshToken(refreshToken)
+                if authService.validateToken(newAuth.token) {
+                    await authenticated(newAuth)
+                }
+            } catch {
+                await unauthenticated()
+            }
+            await unauthenticated()
         } catch {
-            self.state = .unauthenticated
+            await unauthenticated()
         }
     }
     
-    private func handleAuth(auth: Auth) {
+    @MainActor
+    private func updateState(_ state: AuthState) {
+        self.state = state
+    }
+    
+    private func authenticated(_ auth: Auth) async {
         do {
             try tokenStorage.save(token: auth)
-            self.state = .authenticated(auth)
+            await updateState(.authenticated(auth))
         } catch {
-            self.state = .unauthenticated
+            await updateState(.unauthenticated)
         }
+    }
+    
+    private func unauthenticated() async {
+        try? tokenStorage.clear()
+        await updateState(.unauthenticated)
     }
 
     func signIn(email: String, password: String) async throws {
         let auth = try await authService.signIn(email: email, password: password)
-        handleAuth(auth: auth)
+        await authenticated(auth)
     }
     
     func signUp(email: String, password: String) async throws {
         let auth = try await authService.signUp(email: email, password: password)
-        handleAuth(auth: auth)
+        await authenticated(auth)
     }
 
+    @MainActor
     func logout() {
         try? tokenStorage.clear()
-        self.state = .unauthenticated
+        updateState(.unauthenticated)
     }
 }

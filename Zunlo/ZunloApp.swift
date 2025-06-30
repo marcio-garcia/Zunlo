@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SupabaseSDK
 
 //@main
 //struct ZunloApp: App {
@@ -41,10 +42,14 @@ struct ZunloApp: App {
     
     init() {
         let schema = Schema([EventLocal.self])
+        let supabaseConfig = SupabaseConfig(anonKey: EnvConfig.shared.apiKey,
+                                            baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!)
         do {
             let container = try ModelContainer(for: schema)
             self.sharedModelContainer = container
-            self.eventRepository = EventRepository(modelContext: container.mainContext, authManager: authManager)
+            self.eventRepository = EventRepository(localStore: SwiftDataEventLocalStore(modelContext: container.mainContext),
+                                                   remoteStore: SupabaseEventRemoteStore(supabase: SupabaseSDK(config: supabaseConfig),
+                                                                                         authManager: authManager))
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }

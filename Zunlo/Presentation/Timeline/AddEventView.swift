@@ -43,7 +43,7 @@ struct AddEventView: View {
         Task {
             let newEvent = Event(id: nil, userId: nil, title: eventTitle, dueDate: eventDate, isComplete: false)
             do {
-                try await repository.addEvent(newEvent)
+                try await repository.save(newEvent)
                 dismiss()
             } catch {
                 // Add error handling UI
