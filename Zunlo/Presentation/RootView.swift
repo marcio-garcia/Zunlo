@@ -23,5 +23,8 @@ struct RootView: View {
         }
         .animation(.easeInOut, value: authManager.state)
         .transition(.opacity)
+        .task {
+            await authManager.bootstrap()
+        }
     }
 }

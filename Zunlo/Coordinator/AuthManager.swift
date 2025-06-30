@@ -43,10 +43,9 @@ final class AuthManager: AuthSession, ObservableObject {
          authService: AuthServicing = AuthService(envConfig: EnvConfig.shared)) {
         self.tokenStorage = tokenStorage
         self.authService = authService
-        Task { await self.bootstrap() }
     }
 
-    private func bootstrap() async {
+    public func bootstrap() async {
         do {
             guard let auth = try tokenStorage.loadToken() else {
                 await unauthenticated()
