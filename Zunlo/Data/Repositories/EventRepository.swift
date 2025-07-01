@@ -31,8 +31,10 @@ final class EventRepository: ObservableObject {
 
     func save(_ event: Event) async throws {
         do {
-            try await remoteStore.save(event.toRemote())
-            try localStore.save(event.toLocal())
+            let inserted = try await remoteStore.save(event.toRemote())
+            for event in inserted {
+                try await localStore.save(event.toLocal())
+            }
             await fetchAll()
         } catch {
             print("Failed to save events remotely: \(error)")
@@ -42,8 +44,10 @@ final class EventRepository: ObservableObject {
 
     func update(_ event: Event) async throws {
         do {
-            try await remoteStore.update(event.toRemote())
-            try localStore.update(event.toLocal())
+            let updated = try await remoteStore.update(event.toRemote())
+            for event in updated {
+                try await localStore.update(event.toLocal())
+            }
             await fetchAll()
         } catch {
             print("Failed to update events remotely: \(error)")
@@ -53,8 +57,10 @@ final class EventRepository: ObservableObject {
 
     func delete(_ event: Event) async throws {
         do {
-            try await remoteStore.delete(event.toRemote())
-            try localStore.delete(event.toLocal())
+            let deleted = try await remoteStore.delete(event.toRemote())
+            for event in deleted {
+                try await localStore.delete(event.toLocal())
+            }
             await fetchAll()
         } catch {
             print("Failed to delete events remotely: \(error)")
@@ -62,13 +68,25 @@ final class EventRepository: ObservableObject {
         }
     }
 
-    func deleteAllEvents() async throws {
+    func deleteAllEvents(userId: UUID) async throws {
         do {
-            try await remoteStore.deleteAll()
-            try localStore.deleteAll()
+            _ = try await remoteStore.deleteAll()
+            try await localStore.deleteAll(for: userId)
             await fetchAll()
         } catch {
             print("Failed to delete all events remotely: \(error)")
+            throw error
+        }
+    }
+    
+    func synchronize() async throws {
+        do {
+            let all = try await remoteStore.fetch()
+            try await localStore.deleteAll()
+            for event in all {
+                try await localStore.save(event.toLocal())
+            }
+        } catch {
             throw error
         }
     }

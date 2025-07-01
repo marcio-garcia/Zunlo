@@ -37,6 +37,7 @@ final class NetworkClient {
         }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("\(config.anonKey)", forHTTPHeaderField: "apikey")
+        request.setValue("return=representation", forHTTPHeaderField: "Prefer")
         additionalHeaders?.forEach { key, value in
             request.setValue(value, forHTTPHeaderField: key)
         }

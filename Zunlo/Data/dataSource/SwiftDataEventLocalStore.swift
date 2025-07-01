@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+@MainActor
 final class SwiftDataEventLocalStore: EventLocalStore {
     private let modelContext: ModelContext
 
@@ -26,19 +27,43 @@ final class SwiftDataEventLocalStore: EventLocalStore {
     }
 
     func update(_ event: EventLocal) throws {
-        modelContext.insert(event)
-        try modelContext.save()
+        let id = event.id
+        let predicate = #Predicate<EventLocal> { $0.id == id }
+        let fetchDescriptor = FetchDescriptor<EventLocal>(predicate: predicate)
+        let events = try modelContext.fetch(fetchDescriptor)
+        if let ev = events.first {
+            ev.title = event.title
+            ev.dueDate = event.dueDate
+            ev.isComplete = event.isComplete
+            try modelContext.save()
+        }
     }
 
     func delete(_ event: EventLocal) throws {
-        modelContext.delete(event)
-        try modelContext.save()
+        let id = event.id
+        let predicate = #Predicate<EventLocal> { $0.id == id }
+        let fetchDescriptor = FetchDescriptor<EventLocal>(predicate: predicate)
+        let events = try modelContext.fetch(fetchDescriptor)
+        if let ev = events.first {
+            modelContext.delete(ev)
+            try modelContext.save()
+        }
     }
 
     func deleteAll() throws {
         let fetchDescriptor = FetchDescriptor<EventLocal>()
         let allEvents = try modelContext.fetch(fetchDescriptor)
         for event in allEvents {
+            modelContext.delete(event)
+        }
+        try modelContext.save()
+    }
+    
+    func deleteAll(for userId: UUID) throws {
+        let predicate = #Predicate<EventLocal> { $0.userId == userId }
+        let fetchDescriptor = FetchDescriptor<EventLocal>(predicate: predicate)
+        let events = try modelContext.fetch(fetchDescriptor)
+        for event in events {
             modelContext.delete(event)
         }
         try modelContext.save()

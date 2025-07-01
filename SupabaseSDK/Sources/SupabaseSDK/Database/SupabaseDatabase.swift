@@ -32,19 +32,16 @@ public final class SupabaseDatabase: @unchecked Sendable {
             method: "GET",
             query: query
         )
-        
         guard 200..<300 ~= response.statusCode else {
             throw URLError(.badServerResponse)
         }
-        
         return try decode(data)
-//        return try JSONDecoder().decode([T].self, from: data)
     }
     
-    public func insert<T: Encodable>(_ object: T,
-                                     into table: String) async throws {
+    public func insert<T: Codable>(_ object: T,
+                                   into table: String) async throws -> [T] {
         let body = try encode(object)
-        let (_, response) = try await httpClient.sendRequest(
+        let (data, response) = try await httpClient.sendRequest(
             path: "/rest/v1/\(table)",
             method: "POST",
             body: body,
@@ -53,13 +50,14 @@ public final class SupabaseDatabase: @unchecked Sendable {
         guard 200..<300 ~= response.statusCode else {
             throw URLError(.badServerResponse)
         }
+        return try decode(data)
     }
     
-    public func update<T: Encodable>(_ object: T,
-                                     in table: String,
-                                     filter: [String: String]) async throws {
+    public func update<T: Codable>(_ object: T,
+                                   in table: String,
+                                   filter: [String: String]) async throws -> [T] {
         let body = try encode(object)
-        let (_, response) = try await httpClient.sendRequest(
+        let (data, response) = try await httpClient.sendRequest(
             path: "/rest/v1/\(table)",
             method: "PATCH",
             query: filter,
@@ -69,11 +67,12 @@ public final class SupabaseDatabase: @unchecked Sendable {
         guard 200..<300 ~= response.statusCode else {
             throw URLError(.badServerResponse)
         }
+        return try decode(data)
     }
     
-    public func delete(from table: String,
-                       filter: [String: String]) async throws {
-        let (_, response) = try await httpClient.sendRequest(
+    public func delete<T: Codable>(from table: String,
+                                   filter: [String: String]) async throws -> [T] {
+        let (data, response) = try await httpClient.sendRequest(
             path: "/rest/v1/\(table)",
             method: "DELETE",
             query: filter
@@ -81,6 +80,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
         guard 200..<300 ~= response.statusCode else {
             throw URLError(.badServerResponse)
         }
+        return try decode(data)
     }
     
     private func encode<T: Encodable>(_ object: T) throws -> Data {

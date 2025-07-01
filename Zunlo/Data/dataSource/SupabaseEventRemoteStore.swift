@@ -42,34 +42,36 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
         ).fetch(from: tableName, as: EventRemote.self, query: ["select": "*"])
     }
     
-    func save(_ event: EventRemote) async throws {
+    func save(_ event: EventRemote) async throws -> [EventRemote] {
         var ev = event
         ev.id = nil
         ev.userId = nil
         ev.createdAt = nil
-        try await database.insert(ev, into: tableName)
+        return try await database.insert(ev, into: tableName)
     }
     
-    func update(_ event: EventRemote) async throws {
-        guard let id = event.id?.uuidString else { return }
-        var ev = event
-        ev.id = nil
-        ev.userId = nil
-        ev.createdAt = nil
-        try await database.update(ev, in: tableName, filter: ["id": "eq.\(id)"])
-    }
-    
-    func delete(_ event: EventRemote) async throws {
+    func update(_ event: EventRemote) async throws -> [EventRemote] {
         guard let id = event.id?.uuidString else {
             throw StoreError.invalidData("\(tableName).id")
         }
-        try await database.delete(from: tableName, filter: ["id" : "eq.\(id)"])
+        var ev = event
+        ev.id = nil
+        ev.userId = nil
+        ev.createdAt = nil
+        return try await database.update(ev, in: tableName, filter: ["id": "eq.\(id)"])
     }
     
-    func deleteAll() async throws {
+    func delete(_ event: EventRemote) async throws -> [EventRemote] {
+        guard let id = event.id?.uuidString else {
+            throw StoreError.invalidData("\(tableName).id")
+        }
+        return try await database.delete(from: tableName, filter: ["id" : "eq.\(id)"])
+    }
+    
+    func deleteAll() async throws -> [EventRemote] {
         guard let userId = authManager.auth?.user.id else {
             throw StoreError.invalidData("\(tableName).user_id")
         }
-        try await database.delete(from: tableName, filter: ["userId" : "eq.\(userId)"])
+        return try await database.delete(from: tableName, filter: ["userId" : "eq.\(userId)"])
     }
 }
