@@ -66,11 +66,12 @@ final class AuthManager: AuthSession, ObservableObject {
                 let newAuth = try await authService.refreshToken(refreshToken)
                 if authService.validateToken(newAuth.token) {
                     await authenticated(newAuth)
+                    return
                 }
+                await unauthenticated()
             } catch {
                 await unauthenticated()
             }
-            await unauthenticated()
         } catch {
             await unauthenticated()
         }

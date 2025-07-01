@@ -12,7 +12,7 @@ struct TimelineScrollView: View {
     @State private var showAddEvent = false
     @State private var hasScrolledToToday = false
     @State private var groupedEvents: [String: [Event]] = [:]
-
+    
     // Generate sorted list of days: [-3...+3] around today
     private let days: [Date] = (-3...3)
         .compactMap { Calendar.current.date(byAdding: .day, value: $0, to: Date()) }

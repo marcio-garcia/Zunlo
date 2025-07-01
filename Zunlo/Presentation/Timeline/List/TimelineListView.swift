@@ -19,21 +19,18 @@ struct TimelineListView: View {
         .sorted()
 
     init() {
-        let todayID = Self.sectionID(Calendar.current.startOfDay(for: Date()))
-        _expandedSection = State(initialValue: todayID)
+        let todayID = Calendar.current.startOfDay(for: Date())
+        _expandedSection = State(initialValue: todayID.formattedDate(dateFormat: "yyyy-MM-dd"))
     }
 
     private var groupedEvents: [String: [Event]] {
         Dictionary(grouping: repository.events) { event in
-            Self.sectionID(Calendar.current.startOfDay(for: event.dueDate))
+            sectionID(Calendar.current.startOfDay(for: event.dueDate))
         }
     }
 
-    static func sectionID(_ date: Date) -> String {
+    private func sectionID(_ date: Date) -> String {
         date.formattedDate(dateFormat: "yyyy-MM-dd")
-    }
-    func sectionID(_ date: Date) -> String {
-        Self.sectionID(date)
     }
 
     var body: some View {
