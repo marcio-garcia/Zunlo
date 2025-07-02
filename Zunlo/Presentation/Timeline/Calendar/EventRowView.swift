@@ -15,19 +15,19 @@ struct EventRowView: View {
     var body: some View {
         Button(action: onEdit) {
             HStack(alignment: .center, spacing: 12) {
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: 8, height: 8)
                 Text(event.dueDate.formattedDate(dateFormat: "HH:mm"))
-                    .font(.subheadline)
+                    .font(.system(size: 12, weight: .regular, design: .monospaced))
                     .frame(width: 50, alignment: .trailing)
                 Text(event.title)
                     .font(.body)
-                    .foregroundColor(.primary)
                 Spacer()
             }
             .padding(.vertical, 8)
         }
+        .buttonStyle(.plain)
+        .background(Color.blue.opacity(0.8))
+        .foregroundStyle(.background)
+        .cornerRadius(4)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: ButtonRole.destructive) {
                 onDelete()

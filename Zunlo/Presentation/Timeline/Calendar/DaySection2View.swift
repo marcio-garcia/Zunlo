@@ -18,36 +18,44 @@ struct DaySection2View: View {
         date.formattedDate(dateFormat: "E, MMM d")
     }
 
+    private func day(_ date: Date) -> String {
+        date.formattedDate(dateFormat: "d")
+    }
+    
+    private func weekday(_ date: Date) -> String {
+        date.formattedDate(dateFormat: "E")
+    }
+    
     var body: some View {
-        Section(header:
-            HStack {
-                Text(dateString(date))
-                    .font(.headline)
-                    .foregroundColor(isToday ? .accentColor : .primary)
-                if isToday {
-                    Text("Today")
-                        .font(.subheadline)
-                        .foregroundColor(.accentColor)
-                        .padding(.leading, 4)
+        ForEach(Array(events.enumerated()), id: \.1.id) { index, event in
+            HStack(alignment: .bottom) {
+                // Sidebar only for the first event of the day
+                if index == 0 {
+                    VStack {
+                        Text(weekday(date))
+                            .font(.subheadline)
+                            .foregroundColor(isToday ? .accentColor : .primary)
+                        Text(day(date))
+                            .font(.headline)
+                            .foregroundColor(isToday ? .accentColor : .primary)
+                    }
+                    .padding(.top)
+                    .frame(width: 44)
+                } else {
+                    VStack {
+                        Color.clear
+                    }
+                    .padding(.all, 0)
+                    .frame(width: 44)
                 }
-                Spacer()
+                EventRowView(
+                    event: event,
+                    onEdit: { onEdit(event) },
+                    onDelete: { onDelete(event) }
+                )
             }
             .padding(.vertical, 4)
-            .background(Color(.systemBackground))
-        ) {
-            if events.isEmpty {
-                Text("No events")
-                    .foregroundColor(.secondary)
-                    .padding(.vertical, 12)
-            } else {
-                ForEach(events) { event in
-                    EventRowView(
-                        event: event,
-                        onEdit: { onEdit(event) },
-                        onDelete: { onDelete(event) }
-                    )
-                }
-            }
+            .padding(.horizontal, 16)
         }
     }
 }

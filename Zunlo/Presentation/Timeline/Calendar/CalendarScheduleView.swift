@@ -14,7 +14,7 @@ struct CalendarScheduleView: View {
     @State private var editingEvent: Event?
     @State private var hasScrolledToToday = false
     
-    private let days: [Date] = (-5...5)
+    private let days: [Date] = (-500...500)
         .compactMap { Calendar.current.date(byAdding: .day, value: $0, to: Calendar.current.startOfDay(for: Date())) }
         .sorted()
     
@@ -44,9 +44,11 @@ struct CalendarScheduleView: View {
                                 }
                             )
                             .id(sectionID(date))
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
                         }
                     }
-                    .listStyle(.insetGrouped)
+                    .listStyle(.plain)
                     .refreshable {
                         await repository.fetchAll()
                     }
