@@ -14,6 +14,7 @@ extension Event {
                           title: title,
                           createdAt: createdAt ?? Date(),
                           dueDate: dueDate,
+                          recurrence: recurrence,
                           isComplete: isComplete)
     }
     
@@ -23,6 +24,7 @@ extension Event {
                            title: title,
                            createdAt: createdAt,
                            dueDate: dueDate,
+                           recurrence: recurrence,
                            isComplete: isComplete)
     }
 }
@@ -34,6 +36,7 @@ extension EventLocal {
                      title: title,
                      createdAt: createdAt,
                      dueDate: dueDate,
+                     recurrence: recurrence ?? .none,
                      isComplete: isComplete)
     }
     
@@ -43,6 +46,7 @@ extension EventLocal {
                            title: title,
                            createdAt: createdAt,
                            dueDate: dueDate,
+                           recurrence: recurrence ?? .none,
                            isComplete: isComplete)
     }
 }
@@ -54,6 +58,7 @@ extension EventRemote {
                      title: title,
                      createdAt: createdAt,
                      dueDate: dueDate,
+                     recurrence: recurrence,
                      isComplete: isComplete)
     }
     
@@ -63,6 +68,7 @@ extension EventRemote {
                           title: title,
                           createdAt: createdAt ?? Date(),
                           dueDate: dueDate,
+                          recurrence: recurrence,
                           isComplete: isComplete)
     }
 }

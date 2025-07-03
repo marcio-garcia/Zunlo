@@ -15,14 +15,22 @@ final class EventLocal: Identifiable {
     var title: String
     var createdAt: Date
     var dueDate: Date
+    var recurrence: RecurrenceRule? = RecurrenceRule.none
     var isComplete: Bool
 
-    init(id: UUID, userId: UUID, title: String, createdAt: Date, dueDate: Date, isComplete: Bool) {
+    init(id: UUID,
+         userId: UUID,
+         title: String,
+         createdAt: Date,
+         dueDate: Date,
+         recurrence: RecurrenceRule? = RecurrenceRule.none,
+         isComplete: Bool) {
         self.id = id
         self.title = title
         self.createdAt = createdAt
         self.dueDate = dueDate
         self.isComplete = isComplete
+        self.recurrence = recurrence
         self.userId = userId
     }
 }

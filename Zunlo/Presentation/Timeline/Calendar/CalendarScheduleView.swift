@@ -7,27 +7,33 @@
 
 import SwiftUI
 
+import SwiftUI
+
 struct CalendarScheduleView: View {
     @EnvironmentObject var repository: EventRepository
-    
+
     @State private var showAddSheet = false
     @State private var editingEvent: Event?
     @State private var hasScrolledToToday = false
-    
-    private let days: [Date] = (-500...500)
-        .compactMap { Calendar.current.date(byAdding: .day, value: $0, to: Calendar.current.startOfDay(for: Date())) }
-        .sorted()
-    
-    private var groupedEvents: [String: [Event]] {
-        Dictionary(grouping: repository.events) { event in
-            sectionID(Calendar.current.startOfDay(for: event.dueDate))
-        }
+
+    // Pick your range, e.g., ±1 year around today
+    private var range: ClosedRange<Date> {
+        let cal = Calendar.current
+        let start = cal.date(byAdding: .year, value: -1, to: cal.startOfDay(for: Date()))!
+        let end = cal.date(byAdding: .year, value: 1, to: cal.startOfDay(for: Date()))!
+        return start...end
     }
-    
-    private func sectionID(_ date: Date) -> String {
-        date.formattedDate(dateFormat: "yyyy-MM-dd")
+
+    // All unique days with at least one event (including recurrences)
+    private var days: [Date] {
+        repository.events.allEventDates(in: range)
     }
-    
+
+    // Helper to get events for a given day
+    private func events(for date: Date) -> [Event] {
+        repository.events.filter { $0.occurs(on: date) }
+    }
+
     var body: some View {
         NavigationView {
             ScrollViewReader { proxy in
@@ -37,13 +43,13 @@ struct CalendarScheduleView: View {
                             DaySection2View(
                                 date: date,
                                 isToday: Calendar.current.isDateInToday(date),
-                                events: groupedEvents[sectionID(date)] ?? [],
+                                events: events(for: date),
                                 onEdit: { editingEvent = $0 },
                                 onDelete: { event in
                                     Task { try? await repository.delete(event) }
                                 }
                             )
-                            .id(sectionID(date))
+                            .id(date.formattedDate(dateFormat: "yyyy-MM-dd"))
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
                         }
@@ -57,23 +63,26 @@ struct CalendarScheduleView: View {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button {
                                 withAnimation {
-                                    proxy.scrollTo(sectionID(Date()), anchor: .top)
+                                    if let today = days.first(where: { Calendar.current.isDateInToday($0) }) {
+                                        proxy.scrollTo(today.formattedDate(dateFormat: "yyyy-MM-dd"), anchor: .top)
+                                    }
                                 }
                             } label: {
                                 Label("Today", systemImage: "calendar.circle")
                             }
+                            .disabled(!days.contains(where: { Calendar.current.isDateInToday($0) }))
                         }
                     }
                     .onAppear {
-                        // Prevents repeated jumps when view reloads
-                        if !hasScrolledToToday {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                proxy.scrollTo(sectionID(Date()), anchor: .top)
+                        if !hasScrolledToToday,
+                           let today = days.first(where: { Calendar.current.isDateInToday($0) }) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                proxy.scrollTo(today.formattedDate(dateFormat: "yyyy-MM-dd"), anchor: .top)
                                 hasScrolledToToday = true
                             }
                         }
                     }
-                    
+
                     Button(action: { showAddSheet = true }) {
                         Image(systemName: "plus")
                             .font(.system(size: 28, weight: .bold))

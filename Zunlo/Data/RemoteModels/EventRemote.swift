@@ -13,23 +13,32 @@ struct EventRemote: Codable, Identifiable {
     var title: String
     var createdAt: Date?
     var dueDate: Date
+    var recurrence: RecurrenceRule
     var isComplete: Bool
     
     private enum CodingKeys: String, CodingKey {
         case id
+        case userId = "user_id"
         case title
         case createdAt = "created_at"
         case dueDate = "due_date"
+        case recurrence
         case isComplete = "is_complete"
-        case userId = "user_id"
     }
     
-    internal init(id: UUID? = nil, userId: UUID? = nil, title: String, createdAt: Date? = nil, dueDate: Date, isComplete: Bool) {
+    internal init(id: UUID? = nil,
+                  userId: UUID? = nil,
+                  title: String,
+                  createdAt: Date? = nil,
+                  dueDate: Date,
+                  recurrence: RecurrenceRule,
+                  isComplete: Bool) {
         self.id = id
         self.userId = userId
         self.title = title
         self.createdAt = createdAt
         self.dueDate = dueDate
+        self.recurrence = recurrence
         self.isComplete = isComplete
     }
 
@@ -39,6 +48,7 @@ struct EventRemote: Codable, Identifiable {
         self.userId = try container.decodeSafely(UUID.self, forKey: .userId)
         self.title = try container.decodeSafely(String.self, forKey: .title)
         self.isComplete = try container.decodeSafely(Bool.self, forKey: .isComplete)
+        self.recurrence = try container.decode(RecurrenceRule.self, forKey: .recurrence)
         
         let createdAt = try container.decodeSafely(String.self, forKey: .createdAt)
         let dueDate = try container.decodeSafely(String.self, forKey: .dueDate)
