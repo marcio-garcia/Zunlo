@@ -30,6 +30,19 @@ extension Date {
     }
 }
 
+extension Date {
+    func settingTimeFrom(_ source: Date) -> Date {
+        let cal = Calendar.current
+        let components = cal.dateComponents([.hour, .minute, .second], from: source)
+        return cal.date(
+            bySettingHour: components.hour ?? 0,
+            minute: components.minute ?? 0,
+            second: components.second ?? 0,
+            of: self
+        ) ?? self
+    }
+}
+
 extension DateFormatter {
     static let iso8601WithFractionalSeconds: DateFormatter = {
         let formatter = DateFormatter()

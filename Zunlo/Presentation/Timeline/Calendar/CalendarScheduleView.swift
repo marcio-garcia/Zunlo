@@ -7,14 +7,22 @@
 
 import SwiftUI
 
-import SwiftUI
+enum EditMode {
+    case onlyThis
+    case all
+}
 
 struct CalendarScheduleView: View {
     @EnvironmentObject var repository: EventRepository
-
+    
+    @State private var hasScrolledToToday = false
     @State private var showAddSheet = false
     @State private var editingEvent: Event?
-    @State private var hasScrolledToToday = false
+    @State private var editingInstanceDate: Date? // The selected instance date
+    @State private var showEditOptions = false // Controls the confirmation dialog
+    @State private var editMode: EditMode? // Enum: .onlyThis or .all
+    @State private var pendingEvent: Event? = nil
+    @State private var pendingInstanceDate: Date? = nil
 
     // Pick your range, e.g., ±1 year around today
     private var range: ClosedRange<Date> {
@@ -23,44 +31,36 @@ struct CalendarScheduleView: View {
         let end = cal.date(byAdding: .year, value: 1, to: cal.startOfDay(for: Date()))!
         return start...end
     }
-
+    
     // All unique days with at least one event (including recurrences)
     private var days: [Date] {
-        repository.events.allEventDates(in: range)
+        repository.allEventDates(in: range)
     }
-
-    // Helper to get events for a given day
-    private func events(for date: Date) -> [Event] {
-        repository.events.filter { $0.occurs(on: date) }
-    }
-
+    
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollViewReader { proxy in
                 ZStack(alignment: .bottomTrailing) {
-                    List {
-                        ForEach(days, id: \.self) { date in
-                            DaySection2View(
-                                date: date,
-                                isToday: Calendar.current.isDateInToday(date),
-                                events: events(for: date),
-                                onEdit: { editingEvent = $0 },
-                                onDelete: { event in
-                                    Task { try? await repository.delete(event) }
-                                }
-                            )
-                            .id(date.formattedDate(dateFormat: "yyyy-MM-dd"))
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
+                    CalendarDayListView(
+                        days: days,
+                        repository: repository,
+                        onEdit: { event, date in
+                            if event.recurrence != .none {
+                                pendingEvent = event
+                                pendingInstanceDate = date
+                                showEditOptions = true
+                            } else {
+                                editingEvent = event
+                            }
+                        },
+                        onDelete: { event in
+                            Task { try? await repository.delete(event) }
                         }
-                    }
-                    .listStyle(.plain)
-                    .refreshable {
-                        await repository.fetchAll()
-                    }
+                    )
+                    .refreshable { await repository.fetchAll() }
                     .navigationTitle("Schedule")
                     .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
+                        ToolbarItem(placement: .navigationBarTrailing) {
                             Button {
                                 withAnimation {
                                     if let today = days.first(where: { Calendar.current.isDateInToday($0) }) {
@@ -82,7 +82,7 @@ struct CalendarScheduleView: View {
                             }
                         }
                     }
-
+                    
                     Button(action: { showAddSheet = true }) {
                         Image(systemName: "plus")
                             .font(.system(size: 28, weight: .bold))
@@ -100,11 +100,60 @@ struct CalendarScheduleView: View {
                 AddEventView()
                     .environmentObject(repository)
             }
+            .confirmationDialog("Edit Recurring Event", isPresented: $showEditOptions, titleVisibility: .visible) {
+                Button("Edit only this event") {
+                    editMode = .onlyThis
+                    editingEvent = pendingEvent
+                    editingInstanceDate = pendingInstanceDate
+                    pendingEvent = nil
+                    pendingInstanceDate = nil
+                }
+                Button("Edit all events") {
+                    editMode = .all
+                    editingEvent = pendingEvent
+                    editingInstanceDate = pendingInstanceDate
+                    pendingEvent = nil
+                    pendingInstanceDate = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingEvent = nil
+                    pendingInstanceDate = nil
+                    editMode = nil
+                }
+            }
             .sheet(item: $editingEvent) { event in
-                AddEventView(eventToEdit: event)
+                if editMode == .onlyThis, let instanceDate = editingInstanceDate {
+                    let instanceWithTime = instanceDate.settingTimeFrom(event.dueDate)
+                    AddEventView(
+                        eventToEdit: Event(
+                            id: UUID(),
+                            userId: event.userId,
+                            title: event.title,
+                            createdAt: event.createdAt,
+                            dueDate: instanceWithTime,
+                            recurrence: .none,
+                            exceptions: [],
+                            isComplete: event.isComplete
+                        ),
+                        parentEventForException: event,
+                        overrideDate: instanceDate
+                    )
                     .environmentObject(repository)
+                    .onDisappear {
+                        editMode = nil
+                        editingInstanceDate = nil
+                    }
+                } else {
+                    AddEventView(eventToEdit: event)
+                        .environmentObject(repository)
+                        .onDisappear {
+                            editMode = nil
+                            editingInstanceDate = nil
+                        }
+                }
             }
             .task {
+                try? await repository.synchronize()
                 await repository.fetchAll()
             }
         }

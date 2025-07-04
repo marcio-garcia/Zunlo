@@ -14,6 +14,7 @@ struct Event: Identifiable, Sendable {
     var createdAt: Date?
     var dueDate: Date
     var recurrence: RecurrenceRule
+    var exceptions: [Date]
     var isComplete: Bool
     
     static var empty: Event {
@@ -23,6 +24,7 @@ struct Event: Identifiable, Sendable {
                      createdAt: nil,
                      dueDate: Date(),
                      recurrence: .none,
+                     exceptions: [],
                      isComplete: false)
     }
 }
@@ -33,6 +35,10 @@ extension Event {
         let start = cal.startOfDay(for: dueDate)
         let target = cal.startOfDay(for: date)
 
+        if exceptions.contains(where: { cal.isDate($0, inSameDayAs: target) }) {
+            return false
+        }
+        
         guard target >= start else { return false }
 
         switch recurrence {

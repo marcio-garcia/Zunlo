@@ -25,8 +25,10 @@ struct AddEventView: View {
     @State private var isSaving = false
 
     let eventToEdit: Event?
+    let parentEventForException: Event?
+    let overrideDate: Date?
 
-    init(eventToEdit: Event? = nil) {
+    init(eventToEdit: Event? = nil, parentEventForException: Event? = nil, overrideDate: Date? = nil) {
         _eventTitle = State(initialValue: eventToEdit?.title ?? "")
         _eventDate = State(initialValue: eventToEdit?.dueDate ?? Date())
         if let recurrence = eventToEdit?.recurrence {
@@ -38,6 +40,8 @@ struct AddEventView: View {
             }
         }
         self.eventToEdit = eventToEdit
+        self.parentEventForException = parentEventForException
+        self.overrideDate = overrideDate
     }
 
     var body: some View {
@@ -84,35 +88,21 @@ struct AddEventView: View {
             return .monthly(day: day)
         }
     }
-
+    
     private func saveEvent() {
         guard !eventTitle.isEmpty else { return }
         isSaving = true
         Task {
             do {
-                let event: Event
-                if let editing = eventToEdit {
-                    event = Event(
-                        id: editing.id,
-                        userId: editing.userId,
-                        title: eventTitle,
-                        createdAt: editing.createdAt,
-                        dueDate: eventDate,
-                        recurrence: chosenRecurrence,
-                        isComplete: editing.isComplete
-                    )
-                    try await repository.update(event)
-                } else {
-                    event = Event(
-                        id: nil,
-                        userId: nil,
-                        title: eventTitle,
-                        dueDate: eventDate,
-                        recurrence: chosenRecurrence,
-                        isComplete: false
-                    )
-                    try await repository.save(event)
-                }
+                try await repository.saveEvent(
+                    eventToEdit: eventToEdit,
+                    parentEventForException: parentEventForException,
+                    overrideDate: overrideDate,
+                    newTitle: eventTitle,
+                    newDate: eventDate,
+                    recurrence: chosenRecurrence,
+                    isComplete: eventToEdit?.isComplete ?? false
+                )
             } catch {
                 print("Failed to save event: \(error)")
             }
@@ -120,4 +110,5 @@ struct AddEventView: View {
             isSaving = false
         }
     }
+
 }

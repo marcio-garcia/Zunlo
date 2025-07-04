@@ -14,6 +14,7 @@ struct EventRemote: Codable, Identifiable {
     var createdAt: Date?
     var dueDate: Date
     var recurrence: RecurrenceRule
+    var exceptions: [Date]
     var isComplete: Bool
     
     private enum CodingKeys: String, CodingKey {
@@ -23,6 +24,7 @@ struct EventRemote: Codable, Identifiable {
         case createdAt = "created_at"
         case dueDate = "due_date"
         case recurrence
+        case exceptions
         case isComplete = "is_complete"
     }
     
@@ -32,6 +34,7 @@ struct EventRemote: Codable, Identifiable {
                   createdAt: Date? = nil,
                   dueDate: Date,
                   recurrence: RecurrenceRule,
+                  exceptions: [Date] = [],
                   isComplete: Bool) {
         self.id = id
         self.userId = userId
@@ -39,6 +42,7 @@ struct EventRemote: Codable, Identifiable {
         self.createdAt = createdAt
         self.dueDate = dueDate
         self.recurrence = recurrence
+        self.exceptions = exceptions
         self.isComplete = isComplete
     }
 
@@ -52,6 +56,7 @@ struct EventRemote: Codable, Identifiable {
         
         let createdAt = try container.decodeSafely(String.self, forKey: .createdAt)
         let dueDate = try container.decodeSafely(String.self, forKey: .dueDate)
+        let exceptions = try container.decode([String].self, forKey: .exceptions)
         
         self.createdAt = DateFormatter.iso8601WithFractionalSeconds.date(from: createdAt)
         
@@ -59,5 +64,9 @@ struct EventRemote: Codable, Identifiable {
         if let date = DateFormatter.iso8601WithoutFractionalSeconds.date(from: dueDate) {
             self.dueDate = date
         }
+        
+        self.exceptions = exceptions.compactMap({ dateString in
+            return DateFormatter.iso8601WithoutFractionalSeconds.date(from: dateString)
+        })
     }
 }

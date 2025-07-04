@@ -32,9 +32,7 @@ final class SwiftDataEventLocalStore: EventLocalStore {
         let fetchDescriptor = FetchDescriptor<EventLocal>(predicate: predicate)
         let events = try modelContext.fetch(fetchDescriptor)
         if let ev = events.first {
-            ev.title = event.title
-            ev.dueDate = event.dueDate
-            ev.isComplete = event.isComplete
+            ev.getUpdateFields(event)
             try modelContext.save()
         }
     }

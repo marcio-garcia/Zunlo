@@ -15,6 +15,7 @@ extension Event {
                           createdAt: createdAt ?? Date(),
                           dueDate: dueDate,
                           recurrence: recurrence,
+                          exceptions: exceptions,
                           isComplete: isComplete)
     }
     
@@ -25,6 +26,7 @@ extension Event {
                            createdAt: createdAt,
                            dueDate: dueDate,
                            recurrence: recurrence,
+                           exceptions: exceptions,
                            isComplete: isComplete)
     }
 }
@@ -37,6 +39,7 @@ extension EventLocal {
                      createdAt: createdAt,
                      dueDate: dueDate,
                      recurrence: recurrence ?? .none,
+                     exceptions: exceptions,
                      isComplete: isComplete)
     }
     
@@ -49,6 +52,14 @@ extension EventLocal {
                            recurrence: recurrence ?? .none,
                            isComplete: isComplete)
     }
+    
+    func getUpdateFields(_ event: EventLocal) {
+        self.title = event.title
+        self.dueDate = event.dueDate
+        self.recurrence = event.recurrence
+        self.exceptions = event.exceptions
+        self.isComplete = event.isComplete
+    }
 }
 
 extension EventRemote {
@@ -59,6 +70,7 @@ extension EventRemote {
                      createdAt: createdAt,
                      dueDate: dueDate,
                      recurrence: recurrence,
+                     exceptions: exceptions,
                      isComplete: isComplete)
     }
     
@@ -69,6 +81,7 @@ extension EventRemote {
                           createdAt: createdAt ?? Date(),
                           dueDate: dueDate,
                           recurrence: recurrence,
+                          exceptions: exceptions,
                           isComplete: isComplete)
     }
 }
