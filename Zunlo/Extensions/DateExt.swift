@@ -31,6 +31,13 @@ extension Date {
 }
 
 extension Date {
+    func isSameDay(as other: Date) -> Bool {
+        let calendar = Calendar.current
+        return calendar.isDate(self, inSameDayAs: other)
+    }
+}
+
+extension Date {
     func settingTimeFrom(_ source: Date) -> Date {
         let cal = Calendar.current
         let components = cal.dateComponents([.hour, .minute, .second], from: source)

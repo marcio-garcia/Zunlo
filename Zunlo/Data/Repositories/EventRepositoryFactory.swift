@@ -1,0 +1,44 @@
+//
+//  EventRepositoryFactory.swift
+//  Zunlo
+//
+//  Created by Marcio Garcia on 7/5/25.
+//
+
+import Foundation
+import SwiftData
+import SupabaseSDK
+
+@MainActor
+final class EventRepositoryFactory {
+    static func make(
+        supabase: SupabaseSDK,
+        authManager: AuthSession,
+        modelContext: ModelContext
+    ) -> EventRepository {
+        let eventRemoteStore: EventRemoteStore
+        let eventLocalStore: EventLocalStore
+        let recurrenceRuleRemoteStore: RecurrenceRuleRemoteStore
+        let recurrenceRuleLocalStore: RecurrenceRuleLocalStore
+        let eventOverrideRemoteStore:EventOverrideRemoteStore
+        let eventOverrideLocalStore: EventOverrideLocalStore
+        
+        eventRemoteStore = SupabaseEventRemoteStore(supabase: supabase, authManager: authManager)
+        eventLocalStore = SwiftDataEventLocalStore(modelContext: modelContext)
+
+        recurrenceRuleRemoteStore = SupabaseRecurrenceRuleRemoteStore(supabase: supabase, authManager: authManager)
+        recurrenceRuleLocalStore = SwiftDataRecurrenceRuleLocalStore(modelContext: modelContext)
+
+        eventOverrideRemoteStore = SupabaseEventOverrideRemoteStore(supabase: supabase, authManager: authManager)
+        eventOverrideLocalStore = SwiftDataEventOverrideLocalStore(modelContext: modelContext)
+
+        return EventRepository(
+            eventLocalStore: eventLocalStore,
+            eventRemoteStore: eventRemoteStore,
+            recurrenceRuleLocalStore: recurrenceRuleLocalStore,
+            recurrenceRuleRemoteStore: recurrenceRuleRemoteStore,
+            eventOverrideLocalStore: eventOverrideLocalStore,
+            eventOverrideRemoteStore: eventOverrideRemoteStore
+        )
+    }
+}

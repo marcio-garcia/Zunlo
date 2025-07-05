@@ -16,8 +16,8 @@ final class SwiftDataEventLocalStore: EventLocalStore {
         self.modelContext = modelContext
     }
 
-    func fetch() throws -> [EventLocal] {
-        let fetchDescriptor = FetchDescriptor<EventLocal>(sortBy: [SortDescriptor(\.dueDate, order: .forward)])
+    func fetchAll() throws -> [EventLocal] {
+        let fetchDescriptor = FetchDescriptor<EventLocal>(sortBy: [SortDescriptor(\.startDate, order: .forward)])
         return try modelContext.fetch(fetchDescriptor)
     }
 
@@ -30,9 +30,9 @@ final class SwiftDataEventLocalStore: EventLocalStore {
         let id = event.id
         let predicate = #Predicate<EventLocal> { $0.id == id }
         let fetchDescriptor = FetchDescriptor<EventLocal>(predicate: predicate)
-        let events = try modelContext.fetch(fetchDescriptor)
-        if let ev = events.first {
+        if let ev = try modelContext.fetch(fetchDescriptor).first {
             ev.getUpdateFields(event)
+            // No need to update relationships here—handled separately if needed
             try modelContext.save()
         }
     }
@@ -40,28 +40,21 @@ final class SwiftDataEventLocalStore: EventLocalStore {
     func delete(_ event: EventLocal) throws {
         let id = event.id
         let predicate = #Predicate<EventLocal> { $0.id == id }
-        let fetchDescriptor = FetchDescriptor<EventLocal>(predicate: predicate)
-        let events = try modelContext.fetch(fetchDescriptor)
-        if let ev = events.first {
+        if let ev = try modelContext.fetch(FetchDescriptor<EventLocal>(predicate: predicate)).first {
             modelContext.delete(ev)
             try modelContext.save()
         }
     }
 
     func deleteAll() throws {
-        let fetchDescriptor = FetchDescriptor<EventLocal>()
-        let allEvents = try modelContext.fetch(fetchDescriptor)
-        for event in allEvents {
-            modelContext.delete(event)
-        }
+        let allEvents = try modelContext.fetch(FetchDescriptor<EventLocal>())
+        for event in allEvents { modelContext.delete(event) }
         try modelContext.save()
     }
-    
+
     func deleteAll(for userId: UUID) throws {
         let predicate = #Predicate<EventLocal> { $0.userId == userId }
-        let fetchDescriptor = FetchDescriptor<EventLocal>(predicate: predicate)
-        let events = try modelContext.fetch(fetchDescriptor)
-        for event in events {
+        for event in try modelContext.fetch(FetchDescriptor<EventLocal>(predicate: predicate)) {
             modelContext.delete(event)
         }
         try modelContext.save()

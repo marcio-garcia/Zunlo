@@ -5,10 +5,12 @@
 //  Created by Marcio Garcia on 6/29/25.
 //
 
+import Foundation
+
 protocol EventRemoteStore {
-    func fetch() async throws -> [EventRemote]
+    func fetchAll() async throws -> [EventRemote]
     func save(_ event: EventRemote) async throws -> [EventRemote]
     func update(_ event: EventRemote) async throws -> [EventRemote]
     func delete(_ event: EventRemote) async throws -> [EventRemote]
-    func deleteAll() async throws -> [EventRemote]
+    func deleteAll(for userId: UUID) async throws -> [EventRemote]
 }

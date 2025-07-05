@@ -9,7 +9,7 @@ import Foundation
 
 @MainActor
 protocol EventLocalStore {
-    func fetch() throws -> [EventLocal]
+    func fetchAll() throws -> [EventLocal]
     func save(_ event: EventLocal) throws
     func update(_ event: EventLocal) throws
     func delete(_ event: EventLocal) throws

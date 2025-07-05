@@ -8,32 +8,42 @@
 import Foundation
 import SwiftData
 
-@Model
-final class EventLocal: Identifiable {
-    @Attribute(.unique) var id: UUID
-    var userId: UUID
-    var title: String
-    var createdAt: Date
-    var dueDate: Date
-    var recurrence: RecurrenceRule? = RecurrenceRule.none
-    var exceptions: [Date] = []
-    var isComplete: Bool
+import SwiftData
 
-    init(id: UUID,
-         userId: UUID,
-         title: String,
-         createdAt: Date,
-         dueDate: Date,
-         recurrence: RecurrenceRule? = RecurrenceRule.none,
-         exceptions: [Date] = [],
-         isComplete: Bool) {
+@Model
+final class EventLocal {
+    @Attribute(.unique) var id: UUID
+    var userId: UUID?
+    var title: String
+    var descriptionText: String?
+    var startDate: Date
+    var endDate: Date?
+    var isRecurring: Bool
+    var location: String?
+    var createdAt: Date
+    var updatedAt: Date
+
+    init(
+        id: UUID,
+        userId: UUID?,
+        title: String,
+        descriptionText: String?,
+        startDate: Date,
+        endDate: Date?,
+        isRecurring: Bool,
+        location: String?,
+        createdAt: Date,
+        updatedAt: Date
+    ) {
         self.id = id
-        self.title = title
-        self.createdAt = createdAt
-        self.dueDate = dueDate
-        self.isComplete = isComplete
-        self.recurrence = recurrence
-        self.exceptions = exceptions
         self.userId = userId
+        self.title = title
+        self.descriptionText = descriptionText
+        self.startDate = startDate
+        self.endDate = endDate
+        self.isRecurring = isRecurring
+        self.location = location
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 }
