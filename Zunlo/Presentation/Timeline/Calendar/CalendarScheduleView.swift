@@ -26,9 +26,10 @@ struct CalendarScheduleView: View {
 
     // Pick your range, e.g., ±1 year around today
     private var range: ClosedRange<Date> {
+        let today = Date()
         let cal = Calendar.current
-        let start = cal.date(byAdding: .year, value: -1, to: cal.startOfDay(for: Date()))!
-        let end = cal.date(byAdding: .year, value: 1, to: cal.startOfDay(for: Date()))!
+        let start = cal.date(byAdding: .year, value: -1, to: cal.startOfDay(for: today))!
+        let end = cal.date(byAdding: .year, value: 1, to: cal.startOfDay(for: today))!
         return start...end
     }
     
@@ -123,14 +124,13 @@ struct CalendarScheduleView: View {
             }
             .sheet(item: $editingEvent) { event in
                 if editMode == .onlyThis, let instanceDate = editingInstanceDate {
-                    let instanceWithTime = instanceDate.settingTimeFrom(event.dueDate)
                     AddEventView(
                         eventToEdit: Event(
                             id: UUID(),
                             userId: event.userId,
                             title: event.title,
                             createdAt: event.createdAt,
-                            dueDate: instanceWithTime,
+                            dueDate: instanceDate.settingTimeFrom(event.dueDate),
                             recurrence: .none,
                             exceptions: [],
                             isComplete: event.isComplete
@@ -143,7 +143,18 @@ struct CalendarScheduleView: View {
                         editMode = nil
                         editingInstanceDate = nil
                     }
-                } else {
+                } else if editMode == .all, let instanceDate = editingInstanceDate {
+                    // Edit all events (prefill with tapped date)
+                    AddEventView(
+                        eventToEdit: event,
+                        occurrenceDate: instanceDate // prefill date with the tapped occurrence
+                    )
+                    .environmentObject(repository)
+                    .onDisappear {
+                        editMode = nil
+                        editingInstanceDate = nil
+                    }
+                }  else {
                     AddEventView(eventToEdit: event)
                         .environmentObject(repository)
                         .onDisappear {

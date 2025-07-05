@@ -27,10 +27,23 @@ struct AddEventView: View {
     let eventToEdit: Event?
     let parentEventForException: Event?
     let overrideDate: Date?
+    let occurrenceDate: Date?
 
-    init(eventToEdit: Event? = nil, parentEventForException: Event? = nil, overrideDate: Date? = nil) {
+    init(eventToEdit: Event? = nil, parentEventForException: Event? = nil, overrideDate: Date? = nil, occurrenceDate: Date? = nil) {
         _eventTitle = State(initialValue: eventToEdit?.title ?? "")
-        _eventDate = State(initialValue: eventToEdit?.dueDate ?? Date())
+        
+        if let recurrence = eventToEdit?.recurrence,
+           recurrence != .none,
+           parentEventForException == nil,
+           let occDate = occurrenceDate {
+            // Use the time from eventToEdit's dueDate for consistency
+            let initial = occDate.settingTimeFrom(eventToEdit?.dueDate ?? occDate)
+            _eventDate = State(initialValue: initial)
+        } else {
+            // For non-recurring events, or when editing just one instance, use dueDate
+            _eventDate = State(initialValue: eventToEdit?.dueDate ?? Date())
+        }
+        
         if let recurrence = eventToEdit?.recurrence {
             switch recurrence {
             case .none: _recurrenceType = State(initialValue: .none)
@@ -42,6 +55,7 @@ struct AddEventView: View {
         self.eventToEdit = eventToEdit
         self.parentEventForException = parentEventForException
         self.overrideDate = overrideDate
+        self.occurrenceDate = occurrenceDate
     }
 
     var body: some View {
@@ -50,6 +64,11 @@ struct AddEventView: View {
                 Section(header: Text("Event Details")) {
                     TextField("Title", text: $eventTitle)
                     DatePicker("Due Date", selection: $eventDate)
+                    if let event = eventToEdit, event.recurrence != .none, parentEventForException == nil, let occDate = occurrenceDate {
+                        Text("Editing all events. You tapped: \(occDate.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Section(header: Text("Recurrence")) {
                     Picker("Repeat", selection: $recurrenceType) {
