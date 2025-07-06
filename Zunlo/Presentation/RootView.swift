@@ -9,7 +9,8 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authManager: AuthManager
-
+    @EnvironmentObject var eventRepository: EventRepository
+    
     var body: some View {
         Group {
             switch authManager.state {

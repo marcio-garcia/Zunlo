@@ -58,8 +58,11 @@ extension RecurrenceRuleRemote {
 
 extension RecurrenceRuleLocal {
     convenience init(domain: RecurrenceRule) {
+        guard let id = domain.id else {
+            fatalError("Error mapping domain to local: invalid id.")
+        }
         self.init(
-            id: domain.id,
+            id: id,
             eventId: domain.eventId,
             freq: domain.freq,
             interval: domain.interval,

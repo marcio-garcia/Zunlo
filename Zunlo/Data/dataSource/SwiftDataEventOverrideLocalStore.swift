@@ -40,7 +40,7 @@ final class SwiftDataEventOverrideLocalStore: EventOverrideLocalStore {
         let id = override.id
         let predicate = #Predicate<EventOverrideLocal> { $0.id == id }
         if let ov = try modelContext.fetch(FetchDescriptor<EventOverrideLocal>(predicate: predicate)).first {
-
+            ov.getUpdateFields(override)
             try modelContext.save()
         }
     }

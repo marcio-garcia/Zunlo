@@ -58,8 +58,11 @@ extension EventOverrideRemote {
 
 extension EventOverrideLocal {
     convenience init(domain: EventOverride) {
+        guard let id = domain.id else {
+            fatalError("Error mapping domain to local: invalid id.")
+        }
         self.init(
-            id: domain.id,
+            id: id,
             eventId: domain.eventId,
             occurrenceDate: domain.occurrenceDate,
             overriddenTitle: domain.overriddenTitle,

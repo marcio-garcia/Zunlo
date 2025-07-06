@@ -55,8 +55,11 @@ extension EventRemote {
 
 extension EventLocal {
     convenience init(domain: Event) {
+        guard let domainId = domain.id else {
+            fatalError("Domain is must not be nil!")
+        }
         self.init(
-            id: domain.id,
+            id: domainId,
             userId: domain.userId,
             title: domain.title,
             descriptionText: domain.description,

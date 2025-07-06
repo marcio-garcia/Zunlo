@@ -8,8 +8,6 @@
 import Foundation
 import SwiftData
 
-import SwiftData
-
 @Model
 final class EventLocal {
     @Attribute(.unique) var id: UUID

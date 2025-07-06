@@ -17,7 +17,7 @@ struct ZunloApp: App {
     private let supabaseSDK: SupabaseSDK
     
     init() {
-        let schema = Schema([EventLocal.self])
+        let schema = Schema([EventLocal.self, RecurrenceRuleLocal.self, EventOverrideLocal.self])
         let supabaseConfig = SupabaseConfig(anonKey: EnvConfig.shared.apiKey,
                                             baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!)
         do {

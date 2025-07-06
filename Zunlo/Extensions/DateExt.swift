@@ -35,6 +35,10 @@ extension Date {
         let calendar = Calendar.current
         return calendar.isDate(self, inSameDayAs: other)
     }
+    
+    var startOfDay: Date {
+        Calendar.current.startOfDay(for: self)
+    }
 }
 
 extension Date {

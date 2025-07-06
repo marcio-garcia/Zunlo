@@ -8,7 +8,7 @@
 import Foundation
 
 struct RecurrenceRule: Identifiable, Codable, Hashable {
-    let id: UUID
+    let id: UUID?
     let eventId: UUID
     let freq: String
     let interval: Int

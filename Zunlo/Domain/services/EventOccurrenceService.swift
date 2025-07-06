@@ -7,6 +7,11 @@
 
 import Foundation
 
+enum EventOccurrenceError: Error {
+    case overrideIDIsNil
+    case eventIDIsNill
+}
+
 struct EventOccurrenceService {
     /// Generate all event occurrences (including overrides/cancellations) in the given range.
     static func generate(
@@ -14,13 +19,14 @@ struct EventOccurrenceService {
         rules: [RecurrenceRule],
         overrides: [EventOverride],
         in range: ClosedRange<Date>
-    ) -> [EventOccurrence] {
+    ) throws -> [EventOccurrence] {
         var occurrences: [EventOccurrence] = []
 
         let ruleDict = Dictionary(grouping: rules, by: { $0.eventId })
         let overrideDict = Dictionary(grouping: overrides, by: { $0.eventId })
 
         for event in events {
+            guard let eventId = event.id else { throw EventOccurrenceError.eventIDIsNill }
             if !event.isRecurring {
                 // Single event
                 guard range.contains(event.startDate) else { continue }
@@ -28,9 +34,10 @@ struct EventOccurrenceService {
                 if !isCancelled {
                     // If there's an override for this one-off event, apply it
                     if let ov = overrides.first(where: { $0.eventId == event.id && $0.occurrenceDate == event.startDate }) {
+                        guard let overrideId = ov.id else { throw EventOccurrenceError.overrideIDIsNil }
                         occurrences.append(EventOccurrence(
-                            id: ov.id,
-                            eventId: event.id,
+                            id: overrideId,
+                            eventId: eventId,
                             title: ov.overriddenTitle ?? event.title,
                             description: event.description,
                             startDate: ov.overriddenStartDate ?? event.startDate,
@@ -41,8 +48,8 @@ struct EventOccurrenceService {
                         ))
                     } else {
                         occurrences.append(EventOccurrence(
-                            id: event.id,
-                            eventId: event.id,
+                            id: eventId,
+                            eventId: eventId,
                             title: event.title,
                             description: event.description,
                             startDate: event.startDate,
@@ -55,21 +62,22 @@ struct EventOccurrenceService {
                 }
             } else {
                 // Recurring event
-                guard let rule = ruleDict[event.id]?.first else { continue }
+                guard let rule = ruleDict[eventId]?.first else { continue }
                 let dates = generateRecurrenceDates(
                     start: event.startDate,
                     rule: rule,
                     within: range
                 )
-                let eventOverrides = overrideDict[event.id] ?? []
+                let eventOverrides = overrideDict[eventId] ?? []
 
                 for date in dates {
                     // Is there an override/cancellation?
                     if let ov = eventOverrides.first(where: { $0.occurrenceDate.isSameDay(as: date) }) {
                         if ov.isCancelled { continue }
+                        guard let overrideId = ov.id else { throw EventOccurrenceError.overrideIDIsNil }
                         occurrences.append(EventOccurrence(
-                            id: ov.id, // The override's ID
-                            eventId: event.id,
+                            id: overrideId,
+                            eventId: eventId,
                             title: ov.overriddenTitle ?? event.title,
                             description: event.description,
                             startDate: ov.overriddenStartDate ?? date,
@@ -79,13 +87,14 @@ struct EventOccurrenceService {
                             isCancelled: false
                         ))
                     } else {
+                        let eventDuration = event.endDate?.timeIntervalSince(event.startDate)
                         occurrences.append(EventOccurrence(
-                            id: UUID(uuidString: "\(event.id.uuidString.prefix(8))\(date.timeIntervalSince1970)") ?? event.id,
-                            eventId: event.id,
+                            id: UUID(uuidString: "\(eventId.uuidString.prefix(8))\(date.timeIntervalSince1970)") ?? eventId,
+                            eventId: eventId,
                             title: event.title,
                             description: event.description,
                             startDate: date,
-                            endDate: event.endDate, // End time is not updated for recurring in this sample
+                            endDate: eventDuration == nil ? nil : date.addingTimeInterval(eventDuration ?? 0),
                             location: event.location,
                             isOverride: false,
                             isCancelled: false

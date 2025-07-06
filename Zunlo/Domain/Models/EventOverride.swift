@@ -8,7 +8,7 @@
 import Foundation
 
 struct EventOverride: Identifiable, Codable, Hashable {
-    let id: UUID
+    let id: UUID?
     let eventId: UUID
     let occurrenceDate: Date
     let overriddenTitle: String?

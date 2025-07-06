@@ -52,7 +52,7 @@ final class EventRepository: ObservableObject {
             self.events = eventsLocal.map { Event(local: $0) }
             self.recurrenceRules = rulesLocal.map { RecurrenceRule(local: $0) }
             self.eventOverrides = overridesLocal.map { EventOverride(local: $0) }
-            self.eventOccurrences = composeOccurrences(in: range)
+            self.eventOccurrences = try composeOccurrences(in: range)
         } catch {
             self.events = []
             self.recurrenceRules = []
@@ -64,9 +64,9 @@ final class EventRepository: ObservableObject {
 
     // MARK: - Compose occurrences for the UI
 
-    func composeOccurrences(in range: ClosedRange<Date>? = nil) -> [EventOccurrence] {
+    func composeOccurrences(in range: ClosedRange<Date>? = nil) throws -> [EventOccurrence] {
         let usedRange = range ?? defaultDateRange()
-        return EventOccurrenceService.generate(
+        return try EventOccurrenceService.generate(
             events: self.events,
             rules: self.recurrenceRules,
             overrides: self.eventOverrides,
@@ -83,12 +83,13 @@ final class EventRepository: ObservableObject {
 
     // MARK: - CRUD for Events
 
-    func save(_ event: Event) async throws {
+    func save(_ event: Event) async throws -> [Event] {
         let inserted = try await eventRemoteStore.save(EventRemote(domain: event))
         for event in inserted {
             try eventLocalStore.save(EventLocal(remote: event))
         }
         await fetchAll()
+        return inserted.compactMap { Event(remote: $0) }
     }
 
     func update(_ event: Event) async throws {

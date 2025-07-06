@@ -8,7 +8,7 @@
 import Foundation
 
 struct Event: Identifiable, Codable, Hashable {
-    let id: UUID
+    let id: UUID?
     let userId: UUID?
     let title: String
     let description: String?
