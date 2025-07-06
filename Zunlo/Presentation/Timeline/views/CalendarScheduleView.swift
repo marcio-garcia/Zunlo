@@ -43,6 +43,15 @@ struct CalendarScheduleView: View {
                         }
                     }
                 }
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showAddSheet = true
+                        } label: {
+                            Label("Add", systemImage: "plus")
+                        }
+                    }
+                }
             }
         }
         .navigationTitle("Schedule")
@@ -100,10 +109,9 @@ struct CalendarScheduleView: View {
 
     func showEditChoiceDialog(for occurrence: EventOccurrence, parentEvent: Event, rule: RecurrenceRule?) {
         // Simple action sheet (confirmationDialog in SwiftUI) for user choice
-        let occurrenceDate = occurrence.startDate
         let dialog = UIAlertController(title: "Edit Recurring Event", message: nil, preferredStyle: .actionSheet)
         dialog.addAction(UIAlertAction(title: "Edit only this occurrence", style: .default) { _ in
-            editMode = .editSingle(parentEvent: parentEvent, recurrenceRule: rule, occurrenceDate: occurrenceDate)
+            editMode = .editSingle(parentEvent: parentEvent, recurrenceRule: rule, occurrence: occurrence)
         })
         dialog.addAction(UIAlertAction(title: "Edit all occurrences", style: .default) { _ in
             editMode = .editAll(event: parentEvent, recurrenceRule: rule)

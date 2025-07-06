@@ -40,9 +40,10 @@ struct EventOccurrenceService {
                             eventId: eventId,
                             title: ov.overriddenTitle ?? event.title,
                             description: event.description,
+                            location: ov.overriddenLocation ?? event.location,
                             startDate: ov.overriddenStartDate ?? event.startDate,
                             endDate: ov.overriddenEndDate ?? event.endDate,
-                            location: ov.overriddenLocation ?? event.location,
+                            originalDate: ov.occurrenceDate,
                             isOverride: true,
                             isCancelled: false
                         ))
@@ -52,9 +53,10 @@ struct EventOccurrenceService {
                             eventId: eventId,
                             title: event.title,
                             description: event.description,
+                            location: event.location,
                             startDate: event.startDate,
                             endDate: event.endDate,
-                            location: event.location,
+                            originalDate: event.startDate,
                             isOverride: false,
                             isCancelled: false
                         ))
@@ -80,9 +82,10 @@ struct EventOccurrenceService {
                             eventId: eventId,
                             title: ov.overriddenTitle ?? event.title,
                             description: event.description,
+                            location: ov.overriddenLocation ?? event.location,
                             startDate: ov.overriddenStartDate ?? date,
                             endDate: ov.overriddenEndDate ?? event.endDate,
-                            location: ov.overriddenLocation ?? event.location,
+                            originalDate: ov.occurrenceDate,
                             isOverride: true,
                             isCancelled: false
                         ))
@@ -93,9 +96,10 @@ struct EventOccurrenceService {
                             eventId: eventId,
                             title: event.title,
                             description: event.description,
+                            location: event.location,
                             startDate: date,
                             endDate: eventDuration == nil ? nil : date.addingTimeInterval(eventDuration ?? 0),
-                            location: event.location,
+                            originalDate: event.startDate,
                             isOverride: false,
                             isCancelled: false
                         ))

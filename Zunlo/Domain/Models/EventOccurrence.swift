@@ -12,9 +12,10 @@ struct EventOccurrence: Identifiable, Hashable {
     let eventId: UUID
     let title: String
     let description: String?
+    let location: String?
     let startDate: Date
     let endDate: Date?
-    let location: String?
+    let originalDate: Date
     let isOverride: Bool
     let isCancelled: Bool
 }

@@ -19,7 +19,7 @@ final class AddEditEventViewModel: ObservableObject {
     enum Mode {
         case add
         case editAll(event: Event, recurrenceRule: RecurrenceRule?)
-        case editSingle(parentEvent: Event, recurrenceRule: RecurrenceRule?, occurrenceDate: Date)
+        case editSingle(parentEvent: Event, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
         case editOverride(override: EventOverride)
     }
 
@@ -108,11 +108,11 @@ final class AddEditEventViewModel: ObservableObject {
                 until = nil
                 count = ""
             }
-        case .editSingle(let parent, _, let date):
+        case .editSingle(let parent, _, let occurrence):
             title = parent.title
             notes = parent.description ?? ""
-            startDate = date
-            endDate = date.addingTimeInterval(3600)
+            startDate = occurrence.startDate
+            endDate = occurrence.endDate ?? occurrence.startDate.addingTimeInterval(3600)
             location = parent.location ?? ""
             isCancelled = false
         case .editOverride(let override):
@@ -136,8 +136,8 @@ final class AddEditEventViewModel: ObservableObject {
                     try await addEvent()
                 case .editAll(let event, let oldRule):
                     try await editAll(event: event, oldRule: oldRule)
-                case .editSingle(let parent, _, let occDate):
-                    try await editSingle(parentEvent: parent, occurrenceDate: occDate)
+                case .editSingle(let parent, _, let occurrence):
+                    try await editSingle(parentEvent: parent, occurrence: occurrence)
                 case .editOverride(let override):
                     try await editOverride(override: override)
                 }
@@ -233,7 +233,7 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
 
-    private func editSingle(parentEvent: Event, occurrenceDate: Date) async throws {
+    private func editSingle(parentEvent: Event, occurrence: EventOccurrence) async throws {
         guard let parentEventId = parentEvent.id else {
             throw EventError.errorOnEventUpdate
         }
@@ -242,7 +242,7 @@ final class AddEditEventViewModel: ObservableObject {
         let override = EventOverride(
             id: nil,
             eventId: parentEventId,
-            occurrenceDate: occurrenceDate,
+            occurrenceDate: occurrence.startDate,
             overriddenTitle: title,
             overriddenStartDate: startDate,
             overriddenEndDate: endDate,
@@ -279,8 +279,8 @@ extension AddEditEventViewModel.Mode: Identifiable {
         switch self {
         case .add: return "add"
         case .editAll(let event, _): return "editAll-\(event.id)"
-        case .editSingle(let parent, _, let date):
-            return "editSingle-\(parent.id)-\(date.timeIntervalSince1970)"
+        case .editSingle(let parent, _, let occurrence):
+            return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
         case .editOverride(let override): return "editOverride-\(override.id)"
         }
     }

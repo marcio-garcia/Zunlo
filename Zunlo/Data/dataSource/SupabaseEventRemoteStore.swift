@@ -53,7 +53,7 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
         ev.id = nil
         ev.user_id = nil
         ev.created_at = nil
-        return try await database.update(event, in: tableName, filter: ["id": "eq.\(id)"])
+        return try await database.update(ev, in: tableName, filter: ["id": "eq.\(id)"])
     }
 
     func delete(_ event: EventRemote) async throws -> [EventRemote] {
