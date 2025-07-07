@@ -31,14 +31,19 @@ struct CalendarScheduleView: View {
                 .animation(.easeInOut, value: repository.eventOccurrences.isEmpty)
             } else {
                 List {
-                    ForEach(daysWithOccurrences, id: \.self) { date in
-                        Section(header: Text(date, style: .date)) {
-                            ForEach(occurrences(on: date)) { occurrence in
-                                EventRow(
-                                    occurrence: occurrence,
-                                    onEdit: { handleEdit(occurrence: occurrence) },
-                                    onDelete: { handleDelete(occurrence: occurrence) }
-                                )
+                    ForEach(occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
+                        Section(header: Text(monthDate.formattedDate(dateFormat: "LLLL yyyy"))) {
+                            let daysDict = occurrencesByMonthAndDay[monthDate] ?? [:]
+                            ForEach(daysDict.keys.sorted(), id: \.self) { day in
+                                Section(header: Text(day.formattedDate(dateFormat: "E d"))) {
+                                    ForEach(daysDict[day] ?? []) { occurrence in
+                                        EventRow(
+                                            occurrence: occurrence,
+                                            onEdit: { handleEdit(occurrence: occurrence) },
+                                            onDelete: { handleDelete(occurrence: occurrence) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -84,6 +89,24 @@ struct CalendarScheduleView: View {
     var daysWithOccurrences: [Date] {
         let days = Set(repository.eventOccurrences.map { $0.startDate.startOfDay })
         return Array(days).sorted()
+    }
+    
+    /// [monthStartDate: [dayStartDate: [EventOccurrence]]]
+    var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] {
+        let calendar = Calendar.current
+        return Dictionary(
+            grouping: repository.eventOccurrences
+        ) { occurrence in
+            // Group by the first day of the month
+            calendar.date(from: calendar.dateComponents([.year, .month], from: occurrence.startDate.startOfDay))!
+        }
+        .mapValues { occurrencesInMonth in
+            // Within each month, group by day
+            Dictionary(
+                grouping: occurrencesInMonth
+            ) { $0.startDate.startOfDay }
+            .mapValues { $0.sorted { $0.startDate < $1.startDate } } // Optional: sort events by time
+        }
     }
 
     func occurrences(on date: Date) -> [EventOccurrence] {

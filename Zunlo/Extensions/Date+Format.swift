@@ -34,8 +34,8 @@ extension Date {
     }
     
     var startOfDay: Date {
-        Calendar.current.startOfDay(for: self)
-    }
+        return Calendar.current.startOfDay(for: self)
+    }    
 }
 
 extension Date {
