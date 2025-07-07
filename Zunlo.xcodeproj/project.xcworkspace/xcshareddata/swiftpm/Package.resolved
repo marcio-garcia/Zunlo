@@ -1,0 +1,15 @@
+{
+  "originHash" : "8703ddc44b28167d34831624344854f99e65dc9c3fe7279ea207420d49b2359a",
+  "pins" : [
+    {
+      "identity" : "minisignaleye",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/marcio-garcia/MiniSignalEye",
+      "state" : {
+        "revision" : "127af7455367169578a46b5625a63b6a949a6347",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

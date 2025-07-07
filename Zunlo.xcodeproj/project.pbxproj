@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */ = {isa = PBXBuildFile; productRef = 255B93752E1C6FFB00D8CD8A /* MiniSignalEye */; };
 		25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 25FAA9702E0B6E56000AACA2 /* SupabaseSDK */; };
 /* End PBXBuildFile section */
 
@@ -71,6 +72,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */,
+				255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,6 +143,7 @@
 			name = Zunlo;
 			packageProductDependencies = (
 				25FAA9702E0B6E56000AACA2 /* SupabaseSDK */,
+				255B93752E1C6FFB00D8CD8A /* MiniSignalEye */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -224,6 +227,9 @@
 			);
 			mainGroup = 25FA19F42E0854F800E740A3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 25FA19FE2E0854F800E740A3 /* Products */;
 			projectDirPath = "";
@@ -728,7 +734,23 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/marcio-garcia/MiniSignalEye";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		255B93752E1C6FFB00D8CD8A /* MiniSignalEye */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */;
+			productName = MiniSignalEye;
+		};
 		25FAA9702E0B6E56000AACA2 /* SupabaseSDK */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SupabaseSDK;

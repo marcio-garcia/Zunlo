@@ -9,7 +9,11 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authManager: AuthManager
-    @EnvironmentObject var eventRepository: EventRepository
+    var eventRepository: EventRepository
+    
+    init(eventRepository: EventRepository) {
+        self.eventRepository = eventRepository
+    }
     
     var body: some View {
         Group {
@@ -17,7 +21,7 @@ struct RootView: View {
             case .loading:
                 ProgressView("Loading...")
             case .authenticated(_):
-                CalendarScheduleView()
+                CalendarScheduleView(repository: self.eventRepository)
             case .unauthenticated:
                 AuthView()
             }

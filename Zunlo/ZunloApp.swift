@@ -34,9 +34,8 @@ struct ZunloApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(eventRepository: eventRepository)
                 .environmentObject(authManager)
-                .environmentObject(eventRepository)
         }
         .modelContainer(sharedModelContainer)
     }
