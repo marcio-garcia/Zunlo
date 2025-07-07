@@ -31,17 +31,16 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var isRecurring: Bool = false
     @Published var recurrenceType: String = "daily"
     @Published var recurrenceInterval: Int = 1
-    @Published var byWeekday: Set<Int> = [] {
-        didSet {
-            print("🔍 byWeekday changed: \(oldValue) → \(byWeekday)")
-        }
-    }
     @Published var byMonthday: Set<Int> = []
     @Published var until: Date? = nil
     @Published var count: String = ""
     @Published var isCancelled: Bool = false
     @Published var isSaving: Bool = false
 
+    /// UI uses 0=Sunday...6=Saturday.
+    /// calendarByWeekday maps to Calendar's 1=Sunday...7=Saturday.
+    @Published var byWeekday: Set<Int> = []
+    
     let mode: Mode
     let repository: EventRepository
 
@@ -75,6 +74,14 @@ final class AddEditEventViewModel: ObservableObject {
         return false
     }
     
+    var calendarByWeekday: [Int] {
+        return byWeekday.map { $0 + 1 }
+    }
+    
+    func uiByWeekday(from calendarWeekdays: Set<Int>) -> Set<Int> {
+        return Set(calendarWeekdays.map { ($0 + 6) % 7 })
+    }
+    
     private func loadFields() {
         switch mode {
         case .add:
@@ -96,7 +103,7 @@ final class AddEditEventViewModel: ObservableObject {
             if let rule = rule {
                 recurrenceType = rule.freq
                 recurrenceInterval = rule.interval
-                rule.byWeekday?.forEach({ byWeekday.insert($0) })
+                byWeekday = uiByWeekday(from: Set(rule.byWeekday ?? []))
                 rule.byMonthday?.forEach({ byMonthday.insert($0) })
                 until = rule.until
                 count = rule.count.map { String($0) } ?? ""
@@ -176,7 +183,7 @@ final class AddEditEventViewModel: ObservableObject {
                 eventId: newEventId,
                 freq: recurrenceType,
                 interval: recurrenceInterval,
-                byWeekday: byWeekday.isEmpty ? nil : Array(byWeekday),
+                byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
                 byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
                 byMonth: nil,
                 until: until,
@@ -215,7 +222,7 @@ final class AddEditEventViewModel: ObservableObject {
                 eventId: eventId,
                 freq: recurrenceType,
                 interval: recurrenceInterval,
-                byWeekday: byWeekday.isEmpty ? nil : Array(byWeekday),
+                byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
                 byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
                 byMonth: nil,
                 until: until,

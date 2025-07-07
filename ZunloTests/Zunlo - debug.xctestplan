@@ -1,0 +1,32 @@
+{
+  "configurations" : [
+    {
+      "id" : "A017C6FE-4F1F-4F6A-85A4-5DCD82448AE6",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Zunlo.xcodeproj",
+        "identifier" : "25FA1A0E2E0854F900E740A3",
+        "name" : "ZunloTests"
+      }
+    },
+    {
+      "enabled" : false,
+      "target" : {
+        "containerPath" : "container:Zunlo.xcodeproj",
+        "identifier" : "25FA1A182E0854F900E740A3",
+        "name" : "ZunloUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -65,7 +65,7 @@ struct EventOccurrenceService {
             } else {
                 // Recurring event
                 guard let rule = ruleDict[eventId]?.first else { continue }
-                let dates = generateRecurrenceDates(
+                let dates = RecurrenceHelper.generateRecurrenceDates(
                     start: event.startDate,
                     rule: rule,
                     within: range
@@ -110,65 +110,5 @@ struct EventOccurrenceService {
 
         // Optional: sort by date/time
         return occurrences.sorted { $0.startDate < $1.startDate }
-    }
-
-    /// Generate recurrence dates in the range.
-    static func generateRecurrenceDates(start: Date, rule: RecurrenceRule, within range: ClosedRange<Date>) -> [Date] {
-        var dates: [Date] = []
-        let calendar = Calendar.current
-        let interval = rule.interval
-
-        switch rule.freq {
-        case "daily":
-            var date = start
-            while date <= range.upperBound {
-                if date >= range.lowerBound {
-                    dates.append(date)
-                }
-                guard let next = calendar.date(byAdding: .day, value: interval, to: date) else { break }
-                date = next
-                if let until = rule.until, date > until { break }
-                if let count = rule.count, dates.count >= count { break }
-            }
-
-        case "weekly":
-            let weekdays = rule.byWeekday ?? [calendar.component(.weekday, from: start)]
-            var date = start
-            while date <= range.upperBound {
-                for weekday in weekdays {
-                    let nextDate = calendar.nextDate(after: date, matching: DateComponents(weekday: weekday), matchingPolicy: .nextTime, direction: .forward) ?? date
-                    if nextDate >= range.lowerBound && nextDate <= range.upperBound {
-                        dates.append(nextDate)
-                    }
-                }
-                guard let next = calendar.date(byAdding: .weekOfYear, value: interval, to: date) else { break }
-                date = next
-                if let until = rule.until, date > until { break }
-                if let count = rule.count, dates.count >= count { break }
-            }
-
-        case "monthly":
-            let monthdays = rule.byMonthday ?? [calendar.component(.day, from: start)]
-            var date = start
-            while date <= range.upperBound {
-                for day in monthdays {
-                    var comps = calendar.dateComponents([.year, .month], from: date)
-                    comps.day = day
-                    if let nextDate = calendar.date(from: comps), nextDate >= range.lowerBound && nextDate <= range.upperBound {
-                        dates.append(nextDate)
-                    }
-                }
-                guard let next = calendar.date(byAdding: .month, value: interval, to: date) else { break }
-                date = next
-                if let until = rule.until, date > until { break }
-                if let count = rule.count, dates.count >= count { break }
-            }
-
-        default:
-            // Extend for "yearly", etc. as needed.
-            break
-        }
-
-        return dates
     }
 }
