@@ -13,8 +13,7 @@ import SupabaseSDK
 final class EventRepositoryFactory {
     static func make(
         supabase: SupabaseSDK,
-        authManager: AuthSession,
-        modelContext: ModelContext
+        authManager: AuthSession
     ) -> EventRepository {
         let eventRemoteStore: EventRemoteStore
         let eventLocalStore: EventLocalStore
@@ -24,13 +23,13 @@ final class EventRepositoryFactory {
         let eventOverrideLocalStore: EventOverrideLocalStore
         
         eventRemoteStore = SupabaseEventRemoteStore(supabase: supabase, authManager: authManager)
-        eventLocalStore = SwiftDataEventLocalStore(modelContext: modelContext)
+        eventLocalStore = RealmEventLocalStore()
 
         recurrenceRuleRemoteStore = SupabaseRecurrenceRuleRemoteStore(supabase: supabase, authManager: authManager)
-        recurrenceRuleLocalStore = SwiftDataRecurrenceRuleLocalStore(modelContext: modelContext)
+        recurrenceRuleLocalStore = RealmRecurrenceRuleLocalStore()
 
         eventOverrideRemoteStore = SupabaseEventOverrideRemoteStore(supabase: supabase, authManager: authManager)
-        eventOverrideLocalStore = SwiftDataEventOverrideLocalStore(modelContext: modelContext)
+        eventOverrideLocalStore = RealmEventOverrideLocalStore()
 
         return EventRepository(
             eventLocalStore: eventLocalStore,

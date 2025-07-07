@@ -90,13 +90,13 @@ extension EventLocal {
         )
     }
     
-    func getUpdateFields(_ event: EventLocal) {
+    func getUpdateFields(_ event: EventRemote) {
         self.title = event.title
-        self.descriptionText = event.descriptionText
-        self.startDate = event.startDate
-        self.endDate = event.endDate
+        self.descriptionText = event.description
+        self.startDate = event.start_datetime
+        self.endDate = event.end_datetime
         self.location = event.location
-        self.isRecurring = event.isRecurring
-        self.updatedAt = event.updatedAt
+        self.isRecurring = event.is_recurring
+        self.updatedAt = event.updated_at
     }
 }

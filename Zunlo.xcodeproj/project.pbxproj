@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */ = {isa = PBXBuildFile; productRef = 255B93752E1C6FFB00D8CD8A /* MiniSignalEye */; };
+		25857B842E1C85C800676F8B /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; };
 		25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 25FAA9702E0B6E56000AACA2 /* SupabaseSDK */; };
 /* End PBXBuildFile section */
 
@@ -71,6 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25857B842E1C85C800676F8B /* RealmSwift in Frameworks */,
 				25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */,
 				255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */,
 			);
@@ -144,6 +146,7 @@
 			packageProductDependencies = (
 				25FAA9702E0B6E56000AACA2 /* SupabaseSDK */,
 				255B93752E1C6FFB00D8CD8A /* MiniSignalEye */,
+				25857B832E1C85C800676F8B /* RealmSwift */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -229,6 +232,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */,
+				25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 25FA19FE2E0854F800E740A3 /* Products */;
@@ -743,6 +747,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/realm/realm-swift";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 20.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -750,6 +762,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */;
 			productName = MiniSignalEye;
+		};
+		25857B832E1C85C800676F8B /* RealmSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */;
+			productName = RealmSwift;
 		};
 		25FAA9702E0B6E56000AACA2 /* SupabaseSDK */ = {
 			isa = XCSwiftPackageProductDependency;

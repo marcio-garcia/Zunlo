@@ -6,23 +6,23 @@
 //
 
 import Foundation
-import SwiftData
+import RealmSwift
 
-@Model
-final class EventOverrideLocal {
-    @Attribute(.unique) var id: UUID
-    var eventId: UUID
-    var occurrenceDate: Date
-    var overriddenTitle: String?
-    var overriddenStartDate: Date?
-    var overriddenEndDate: Date?
-    var overriddenLocation: String?
-    var isCancelled: Bool
-    var notes: String?
-    var createdAt: Date
-    var updatedAt: Date
+class EventOverrideLocal: Object {
+    @Persisted(primaryKey: true) var id: UUID
+    @Persisted var eventId: UUID
+    @Persisted var occurrenceDate: Date
+    @Persisted var overriddenTitle: String?
+    @Persisted var overriddenStartDate: Date?
+    @Persisted var overriddenEndDate: Date?
+    @Persisted var overriddenLocation: String?
+    @Persisted var isCancelled: Bool = false
+    @Persisted var notes: String?
+    @Persisted var createdAt: Date
+    @Persisted var updatedAt: Date
 
-    init(
+    // Convenience initializer
+    convenience init(
         id: UUID,
         eventId: UUID,
         occurrenceDate: Date,
@@ -35,6 +35,7 @@ final class EventOverrideLocal {
         createdAt: Date,
         updatedAt: Date
     ) {
+        self.init()
         self.id = id
         self.eventId = eventId
         self.occurrenceDate = occurrenceDate

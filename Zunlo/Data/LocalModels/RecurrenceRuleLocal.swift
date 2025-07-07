@@ -6,23 +6,48 @@
 //
 
 import Foundation
-import SwiftData
+import RealmSwift
 
-@Model
-final class RecurrenceRuleLocal {
-    @Attribute(.unique) var id: UUID
-    var eventId: UUID
-    var freq: String
-    var interval: Int
-    var byWeekday: [Int]?
-    var byMonthday: [Int]?
-    var byMonth: [Int]?
-    var until: Date?
-    var count: Int?
-    var createdAt: Date
-    var updatedAt: Date
+class RecurrenceRuleLocal: Object {
+    @Persisted(primaryKey: true) var id: UUID
+    @Persisted var eventId: UUID
+    @Persisted var freq: String
+    @Persisted var interval: Int
+    @Persisted var byWeekday = List<Int>()   // No need for optional; can be empty
+    @Persisted var byMonthday = List<Int>()
+    @Persisted var byMonth = List<Int>()
+    @Persisted var until: Date?
+    @Persisted var count: Int?
+    @Persisted var createdAt: Date
+    @Persisted var updatedAt: Date
 
-    init(
+    var byWeekdayArray: [Int] {
+        get { Array(byWeekday) }
+        set {
+            byWeekday.removeAll()
+            byWeekday.append(objectsIn: newValue)
+        }
+    }
+    
+    var byMonthdayArray: [Int] {
+        get { Array(byMonthday) }
+        set {
+            byMonthday.removeAll()
+            byMonthday.append(objectsIn: newValue)
+        }
+    }
+    
+    var byMonthArray: [Int] {
+        get { Array(byMonth) }
+        set {
+            byMonth.removeAll()
+            byMonth.append(objectsIn: newValue)
+        }
+    }
+    
+    // Realm models need a default (parameterless) initializer for reads/writes.
+    // Custom init for convenience (optional):
+    convenience init(
         id: UUID,
         eventId: UUID,
         freq: String,
@@ -35,13 +60,14 @@ final class RecurrenceRuleLocal {
         createdAt: Date,
         updatedAt: Date
     ) {
+        self.init()
         self.id = id
         self.eventId = eventId
         self.freq = freq
         self.interval = interval
-        self.byWeekday = byWeekday
-        self.byMonthday = byMonthday
-        self.byMonth = byMonth
+        if let byWeekday { self.byWeekday.append(objectsIn: byWeekday) }
+        if let byMonthday { self.byMonthday.append(objectsIn: byMonthday) }
+        if let byMonth { self.byMonth.append(objectsIn: byMonth) }
         self.until = until
         self.count = count
         self.createdAt = createdAt

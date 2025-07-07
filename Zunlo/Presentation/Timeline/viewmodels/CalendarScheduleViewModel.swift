@@ -62,7 +62,11 @@ class CalendarScheduleViewModel: ObservableObject {
     
     @MainActor
     func fetchEvents() async {
-        await repository.fetchAll(in: visibleRange)
+        do {
+            try await repository.fetchAll(in: visibleRange)
+        } catch {
+            print(error)
+        }
     }
     
     var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] {
