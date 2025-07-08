@@ -30,9 +30,9 @@ extension RecurrenceRule {
         self.eventId = local.eventId
         self.freq = local.freq
         self.interval = local.interval
-        self.byWeekday = local.byWeekday
-        self.byMonthday = local.byMonthday
-        self.byMonth = local.byMonth
+        self.byWeekday = local.byWeekdayArray
+        self.byMonthday = local.byMonthdayArray
+        self.byMonth = local.byMonthArray
         self.until = local.until
         self.count = local.count
         self.createdAt = local.createdAt
@@ -94,16 +94,16 @@ extension RecurrenceRuleLocal {
         )
     }
     
-    func getUpdateFields(_ local: RecurrenceRuleLocal) {
+    func getUpdateFields(_ local: RecurrenceRuleRemote) {
         self.freq = local.freq
         self.interval = local.interval
-        self.byWeekday = local.byWeekday
-        self.byMonthday = local.byMonthday
-        self.byMonth = local.byMonth
+        self.byWeekdayArray = local.byweekday ?? []
+        self.byMonthdayArray = local.bymonthday ?? []
+        self.byMonthArray = local.bymonth ?? []
         self.until = local.until
         self.count = local.count
-        self.createdAt = local.createdAt
-        self.updatedAt = local.updatedAt
+        self.createdAt = local.created_at
+        self.updatedAt = local.updated_at
     }
 }
 

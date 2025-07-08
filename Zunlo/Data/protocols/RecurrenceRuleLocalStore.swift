@@ -9,10 +9,10 @@ import Foundation
 
 @MainActor
 protocol RecurrenceRuleLocalStore {
-    func fetchAll() throws -> [RecurrenceRuleLocal]
-    func fetch(for eventId: UUID) throws -> [RecurrenceRuleLocal]
-    func save(_ rule: RecurrenceRuleLocal) throws
-    func update(_ rule: RecurrenceRuleLocal) throws
-    func delete(_ rule: RecurrenceRuleLocal) throws
-    func deleteAll() throws
+    func fetchAll() async throws -> [RecurrenceRule]
+    func fetch(for eventId: UUID) async throws -> [RecurrenceRule]
+    func save(_ rule: RecurrenceRuleRemote) async throws
+    func update(_ rule: RecurrenceRuleRemote) async throws
+    func delete(id: UUID) async throws
+    func deleteAll() async throws
 }

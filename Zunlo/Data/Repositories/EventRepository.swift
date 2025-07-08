@@ -45,14 +45,28 @@ final class EventRepository {
 
     // MARK: - Fetch & Compose All (from local, for UI)
 
-    func fetchAll(in range: ClosedRange<Date>? = nil) async {
+    func fetchAll(in range: ClosedRange<Date>? = nil) async throws {
         do {
             let eventsLocal = try await eventLocalStore.fetchAll()
-            let rulesLocal = try await recurrenceRuleLocalStore.fetchAll()
-            let overridesLocal = try await eventOverrideLocalStore.fetchAll()
-            self.events.value = eventsLocal.map { Event(local: $0) }
-            self.recurrenceRules.value = rulesLocal.map { RecurrenceRule(local: $0) }
-            self.eventOverrides.value = overridesLocal.map { EventOverride(local: $0) }
+            if eventsLocal.isEmpty {
+                try await synchronize()
+            } else {
+                try await fetchLocal(in: range)
+            }
+        } catch {
+            self.events.value = []
+            self.recurrenceRules.value = []
+            self.eventOverrides.value = []
+            self.eventOccurrences.value = []
+            print("Failed to fetch data: \(error)")
+        }
+    }
+    
+    private func fetchLocal(in range: ClosedRange<Date>? = nil) async throws {
+        do {
+            self.events.value = try await eventLocalStore.fetchAll()
+            self.recurrenceRules.value = try await recurrenceRuleLocalStore.fetchAll()
+            self.eventOverrides.value = try await eventOverrideLocalStore.fetchAll()
             self.eventOccurrences.value = try composeOccurrences(in: range)
         } catch {
             self.events.value = []
@@ -87,26 +101,27 @@ final class EventRepository {
     func save(_ event: Event) async throws -> [Event] {
         let inserted = try await eventRemoteStore.save(EventRemote(domain: event))
         for event in inserted {
-            try await eventLocalStore.save(EventLocal(remote: event))
+            try await eventLocalStore.save(event)
         }
-        await fetchAll()
+        try await fetchLocal()
         return inserted.compactMap { Event(remote: $0) }
     }
 
     func update(_ event: Event) async throws {
         let updated = try await eventRemoteStore.update(EventRemote(domain: event))
         for event in updated {
-            try await eventLocalStore.update(EventLocal(remote: event))
+            try await eventLocalStore.update(event)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     func delete(_ event: Event) async throws {
+        guard let id = event.id else { return }
         let deleted = try await eventRemoteStore.delete(EventRemote(domain: event))
         for event in deleted {
-            try await eventLocalStore.delete(EventLocal(remote: event))
+            try await eventLocalStore.delete(id: id)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     // MARK: - CRUD for RecurrenceRule
@@ -114,25 +129,26 @@ final class EventRepository {
     func saveRecurrenceRule(_ rule: RecurrenceRule) async throws {
         let inserted = try await recurrenceRuleRemoteStore.save(RecurrenceRuleRemote(domain: rule))
         for rule in inserted {
-            try await recurrenceRuleLocalStore.save(RecurrenceRuleLocal(remote: rule))
+            try await recurrenceRuleLocalStore.save(rule)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     func updateRecurrenceRule(_ rule: RecurrenceRule) async throws {
         let updated = try await recurrenceRuleRemoteStore.update(RecurrenceRuleRemote(domain: rule))
         for rule in updated {
-            try await recurrenceRuleLocalStore.update(RecurrenceRuleLocal(remote: rule))
+            try await recurrenceRuleLocalStore.update(rule)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     func deleteRecurrenceRule(_ rule: RecurrenceRule) async throws {
+        guard let id = rule.id else { return }
         let deleted = try await recurrenceRuleRemoteStore.delete(RecurrenceRuleRemote(domain: rule))
         for rule in deleted {
-            try await recurrenceRuleLocalStore.delete(RecurrenceRuleLocal(remote: rule))
+            try await recurrenceRuleLocalStore.delete(id: id)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     // MARK: - CRUD for EventOverride
@@ -140,25 +156,26 @@ final class EventRepository {
     func saveOverride(_ override: EventOverride) async throws {
         let inserted = try await eventOverrideRemoteStore.save(EventOverrideRemote(domain: override))
         for ov in inserted {
-            try await eventOverrideLocalStore.save(EventOverrideLocal(remote: ov))
+            try await eventOverrideLocalStore.save(ov)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     func updateOverride(_ override: EventOverride) async throws {
         let updated = try await eventOverrideRemoteStore.update(EventOverrideRemote(domain: override))
         for ov in updated {
-            try await eventOverrideLocalStore.update(EventOverrideLocal(remote: ov))
+            try await eventOverrideLocalStore.update(ov)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     func deleteOverride(_ override: EventOverride) async throws {
+        guard let id = override.id else { return }
         let deleted = try await eventOverrideRemoteStore.delete(EventOverrideRemote(domain: override))
         for ov in deleted {
-            try await eventOverrideLocalStore.delete(EventOverrideLocal(remote: ov))
+            try await eventOverrideLocalStore.delete(id: id)
         }
-        await fetchAll()
+        try await fetchLocal()
     }
 
     // MARK: - Batch Delete & Sync
@@ -167,7 +184,7 @@ final class EventRepository {
         _ = try await eventRemoteStore.deleteAll(for: userId)
         try await eventLocalStore.deleteAll(for: userId)
         // Optionally delete recurrence rules and overrides for this user as well
-        await fetchAll()
+        try await fetchLocal()
     }
 
     /// Fetch everything from remote and overwrite local cache
@@ -180,11 +197,11 @@ final class EventRepository {
         try await recurrenceRuleLocalStore.deleteAll()
         try await eventOverrideLocalStore.deleteAll()
 
-        for e in remoteEvents { try await eventLocalStore.save(EventLocal(remote: e)) }
-        for r in remoteRules { try await recurrenceRuleLocalStore.save(RecurrenceRuleLocal(remote: r)) }
-        for o in remoteOverrides { try await eventOverrideLocalStore.save(EventOverrideLocal(remote: o)) }
+        for e in remoteEvents { try await eventLocalStore.save(e) }
+        for r in remoteRules { try await recurrenceRuleLocalStore.save(r) }
+        for o in remoteOverrides { try await eventOverrideLocalStore.save(o) }
 
-        await fetchAll()
+        try await fetchAll()
     }
 
     // MARK: - Query helpers (for view models/UI)

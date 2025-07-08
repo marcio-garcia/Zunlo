@@ -6,33 +6,33 @@
 //
 
 import Foundation
-import SwiftData
+import RealmSwift
 
-@Model
-final class EventLocal {
-    @Attribute(.unique) var id: UUID
-    var userId: UUID?
-    var title: String
-    var descriptionText: String?
-    var startDate: Date
-    var endDate: Date?
-    var isRecurring: Bool
-    var location: String?
-    var createdAt: Date
-    var updatedAt: Date
-
-    init(
+class EventLocal: Object {
+    @Persisted(primaryKey: true) var id: UUID
+    @Persisted var userId: UUID?
+    @Persisted var title: String = ""
+    @Persisted var descriptionText: String?
+    @Persisted var startDate: Date = Date()
+    @Persisted var endDate: Date?
+    @Persisted var isRecurring: Bool = false
+    @Persisted var location: String?
+    @Persisted var createdAt: Date = Date()
+    @Persisted var updatedAt: Date = Date()
+    
+    convenience init(
         id: UUID,
-        userId: UUID?,
-        title: String,
-        descriptionText: String?,
-        startDate: Date,
-        endDate: Date?,
-        isRecurring: Bool,
-        location: String?,
-        createdAt: Date,
-        updatedAt: Date
+        userId: UUID? = nil,
+        title: String = "",
+        descriptionText: String? = nil,
+        startDate: Date = Date(),
+        endDate: Date? = nil,
+        isRecurring: Bool = false,
+        location: String? = nil,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
     ) {
+        self.init() // <-- MUST call the default init
         self.id = id
         self.userId = userId
         self.title = title

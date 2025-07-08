@@ -9,10 +9,10 @@ import Foundation
 
 @MainActor
 protocol EventLocalStore {
-    func fetchAll() throws -> [EventLocal]
-    func save(_ event: EventLocal) throws
-    func update(_ event: EventLocal) throws
-    func delete(_ event: EventLocal) throws
-    func deleteAll(for userId: UUID) throws
-    func deleteAll() throws
+    func fetchAll() async throws -> [Event]
+    func save(_ remoteEvent: EventRemote) async throws
+    func update(_ event: EventRemote) async throws
+    func delete(id: UUID) async throws
+    func deleteAll(for userId: UUID) async throws
+    func deleteAll() async throws
 }

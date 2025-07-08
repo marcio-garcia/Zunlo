@@ -94,14 +94,14 @@ extension EventOverrideLocal {
         )
     }
     
-    func getUpdateFields(_ local: EventOverrideLocal) {
-        self.occurrenceDate = local.occurrenceDate
-        self.overriddenTitle = local.overriddenTitle
-        self.overriddenStartDate = local.overriddenStartDate
-        self.overriddenEndDate = local.overriddenEndDate
-        self.overriddenLocation = local.overriddenLocation
-        self.isCancelled = local.isCancelled
+    func getUpdateFields(_ local: EventOverrideRemote) {
+        self.occurrenceDate = local.occurrence_date
+        self.overriddenTitle = local.overridden_title
+        self.overriddenStartDate = local.overridden_start_datetime
+        self.overriddenEndDate = local.overridden_end_datetime
+        self.overriddenLocation = local.overridden_location
+        self.isCancelled = local.is_cancelled
         self.notes = local.notes
-        self.updatedAt = local.updatedAt
+        self.updatedAt = local.updated_at
     }
 }
