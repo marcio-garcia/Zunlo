@@ -7,6 +7,9 @@
 
 import SwiftUI
 import MiniSignalEye
+import CoreLocation
+
+enum Season: String { case winter, spring, summer, autumn }
 
 class CalendarScheduleViewModel: ObservableObject {
     @Published var showAddSheet = false
@@ -22,6 +25,7 @@ class CalendarScheduleViewModel: ObservableObject {
     
     var repository: EventRepository
     let visibleRange: ClosedRange<Date>
+    var locationManager = LocationManager()
     
     var occurObservID: UUID?
     var eventsObservID: UUID?
@@ -116,6 +120,44 @@ class CalendarScheduleViewModel: ObservableObject {
 
     func handleDelete(occurrence: EventOccurrence) {
         // Implement actual delete logic here
+    }
+    
+    private func season(by date: Date) -> Season {
+        let month = Calendar.current.component(.month, from: date)
+        return season(for: month,
+                      hemisphere: hemisphere(for: locationManager.latitude))
+    }
+    
+    private func hemisphere(for latitude: CLLocationDegrees) -> String {
+        latitude >= 0 ? "north" : "south"
+    }
+    
+    private func season(for month: Int, hemisphere: String) -> Season {
+        // month: 1 = January ... 12 = December
+        switch (hemisphere, month) {
+        case ("north", 12), ("north", 1), ("north", 2): return .winter
+        case ("north", 3), ("north", 4), ("north", 5): return .spring
+        case ("north", 6), ("north", 7), ("north", 8): return .summer
+        case ("north", 9), ("north", 10), ("north", 11): return .autumn
+        case ("south", 6), ("south", 7), ("south", 8): return .winter
+        case ("south", 9), ("south", 10), ("south", 11): return .spring
+        case ("south", 12), ("south", 1), ("south", 2): return .summer
+        case ("south", 3), ("south", 4), ("south", 5): return .autumn
+        default: return .summer // fallback
+        }
+    }
+    
+    func monthHeaderImageName(for date: Date) -> String {
+        return imageName(for: season(by: date))
+    }
+    
+    private func imageName(for season: Season) -> String {
+        switch season {
+        case .spring: return "spring"
+        case .summer: return "summer"
+        case .autumn: return "autumn"
+        case .winter: return "winter"
+        }
     }
 }
 

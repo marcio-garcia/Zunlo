@@ -1,0 +1,41 @@
+//
+//  CartoonImageHeader.swift
+//  Zunlo
+//
+//  Created by Marcio Garcia on 7/8/25.
+//
+
+import SwiftUI
+
+struct CartoonImageHeader: View {
+    let title: String
+    let imageName: String
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Image(imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(height: 200)
+                .clipped()
+                .blur(radius: 0)
+
+            VStack {
+                HStack(spacing: 14) {
+                    Text(title)
+                        .font(.title2)
+                        .foregroundColor(.black)
+                        .shadow(radius: 10)
+                    Spacer()
+                }
+                .padding(.horizontal, 40)
+                
+                Spacer()
+            }
+            .padding(.vertical, 20)
+        }
+        .frame(height: 200)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 0)
+    }
+}

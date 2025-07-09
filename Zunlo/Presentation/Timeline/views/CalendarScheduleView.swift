@@ -23,19 +23,37 @@ struct CalendarScheduleView: View {
                 .transition(.opacity)
                 .animation(.easeInOut, value: viewModel.eventOccurrences.isEmpty)
             } else {
-                List {
-                    ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
-                        Section(header: Text(monthDate.formattedDate(dateFormat: "LLLL yyyy"))) {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
+                            let monthName = monthDate.formattedDate(dateFormat: "LLLL")
+                            let imageName = viewModel.monthHeaderImageName(for: monthDate)
                             let daysDict = viewModel.occurrencesByMonthAndDay[monthDate] ?? [:]
-                            ForEach(daysDict.keys.sorted(), id: \.self) { day in
-                                Section(header: Text(day.formattedDate(dateFormat: "E d"))) {
-                                    ForEach(daysDict[day] ?? []) { occurrence in
-                                        EventRow(
-                                            occurrence: occurrence,
-                                            onEdit: { viewModel.handleEdit(occurrence: occurrence) },
-                                            onDelete: { viewModel.handleDelete(occurrence: occurrence) }
-                                        )
+
+                            CartoonImageHeader(title: monthName, imageName: imageName)
+                                .frame(maxWidth: .infinity)
+                            
+                            LazyVStack(alignment: .leading, spacing: 0) {
+                                ForEach(daysDict.keys.sorted(), id: \.self) { day in
+                                    let occurrences = daysDict[day] ?? []
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        Text(day.formattedDate(dateFormat: "E d"))
+                                            .font(.headline)
+                                            .padding(.leading, 16)
+                                            .padding(.top, 8)
+                                            .padding(.bottom, 4)
+                                        ForEach(occurrences) { occurrence in
+                                            EventRow(
+                                                occurrence: occurrence,
+                                                onEdit: { viewModel.handleEdit(occurrence: occurrence) },
+                                                onDelete: { viewModel.handleDelete(occurrence: occurrence) }
+                                            )
+                                        }
                                     }
+                                    .background(Color(.systemBackground))
+                                    .cornerRadius(10)
+                                    .padding(.horizontal, 20)
+                                    .padding(.bottom, 10)
                                 }
                             }
                         }

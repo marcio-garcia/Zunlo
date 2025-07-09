@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */ = {isa = PBXBuildFile; productRef = 255B93752E1C6FFB00D8CD8A /* MiniSignalEye */; };
 		25857B842E1C85C800676F8B /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; };
+		25857E4B2E1DF95700676F8B /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 25FAA9702E0B6E56000AACA2 /* SupabaseSDK */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,20 @@
 			remoteInfo = Zunlo;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		25857E4C2E1DF95700676F8B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				25857E4B2E1DF95700676F8B /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		25FA19FD2E0854F800E740A3 /* Zunlo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zunlo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -134,6 +149,7 @@
 				25FA19F92E0854F800E740A3 /* Sources */,
 				25FA19FA2E0854F800E740A3 /* Frameworks */,
 				25FA19FB2E0854F800E740A3 /* Resources */,
+				25857E4C2E1DF95700676F8B /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
