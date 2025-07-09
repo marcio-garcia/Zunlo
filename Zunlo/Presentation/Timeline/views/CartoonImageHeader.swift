@@ -25,7 +25,8 @@ struct CartoonImageHeader: View {
                     Text(title)
                         .font(.title2)
                         .foregroundColor(.black)
-                        .shadow(radius: 10)
+//                        .shadow(radius: 10)
+                        .shadow(color: .white, radius: 0.5, x: 1, y: 1)
                     Spacer()
                 }
                 .padding(.horizontal, 40)

@@ -7,21 +7,43 @@
 
 import CoreLocation
 
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+class LocationManager: NSObject, ObservableObject {
     @Published var latitude: CLLocationDegrees = 40.0 // Default to Northern Hemisphere (fake)
+    @Published var status: CLAuthorizationStatus = .notDetermined
     
-     private let manager = CLLocationManager()
+    private let manager = CLLocationManager()
     
-     override init() {
-         super.init()
-         manager.delegate = self
-         manager.requestWhenInUseAuthorization()
-         manager.startUpdatingLocation()
-     }
+    override init() {
+        super.init()
+        manager.delegate = self
+        status = manager.authorizationStatus
+    }
     
-     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-         if let loc = locations.first {
-             self.latitude = loc.coordinate.latitude
-         }
-     }
+    func requestPermission() {
+        manager.requestWhenInUseAuthorization()
+    }
+    
+    func checkStatus() {
+        status = manager.authorizationStatus
+    }
+    
+    func startUpdatingLocation() {
+        manager.startUpdatingLocation()
+    }
+    
+    func stop() {
+        manager.stopUpdatingLocation()
+    }
+}
+
+extension LocationManager: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let loc = locations.first {
+            latitude = loc.coordinate.latitude
+        }
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        status = manager.authorizationStatus
+    }
 }
