@@ -23,10 +23,9 @@ struct CartoonImageHeader: View {
             VStack {
                 HStack(spacing: 14) {
                     Text(title)
-                        .font(.title2)
+                        .font(.largeTitle)
                         .foregroundColor(.black)
-//                        .shadow(radius: 10)
-                        .shadow(color: .white, radius: 0.5, x: 1, y: 1)
+                        .shadow(color: .white.opacity(0.7), radius: 0.5, x: 1, y: 1)
                     Spacer()
                 }
                 .padding(.horizontal, 40)

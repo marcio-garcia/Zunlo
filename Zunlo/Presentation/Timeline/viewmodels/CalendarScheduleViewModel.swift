@@ -76,6 +76,7 @@ class CalendarScheduleViewModel: ObservableObject {
     @MainActor
     func fetchEvents() async {
         do {
+            locationManager.startUpdatingLocation()
             try await repository.fetchAll(in: visibleRange)
         } catch {
             state = .error(error.localizedDescription)
