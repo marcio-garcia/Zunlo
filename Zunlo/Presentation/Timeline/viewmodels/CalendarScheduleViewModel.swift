@@ -11,17 +11,25 @@ import CoreLocation
 
 enum Season: String { case winter, spring, summer, autumn }
 
+enum ViewState {
+    case loading
+    case loaded
+    case empty
+    case error(_ message: String)
+}
+
 class CalendarScheduleViewModel: ObservableObject {
+    @Published var state = ViewState.loading
     @Published var showAddSheet = false
     @Published var editMode: AddEditEventViewModel.Mode?
     @Published var showEditChoiceDialog = false
     @Published var editChoiceContext: EditChoiceContext?
 
     // For grouping and access
-    @Published var eventOccurrences: [EventOccurrence] = []
-    @Published var events: [Event] = []
-    @Published var eventOverrides: [EventOverride] = []
-    @Published var recurrenceRules: [RecurrenceRule] = []
+    var eventOccurrences: [EventOccurrence] = []
+    var events: [Event] = []
+    var eventOverrides: [EventOverride] = []
+    var recurrenceRules: [RecurrenceRule] = []
     
     var repository: EventRepository
     let visibleRange: ClosedRange<Date>
@@ -48,6 +56,7 @@ class CalendarScheduleViewModel: ObservableObject {
         // Bind to repository data observers
         
         occurObservID = repository.eventOccurrences.observe(owner: self, onChange: { [weak self] occurrences in
+            self?.state = occurrences.isEmpty ? .empty : .loaded
             self?.eventOccurrences = occurrences
         })
         
@@ -69,6 +78,7 @@ class CalendarScheduleViewModel: ObservableObject {
         do {
             try await repository.fetchAll(in: visibleRange)
         } catch {
+            state = .error(error.localizedDescription)
             print(error)
         }
     }

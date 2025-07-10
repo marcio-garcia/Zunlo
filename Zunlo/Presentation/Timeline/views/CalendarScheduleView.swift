@@ -17,13 +17,8 @@ struct CalendarScheduleView: View {
     
     var body: some View {
         NavigationStack {
-            if viewModel.eventOccurrences.isEmpty {
-                EmptyScheduleView {
-                    viewModel.showAddSheet = true
-                }
-                .transition(.opacity)
-                .animation(.easeInOut, value: viewModel.eventOccurrences.isEmpty)
-            } else {
+            switch viewModel.state {
+            case .loaded:
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
@@ -91,6 +86,16 @@ struct CalendarScheduleView: View {
                         }
                     }
                 }
+            case .loading:
+                ProgressView("Loading...")
+            case .empty:
+                EmptyScheduleView {
+                    viewModel.showAddSheet = true
+                }
+                .transition(.opacity)
+                .animation(.easeInOut, value: viewModel.eventOccurrences.isEmpty)
+            case .error(let message):
+                Text(message)
             }
         }
         .navigationTitle("Schedule")
