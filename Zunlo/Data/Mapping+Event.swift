@@ -22,6 +22,7 @@ extension Event {
         self.location = remote.location
         self.createdAt = created_at
         self.updatedAt = remote.updated_at
+        self.color = remote.color ?? .yellow
     }
 
     init(local: EventLocal) {
@@ -35,6 +36,7 @@ extension Event {
         self.location = local.location
         self.createdAt = local.createdAt
         self.updatedAt = local.updatedAt
+        self.color = local.color ?? .yellow
     }
 }
 
@@ -50,6 +52,7 @@ extension EventRemote {
         self.location = domain.location
         self.created_at = domain.createdAt
         self.updated_at = domain.updatedAt
+        self.color = domain.color
     }
 }
 
@@ -68,7 +71,8 @@ extension EventLocal {
             isRecurring: domain.isRecurring,
             location: domain.location,
             createdAt: domain.createdAt,
-            updatedAt: domain.updatedAt
+            updatedAt: domain.updatedAt,
+            color: domain.color
         )
     }
     
@@ -86,7 +90,8 @@ extension EventLocal {
             isRecurring: remote.is_recurring,
             location: remote.location,
             createdAt: created_at,
-            updatedAt: remote.updated_at
+            updatedAt: remote.updated_at,
+            color: remote.color ?? .yellow
         )
     }
     
@@ -98,5 +103,6 @@ extension EventLocal {
         self.location = event.location
         self.isRecurring = event.is_recurring
         self.updatedAt = event.updated_at
+        self.color = event.color ?? .yellow
     }
 }

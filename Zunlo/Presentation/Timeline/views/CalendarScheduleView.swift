@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CalendarScheduleView: View {
     @StateObject var viewModel: CalendarScheduleViewModel
+    @State private var openRowID: UUID? = nil
     
     init(repository: EventRepository) {
         _viewModel = StateObject(wrappedValue: CalendarScheduleViewModel(repository: repository))
@@ -43,11 +44,33 @@ struct CalendarScheduleView: View {
                                             .padding(.top, 8)
                                             .padding(.bottom, 4)
                                         ForEach(occurrences) { occurrence in
-                                            EventRow(
-                                                occurrence: occurrence,
-                                                onEdit: { viewModel.handleEdit(occurrence: occurrence) },
-                                                onDelete: { viewModel.handleDelete(occurrence: occurrence) }
-                                            )
+//                                            let occID = occurrence.id + occurrence.
+                                            SwipeableRow(id: occurrence.id,
+                                                         isOpen: occurrence.id == openRowID) {
+                                                EventRow(occurrence: occurrence, onEdit: {}, onDelete: {})
+                                            } onOpen: {
+                                                openRowID = occurrence.id
+                                            } onClose: {
+                                                openRowID = nil
+                                            } onDelete: {
+                                                viewModel.handleDelete(occurrence: occurrence)
+                                            } onEdit: {
+                                                viewModel.handleEdit(occurrence: occurrence)
+                                            }
+
+//                                            SwipeableRow {
+//                                                EventRow(occurrence: occurrence, onEdit: {}, onDelete: {})
+//                                            } onDelete: {
+//                                                viewModel.handleDelete(occurrence: occurrence)
+//                                            } onEdit: {
+//                                                viewModel.handleEdit(occurrence: occurrence)
+//                                            }
+
+//                                            EventRow(
+//                                                occurrence: occurrence,
+//                                                onEdit: {  },
+//                                                onDelete: {  }
+//                                            )
                                         }
                                     }
                                     .background(Color(.systemBackground))

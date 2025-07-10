@@ -23,6 +23,7 @@ extension EventOverride {
         self.notes = remote.notes
         self.createdAt = remote.created_at
         self.updatedAt = remote.updated_at
+        self.color = remote.color ?? .yellow
     }
 
     init(local: EventOverrideLocal) {
@@ -37,6 +38,7 @@ extension EventOverride {
         self.notes = local.notes
         self.createdAt = local.createdAt
         self.updatedAt = local.updatedAt
+        self.color = local.color ?? .yellow
     }
 }
 
@@ -53,6 +55,7 @@ extension EventOverrideRemote {
         self.notes = domain.notes
         self.created_at = domain.createdAt
         self.updated_at = domain.updatedAt
+        self.color = domain.color
     }
 }
 
@@ -72,7 +75,8 @@ extension EventOverrideLocal {
             isCancelled: domain.isCancelled,
             notes: domain.notes,
             createdAt: domain.createdAt,
-            updatedAt: domain.updatedAt
+            updatedAt: domain.updatedAt,
+            color: domain.color
         )
     }
     
@@ -90,7 +94,8 @@ extension EventOverrideLocal {
                   isCancelled: remote.is_cancelled,
                   notes: remote.notes,
                   createdAt: remote.created_at,
-                  updatedAt: remote.updated_at
+                  updatedAt: remote.updated_at,
+                  color: remote.color ?? .yellow
         )
     }
     
@@ -103,5 +108,6 @@ extension EventOverrideLocal {
         self.isCancelled = local.is_cancelled
         self.notes = local.notes
         self.updatedAt = local.updated_at
+        self.color = local.color ?? .yellow
     }
 }

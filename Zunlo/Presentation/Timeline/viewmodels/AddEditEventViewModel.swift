@@ -34,6 +34,7 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var byMonthday: Set<Int> = []
     @Published var until: Date? = nil
     @Published var count: String = ""
+    @Published var color: String = EventColor.yellow.rawValue
     @Published var isCancelled: Bool = false
     @Published var isSaving: Bool = false
 
@@ -93,6 +94,7 @@ final class AddEditEventViewModel: ObservableObject {
             byMonthday.removeAll()
             until = nil
             count = ""
+            color = EventColor.yellow.rawValue
         case .editAll(let event, let rule):
             title = event.title
             notes = event.description ?? ""
@@ -100,6 +102,7 @@ final class AddEditEventViewModel: ObservableObject {
             endDate = event.endDate ?? event.startDate.addingTimeInterval(3600)
             location = event.location ?? ""
             isRecurring = event.isRecurring
+            color = event.color.rawValue
             if let rule = rule {
                 recurrenceType = rule.freq
                 recurrenceInterval = rule.interval
@@ -121,6 +124,7 @@ final class AddEditEventViewModel: ObservableObject {
             startDate = occurrence.startDate
             endDate = occurrence.endDate ?? occurrence.startDate.addingTimeInterval(3600)
             location = parent.location ?? ""
+            color = parent.color.rawValue
             isCancelled = false
         case .editOverride(let override):
             title = override.overriddenTitle ?? ""
@@ -129,6 +133,7 @@ final class AddEditEventViewModel: ObservableObject {
             endDate = override.overriddenEndDate ?? (override.overriddenStartDate?.addingTimeInterval(3600) ?? override.occurrenceDate.addingTimeInterval(3600))
             location = override.overriddenLocation ?? ""
             isCancelled = override.isCancelled
+            color = override.color.rawValue
         }
     }
     
@@ -169,7 +174,8 @@ final class AddEditEventViewModel: ObservableObject {
             isRecurring: isRecurring,
             location: location.isEmpty ? nil : location,
             createdAt: now,
-            updatedAt: now
+            updatedAt: now,
+            color: EventColor(rawValue: color) ?? . yellow
         )
         
         let addedEvents = try await repository.save(newEvent)
@@ -211,7 +217,8 @@ final class AddEditEventViewModel: ObservableObject {
             isRecurring: isRecurring,
             location: location.isEmpty ? nil : location,
             createdAt: event.createdAt,
-            updatedAt: now
+            updatedAt: now,
+            color: EventColor(rawValue: color) ?? . yellow
         )
         
         try await repository.update(updatedEvent)
@@ -257,7 +264,8 @@ final class AddEditEventViewModel: ObservableObject {
             isCancelled: isCancelled,
             notes: notes.isEmpty ? nil : notes,
             createdAt: now,
-            updatedAt: now
+            updatedAt: now,
+            color: EventColor(rawValue: color) ?? . yellow
         )
         try await repository.saveOverride(override)
     }
@@ -275,7 +283,8 @@ final class AddEditEventViewModel: ObservableObject {
             isCancelled: isCancelled,
             notes: notes.isEmpty ? nil : notes,
             createdAt: override.createdAt,
-            updatedAt: now
+            updatedAt: now,
+            color: EventColor(rawValue: color) ?? . yellow
         )
         try await repository.updateOverride(updatedOverride)
     }

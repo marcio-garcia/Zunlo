@@ -18,4 +18,5 @@ struct EventOccurrence: Identifiable, Hashable {
     let originalDate: Date
     let isOverride: Bool
     let isCancelled: Bool
+    let color: EventColor
 }

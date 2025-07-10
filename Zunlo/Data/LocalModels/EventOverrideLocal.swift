@@ -20,6 +20,7 @@ class EventOverrideLocal: Object {
     @Persisted var notes: String?
     @Persisted var createdAt: Date
     @Persisted var updatedAt: Date
+    @Persisted var color: EventColor? = .yellow
 
     // Convenience initializer
     convenience init(
@@ -33,7 +34,8 @@ class EventOverrideLocal: Object {
         isCancelled: Bool,
         notes: String?,
         createdAt: Date,
-        updatedAt: Date
+        updatedAt: Date,
+        color: EventColor? = .yellow
     ) {
         self.init()
         self.id = id
@@ -47,5 +49,6 @@ class EventOverrideLocal: Object {
         self.notes = notes
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.color = color
     }
 }

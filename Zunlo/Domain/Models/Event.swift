@@ -18,4 +18,5 @@ struct Event: Identifiable, Codable, Hashable {
     let location: String?
     let createdAt: Date
     let updatedAt: Date
+    let color: EventColor
 }

@@ -31,7 +31,7 @@ class CalendarScheduleViewModel: ObservableObject {
     var eventsObservID: UUID?
     var overridesObservID: UUID?
     var rulesObservID: UUID?
-    
+        
     struct EditChoiceContext {
         let occurrence: EventOccurrence
         let parentEvent: Event

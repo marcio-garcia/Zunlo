@@ -19,6 +19,7 @@ class EventLocal: Object {
     @Persisted var location: String?
     @Persisted var createdAt: Date = Date()
     @Persisted var updatedAt: Date = Date()
+    @Persisted var color: EventColor? = .yellow
     
     convenience init(
         id: UUID,
@@ -30,7 +31,8 @@ class EventLocal: Object {
         isRecurring: Bool = false,
         location: String? = nil,
         createdAt: Date = Date(),
-        updatedAt: Date = Date()
+        updatedAt: Date = Date(),
+        color: EventColor? = .yellow
     ) {
         self.init() // <-- MUST call the default init
         self.id = id
@@ -43,5 +45,6 @@ class EventLocal: Object {
         self.location = location
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.color = color
     }
 }

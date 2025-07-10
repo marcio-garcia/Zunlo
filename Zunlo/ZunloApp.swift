@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import SupabaseSDK
+import RealmSwift
 
 @main
 struct ZunloApp: App {
@@ -16,6 +17,8 @@ struct ZunloApp: App {
     private let supabaseSDK: SupabaseSDK
     
     init() {
+        setupRealm()
+        
         let supabaseConfig = SupabaseConfig(anonKey: EnvConfig.shared.apiKey,
                                             baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!)
         supabaseSDK = SupabaseSDK(config: supabaseConfig)
@@ -29,4 +32,25 @@ struct ZunloApp: App {
                 .environmentObject(authManager)
         }
     }
+}
+
+func setupRealm() {
+    let config = Realm.Configuration(
+        schemaVersion: 3, // <- increment this every time you change schema!
+        migrationBlock: { migration, oldSchemaVersion in
+            if oldSchemaVersion < 2 {
+                // For new 'color' property on EventLocal/EventOverrideLocal,
+                // Realm will auto-initialize it to the default value.
+                // If you want to set a custom default, do it here:
+//                migration.enumerateObjects(ofType: EventLocal.className()) { oldObject, newObject in
+//                    newObject?["color"] = "#FFD966" // Default pastel yellow (or whatever you like)
+//                }
+//                migration.enumerateObjects(ofType: EventOverrideLocal.className()) { oldObject, newObject in
+//                    newObject?["color"] = "#FFD966"
+//                }
+            }
+        }
+    )
+    Realm.Configuration.defaultConfiguration = config
+    // let _ = try! Realm() // Force Realm to initialize now
 }

@@ -14,21 +14,26 @@ struct EventRow: View {
 
     var body: some View {
         HStack {
+            Rectangle()
+                .fill(Color(hex: occurrence.color.rawValue) ?? Color.gray)
+                .frame(width: 6)
+                .cornerRadius(3)
             VStack(alignment: .leading) {
                 Text(occurrence.title)
+                    .font(.subheadline)
                 Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             Spacer()
             if occurrence.isOverride {
                 Image(systemName: "pencil")
             }
-            Button(action: onEdit) {
-                Image(systemName: "square.and.pencil")
-            }
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-            }
         }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
     
     func formatDate(start: Date, end: Date?) -> String {

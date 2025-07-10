@@ -19,4 +19,5 @@ struct EventOverride: Identifiable, Codable, Hashable {
     let notes: String?
     let createdAt: Date
     let updatedAt: Date
+    let color: EventColor
 }

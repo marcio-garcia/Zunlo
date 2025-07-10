@@ -45,7 +45,8 @@ struct EventOccurrenceService {
                             endDate: ov.overriddenEndDate ?? event.endDate,
                             originalDate: ov.occurrenceDate,
                             isOverride: true,
-                            isCancelled: false
+                            isCancelled: false,
+                            color: ov.color
                         ))
                     } else {
                         occurrences.append(EventOccurrence(
@@ -58,7 +59,8 @@ struct EventOccurrenceService {
                             endDate: event.endDate,
                             originalDate: event.startDate,
                             isOverride: false,
-                            isCancelled: false
+                            isCancelled: false,
+                            color: event.color
                         ))
                     }
                 }
@@ -87,12 +89,13 @@ struct EventOccurrenceService {
                             endDate: ov.overriddenEndDate ?? event.endDate,
                             originalDate: ov.occurrenceDate,
                             isOverride: true,
-                            isCancelled: false
+                            isCancelled: false,
+                            color: ov.color
                         ))
                     } else {
                         let eventDuration = event.endDate?.timeIntervalSince(event.startDate)
                         occurrences.append(EventOccurrence(
-                            id: UUID(uuidString: "\(eventId.uuidString.prefix(8))\(date.timeIntervalSince1970)") ?? eventId,
+                            id: UUID(),
                             eventId: eventId,
                             title: event.title,
                             description: event.description,
@@ -101,7 +104,8 @@ struct EventOccurrenceService {
                             endDate: eventDuration == nil ? nil : date.addingTimeInterval(eventDuration ?? 0),
                             originalDate: event.startDate,
                             isOverride: false,
-                            isCancelled: false
+                            isCancelled: false,
+                            color: event.color
                         ))
                     }
                 }

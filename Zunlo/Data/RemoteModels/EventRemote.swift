@@ -18,6 +18,7 @@ struct EventRemote: Codable, Identifiable {
     let location: String?
     var created_at: Date?
     let updated_at: Date
+    let color: EventColor?
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -27,6 +28,7 @@ struct EventRemote: Codable, Identifiable {
         self.description = try? container.decodeSafely(String.self, forKey: .description)
         self.is_recurring = try container.decodeSafely(Bool.self, forKey: .is_recurring)
         self.location = try? container.decodeSafely(String.self, forKey: .location)
+        self.color = try? container.decodeSafely(EventColor.self, forKey: .color)
         
         let start_datetime = try container.decode(String.self, forKey: .start_datetime)
         let end_datetime = try? container.decodeSafely(String.self, forKey: .end_datetime)

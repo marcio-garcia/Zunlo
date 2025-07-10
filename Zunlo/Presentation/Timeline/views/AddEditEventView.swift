@@ -21,7 +21,7 @@ struct AddEditEventView: View {
             Form {
                 Section {
                     TextField("Title", text: $viewModel.title)
-                        .focused($focusTitle)
+//                        .focused($focusTitle)
                     TextField("Location", text: $viewModel.location)
                     TextField("Notes", text: $viewModel.notes, axis: .vertical)
                 } header: {
@@ -71,6 +71,7 @@ struct AddEditEventView: View {
                 // Cancel single occurrence for override
                 if viewModel.showsCancelSection && viewModel.isEditingSingleOrOverride {
                     Section {
+                        ColorPickerView(selectedColor: $viewModel.color)
                         Toggle("Cancelled", isOn: $viewModel.isCancelled)
                             .tint(.red)
                     }

@@ -19,6 +19,7 @@ struct EventOverrideRemote: Codable, Identifiable {
     let notes: String?
     let created_at: Date
     let updated_at: Date
+    let color: EventColor?
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -28,7 +29,7 @@ struct EventOverrideRemote: Codable, Identifiable {
         self.overridden_location = try? container.decodeSafely(String.self, forKey: .overridden_location)
         self.is_cancelled = try container.decodeSafely(Bool.self, forKey: .is_cancelled)
         self.notes = try? container.decodeSafely(String.self, forKey: .notes)
-        
+        self.color = try? container.decodeSafely(EventColor.self, forKey: .color)
         
         let occurrence_date = try container.decodeSafely(String.self, forKey: .occurrence_date)
         let overridden_start_datetime = try? container.decodeSafely(String.self, forKey: .overridden_start_datetime)
