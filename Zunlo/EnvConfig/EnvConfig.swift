@@ -22,6 +22,12 @@ class EnvConfig {
         return "\(apiProtocol)://\(apiUrl)"
     }
     
+    var apiFunctionsBaseUrl: String {
+        let apiProtocol = Bundle.main.infoDictionary?["API_PROTOCOL"] as? String ?? ""
+        let apiUrl =  Bundle.main.infoDictionary?["API_FUNCTIONS_BASE_URL"] as? String ?? ""
+        return "\(apiProtocol)://\(apiUrl)"
+    }
+    
     var apiKey: String {
         Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
     }

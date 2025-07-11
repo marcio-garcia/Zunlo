@@ -34,6 +34,10 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
     func fetchAll() async throws -> [EventRemote] {
         try await database.fetch(from: tableName, as: EventRemote.self, query: ["select": "*"])
     }
+    
+    func fecthOccurrences() async throws -> [EventOccurrenceRemote] {
+        try await database.fetchOccurrences(as: EventOccurrenceRemote.self)
+    }
 
     func save(_ event: EventRemote) async throws -> [EventRemote] {
         // Only nil the ID if creating a new record and let Supabase/DB handle it

@@ -38,6 +38,18 @@ public final class SupabaseDatabase: @unchecked Sendable {
         return try decode(data)
     }
     
+    public func fetchOccurrences<T: Decodable>(as type: T.Type = T.self) async throws -> [T] {
+        let (data, response) = try await httpClient.sendRequest(
+            baseURL: config.functionsBaseURL,
+            path: "/get_user_events",
+            method: "GET"
+        )
+        guard 200..<300 ~= response.statusCode else {
+            throw URLError(.badServerResponse)
+        }
+        return try decode(data)
+    }
+    
     public func insert<T: Codable>(_ object: T,
                                    into table: String) async throws -> [T] {
         let body = try encode(object)

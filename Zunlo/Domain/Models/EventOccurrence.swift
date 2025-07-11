@@ -8,15 +8,20 @@
 import Foundation
 
 struct EventOccurrence: Identifiable, Hashable {
-    let id: UUID         // For recurring: master event ID + date can be composed as needed
+    let id: UUID
+    let userId: UUID
     let eventId: UUID
     let title: String
     let description: String?
-    let location: String?
     let startDate: Date
     let endDate: Date?
-    let originalDate: Date
+    let isRecurring: Bool
+    let location: String?
+    let color: EventColor
     let isOverride: Bool
     let isCancelled: Bool
-    let color: EventColor
+    let updatedAt: Date
+    let createdAt: Date
+    let overrides: [EventOverride]
+    let recurrence_rules: [RecurrenceRule]
 }

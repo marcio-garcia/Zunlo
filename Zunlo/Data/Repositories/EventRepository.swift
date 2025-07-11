@@ -9,14 +9,12 @@ import Foundation
 import MiniSignalEye
 
 final class EventRepository {
-    // Flat list of all event instances, ready for UI
-    private(set) var eventOccurrences = Observable<[EventOccurrence]>([])
-    
     // Raw domain entities (may be useful for some advanced features)
     private(set) var events = Observable<[Event]>([])
     private(set) var recurrenceRules = Observable<[RecurrenceRule]>([])
     private(set) var eventOverrides = Observable<[EventOverride]>([])
-
+    private(set) var occurrences = Observable<[EventOccurrence]>([])
+    
     // Stores
     private let eventLocalStore: EventLocalStore
     private let eventRemoteStore: EventRemoteStore
@@ -24,8 +22,6 @@ final class EventRepository {
     private let recurrenceRuleRemoteStore: RecurrenceRuleRemoteStore
     private let eventOverrideLocalStore: EventOverrideLocalStore
     private let eventOverrideRemoteStore: EventOverrideRemoteStore
-
-    var occurrenceObservable = Observable<[EventOccurrence]>([])
     
     init(
         eventLocalStore: EventLocalStore,
@@ -46,20 +42,20 @@ final class EventRepository {
     // MARK: - Fetch & Compose All (from local, for UI)
 
     func fetchAll(in range: ClosedRange<Date>? = nil) async throws {
-        do {
-            let eventsLocal = try await eventLocalStore.fetchAll()
-            if eventsLocal.isEmpty {
-                try await synchronize()
-            } else {
-                try await fetchLocal(in: range)
-            }
-        } catch {
-            self.events.value = []
-            self.recurrenceRules.value = []
-            self.eventOverrides.value = []
-            self.eventOccurrences.value = []
-            print("Failed to fetch data: \(error)")
-        }
+        occurrences.value = try await fetchRemote()
+//        do {
+//            let eventsLocal = try await eventLocalStore.fetchAll()
+//            if eventsLocal.isEmpty {
+//                try await synchronize()
+//            } else {
+//                try await fetchLocal(in: range)
+//            }
+//        } catch {
+//            self.events.value = []
+//            self.recurrenceRules.value = []
+//            self.eventOverrides.value = []
+//            print("Failed to fetch data: \(error)")
+//        }
     }
     
     private func fetchLocal(in range: ClosedRange<Date>? = nil) async throws {
@@ -67,33 +63,17 @@ final class EventRepository {
             self.events.value = try await eventLocalStore.fetchAll()
             self.recurrenceRules.value = try await recurrenceRuleLocalStore.fetchAll()
             self.eventOverrides.value = try await eventOverrideLocalStore.fetchAll()
-            self.eventOccurrences.value = try composeOccurrences(in: range)
         } catch {
             self.events.value = []
             self.recurrenceRules.value = []
             self.eventOverrides.value = []
-            self.eventOccurrences.value = []
             print("Failed to fetch all local data: \(error)")
         }
     }
-
-    // MARK: - Compose occurrences for the UI
-
-    func composeOccurrences(in range: ClosedRange<Date>? = nil) throws -> [EventOccurrence] {
-        let usedRange = range ?? defaultDateRange()
-        return try EventOccurrenceService.generate(
-            events: self.events.value,
-            rules: self.recurrenceRules.value,
-            overrides: self.eventOverrides.value,
-            in: usedRange
-        )
-    }
-
-    private func defaultDateRange() -> ClosedRange<Date> {
-        let cal = Calendar.current
-        let start = cal.date(byAdding: .month, value: -12, to: Date())!
-        let end = cal.date(byAdding: .month, value: 12, to: Date())!
-        return start...end
+    
+    private func fetchRemote() async throws -> [EventOccurrence] {
+        let occurrences = try await eventRemoteStore.fecthOccurrences()
+        return occurrences.map { EventOccurrence(remote: $0) }
     }
 
     // MARK: - CRUD for Events
@@ -116,10 +96,11 @@ final class EventRepository {
     }
 
     func delete(_ event: Event) async throws {
-        guard let id = event.id else { return }
         let deleted = try await eventRemoteStore.delete(EventRemote(domain: event))
         for event in deleted {
-            try await eventLocalStore.delete(id: id)
+            if let id = event.id {
+                try await eventLocalStore.delete(id: id)
+            }
         }
         try await fetchLocal()
     }
@@ -143,10 +124,11 @@ final class EventRepository {
     }
 
     func deleteRecurrenceRule(_ rule: RecurrenceRule) async throws {
-        guard let id = rule.id else { return }
         let deleted = try await recurrenceRuleRemoteStore.delete(RecurrenceRuleRemote(domain: rule))
         for rule in deleted {
-            try await recurrenceRuleLocalStore.delete(id: id)
+            if let id = rule.id {
+                try await recurrenceRuleLocalStore.delete(id: id)
+            }
         }
         try await fetchLocal()
     }
@@ -170,10 +152,11 @@ final class EventRepository {
     }
 
     func deleteOverride(_ override: EventOverride) async throws {
-        guard let id = override.id else { return }
         let deleted = try await eventOverrideRemoteStore.delete(EventOverrideRemote(domain: override))
-        for ov in deleted {
-            try await eventOverrideLocalStore.delete(id: id)
+        for del in deleted {
+            if let id = del.id {
+                try await eventOverrideLocalStore.delete(id: id)
+            }
         }
         try await fetchLocal()
     }
@@ -202,23 +185,6 @@ final class EventRepository {
         for o in remoteOverrides { try await eventOverrideLocalStore.save(o) }
 
         try await fetchAll()
-    }
-
-    // MARK: - Query helpers (for view models/UI)
-
-    func allEventDates(in range: ClosedRange<Date>) -> [Date] {
-        eventOccurrences.value.map { $0.startDate }
-            .filter { range.contains($0) }
-            .removingDuplicates()
-            .sorted()
-    }
-
-    func occurrences(on date: Date) -> [EventOccurrence] {
-        eventOccurrences.value.filter { Calendar.current.isDate($0.startDate, inSameDayAs: date) }
-    }
-
-    func containsEvent(on date: Date) -> Bool {
-        !occurrences(on: date).isEmpty
     }
 }
 

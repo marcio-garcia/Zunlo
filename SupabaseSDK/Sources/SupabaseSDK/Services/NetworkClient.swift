@@ -18,12 +18,14 @@ final class NetworkClient {
         self.session = session
     }
     
-    func sendRequest(path: String,
+    func sendRequest(baseURL: URL? = nil,
+                     path: String,
                      method: String,
                      query: [String: String]? = nil,
                      body: Data? = nil,
                      additionalHeaders: [String: String]? = nil) async throws -> (Data, HTTPURLResponse) {
-        var url = config.baseURL.appendingPathComponent(path)
+        let base = baseURL ?? config.baseURL
+        var url = base.appendingPathComponent(path)
         if let query = query, !query.isEmpty {
             var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
             components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }

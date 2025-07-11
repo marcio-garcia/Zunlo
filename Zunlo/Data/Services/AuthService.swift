@@ -21,7 +21,9 @@ class AuthService: AuthServicing {
     private var supabase: SupabaseSDK
     
     init(envConfig: EnvConfig) {
-        let config = SupabaseConfig(anonKey: envConfig.apiKey, baseURL: URL(string: envConfig.apiBaseUrl)!)
+        let config = SupabaseConfig(anonKey: envConfig.apiKey,
+                                    baseURL: URL(string: envConfig.apiBaseUrl)!,
+                                    functionsBaseURL: URL(string: envConfig.apiFunctionsBaseUrl))
         supabase = SupabaseSDK(config: config)
     }
     

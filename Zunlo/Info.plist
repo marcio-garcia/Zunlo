@@ -4,14 +4,16 @@
 <dict>
 	<key>API_BASE_URL</key>
 	<string>$(API_BASE_URL)</string>
+	<key>API_FUNCTIONS_BASE_URL</key>
+	<string>$(API_FUNCTIONS_BASE_URL)</string>
 	<key>API_PROTOCOL</key>
 	<string>$(API_PROTOCOL)</string>
 	<key>ENVIRONMENT</key>
 	<string>$(ENVIRONMENT)</string>
 	<key>API_KEY</key>
 	<string>$(API_KEY)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos sua localização para mostrar conteúdo personalizado.</string>
 </dict>

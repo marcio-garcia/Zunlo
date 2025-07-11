@@ -13,106 +13,127 @@ enum EventOccurrenceError: Error {
 }
 
 struct EventOccurrenceService {
+    
     /// Generate all event occurrences (including overrides/cancellations) in the given range.
-    static func generate(
-        events: [Event],
-        rules: [RecurrenceRule],
-        overrides: [EventOverride],
-        in range: ClosedRange<Date>
-    ) throws -> [EventOccurrence] {
+    static func generate(rawOccurrences: [EventOccurrence],
+                         in range: ClosedRange<Date>) throws -> [EventOccurrence] {
         var occurrences: [EventOccurrence] = []
 
-        let ruleDict = Dictionary(grouping: rules, by: { $0.eventId })
-        let overrideDict = Dictionary(grouping: overrides, by: { $0.eventId })
-
-        for event in events {
-            guard let eventId = event.id else { throw EventOccurrenceError.eventIDIsNill }
-            if !event.isRecurring {
-                // Single event
-                guard range.contains(event.startDate) else { continue }
-                let isCancelled = overrides.contains(where: { $0.eventId == event.id && $0.occurrenceDate == event.startDate && $0.isCancelled })
-                if !isCancelled {
-                    // If there's an override for this one-off event, apply it
-                    if let ov = overrides.first(where: { $0.eventId == event.id && $0.occurrenceDate == event.startDate }) {
-                        guard let overrideId = ov.id else { throw EventOccurrenceError.overrideIDIsNil }
-                        occurrences.append(EventOccurrence(
-                            id: overrideId,
-                            eventId: eventId,
-                            title: ov.overriddenTitle ?? event.title,
-                            description: event.description,
-                            location: ov.overriddenLocation ?? event.location,
-                            startDate: ov.overriddenStartDate ?? event.startDate,
-                            endDate: ov.overriddenEndDate ?? event.endDate,
-                            originalDate: ov.occurrenceDate,
-                            isOverride: true,
-                            isCancelled: false,
-                            color: ov.color
-                        ))
-                    } else {
-                        occurrences.append(EventOccurrence(
-                            id: eventId,
-                            eventId: eventId,
-                            title: event.title,
-                            description: event.description,
-                            location: event.location,
-                            startDate: event.startDate,
-                            endDate: event.endDate,
-                            originalDate: event.startDate,
-                            isOverride: false,
-                            isCancelled: false,
-                            color: event.color
-                        ))
-                    }
-                }
-            } else {
+        for rawOcc in rawOccurrences {
+            if rawOcc.isRecurring {
                 // Recurring event
-                guard let rule = ruleDict[eventId]?.first else { continue }
+                let ruleDict = Dictionary(grouping: rawOcc.recurrence_rules, by: { $0.eventId })
+                let overrideDict = Dictionary(grouping: rawOcc.overrides, by: { $0.eventId })
+                
+                guard let rule = ruleDict[rawOcc.eventId]?.first else { continue }
+                
                 let dates = RecurrenceHelper.generateRecurrenceDates(
-                    start: event.startDate,
+                    start: rawOcc.startDate,
                     rule: rule,
                     within: range
                 )
-                let eventOverrides = overrideDict[eventId] ?? []
+                
+                let eventOverrides = overrideDict[rawOcc.eventId] ?? []
 
                 for date in dates {
                     // Is there an override/cancellation?
                     if let ov = eventOverrides.first(where: { $0.occurrenceDate.isSameDay(as: date) }) {
                         if ov.isCancelled { continue }
                         guard let overrideId = ov.id else { throw EventOccurrenceError.overrideIDIsNil }
-                        occurrences.append(EventOccurrence(
+                        let occu = EventOccurrence(
                             id: overrideId,
-                            eventId: eventId,
-                            title: ov.overriddenTitle ?? event.title,
-                            description: event.description,
-                            location: ov.overriddenLocation ?? event.location,
+                            userId: rawOcc.userId,
+                            eventId: ov.eventId,
+                            title: ov.overriddenTitle ?? rawOcc.title,
+                            description: rawOcc.description,
                             startDate: ov.overriddenStartDate ?? date,
-                            endDate: ov.overriddenEndDate ?? event.endDate,
-                            originalDate: ov.occurrenceDate,
+                            endDate: ov.overriddenEndDate ?? rawOcc.endDate,
+                            isRecurring: rawOcc.isRecurring,
+                            location: ov.overriddenLocation ?? rawOcc.location,
+                            color: ov.color,
                             isOverride: true,
                             isCancelled: false,
-                            color: ov.color
-                        ))
+                            updatedAt: ov.updatedAt,
+                            createdAt: ov.createdAt,
+                            overrides: eventOverrides,
+                            recurrence_rules: [rule]
+                        )
+                        occurrences.append(occu)
                     } else {
-                        let eventDuration = event.endDate?.timeIntervalSince(event.startDate)
-                        occurrences.append(EventOccurrence(
+                        let eventDuration = rawOcc.endDate?.timeIntervalSince(rawOcc.startDate)
+                        let occu = EventOccurrence(
                             id: UUID(),
-                            eventId: eventId,
-                            title: event.title,
-                            description: event.description,
-                            location: event.location,
+                            userId: rawOcc.userId,
+                            eventId: rawOcc.eventId,
+                            title: rawOcc.title,
+                            description: rawOcc.description,
                             startDate: date,
                             endDate: eventDuration == nil ? nil : date.addingTimeInterval(eventDuration ?? 0),
-                            originalDate: event.startDate,
+                            isRecurring: rawOcc.isRecurring,
+                            location: rawOcc.location,
+                            color: rawOcc.color,
                             isOverride: false,
                             isCancelled: false,
-                            color: event.color
-                        ))
+                            updatedAt: rawOcc.updatedAt,
+                            createdAt: rawOcc.createdAt,
+                            overrides: eventOverrides,
+                            recurrence_rules: [rule]
+                        )
+                        occurrences.append(occu)
+                    }
+                }
+            } else {
+                // Regular event
+                guard range.contains(rawOcc.startDate) else { continue }
+                let isCancelled = rawOcc.overrides.contains(where: { $0.eventId == rawOcc.eventId && $0.occurrenceDate == rawOcc.startDate && $0.isCancelled })
+                if !isCancelled {
+                    // If there's an override for this one-off event, apply it
+                    if let ov = rawOcc.overrides.first(where: { $0.eventId == rawOcc.eventId && $0.occurrenceDate == rawOcc.startDate }) {
+                        guard let overrideId = ov.id else { throw EventOccurrenceError.overrideIDIsNil }
+                        let occu = EventOccurrence(
+                            id: overrideId,
+                            userId: rawOcc.userId,
+                            eventId: ov.eventId,
+                            title: ov.overriddenTitle ?? rawOcc.title,
+                            description: rawOcc.description,
+                            startDate: ov.overriddenStartDate ?? rawOcc.startDate,
+                            endDate: ov.overriddenEndDate ?? rawOcc.endDate,
+                            isRecurring: rawOcc.isRecurring,
+                            location: ov.overriddenLocation ?? rawOcc.location,
+                            color: ov.color,
+                            isOverride: true,
+                            isCancelled: false,
+                            updatedAt: ov.updatedAt,
+                            createdAt: ov.createdAt,
+                            overrides: [],
+                            recurrence_rules: []
+                        )
+                        occurrences.append(occu)
+                    } else {
+                        let occu = EventOccurrence(
+                            id: rawOcc.eventId,
+                            userId: rawOcc.userId,
+                            eventId: rawOcc.eventId,
+                            title: rawOcc.title,
+                            description: rawOcc.description,
+                            startDate: rawOcc.startDate,
+                            endDate: rawOcc.endDate,
+                            isRecurring: rawOcc.isRecurring,
+                            location: rawOcc.location,
+                            color: rawOcc.color,
+                            isOverride: false,
+                            isCancelled: false,
+                            updatedAt: rawOcc.updatedAt,
+                            createdAt: rawOcc.createdAt,
+                            overrides: [],
+                            recurrence_rules: []
+                        )
+                        occurrences.append(occu)
                     }
                 }
             }
         }
 
-        // Optional: sort by date/time
         return occurrences.sorted { $0.startDate < $1.startDate }
     }
 }

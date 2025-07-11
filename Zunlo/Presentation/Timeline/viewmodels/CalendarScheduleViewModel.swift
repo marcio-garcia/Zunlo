@@ -26,10 +26,7 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var editChoiceContext: EditChoiceContext?
 
     // For grouping and access
-    var eventOccurrences: [EventOccurrence] = []
-    var events: [Event] = []
-    var eventOverrides: [EventOverride] = []
-    var recurrenceRules: [RecurrenceRule] = []
+    var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
     
     var repository: EventRepository
     let visibleRange: ClosedRange<Date>
@@ -42,7 +39,7 @@ class CalendarScheduleViewModel: ObservableObject {
         
     struct EditChoiceContext {
         let occurrence: EventOccurrence
-        let parentEvent: Event
+        let parentEvent: EventOccurrence
         let rule: RecurrenceRule?
     }
     
@@ -54,22 +51,8 @@ class CalendarScheduleViewModel: ObservableObject {
         self.visibleRange = start...end
 
         // Bind to repository data observers
-        
-        occurObservID = repository.eventOccurrences.observe(owner: self, onChange: { [weak self] occurrences in
-            self?.state = occurrences.isEmpty ? .empty : .loaded
-            self?.eventOccurrences = occurrences
-        })
-        
-        eventsObservID = repository.events.observe(owner: self, onChange: { [weak self] events in
-            self?.events = events
-        })
-        
-        overridesObservID = repository.eventOverrides.observe(owner: self, onChange: { [weak self] overrides in
-            self?.eventOverrides = overrides
-        })
-        
-        rulesObservID = repository.recurrenceRules.observe(owner: self, onChange: { [weak self] rules in
-            self?.recurrenceRules = rules
+        occurObservID = repository.occurrences.observe(owner: self, onChange: { [weak self] occurrences in
+            self?.handleOccurrences(occurrences)
         })
     }
     
@@ -84,12 +67,37 @@ class CalendarScheduleViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Compose occurrences for the UI
+
+    func handleOccurrences(_ occ: [EventOccurrence]) {
+        do {
+            eventOccurrences = try composeOccurrences(in: visibleRange, occurrences: occ)
+            state = occ.isEmpty ? .empty : .loaded
+        } catch {
+            state = .error(error.localizedDescription)
+        }
+    }
+    
+    func composeOccurrences(in range: ClosedRange<Date>? = nil,
+                            occurrences: [EventOccurrence]) throws -> [EventOccurrence] {
+        let usedRange = range ?? defaultDateRange()
+        return try EventOccurrenceService.generate(rawOccurrences: occurrences, in: usedRange)
+    }
+    
+    private func defaultDateRange() -> ClosedRange<Date> {
+        let cal = Calendar.current
+        let start = cal.date(byAdding: .month, value: -12, to: Date())!
+        let end = cal.date(byAdding: .month, value: 12, to: Date())!
+        return start...end
+    }
+    
     var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] {
         let calendar = Calendar.current
         return Dictionary(
             grouping: eventOccurrences
         ) { occurrence in
-            calendar.date(from: calendar.dateComponents([.year, .month], from: occurrence.startDate.startOfDay))!
+            calendar.date(from: calendar.dateComponents([.year, .month],
+                                                        from: occurrence.startDate.startOfDay))!
         }
         .mapValues { occurrencesInMonth in
             Dictionary(
@@ -101,13 +109,12 @@ class CalendarScheduleViewModel: ObservableObject {
 
     func handleEdit(occurrence: EventOccurrence) {
         if occurrence.isOverride {
-            if let override = eventOverrides.first(where: { $0.id == occurrence.id }) {
+            if let override = occurrence.overrides.first(where: { $0.id == occurrence.id }) {
                 editMode = .editOverride(override: override)
             }
-        } else if let parent = events.first(where: { $0.id == occurrence.eventId }) {
-            let rule = recurrenceRules.first(where: { $0.eventId == parent.id })
+        } else if let parent = eventOccurrences.first(where: { $0.id == occurrence.eventId }) {
+            let rule = occurrence.recurrence_rules.first(where: { $0.eventId == parent.eventId })
             if parent.isRecurring {
-                // Native SwiftUI confirmation dialog
                 editChoiceContext = EditChoiceContext(occurrence: occurrence, parentEvent: parent, rule: rule)
                 showEditChoiceDialog = true
             } else {

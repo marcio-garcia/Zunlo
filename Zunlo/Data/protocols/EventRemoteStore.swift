@@ -9,6 +9,7 @@ import Foundation
 
 protocol EventRemoteStore {
     func fetchAll() async throws -> [EventRemote]
+    func fecthOccurrences() async throws -> [EventOccurrenceRemote]
     func save(_ event: EventRemote) async throws -> [EventRemote]
     func update(_ event: EventRemote) async throws -> [EventRemote]
     func delete(_ event: EventRemote) async throws -> [EventRemote]

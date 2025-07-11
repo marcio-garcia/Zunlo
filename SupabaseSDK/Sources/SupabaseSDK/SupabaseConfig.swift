@@ -10,9 +10,11 @@ import Foundation
 public struct SupabaseConfig: Sendable {
     public let anonKey: String
     public let baseURL: URL
+    public let functionsBaseURL: URL?
     
-    public init(anonKey: String, baseURL: URL) {
+    public init(anonKey: String, baseURL: URL, functionsBaseURL: URL?) {
         self.anonKey = anonKey
         self.baseURL = baseURL
+        self.functionsBaseURL = functionsBaseURL
     }
 }

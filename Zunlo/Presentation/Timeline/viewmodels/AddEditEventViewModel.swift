@@ -18,8 +18,8 @@ enum EventError: Error {
 final class AddEditEventViewModel: ObservableObject {
     enum Mode {
         case add
-        case editAll(event: Event, recurrenceRule: RecurrenceRule?)
-        case editSingle(parentEvent: Event, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
+        case editAll(event: EventOccurrence, recurrenceRule: RecurrenceRule?)
+        case editSingle(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
         case editOverride(override: EventOverride)
     }
 
@@ -201,11 +201,7 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
     
-    private func editAll(event: Event, oldRule: RecurrenceRule?) async throws {
-        guard let eventId = event.id else {
-            throw EventError.errorOnEventUpdate
-        }
-        
+    private func editAll(event: EventOccurrence, oldRule: RecurrenceRule?) async throws {
         let now = Date()
         let updatedEvent = Event(
             id: event.id,
@@ -226,7 +222,7 @@ final class AddEditEventViewModel: ObservableObject {
         if isRecurring {
             let newRule = RecurrenceRule(
                 id: oldRule?.id,
-                eventId: eventId,
+                eventId: event.id,
                 freq: recurrenceType,
                 interval: recurrenceInterval,
                 byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
@@ -247,15 +243,11 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
 
-    private func editSingle(parentEvent: Event, occurrence: EventOccurrence) async throws {
-        guard let parentEventId = parentEvent.id else {
-            throw EventError.errorOnEventUpdate
-        }
-        
+    private func editSingle(parentEvent: EventOccurrence, occurrence: EventOccurrence) async throws {
         let now = Date()
         let override = EventOverride(
             id: nil,
-            eventId: parentEventId,
+            eventId: parentEvent.id,
             occurrenceDate: occurrence.startDate,
             overriddenTitle: title,
             overriddenStartDate: startDate,

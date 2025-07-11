@@ -20,7 +20,8 @@ struct ZunloApp: App {
         setupRealm()
         
         let supabaseConfig = SupabaseConfig(anonKey: EnvConfig.shared.apiKey,
-                                            baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!)
+                                            baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
+                                            functionsBaseURL: URL(string: EnvConfig.shared.apiFunctionsBaseUrl))
         supabaseSDK = SupabaseSDK(config: supabaseConfig)
         self.eventRepository = EventRepositoryFactory.make(supabase: supabaseSDK,
                                                            authManager: authManager)
