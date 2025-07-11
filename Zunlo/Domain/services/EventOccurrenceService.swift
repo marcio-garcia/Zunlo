@@ -62,7 +62,7 @@ struct EventOccurrenceService {
                     } else {
                         let eventDuration = rawOcc.endDate?.timeIntervalSince(rawOcc.startDate)
                         let occu = EventOccurrence(
-                            id: UUID(),
+                            id: date == rawOcc.startDate ? rawOcc.id : UUID(),
                             userId: rawOcc.userId,
                             eventId: rawOcc.eventId,
                             title: rawOcc.title,

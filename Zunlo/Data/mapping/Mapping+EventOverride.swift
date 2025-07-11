@@ -21,8 +21,8 @@ extension EventOverride {
         self.overriddenLocation = remote.overridden_location
         self.isCancelled = remote.is_cancelled
         self.notes = remote.notes
-        self.createdAt = remote.created_at
-        self.updatedAt = remote.updated_at
+        self.createdAt = remote.created_at ?? Date()
+        self.updatedAt = remote.updated_at ?? Date()
         self.color = remote.color ?? .yellow
     }
 
@@ -93,8 +93,8 @@ extension EventOverrideLocal {
                   overriddenLocation: remote.overridden_location,
                   isCancelled: remote.is_cancelled,
                   notes: remote.notes,
-                  createdAt: remote.created_at,
-                  updatedAt: remote.updated_at,
+                  createdAt: remote.created_at ?? Date(),
+                  updatedAt: remote.updated_at ?? Date(),
                   color: remote.color ?? .yellow
         )
     }
@@ -107,7 +107,7 @@ extension EventOverrideLocal {
         self.overriddenLocation = local.overridden_location
         self.isCancelled = local.is_cancelled
         self.notes = local.notes
-        self.updatedAt = local.updated_at
+        self.updatedAt = local.updated_at ?? Date()
         self.color = local.color ?? .yellow
     }
 }

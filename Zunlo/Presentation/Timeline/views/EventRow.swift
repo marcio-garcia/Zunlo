@@ -9,25 +9,28 @@ import SwiftUI
 
 struct EventRow: View {
     let occurrence: EventOccurrence
-    let onEdit: () -> Void
-    let onDelete: () -> Void
+    let onTap: () -> Void
 
     var body: some View {
-        HStack {
-            Rectangle()
-                .fill(Color(hex: occurrence.color.rawValue) ?? Color.gray)
-                .frame(width: 6)
-                .cornerRadius(3)
-            VStack(alignment: .leading) {
-                Text(occurrence.title)
-                    .font(.subheadline)
-                Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            Spacer()
-            if occurrence.isOverride {
-                Image(systemName: "pencil")
+        Button {
+            onTap()
+        } label: {
+            HStack {
+                Rectangle()
+                    .fill(Color(hex: occurrence.color.rawValue) ?? Color.gray)
+                    .frame(width: 6)
+                    .cornerRadius(3)
+                VStack(alignment: .leading) {
+                    Text(occurrence.title)
+                        .font(.subheadline)
+                    Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                if occurrence.isOverride {
+                    Image(systemName: "pencil")
+                }
             }
         }
         .padding()

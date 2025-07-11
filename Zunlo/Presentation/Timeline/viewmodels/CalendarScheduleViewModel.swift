@@ -51,7 +51,7 @@ class CalendarScheduleViewModel: ObservableObject {
         self.visibleRange = start...end
 
         // Bind to repository data observers
-        occurObservID = repository.occurrences.observe(owner: self, onChange: { [weak self] occurrences in
+        occurObservID = repository.occurrences.observe(owner: self, fireNow: false, onChange: { [weak self] occurrences in
             self?.handleOccurrences(occurrences)
         })
     }

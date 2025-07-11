@@ -17,8 +17,8 @@ struct EventOverrideRemote: Codable, Identifiable {
     let overridden_location: String?
     let is_cancelled: Bool
     let notes: String?
-    let created_at: Date
-    let updated_at: Date
+    var created_at: Date?
+    var updated_at: Date?
     let color: EventColor?
     
     init(from decoder: Decoder) throws {

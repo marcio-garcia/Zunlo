@@ -40,8 +40,7 @@ struct CalendarScheduleView: View {
                                         ForEach(occurrences) { occurrence in
                                             EventRow(
                                                 occurrence: occurrence,
-                                                onEdit: { viewModel.handleEdit(occurrence: occurrence) },
-                                                onDelete: { viewModel.handleDelete(occurrence: occurrence) }
+                                                onTap: { viewModel.handleEdit(occurrence: occurrence) }
                                             )
                                         }
                                     }

@@ -32,6 +32,8 @@ final class SupabaseEventOverrideRemoteStore: EventOverrideRemoteStore {
     func save(_ override: EventOverrideRemote) async throws -> [EventOverrideRemote] {
         var ov = override
         ov.id = nil
+        ov.created_at = nil
+        ov.updated_at = nil
         return try await database.insert(ov, into: tableName)
     }
 
