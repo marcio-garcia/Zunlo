@@ -9,7 +9,6 @@ import Foundation
 import SwiftData
 import SupabaseSDK
 
-@MainActor
 final class EventRepositoryFactory {
     static func make(
         supabase: SupabaseSDK,

@@ -9,40 +9,35 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authManager: AuthManager
-    @StateObject private var locationManager = LocationManager()
-    var eventRepository: EventRepository
-    
-    init(eventRepository: EventRepository) {
-        self.eventRepository = eventRepository
-    }
+    var appState: AppState
     
     var body: some View {
         Group {
-            switch authManager.state {
+            switch appState.authManager.state {
             case .loading:
                 ProgressView("Loading...")
             case .unauthenticated:
                 AuthView()
             case .authenticated(_):
-                switch locationManager.status {
+                switch appState.locationManager.status {
                 case .notDetermined:
                     OnboardingLocationView {
-                        locationManager.requestPermission()
+                        appState.locationManager.requestPermission()
                     }
                 case .denied, .restricted:
                     LocationDeniedView()
                 case .authorizedWhenInUse, .authorizedAlways:
-                    CalendarScheduleView(repository: eventRepository)
+                    MainView(factory: DefaultViewFactory(appState: appState))
                 @unknown default:
                     ProgressView("Checking location permission...")
                 }
             }
         }
-        .animation(.easeInOut, value: authManager.state)
+        .animation(.easeInOut, value: appState.authManager.state)
         .transition(.opacity)
         .task {
-            await authManager.bootstrap()
-            locationManager.checkStatus()
+            await appState.authManager.bootstrap()
+            appState.locationManager.checkStatus()
         }
     }
 }

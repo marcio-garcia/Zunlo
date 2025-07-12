@@ -13,9 +13,11 @@ import RealmSwift
 @main
 struct ZunloApp: App {
     private let authManager = AuthManager()
-    private let eventRepository: EventRepository
     private let supabaseSDK: SupabaseSDK
+    private let eventRepository: EventRepository
+    private let chatRepository: ChatRepository
     
+    private let appState: AppState
     init() {
         setupRealm()
         
@@ -23,13 +25,21 @@ struct ZunloApp: App {
                                             baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
                                             functionsBaseURL: URL(string: EnvConfig.shared.apiFunctionsBaseUrl))
         supabaseSDK = SupabaseSDK(config: supabaseConfig)
-        self.eventRepository = EventRepositoryFactory.make(supabase: supabaseSDK,
-                                                           authManager: authManager)
+        eventRepository = EventRepositoryFactory.make(supabase: supabaseSDK,
+                                                      authManager: authManager)
+        
+        chatRepository = DefaultChatRepository(store: RealmChatLocalStore(), userId: nil)
+        
+        appState = AppState(authManager: authManager,
+                            supabase: supabaseSDK,
+                            locationManager: LocationManager(),
+                            eventRepository: eventRepository,
+                            chatRepository: chatRepository)
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView(eventRepository: eventRepository)
+            RootView(appState: appState)
                 .environmentObject(authManager)
         }
     }
@@ -37,7 +47,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 3, // <- increment this every time you change schema!
+        schemaVersion: 4, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 2 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,

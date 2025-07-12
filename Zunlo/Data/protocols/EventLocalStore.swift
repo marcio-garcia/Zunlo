@@ -7,7 +7,6 @@
 
 import Foundation
 
-@MainActor
 protocol EventLocalStore {
     func fetchAll() async throws -> [Event]
     func save(_ remoteEvent: EventRemote) async throws

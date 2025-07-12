@@ -9,8 +9,6 @@ import Foundation
 import RealmSwift
 
 final class RealmEventLocalStore: EventLocalStore {
-    
-    // No shared Realm instance; always create per thread
 
     func fetchAll() async throws -> [Event] {
         try await Task.detached(priority: .background) {

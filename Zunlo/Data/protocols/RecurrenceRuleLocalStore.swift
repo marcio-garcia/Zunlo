@@ -7,7 +7,6 @@
 
 import Foundation
 
-@MainActor
 protocol RecurrenceRuleLocalStore {
     func fetchAll() async throws -> [RecurrenceRule]
     func fetch(for eventId: UUID) async throws -> [RecurrenceRule]

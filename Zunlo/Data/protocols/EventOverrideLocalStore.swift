@@ -7,7 +7,6 @@
 
 import Foundation
 
-@MainActor
 protocol EventOverrideLocalStore {
     func fetchAll() async throws -> [EventOverride]
     func fetch(for eventId: UUID) async throws -> [EventOverride]
