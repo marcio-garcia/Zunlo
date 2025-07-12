@@ -25,5 +25,6 @@ extension EventOccurrence {
         self.createdAt = remote.created_at
         self.overrides = remote.overrides.compactMap { EventOverride(remote: $0) }
         self.recurrence_rules = remote.recurrence_rules.compactMap { RecurrenceRule(remote: $0) }
+        self.isFakeOccForEmptyToday = false
     }
 }

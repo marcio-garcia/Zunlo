@@ -134,6 +134,7 @@ struct EventOccurrenceService {
             }
         }
 
-        return occurrences.sorted { $0.startDate < $1.startDate }
+        let occ = RecurrenceHelper.addTodayIfNeeded(occurrences: occurrences)
+        return occ.sorted { $0.startDate < $1.startDate }
     }
 }

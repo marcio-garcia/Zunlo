@@ -94,6 +94,41 @@ class RecurrenceHelper {
         }
         return dates.sorted()
     }
+    
+    static func addTodayIfNeeded(occurrences: [EventOccurrence]) -> [EventOccurrence] {
+        let today = Date().startOfDay
+        var hasToday = false
+        
+        for occ in occurrences where occ.startDate.isSameDay(as: today) {
+            hasToday = true
+        }
+        
+        if !hasToday {
+            var occ = occurrences
+            occ.append(EventOccurrence(
+                id: UUID(),
+                userId: UUID(),
+                eventId: UUID(),
+                title: "Nothing for today",
+                description: nil,
+                startDate: today,
+                endDate: nil,
+                isRecurring: false,
+                location: nil,
+                color: EventColor.yellow,
+                isOverride: false,
+                isCancelled: false,
+                updatedAt: today,
+                createdAt: today,
+                overrides: [],
+                recurrence_rules: [],
+                isFakeOccForEmptyToday: true)
+            )
+            return occ
+        }
+        
+        return occurrences
+    }
 
     private static func generateMonthlyRecurrence(
         start: Date,

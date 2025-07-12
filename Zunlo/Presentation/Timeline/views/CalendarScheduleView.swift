@@ -14,51 +14,87 @@ struct CalendarScheduleView: View {
         _viewModel = StateObject(wrappedValue: CalendarScheduleViewModel(repository: repository))
     }
     
+    private func isToday(date: Date) -> Bool {
+        let today = Date()
+        return date.isSameDay(as: today)
+    }
+    
     var body: some View {
         NavigationStack {
             switch viewModel.state {
             case .loaded:
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
-                            let monthName = monthDate.formattedDate(dateFormat: "LLLL")
-                            let imageName = viewModel.monthHeaderImageName(for: monthDate)
-                            let daysDict = viewModel.occurrencesByMonthAndDay[monthDate] ?? [:]
-
-                            CartoonImageHeader(title: monthName, imageName: imageName)
-                                .frame(maxWidth: .infinity)
-                            
-                            LazyVStack(alignment: .leading, spacing: 0) {
-                                ForEach(daysDict.keys.sorted(), id: \.self) { day in
-                                    let occurrences = daysDict[day] ?? []
-                                    VStack(alignment: .leading, spacing: 0) {
-                                        Text(day.formattedDate(dateFormat: "E d"))
-                                            .font(.headline)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
+                                let monthName = monthDate.formattedDate(dateFormat: "LLLL")
+                                let imageName = viewModel.monthHeaderImageName(for: monthDate)
+                                let daysDict = viewModel.occurrencesByMonthAndDay[monthDate] ?? [:]
+                                let sortedDays = daysDict.keys.sorted()
+                                
+                                CartoonImageHeader(title: monthName, imageName: imageName)
+                                    .frame(maxWidth: .infinity)
+                                
+                                VStack(alignment: .leading, spacing: 0) {
+                                    ForEach(sortedDays, id: \.self) { day in
+                                        let occurrences = daysDict[day] ?? []
+                                        VStack(alignment: .leading, spacing: 0) {
+                                            Group {
+                                                Text(day.formattedDate(dateFormat: "E d"))
+                                                    .font(.headline)
+                                                    .padding(.horizontal, 10)
+                                                    .padding(.vertical, 4)
+                                                    .background(
+                                                        isToday(date: day) ? Capsule().fill(Color.blue) : nil
+                                                    )
+                                            }
                                             .padding(.leading, 16)
-                                            .padding(.top, 8)
-                                            .padding(.bottom, 4)
-                                        ForEach(occurrences) { occurrence in
-                                            EventRow(
-                                                occurrence: occurrence,
-                                                onTap: { viewModel.handleEdit(occurrence: occurrence) }
-                                            )
+                                            
+                                            if isToday(date: day), occurrences[0].title == "Fake today" {
+                                                EmptyView()
+                                            } else {
+                                                ForEach(occurrences) { occurrence in
+                                                    EventRow(
+                                                        occurrence: occurrence,
+                                                        onTap: { viewModel.handleEdit(occurrence: occurrence) }
+                                                    )
+                                                }
+                                            }
                                         }
+                                        .background(Color(.systemBackground))
+                                        .cornerRadius(10)
+                                        .padding(.horizontal, 20)
+                                        .padding(.bottom, 16)
+                                        .id(day)
                                     }
-                                    .background(Color(.systemBackground))
-                                    .cornerRadius(10)
-                                    .padding(.horizontal, 20)
-                                    .padding(.bottom, 10)
                                 }
                             }
                         }
                     }
-                }
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            viewModel.showAddSheet = true
-                        } label: {
-                            Label("Add", systemImage: "plus")
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            HStack(spacing: 12) {
+                                Button {
+                                    DispatchQueue.main.async {
+                                        withAnimation {
+                                            proxy.scrollTo(Date().startOfDay, anchor: .top)
+                                        }
+                                    }
+                                } label: {
+                                    Label("Today", systemImage: "calendar.badge.clock")
+                                }
+                                
+                                Button {
+                                    viewModel.showAddSheet = true
+                                } label: {
+                                    Label("Add", systemImage: "plus")
+                                }
+                            }
+                        }
+                    }
+                    .onAppear {
+                        DispatchQueue.main.async {
+                            proxy.scrollTo(Date().startOfDay, anchor: .top)
                         }
                     }
                 }

@@ -21,17 +21,21 @@ struct AddEditEventView: View {
             Form {
                 Section {
                     TextField("Title", text: $viewModel.title)
-//                        .focused($focusTitle)
                     TextField("Location", text: $viewModel.location)
                     TextField("Notes", text: $viewModel.notes, axis: .vertical)
                 } header: {
                     Text("Event Details")
                 }
+                
                 Section {
                     DatePicker("Start", selection: $viewModel.startDate, displayedComponents: [.date, .hourAndMinute])
                     DatePicker("End", selection: $viewModel.endDate, displayedComponents: [.date, .hourAndMinute])
                 } header: {
                     Text("Date & Time")
+                }
+                
+                Section {
+                    ColorPickerView(selectedColor: $viewModel.color)
                 }
 
                 // Recurrence only for add/editAll
@@ -71,7 +75,6 @@ struct AddEditEventView: View {
                 // Cancel single occurrence for override
                 if viewModel.showsCancelSection && viewModel.isEditingSingleOrOverride {
                     Section {
-                        ColorPickerView(selectedColor: $viewModel.color)
                         Toggle("Cancelled", isOn: $viewModel.isCancelled)
                             .tint(.red)
                     }

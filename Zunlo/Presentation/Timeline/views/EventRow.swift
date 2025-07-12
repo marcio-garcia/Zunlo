@@ -16,16 +16,20 @@ struct EventRow: View {
             onTap()
         } label: {
             HStack {
+                let eventColorHex = occurrence.isFakeOccForEmptyToday ? "#E0E0E0" : occurrence.color.rawValue
                 Rectangle()
-                    .fill(Color(hex: occurrence.color.rawValue) ?? Color.gray)
+                    .fill(Color(hex: eventColorHex) ?? Color.gray)
                     .frame(width: 6)
                     .cornerRadius(3)
                 VStack(alignment: .leading) {
                     Text(occurrence.title)
                         .font(.subheadline)
-                    Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.black)
+                    if !occurrence.isFakeOccForEmptyToday {
+                        Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
+                            .font(.caption)
+                            .foregroundStyle(.gray)
+                    }
                 }
                 Spacer()
                 if occurrence.isOverride {
@@ -33,7 +37,8 @@ struct EventRow: View {
                 }
             }
         }
-        .padding()
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 1)
