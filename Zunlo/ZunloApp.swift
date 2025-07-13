@@ -15,6 +15,7 @@ struct ZunloApp: App {
     private let authManager = AuthManager()
     private let supabaseSDK: SupabaseSDK
     private let eventRepository: EventRepository
+    private let userTaskRepository: UserTaskRepository
     private let chatRepository: ChatRepository
     
     private let appState: AppState
@@ -28,12 +29,17 @@ struct ZunloApp: App {
         eventRepository = EventRepositoryFactory.make(supabase: supabaseSDK,
                                                       authManager: authManager)
         
+        userTaskRepository = UserTaskRepository(localStore: RealmUserTaskLocalStore(),
+                                                remoteStore: SupabaseUserTaskRemoteStore(supabase: supabaseSDK,
+                                                                                         authManager: authManager))
+        
         chatRepository = DefaultChatRepository(store: RealmChatLocalStore(), userId: nil)
         
         appState = AppState(authManager: authManager,
                             supabase: supabaseSDK,
                             locationManager: LocationManager(),
                             eventRepository: eventRepository,
+                            userTaskRepository: userTaskRepository,
                             chatRepository: chatRepository)
     }
 
@@ -47,7 +53,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 4, // <- increment this every time you change schema!
+        schemaVersion: 5, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 2 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,

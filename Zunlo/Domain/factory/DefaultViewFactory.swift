@@ -24,6 +24,7 @@ final class DefaultViewFactory: ViewFactory {
         let chatVM = ChatScreenViewModel(repository: DefaultChatRepository(store: RealmChatLocalStore(),
                                                                            userId: userId))
         return MainViewModel(eventRepository: appState.eventRepository,
+                             userTaskRepository: appState.userTaskRepository,
                              chatViewModel: chatVM)
     }
     

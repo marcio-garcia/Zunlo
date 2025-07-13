@@ -11,13 +11,6 @@ import CoreLocation
 
 enum Season: String { case winter, spring, summer, autumn }
 
-enum ViewState {
-    case loading
-    case loaded
-    case empty
-    case error(_ message: String)
-}
-
 class CalendarScheduleViewModel: ObservableObject {
     @Published var state = ViewState.loading
     @Published var showAddSheet = false

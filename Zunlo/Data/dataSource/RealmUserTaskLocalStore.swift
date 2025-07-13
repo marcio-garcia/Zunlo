@@ -1,50 +1,49 @@
 //
-//  RealmEventLocalStore.swift
+//  RealmUserTaskLocalStore.swift
 //  Zunlo
 //
-//  Created by Marcio Garcia on 7/7/25.
+//  Created by Marcio Garcia on 7/13/25.
 //
 
 import Foundation
 import RealmSwift
 
-final class RealmEventLocalStore: EventLocalStore {
+final class RealmUserTaskLocalStore: UserTaskLocalStore {
 
-    func fetchAll() async throws -> [Event] {
+    func fetchAll() async throws -> [UserTask] {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
-            let eventsLocal = Array(realm.objects(EventLocal.self).sorted(byKeyPath: "startDate", ascending: true))
-            return eventsLocal.map { Event(local: $0) }
+            let eventsLocal = Array(realm.objects(UserTaskLocal.self).sorted(byKeyPath: "startDate", ascending: true))
+            return eventsLocal.map { $0.toDomain() }
         }.value
     }
 
-    func save(_ remoteEvent: EventRemote) async throws {
+    func save(_ remote: UserTaskRemote) async throws {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
-            let event = EventLocal(remote: remoteEvent) // Construct here
+            let local = UserTaskLocal(from: remote)
             try realm.write {
-                realm.add(event, update: .all)
+                realm.add(local, update: .all)
             }
         }.value
     }
 
-    func update(_ event: EventRemote) async throws {
+    func update(_ remote: UserTaskRemote) async throws {
         // The safest: update by ID, copy fields over
-        let eventID = event.id
+        let id = remote.id
         try await Task.detached(priority: .background) {
             let realm = try Realm()
-            guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: eventID) else { return }
+            guard let existing = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id) else { return }
             try realm.write {
-                existing.getUpdateFields(event)
+                existing.getUpdateFields(remote: remote)
             }
         }.value
     }
 
     func delete(id: UUID) async throws {
-        let eventID = id
         try await Task.detached(priority: .background) {
             let realm = try Realm()
-            guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: eventID) else { return }
+            guard let existing = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id) else { return }
             try realm.write {
                 realm.delete(existing)
             }
@@ -54,7 +53,7 @@ final class RealmEventLocalStore: EventLocalStore {
     func deleteAll(for userId: UUID) async throws {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
-            let events = realm.objects(EventLocal.self).filter("userId == %@", userId)
+            let events = realm.objects(UserTaskLocal.self).filter("userId == %@", userId)
             try realm.write {
                 realm.delete(events)
             }
@@ -65,8 +64,9 @@ final class RealmEventLocalStore: EventLocalStore {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
             try realm.write {
-                realm.delete(realm.objects(EventLocal.self))
+                realm.delete(realm.objects(UserTaskLocal.self))
             }
         }.value
     }
 }
+

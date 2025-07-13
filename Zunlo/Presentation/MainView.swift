@@ -21,7 +21,9 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-            CalendarScheduleView(repository: viewModel.eventRepository)
+//            CalendarScheduleView(repository: viewModel.eventRepository)
+            TodayView(eventRepository: viewModel.eventRepository,
+                      taskRepository: viewModel.userTaskRepository)
 
             if !isShowingChat {
                 FloatingSearchBar(namespace: chatNamespace) {
