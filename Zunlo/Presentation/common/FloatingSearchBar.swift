@@ -17,18 +17,15 @@ struct FloatingSearchBar: View {
             HStack {
                 Spacer()
                 Button(action: onTap) {
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                        Text("Ask your assistant...")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemGray6))
-                    )
-                    .matchedGeometryEffect(id: "chatBar", in: namespace)
-                    .shadow(radius: 2)
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemGray6))
+                        .frame(width: 56, height: 56)
+                        .overlay(
+                            Image(systemName: "bubble.left.and.text.bubble.right")
+                                .foregroundColor(.primary)
+                        )
+                        .matchedGeometryEffect(id: "chatBar", in: namespace)
+                        .shadow(radius: 2)
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 30)

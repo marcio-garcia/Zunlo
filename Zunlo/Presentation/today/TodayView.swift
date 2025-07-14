@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct TodayView: View {
+    var namespace: Namespace.ID
+    @Binding var showChat: Bool
+    
     @State private var showSchedule = false
     @State private var showTaskInbox = false
     @State private var showAddTask = false
@@ -18,29 +21,46 @@ struct TodayView: View {
     var taskRepository: UserTaskRepository
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    greetingSection
-                    eventsTodaySection
-                    tasksTodaySection
-                    quickAddSection
+        ZStack(alignment: .bottomTrailing) {
+            Color.white.ignoresSafeArea()
+            NavigationStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        greetingSection
+                        eventsTodaySection
+                        tasksTodaySection
+                        quickAddSection
+                    }
+                    .padding()
                 }
-                .padding()
+                .navigationTitle("Today")
+                .sheet(isPresented: $showSchedule) {
+                    CalendarScheduleView(repository: eventRepository)
+                }
+                .sheet(isPresented: $showTaskInbox) {
+                    TaskInboxView(repository: taskRepository)
+                }
+                .sheet(isPresented: $showAddTask) {
+                    AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: taskRepository))
+                }
+                .sheet(isPresented: $showAddEvent) {
+                    AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: eventRepository))
+                }
             }
-            .navigationTitle("Today")
-            .sheet(isPresented: $showSchedule) {
-                CalendarScheduleView(repository: eventRepository)
+            Button(action: {
+                showChat = true
+            }) {
+                Image(systemName: "bubble.left.and.bubble.right.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(
+                        Circle()
+                            .fill(Color.accentColor)
+                            .matchedGeometryEffect(id: "chatMorph", in: namespace)
+                    )
             }
-            .sheet(isPresented: $showTaskInbox) {
-                TaskInboxView(repository: taskRepository)
-            }
-            .sheet(isPresented: $showAddTask) {
-                AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: taskRepository))
-            }
-            .sheet(isPresented: $showAddEvent) {
-                AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: eventRepository))
-            }
+            .padding()
         }
     }
 

@@ -9,20 +9,21 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var locationManager: LocationManager
     var appState: AppState
     
     var body: some View {
         Group {
-            switch appState.authManager.state {
+            switch authManager.state {
             case .loading:
                 ProgressView("Loading...")
             case .unauthenticated:
                 AuthView()
             case .authenticated(_):
-                switch appState.locationManager.status {
+                switch locationManager.status {
                 case .notDetermined:
                     OnboardingLocationView {
-                        appState.locationManager.requestPermission()
+                        locationManager.requestPermission()
                     }
                 case .denied, .restricted:
                     LocationDeniedView()
@@ -33,11 +34,11 @@ struct RootView: View {
                 }
             }
         }
-        .animation(.easeInOut, value: appState.authManager.state)
+        .animation(.easeInOut, value: authManager.state)
         .transition(.opacity)
         .task {
-            await appState.authManager.bootstrap()
-            appState.locationManager.checkStatus()
+            await authManager.bootstrap()
+            locationManager.checkStatus()
         }
     }
 }

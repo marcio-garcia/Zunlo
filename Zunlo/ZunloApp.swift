@@ -13,6 +13,7 @@ import RealmSwift
 @main
 struct ZunloApp: App {
     private let authManager = AuthManager()
+    private let locationManager = LocationManager()
     private let supabaseSDK: SupabaseSDK
     private let eventRepository: EventRepository
     private let userTaskRepository: UserTaskRepository
@@ -37,7 +38,7 @@ struct ZunloApp: App {
         
         appState = AppState(authManager: authManager,
                             supabase: supabaseSDK,
-                            locationManager: LocationManager(),
+                            locationManager: locationManager,
                             eventRepository: eventRepository,
                             userTaskRepository: userTaskRepository,
                             chatRepository: chatRepository)
@@ -46,7 +47,8 @@ struct ZunloApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(appState: appState)
-                .environmentObject(authManager)
+                .environmentObject(appState.authManager)
+                .environmentObject(appState.locationManager)
         }
     }
 }

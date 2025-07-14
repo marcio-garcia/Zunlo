@@ -8,30 +8,28 @@
 import SwiftUI
 
 struct ChatScreenView: View {
-    let namespace: Namespace.ID
-    @Binding var isPresented: Bool
+    var namespace: Namespace.ID
+    @Binding var showChat: Bool
     @StateObject private var viewModel: ChatScreenViewModel
 
-    init(namespace: Namespace.ID, isPresented: Binding<Bool>, factory: ViewFactory) {
+    init(namespace: Namespace.ID, showChat: Binding<Bool>, factory: ViewFactory) {
         self.namespace = namespace
-        self._isPresented = isPresented
+        self._showChat = showChat
         self._viewModel = StateObject(wrappedValue: factory.makeChatScreenViewModel())
     }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Button {
-                    withAnimation(.spring()) {
-                        isPresented = false
-                    }
-                } label: {
-                    Image(systemName: "chevron.down")
-                        .font(.title2)
-                        .padding()
+                Button(action: {
+                    showChat = false
+                }) {
+                    Image(systemName: "chevron.backward")
+                        .foregroundColor(.primary)
                 }
                 Spacer()
             }
+            .padding()
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -39,7 +37,7 @@ struct ChatScreenView: View {
                         ForEach(viewModel.messages) { message in
                             Text(message.message)
                                 .padding()
-                                .background(message.isFromUser ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
+                                .background(message.isFromUser ? Color.accentColor.opacity(0.2) : Color.accentColor.opacity(0.5))
                                 .cornerRadius(12)
                                 .frame(maxWidth: .infinity, alignment: message.isFromUser ? .trailing : .leading)
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -56,16 +54,24 @@ struct ChatScreenView: View {
                     }
                 }
             }
-
+            
             HStack {
-                TextField("Type a message...", text: $viewModel.messageText)
-                    .padding(12)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(16)
-                    .matchedGeometryEffect(id: "chatBar", in: namespace)
-
-                Button("Send") {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 25)
+                        .fill(Color.accentColor)
+                    TextField("Type a message...", text: $viewModel.messageText)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .foregroundColor(.primary)
+                }
+                .frame(maxWidth: .infinity, minHeight: 42, maxHeight: 42)
+                .matchedGeometryEffect(id: "chatMorph", in: namespace)
+                
+                Button(action: {
                     Task { await viewModel.sendMessage() }
+                }) {
+                    Image(systemName: "paperplane")
+                        .foregroundColor(.primary)
                 }
             }
             .padding()

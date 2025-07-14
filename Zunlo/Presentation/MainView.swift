@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MainView: View {
-    @Namespace private var chatNamespace
+    @Namespace private var animationNamespace
     @State private var isShowingChat = false
     @StateObject private var viewModel: MainViewModel
     
@@ -21,23 +21,22 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-//            CalendarScheduleView(repository: viewModel.eventRepository)
-            TodayView(eventRepository: viewModel.eventRepository,
-                      taskRepository: viewModel.userTaskRepository)
-
-            if !isShowingChat {
-                FloatingSearchBar(namespace: chatNamespace) {
-                    withAnimation(.spring()) {
-                        isShowingChat = true
-                    }
-                }
-            }
-
             if isShowingChat {
-                ChatScreenView(namespace: chatNamespace,
-                               isPresented: $isShowingChat,
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .blur(radius: 10)
+                    .animation(.easeInOut(duration: 0.3), value: isShowingChat)
+                ChatScreenView(namespace: animationNamespace,
+                               showChat: $isShowingChat,
                                factory: factory)
+            } else {
+                TodayView(namespace: animationNamespace,
+                          showChat: $isShowingChat,
+                          eventRepository: viewModel.eventRepository,
+                          taskRepository: viewModel.userTaskRepository)
             }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.90), value: isShowingChat)
     }
 }
