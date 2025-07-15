@@ -10,6 +10,8 @@
 		255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */ = {isa = PBXBuildFile; productRef = 255B93752E1C6FFB00D8CD8A /* MiniSignalEye */; };
 		25857B842E1C85C800676F8B /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; };
 		25857E4B2E1DF95700676F8B /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 25ACE3452E25F028009F0218 /* FirebaseCore */; };
+		25ACE3482E25F028009F0218 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25ACE3472E25F028009F0218 /* FirebaseMessaging */; };
 		25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 25FAA9702E0B6E56000AACA2 /* SupabaseSDK */; };
 /* End PBXBuildFile section */
 
@@ -89,6 +91,8 @@
 			files = (
 				25857B842E1C85C800676F8B /* RealmSwift in Frameworks */,
 				25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */,
+				25ACE3482E25F028009F0218 /* FirebaseMessaging in Frameworks */,
+				25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */,
 				255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -163,6 +167,8 @@
 				25FAA9702E0B6E56000AACA2 /* SupabaseSDK */,
 				255B93752E1C6FFB00D8CD8A /* MiniSignalEye */,
 				25857B832E1C85C800676F8B /* RealmSwift */,
+				25ACE3452E25F028009F0218 /* FirebaseCore */,
+				25ACE3472E25F028009F0218 /* FirebaseMessaging */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -249,6 +255,7 @@
 			packageReferences = (
 				255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */,
 				25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */,
+				25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 25FA19FE2E0854F800E740A3 /* Products */;
@@ -388,6 +395,7 @@
 			baseConfigurationReferenceRelativePath = Resources/Config/staging.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Zunlo/Zunlo.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -396,7 +404,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zunlo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_NAME)";
+				INFOPLIST_KEY_CFBundleDisplayName = Zunlo;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para mostrar conteúdo personalizado.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -589,6 +597,7 @@
 			baseConfigurationReferenceRelativePath = Resources/Config/dev.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Zunlo/Zunlo.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -597,7 +606,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zunlo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_NAME)";
+				INFOPLIST_KEY_CFBundleDisplayName = Zunlo;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para mostrar conteúdo personalizado.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -626,6 +635,7 @@
 			baseConfigurationReferenceRelativePath = Resources/Config/prod.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Zunlo/Zunlo.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -634,7 +644,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zunlo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_NAME)";
+				INFOPLIST_KEY_CFBundleDisplayName = Zunlo;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para mostrar conteúdo personalizado.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -801,6 +811,14 @@
 				minimumVersion = 20.0.0;
 			};
 		};
+		25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.15.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -813,6 +831,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */;
 			productName = RealmSwift;
+		};
+		25ACE3452E25F028009F0218 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		25ACE3472E25F028009F0218 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 		25FAA9702E0B6E56000AACA2 /* SupabaseSDK */ = {
 			isa = XCSwiftPackageProductDependency;

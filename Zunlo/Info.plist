@@ -12,5 +12,9 @@
 	<string>$(API_PROTOCOL)</string>
 	<key>ENVIRONMENT</key>
 	<string>$(ENVIRONMENT)</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

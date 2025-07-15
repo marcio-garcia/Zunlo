@@ -7,13 +7,20 @@
 
 import Foundation
 
+enum RuntimeEnvironment: String {
+    case dev = "DEVELOPMENT"
+    case prod = "PRODUCTION"
+    case staging = "STAGING"
+}
+
 class EnvConfig {
     static let shared = EnvConfig()
     
     private init() {}
     
-    var current: String {
-        Bundle.main.infoDictionary?["ENVIRONMENT"] as? String ?? "UNKNOWN"
+    var current: RuntimeEnvironment {
+        let envString = Bundle.main.infoDictionary?["ENVIRONMENT"] as? String ?? "UNKNOWN"
+        return RuntimeEnvironment(rawValue: envString) ?? .dev
     }
     
     var apiBaseUrl: String {

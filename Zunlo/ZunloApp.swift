@@ -9,9 +9,12 @@ import SwiftUI
 import SwiftData
 import SupabaseSDK
 import RealmSwift
+import FirebaseMessaging
 
 @main
 struct ZunloApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     private let authManager = AuthManager()
     private let locationManager = LocationManager()
     private let supabaseSDK: SupabaseSDK
@@ -42,6 +45,13 @@ struct ZunloApp: App {
                             eventRepository: eventRepository,
                             userTaskRepository: userTaskRepository,
                             chatRepository: chatRepository)
+        
+        Messaging.messaging().token { token, error in
+            if let token = token {
+                print("FCM token again: \(token)")
+                // Send this to your backend
+            }
+        }
     }
 
     var body: some Scene {
