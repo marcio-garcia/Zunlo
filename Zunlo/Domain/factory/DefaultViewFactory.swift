@@ -25,7 +25,9 @@ final class DefaultViewFactory: ViewFactory {
                                                                            userId: userId))
         return MainViewModel(eventRepository: appState.eventRepository,
                              userTaskRepository: appState.userTaskRepository,
-                             chatViewModel: chatVM)
+                             chatViewModel: chatVM,
+                             locationManager: appState.locationManager,
+                             pushService: appState.pushNotificationService)
     }
     
     func makeChatScreenViewModel() -> ChatScreenViewModel {

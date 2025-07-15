@@ -38,4 +38,8 @@ class EnvConfig {
     var apiKey: String {
         Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
     }
+    
+    var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    }
 }

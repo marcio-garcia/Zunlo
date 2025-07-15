@@ -19,6 +19,8 @@ struct TodayView: View {
     // Inject your real repositories here
     var eventRepository: EventRepository
     var taskRepository: UserTaskRepository
+    var locationManager: LocationManager
+    var pushService: PushNotificationService
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -35,7 +37,9 @@ struct TodayView: View {
                 }
                 .navigationTitle("Today")
                 .sheet(isPresented: $showSchedule) {
-                    CalendarScheduleView(repository: eventRepository)
+                    CalendarScheduleView(repository: eventRepository,
+                                         locationManager: locationManager,
+                                         pushService: pushService)
                 }
                 .sheet(isPresented: $showTaskInbox) {
                     TaskInboxView(repository: taskRepository)

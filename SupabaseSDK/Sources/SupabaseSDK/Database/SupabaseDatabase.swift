@@ -51,14 +51,17 @@ public final class SupabaseDatabase: @unchecked Sendable {
     }
     
     public func insert<T: Codable>(_ object: T,
-                                   into table: String) async throws -> [T] {
+                                   into table: String,
+                                   additionalHeaders: [String: String]? = nil) async throws -> [T] {
         let body = try encode(object)
+        let headers = additionalHeaders?.merging(["Content-Type": "application/json"]) { _, new in new } ?? ["Content-Type": "application/json"]
         let (data, response) = try await httpClient.sendRequest(
             path: "/rest/v1/\(table)",
             method: "POST",
             body: body,
-            additionalHeaders: ["Content-Type": "application/json"]
+            additionalHeaders: headers
         )
+        
         guard 200..<300 ~= response.statusCode else {
             throw URLError(.badServerResponse)
         }

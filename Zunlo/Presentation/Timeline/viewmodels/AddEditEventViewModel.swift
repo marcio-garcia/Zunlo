@@ -154,6 +154,7 @@ final class AddEditEventViewModel: ObservableObject {
                     try await editOverride(override: override)
                 }
                 isSaving = false
+                UserDefaults.standard.set(true, forKey: "RequestPushPermissions")
                 completion(.success(()))
             } catch {
                 isSaving = false
@@ -291,5 +292,11 @@ extension AddEditEventViewModel.Mode: Identifiable {
             return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
         case .editOverride(let override): return "editOverride-\(override.id)"
         }
+    }
+}
+
+extension AddEditEventViewModel {
+    func sss() {
+        
     }
 }

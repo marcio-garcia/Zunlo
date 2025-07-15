@@ -23,7 +23,8 @@ class CalendarScheduleViewModel: ObservableObject {
     
     var repository: EventRepository
     let visibleRange: ClosedRange<Date>
-    var locationManager = LocationManager()
+    var locationManager: LocationManager
+    var pushService: PushNotificationService
     
     var occurObservID: UUID?
     var eventsObservID: UUID?
@@ -36,8 +37,13 @@ class CalendarScheduleViewModel: ObservableObject {
         let rule: RecurrenceRule?
     }
     
-    init(repository: EventRepository) {
+    init(repository: EventRepository,
+         locationManager: LocationManager,
+         pushService: PushNotificationService) {
+        
         self.repository = repository
+        self.locationManager = locationManager
+        self.pushService = pushService
         let cal = Calendar.current
         let start = cal.date(byAdding: .month, value: -6, to: Date())!
         let end = cal.date(byAdding: .month, value: 6, to: Date())!
@@ -131,6 +137,10 @@ class CalendarScheduleViewModel: ObservableObject {
 
     func handleDelete(occurrence: EventOccurrence) {
         // Implement actual delete logic here
+    }
+    
+    func requestPushPermissions() {
+        pushService.requestNotificationPermissions()
     }
     
     private func season(by date: Date) -> Season {

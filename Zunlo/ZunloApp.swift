@@ -6,10 +6,9 @@
 //
 
 import SwiftUI
-import SwiftData
 import SupabaseSDK
 import RealmSwift
-import FirebaseMessaging
+import Firebase
 
 @main
 struct ZunloApp: App {
@@ -17,41 +16,66 @@ struct ZunloApp: App {
     
     private let authManager = AuthManager()
     private let locationManager = LocationManager()
+    private let pushNotificationService: PushNotificationService
     private let supabaseSDK: SupabaseSDK
     private let eventRepository: EventRepository
     private let userTaskRepository: UserTaskRepository
     private let chatRepository: ChatRepository
+    private let firebaseService: FirebaseService
     
     private let appState: AppState
+    
     init() {
         setupRealm()
+        configureFirebase()
         
-        let supabaseConfig = SupabaseConfig(anonKey: EnvConfig.shared.apiKey,
-                                            baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
-                                            functionsBaseURL: URL(string: EnvConfig.shared.apiFunctionsBaseUrl))
-        supabaseSDK = SupabaseSDK(config: supabaseConfig)
-        eventRepository = EventRepositoryFactory.make(supabase: supabaseSDK,
-                                                      authManager: authManager)
+        let supabaseConfig = SupabaseConfig(
+            anonKey: EnvConfig.shared.apiKey,
+            baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
+            functionsBaseURL: URL(string: EnvConfig.shared.apiFunctionsBaseUrl)
+        )
+        let supabase = SupabaseSDK(config: supabaseConfig)
         
-        userTaskRepository = UserTaskRepository(localStore: RealmUserTaskLocalStore(),
-                                                remoteStore: SupabaseUserTaskRemoteStore(supabase: supabaseSDK,
-                                                                                         authManager: authManager))
+        let firebase = FirebaseService()
         
-        chatRepository = DefaultChatRepository(store: RealmChatLocalStore(), userId: nil)
+        let pushService = PushNotificationService(
+            authManager: authManager,
+            pushTokenStore: SupabasePushTokensRemoteStore(supabase: supabase, authManager: authManager),
+            firebaseService: firebase
+        )
         
-        appState = AppState(authManager: authManager,
-                            supabase: supabaseSDK,
-                            locationManager: locationManager,
-                            eventRepository: eventRepository,
-                            userTaskRepository: userTaskRepository,
-                            chatRepository: chatRepository)
+        let eventRepo = EventRepositoryFactory.make(
+            supabase: supabase,
+            authManager: authManager
+        )
         
-        Messaging.messaging().token { token, error in
-            if let token = token {
-                print("FCM token again: \(token)")
-                // Send this to your backend
-            }
-        }
+        let taskRepo = UserTaskRepository(
+            localStore: RealmUserTaskLocalStore(),
+            remoteStore: SupabaseUserTaskRemoteStore(supabase: supabase, authManager: authManager)
+        )
+        
+        let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(), userId: nil)
+        
+        let state = AppState(
+            authManager: authManager,
+            supabase: supabase,
+            locationManager: locationManager,
+            pushNotificationService: pushService,
+            eventRepository: eventRepo,
+            userTaskRepository: taskRepo,
+            chatRepository: chatRepo
+        )
+        
+        self.supabaseSDK = supabase
+        self.firebaseService = firebase
+        self.pushNotificationService = pushService
+        self.eventRepository = eventRepo
+        self.userTaskRepository = taskRepo
+        self.chatRepository = chatRepo
+        self.appState = state
+        
+        pushService.start()
+        appDelegate.pushNotificationService = pushService
     }
 
     var body: some Scene {
@@ -82,4 +106,21 @@ func setupRealm() {
     )
     Realm.Configuration.defaultConfiguration = config
     // let _ = try! Realm() // Force Realm to initialize now
+}
+
+func configureFirebase() {
+    var filePath: String?
+    switch EnvConfig.shared.current {
+    case .dev:
+        filePath = Bundle.main.path(forResource: "GoogleService-Info-dev", ofType: "plist")
+    case .prod:
+        filePath = Bundle.main.path(forResource: "GoogleService-Info-prod", ofType: "plist")
+    case .staging:
+        filePath = Bundle.main.path(forResource: "GoogleService-Info-dev", ofType: "plist")
+    }
+
+    guard let fileopts = FirebaseOptions(contentsOfFile: filePath!) else {
+        fatalError("Couldn't load Firebase config file")
+    }
+    FirebaseApp.configure(options: fileopts)
 }
