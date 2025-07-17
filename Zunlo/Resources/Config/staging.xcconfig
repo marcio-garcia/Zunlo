@@ -6,4 +6,5 @@ API_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 GOOGLESERVICE_INFO_FILE = GoogleService-Info-dev.plist
 
 APP_NAME = Zunlo stg
+PRODUCT_BUNDLE_IDENTIFIER = net.loginode.zunloapp.stg
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-stg

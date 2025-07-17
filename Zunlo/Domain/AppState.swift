@@ -13,19 +13,19 @@ final class AppState {
     let userTaskRepository: UserTaskRepository
     let chatRepository: ChatRepository
     let supabase: SupabaseSDK
-    let locationManager: LocationManager
+    let locationService: LocationService
     let pushNotificationService: PushNotificationService
     
     init(authManager: AuthManager,
          supabase: SupabaseSDK,
-         locationManager: LocationManager,
+         locationService: LocationService,
          pushNotificationService: PushNotificationService,
          eventRepository: EventRepository,
          userTaskRepository: UserTaskRepository,
          chatRepository: ChatRepository) {
         self.authManager = authManager
         self.supabase = supabase
-        self.locationManager = locationManager
+        self.locationService = locationService
         self.pushNotificationService = pushNotificationService
         self.eventRepository = eventRepository
         self.userTaskRepository = userTaskRepository

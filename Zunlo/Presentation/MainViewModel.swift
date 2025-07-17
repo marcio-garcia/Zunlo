@@ -11,18 +11,18 @@ final class MainViewModel: ObservableObject {
     let eventRepository: EventRepository
     let userTaskRepository: UserTaskRepository
     let chatViewModel: ChatScreenViewModel
-    let locationManager: LocationManager
+    let locationService: LocationService
     let pushService: PushNotificationService
 
     init(eventRepository: EventRepository,
          userTaskRepository: UserTaskRepository,
          chatViewModel: ChatScreenViewModel,
-         locationManager: LocationManager,
+         locationService: LocationService,
          pushService: PushNotificationService) {
         self.eventRepository = eventRepository
         self.userTaskRepository = userTaskRepository
         self.chatViewModel = chatViewModel
-        self.locationManager = locationManager
+        self.locationService = locationService
         self.pushService = pushService
     }
 }

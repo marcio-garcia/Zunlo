@@ -9,12 +9,10 @@ import SwiftUI
 
 struct CalendarScheduleView: View {
     @StateObject var viewModel: CalendarScheduleViewModel
-    @State var needRequestPushPermissions: Bool = false
     
-    init(repository: EventRepository, locationManager: LocationManager, pushService: PushNotificationService) {
+    init(repository: EventRepository, locationService: LocationService) {
         _viewModel = StateObject(wrappedValue: CalendarScheduleViewModel(repository: repository,
-                                                                         locationManager: locationManager,
-                                                                         pushService: pushService))
+                                                                         locationService: locationService))
     }
     
     private func isToday(date: Date) -> Bool {
@@ -98,9 +96,6 @@ struct CalendarScheduleView: View {
                     .onAppear {
                         DispatchQueue.main.async {
                             proxy.scrollTo(Date().startOfDay, anchor: .top)
-                            if let value = UserDefaults.standard.object(forKey: "RequestPushPermissions") {
-                                self.needRequestPushPermissions = true
-                            }
                         }
                     }
                 }
@@ -146,11 +141,6 @@ struct CalendarScheduleView: View {
             }
             Button("Cancel", role: .cancel) {
                 viewModel.showEditChoiceDialog = false
-            }
-        }
-        .sheet(isPresented: $needRequestPushPermissions) {
-            RequestPushPermissionsView {
-                viewModel.requestPushPermissions()
             }
         }
         .task {

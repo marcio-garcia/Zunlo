@@ -8,29 +8,24 @@
 import SwiftUI
 
 struct RootView: View {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @EnvironmentObject var authManager: AuthManager
-    @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var locationService: LocationService
     var appState: AppState
+    
     
     var body: some View {
         Group {
-            switch authManager.state {
-            case .loading:
-                ProgressView("Loading...")
-            case .unauthenticated:
-                AuthView()
-            case .authenticated(_):
-                switch locationManager.status {
-                case .notDetermined:
-                    OnboardingLocationView {
-                        locationManager.requestPermission()
-                    }
-                case .denied, .restricted:
-                    LocationDeniedView()
-                case .authorizedWhenInUse, .authorizedAlways:
+            if !hasCompletedOnboarding {
+                OnboardingView(appState: appState) {
+                    hasCompletedOnboarding = true
+                }
+            } else {
+                switch authManager.state {
+                case .unauthenticated:
+                    AuthView()
+                case .authenticated(_):
                     MainView(factory: DefaultViewFactory(appState: appState))
-                @unknown default:
-                    ProgressView("Checking location permission...")
                 }
             }
         }
@@ -38,7 +33,7 @@ struct RootView: View {
         .transition(.opacity)
         .task {
             await authManager.bootstrap()
-            locationManager.checkStatus()
+            locationService.checkStatus()
         }
     }
 }

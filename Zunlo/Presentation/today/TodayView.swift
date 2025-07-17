@@ -15,11 +15,12 @@ struct TodayView: View {
     @State private var showTaskInbox = false
     @State private var showAddTask = false
     @State private var showAddEvent = false
+    @State private var showRequestPush = false
 
     // Inject your real repositories here
     var eventRepository: EventRepository
     var taskRepository: UserTaskRepository
-    var locationManager: LocationManager
+    var locationService: LocationService
     var pushService: PushNotificationService
 
     var body: some View {
@@ -38,9 +39,17 @@ struct TodayView: View {
                 .navigationTitle("Today")
                 .sheet(isPresented: $showSchedule) {
                     CalendarScheduleView(repository: eventRepository,
-                                         locationManager: locationManager,
-                                         pushService: pushService)
+                                         locationService: locationService)
                 }
+                .sheet(isPresented: $showRequestPush, onDismiss: {
+                    showSchedule = true
+                }, content: {
+                    RequestPushPermissionsView(pushPermissionsDenied: pushService.pushPermissionsDenied) {
+                        pushService.requestNotificationPermissions { granted in
+                            showRequestPush = false
+                        }
+                    }
+                })
                 .sheet(isPresented: $showTaskInbox) {
                     TaskInboxView(repository: taskRepository)
                 }
@@ -70,43 +79,49 @@ struct TodayView: View {
 
     private var greetingSection: some View {
         Text("Good morning! 👋")
-            .font(.largeTitle)
-            .fontWeight(.semibold)
+            .font(AppFont.subtitle())
     }
 
     private var eventsTodaySection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Events Today")
-                .font(.headline)
+                .themedHeadline()
 
             // Replace with real event occurrences for today
             Group {
                 Text("\u{2022} 9:00 AM - Team Standup")
                 Text("\u{2022} 2:00 PM - Therapist Appointment")
             }
+            .themedText()
 
             Button("View Full Schedule") {
-                showSchedule = true
+                if pushService.pushPermissionsGranted {
+                    showSchedule = true
+                } else {
+                    showRequestPush = true
+                }
             }
-            .font(.subheadline)
+            .themedPrimaryButton()
         }
+        .themedCard()
     }
 
     private var tasksTodaySection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tasks Today")
-                .font(.headline)
+                .themedHeadline()
 
             // Replace with real filtered tasks for today
             Group {
                 Text("[ ] Take medication")
                 Text("[ ] Write journal entry")
             }
-
+            .themedText()
+            
             Button("View Task Inbox") {
                 showTaskInbox = true
             }
-            .font(.subheadline)
+            .font(AppFont.caption())
         }
     }
 
@@ -119,11 +134,12 @@ struct TodayView: View {
                 Button(action: { showAddTask = true }) {
                     Label("Add Task", systemImage: "plus")
                 }
+                .themedSecondaryButton()
                 Button(action: { showAddEvent = true }) {
                     Label("Add Event", systemImage: "calendar.badge.plus")
                 }
+                .themedSecondaryButton()
             }
-            .buttonStyle(.bordered)
         }
     }
 }

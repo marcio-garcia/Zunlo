@@ -23,8 +23,7 @@ class CalendarScheduleViewModel: ObservableObject {
     
     var repository: EventRepository
     let visibleRange: ClosedRange<Date>
-    var locationManager: LocationManager
-    var pushService: PushNotificationService
+    var locationService: LocationService
     
     var occurObservID: UUID?
     var eventsObservID: UUID?
@@ -38,12 +37,10 @@ class CalendarScheduleViewModel: ObservableObject {
     }
     
     init(repository: EventRepository,
-         locationManager: LocationManager,
-         pushService: PushNotificationService) {
+         locationService: LocationService) {
         
         self.repository = repository
-        self.locationManager = locationManager
-        self.pushService = pushService
+        self.locationService = locationService
         let cal = Calendar.current
         let start = cal.date(byAdding: .month, value: -6, to: Date())!
         let end = cal.date(byAdding: .month, value: 6, to: Date())!
@@ -58,7 +55,7 @@ class CalendarScheduleViewModel: ObservableObject {
     @MainActor
     func fetchEvents() async {
         do {
-            locationManager.startUpdatingLocation()
+            locationService.startUpdatingLocation()
             try await repository.fetchAll(in: visibleRange)
         } catch {
             state = .error(error.localizedDescription)
@@ -139,14 +136,10 @@ class CalendarScheduleViewModel: ObservableObject {
         // Implement actual delete logic here
     }
     
-    func requestPushPermissions() {
-        pushService.requestNotificationPermissions()
-    }
-    
     private func season(by date: Date) -> Season {
         let month = Calendar.current.component(.month, from: date)
         return season(for: month,
-                      hemisphere: hemisphere(for: locationManager.latitude))
+                      hemisphere: hemisphere(for: locationService.latitude))
     }
     
     private func hemisphere(for latitude: CLLocationDegrees) -> String {

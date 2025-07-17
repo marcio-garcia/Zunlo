@@ -26,7 +26,7 @@ final class DefaultViewFactory: ViewFactory {
         return MainViewModel(eventRepository: appState.eventRepository,
                              userTaskRepository: appState.userTaskRepository,
                              chatViewModel: chatVM,
-                             locationManager: appState.locationManager,
+                             locationService: appState.locationService,
                              pushService: appState.pushNotificationService)
     }
     

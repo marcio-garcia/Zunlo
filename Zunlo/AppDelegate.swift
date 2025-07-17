@@ -9,7 +9,7 @@ import UIKit
 
 class AppDelegate: NSObject, UIApplicationDelegate {
 
-    var pushNotificationService: PushNotificationService?
+    weak var pushNotificationService: PushNotificationService?
     
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -18,6 +18,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        print("******** APNS didRegisterForRemoteNotifications")
         pushNotificationService?.registerAPNsToken(deviceToken)
     }
 }

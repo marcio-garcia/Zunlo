@@ -7,6 +7,20 @@
 
 import Foundation
 
+public enum SupabaseServiceError: Error {
+    case serverError(statusCode: Int, body: Data?, supabaseError: SupabaseErrorResponse?)
+    case decodingError(Error)
+    case encodingError(Error)
+    case networkError(Error)
+}
+
+public struct SupabaseErrorResponse: Decodable, Error {
+    public let code: String
+    public let details: String
+    public let hint: String?
+    public let message: String
+}
+
 public final class SupabaseDatabase: @unchecked Sendable {
     private let config: SupabaseConfig
     private let session: URLSession
@@ -53,19 +67,31 @@ public final class SupabaseDatabase: @unchecked Sendable {
     public func insert<T: Codable>(_ object: T,
                                    into table: String,
                                    additionalHeaders: [String: String]? = nil) async throws -> [T] {
-        let body = try encode(object)
-        let headers = additionalHeaders?.merging(["Content-Type": "application/json"]) { _, new in new } ?? ["Content-Type": "application/json"]
-        let (data, response) = try await httpClient.sendRequest(
-            path: "/rest/v1/\(table)",
-            method: "POST",
-            body: body,
-            additionalHeaders: headers
-        )
-        
-        guard 200..<300 ~= response.statusCode else {
-            throw URLError(.badServerResponse)
+        do {
+            let body = try encode(object)
+            let headers = additionalHeaders?.merging(["Content-Type": "application/json"]) { _, new in new } ?? ["Content-Type": "application/json"]
+            
+            let (data, response) = try await httpClient.sendRequest(
+                path: "/rest/v1/\(table)",
+                method: "POST",
+                body: body,
+                additionalHeaders: headers
+            )
+            
+            guard 200..<300 ~= response.statusCode else {
+                let decodedError = try? JSONDecoder().decode(SupabaseErrorResponse.self, from: data)
+                throw SupabaseServiceError.serverError(statusCode: response.statusCode, body: data, supabaseError: decodedError)
+            }
+            
+            return try decode(data)
+            
+        } catch let decodingError as DecodingError {
+            throw SupabaseServiceError.decodingError(decodingError)
+        } catch let encodingError as EncodingError {
+            throw SupabaseServiceError.encodingError(encodingError)
+        } catch {
+            throw SupabaseServiceError.networkError(error)
         }
-        return try decode(data)
     }
     
     public func update<T: Codable>(_ object: T,

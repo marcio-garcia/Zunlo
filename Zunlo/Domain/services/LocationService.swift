@@ -1,5 +1,5 @@
 //
-//  LocationManager.swift
+//  LocationService.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 7/8/25.
@@ -7,7 +7,7 @@
 
 import CoreLocation
 
-class LocationManager: NSObject, ObservableObject {
+class LocationService: NSObject, ObservableObject {
     @Published var latitude: CLLocationDegrees = 40.0 // Default to Northern Hemisphere (fake)
     @Published var status: CLAuthorizationStatus = .notDetermined
     
@@ -36,7 +36,7 @@ class LocationManager: NSObject, ObservableObject {
     }
 }
 
-extension LocationManager: CLLocationManagerDelegate {
+extension LocationService: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let loc = locations.first {
             latitude = loc.coordinate.latitude

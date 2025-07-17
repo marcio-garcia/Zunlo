@@ -29,7 +29,40 @@ final class SupabasePushTokensRemoteStore: PushTokensRemoteStore {
         var re = remote
         re.id = nil
         let headers = ["Prefer": "resolution=merge-duplicates"]
-        return try await database.insert(re, into: tableName, additionalHeaders: headers)
+        do {
+            return try await database.insert(re, into: tableName, additionalHeaders: headers)
+        } catch let error as SupabaseServiceError {
+            var passError: Error
+            switch error {
+            case .serverError(let statusCode, _, let errorResponse):
+                if statusCode == 409 {
+                    if let conflictDetails = errorResponse?.details {
+                        print("Conflict on key:", conflictDetails)
+                        // Optionally resolve or ignore
+                    }
+                } else {
+                    if let errMessage = errorResponse?.message {
+                        print("Servier error - status code: [\(statusCode)], error response: \(errMessage)")
+                        
+                    } else {
+                        print("Servier error - status code: [\(statusCode)]")
+                    }
+                }
+                passError = error
+            case .decodingError(let err):
+                print("Decoding failed:", err)
+                passError = err
+            case .encodingError(let err):
+                print("Encoding failed:", err)
+                passError = err
+            case .networkError(let err):
+                print("Network error:", err)
+                passError = err
+            }
+            throw passError
+        } catch {
+            throw error
+        }
     }
 
     func update(_ remote: PushTokenRemote) async throws -> [PushTokenRemote] {

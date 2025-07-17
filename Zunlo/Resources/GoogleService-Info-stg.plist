@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>net.loginode.zunloapp.dev</string>
+	<string>net.loginode.zunloapp.stg</string>
 	<key>PROJECT_ID</key>
 	<string>zunlo-ba8f0</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:606243636260:ios:d69fcbe6dfa055025084b1</string>
+	<string>1:606243636260:ios:49707fe3696c9cb35084b1</string>
 </dict>
 </plist>

@@ -9,10 +9,13 @@ import UIKit
 import UserNotifications
 
 final class PushNotificationService: NSObject {
-
+    
     var authManager: AuthManager
     var pushTokenStore: PushTokensRemoteStore
     var firebaseService: FirebaseService
+
+    let grantedUserDefultKey = "PushPermissionsGranted"
+    let deniedUserDefultKey = "PushPermissionsDenied"
     
     init(authManager: AuthManager,
          pushTokenStore: PushTokensRemoteStore,
@@ -22,25 +25,56 @@ final class PushNotificationService: NSObject {
         self.firebaseService = firebaseService
     }
 
+    var pushPermissionsGranted: Bool {
+        get {
+            UserDefaults.standard.object(forKey: self.grantedUserDefultKey) as? Bool ?? false
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: self.grantedUserDefultKey)
+        }
+    }
+    
+    var pushPermissionsDenied: Bool {
+        get {
+            UserDefaults.standard.object(forKey: self.deniedUserDefultKey) as? Bool ?? false
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: self.deniedUserDefultKey)
+        }
+    }
+    
     func start() {
         UNUserNotificationCenter.current().delegate = self
         
         firebaseService.onDidReceiveRegistrationToken = { [weak self] token in
             Task {
                 guard let self else { return }
+                print("onDidReceiveRegistrationToken - FCM token: \(token)")
                 try await self.registerCurrentToken(token)
             }
         }
         
-        firebaseService.observeTokenRefresh { [weak self] token in
-            Task {
-                guard let self, let token else { return }
-                try? await self.registerCurrentToken(token)
-            }
-        }
+//        firebaseService.observeTokenRefresh { [weak self] token in
+//            Task {
+//                guard let self, let token else { return }
+//                print("observeTokenRefresh - FCM token: \(token)")
+//                try? await self.registerCurrentToken(token)
+//            }
+//        }
+        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+//            Task {
+//                do {
+//                    let token = try await self.firebaseService.getFCMToken()
+//                    print("observeTokenRefresh - FCM token: \(token)")
+//                } catch {
+//                    print("Failed to get FCM token:", error)
+//                }
+//            }
+//        }
     }
     
-    func requestNotificationPermissions() {
+    func requestNotificationPermissions(completion: ((Bool) -> Void)?) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
                 DispatchQueue.main.async {
@@ -48,13 +82,17 @@ final class PushNotificationService: NSObject {
                 }
             } else {
                 print("User denied notifications: \(error?.localizedDescription ?? "No error")")
+                self.pushPermissionsGranted = false
+                self.pushPermissionsDenied = true
             }
+            completion?(granted)
         }
     }
     
     func registerAPNsToken(_ deviceToken: Data) {
         firebaseService.setAPNsToken(deviceToken)
-        UserDefaults.standard.set(false, forKey: "RequestPushPermissions")
+        self.pushPermissionsGranted = true
+        self.pushPermissionsDenied = false
     }
 
     func getToken() async throws -> String {

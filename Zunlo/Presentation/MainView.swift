@@ -35,7 +35,7 @@ struct MainView: View {
                           showChat: $isShowingChat,
                           eventRepository: viewModel.eventRepository,
                           taskRepository: viewModel.userTaskRepository,
-                          locationManager: viewModel.locationManager,
+                          locationService: viewModel.locationService,
                           pushService: viewModel.pushService)
             }
         }

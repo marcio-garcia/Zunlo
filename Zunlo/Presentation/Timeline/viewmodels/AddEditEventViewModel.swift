@@ -154,7 +154,6 @@ final class AddEditEventViewModel: ObservableObject {
                     try await editOverride(override: override)
                 }
                 isSaving = false
-                UserDefaults.standard.set(true, forKey: "RequestPushPermissions")
                 completion(.success(()))
             } catch {
                 isSaving = false
