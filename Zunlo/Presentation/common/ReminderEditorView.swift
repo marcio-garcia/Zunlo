@@ -18,9 +18,7 @@ struct ReminderEditorView: View {
                         get: { triggers[index].message ?? "" },
                         set: { triggers[index].message = $0 }
                     ))
-                    .themedBody()
-
-//                    Spacer()
+                    .themedCaption()
                     
                     VStack(alignment: .leading) {
                         Slider(
@@ -35,29 +33,6 @@ struct ReminderEditorView: View {
                         Text(formatReminderTime(Int(triggers[index].timeBeforeDue / 60)))
                             .themedCaption()
                     }
-
-//                    VStack {
-//                        let minutes = Int(triggers[index].timeBeforeDue / 60)
-//                        
-//                        let reminderOptions: [(label: String, seconds: TimeInterval)] = [
-//                            ("At time of task", 0),
-//                            ("5 min before", 300),
-//                            ("15 min", 900),
-//                            ("30 min", 1800),
-//                            ("1 hour", 3600),
-//                            ("1 day", 86400)
-//                        ]
-//                        
-//                        Picker("Reminder Time", selection: Binding(
-//                            get: { minutes },
-//                            set: { triggers[index].timeBeforeDue = TimeInterval($0 * 60) }
-//                        )) {
-//                            ForEach(reminderOptions, id: \.seconds) { option in
-//                                Text(option.label).tag(option.seconds)
-//                            }
-//                        }
-//                        .pickerStyle(.menu) // Or use .segmented for a row of pills
-//                    }
                 }
             }
 

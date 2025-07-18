@@ -68,7 +68,11 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
         guard let id = item.id,
               let triggers = item.reminderTriggers else { return }
 
-        let identifiers = triggers.indices.map { makeNotificationId(id, $0) }
+        cancelReminders(itemId: id, reminderTriggers: triggers)
+    }
+    
+    func cancelReminders(itemId: UUID, reminderTriggers: [ReminderTrigger]) {
+        let identifiers = reminderTriggers.indices.map { makeNotificationId(itemId, $0) }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 

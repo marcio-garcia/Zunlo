@@ -54,6 +54,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
         as type: T.Type = T.self
     ) async throws -> [T] {
         try await performRequest(
+            baseURL: config.functionsBaseURL,
             path: "/get_user_events",
             method: "GET"
         )
@@ -97,6 +98,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
     }
     
     private func performRequest<T: Codable>(
+        baseURL: URL? = nil,
         path: String,
         method: String,
         bodyObject: T? = nil,
@@ -104,10 +106,11 @@ public final class SupabaseDatabase: @unchecked Sendable {
         additionalHeaders: [String: String]? = nil
     ) async throws -> [T] {
         do {
-            let body = try encode(bodyObject)
+            let body = bodyObject == nil ? nil : try encode(bodyObject!)
             let headers = additionalHeaders?.merging(["Content-Type": "application/json"]) { _, new in new } ?? ["Content-Type": "application/json"]
             
             let (data, response) = try await httpClient.sendRequest(
+                baseURL: baseURL,
                 path: path,
                 method: method,
                 query: query,

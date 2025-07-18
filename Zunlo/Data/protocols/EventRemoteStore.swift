@@ -12,6 +12,6 @@ protocol EventRemoteStore {
     func fecthOccurrences() async throws -> [EventOccurrenceRemote]
     func save(_ event: EventRemote) async throws -> [EventRemote]
     func update(_ event: EventRemote) async throws -> [EventRemote]
-    func delete(_ event: EventRemote) async throws -> [EventRemote]
+    func delete(id: UUID) async throws -> [EventRemote]
     func deleteAll(for userId: UUID) async throws -> [EventRemote]
 }

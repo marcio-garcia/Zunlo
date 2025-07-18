@@ -60,11 +60,7 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
         return try await database.update(ev, in: tableName, filter: ["id": "eq.\(id)"])
     }
 
-    func delete(_ event: EventRemote) async throws -> [EventRemote] {
-        guard let id = event.id?.uuidString else {
-            assertionFailure("SupabaseEventRemoteStore - delete(_ rule:) - id == nil")
-            return []
-        }
+    func delete(id: UUID) async throws -> [EventRemote] {
         return try await database.delete(from: tableName, filter: ["id": "eq.\(id)"])
     }
 

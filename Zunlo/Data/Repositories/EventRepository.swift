@@ -101,14 +101,16 @@ final class EventRepository {
         occurrences.value = try await fetchRemote()
     }
 
-    func delete(_ event: Event) async throws {
-        let deleted = try await eventRemoteStore.delete(EventRemote(domain: event))
+    func delete(id: UUID, reminderTriggers: [ReminderTrigger]? = nil) async throws {
+        let deleted = try await eventRemoteStore.delete(id: id)
         for event in deleted {
             if let id = event.id {
                 try await eventLocalStore.delete(id: id)
             }
         }
-        reminderScheduler.cancelReminders(for: event)
+        if let triggers = reminderTriggers {
+            reminderScheduler.cancelReminders(itemId: id, reminderTriggers: triggers)
+        }
         occurrences.value = try await fetchRemote()
     }
 

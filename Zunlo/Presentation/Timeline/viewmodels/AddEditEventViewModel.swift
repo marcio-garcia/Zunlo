@@ -36,9 +36,10 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var count: String = ""
     @Published var color: String = EventColor.yellow.rawValue
     @Published var isCancelled: Bool = false
-    @Published var isSaving: Bool = false
+    @Published var isProcessing: Bool = false
     @Published var reminderTriggers: [ReminderTrigger]?
-
+    @Published var showDeleteConfirmation = false
+    
     /// UI uses 0=Sunday...6=Saturday.
     /// calendarByWeekday maps to Calendar's 1=Sunday...7=Saturday.
     @Published var byWeekday: Set<Int> = []
@@ -73,6 +74,11 @@ final class AddEditEventViewModel: ObservableObject {
     var isEditingSingleOrOverride: Bool {
         if case .editSingle = mode { return true }
         if case .editOverride = mode { return true }
+        return false
+    }
+    
+    var isEditingAll: Bool {
+        if case .editAll = mode { return true }
         return false
     }
     
@@ -140,9 +146,25 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
     
+    func delete(completion: @escaping (Result<Void, Error>) -> Void) {
+        isProcessing = true
+        if case .editAll(let event, let recurrenceRule) = mode {
+            Task {
+                do {
+                    try await repository.delete(id: event.eventId, reminderTriggers: event.reminderTriggers)
+                    isProcessing = true
+                    completion(.success(()))
+                } catch {
+                    isProcessing = true
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
     func save(completion: @escaping (Result<Void, Error>) -> Void) {
         guard !title.isEmpty else { return }
-        isSaving = true
+        isProcessing = true
 
         Task {
             do {
@@ -156,10 +178,10 @@ final class AddEditEventViewModel: ObservableObject {
                 case .editOverride(let override):
                     try await editOverride(override: override)
                 }
-                isSaving = false
+                isProcessing = false
                 completion(.success(()))
             } catch {
-                isSaving = false
+                isProcessing = false
                 completion(.failure(error))
             }
         }
