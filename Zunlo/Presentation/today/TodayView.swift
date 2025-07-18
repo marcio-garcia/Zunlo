@@ -29,14 +29,13 @@ struct TodayView: View {
             NavigationStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        greetingSection
                         eventsTodaySection
                         tasksTodaySection
                         quickAddSection
                     }
                     .padding()
                 }
-                .navigationTitle("Today")
+                .navigationTitle(greetingForCurrentTime())
                 .sheet(isPresented: $showSchedule) {
                     CalendarScheduleView(repository: eventRepository,
                                          locationService: locationService)
@@ -77,11 +76,6 @@ struct TodayView: View {
         }
     }
 
-    private var greetingSection: some View {
-        Text("Good morning! 👋")
-            .font(AppFont.subtitle())
-    }
-
     private var eventsTodaySection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Events Today")
@@ -92,7 +86,7 @@ struct TodayView: View {
                 Text("\u{2022} 9:00 AM - Team Standup")
                 Text("\u{2022} 2:00 PM - Therapist Appointment")
             }
-            .themedText()
+            .themedBody()
 
             Button("View Full Schedule") {
                 if pushService.pushPermissionsGranted {
@@ -116,20 +110,18 @@ struct TodayView: View {
                 Text("[ ] Take medication")
                 Text("[ ] Write journal entry")
             }
-            .themedText()
+            .themedBody()
             
             Button("View Task Inbox") {
                 showTaskInbox = true
             }
             .font(AppFont.caption())
         }
+        .themedCard()
     }
 
     private var quickAddSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Add")
-                .font(.headline)
-
             HStack {
                 Button(action: { showAddTask = true }) {
                     Label("Add Task", systemImage: "plus")
@@ -140,6 +132,21 @@ struct TodayView: View {
                 }
                 .themedSecondaryButton()
             }
+        }
+    }
+    
+    private func greetingForCurrentTime(date: Date = Date()) -> String {
+        let hour = Calendar.current.component(.hour, from: date)
+        
+        switch hour {
+        case 5..<12:
+            return "Good morning! 👋"
+        case 12..<17:
+            return "Good afternoon! ☀️"
+        case 17..<22:
+            return "Good evening! 🌆"
+        default:
+            return "Good night! 🌙"
         }
     }
 }

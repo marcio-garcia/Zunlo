@@ -21,6 +21,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     @Published var priority: UserTaskPriority = .medium
     @Published var tags: String = ""
     @Published var isSaving = false
+    @Published var reminderTriggers: [ReminderTrigger] = []
 
     let mode: Mode
     let repository: UserTaskRepository
@@ -73,7 +74,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             dueDate: dueDate,
             priority: priority,
             parentEventId: nil,
-            tags: tagArray
+            tags: tagArray,
+            reminderTriggers: reminderTriggers
         )
 
         Task {
@@ -102,6 +104,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             dueDate = task.dueDate
             priority = task.priority ?? .medium
             tags = task.tags.joined(separator: ", ")
+            reminderTriggers = task.reminderTriggers ?? []
         }
     }
 }

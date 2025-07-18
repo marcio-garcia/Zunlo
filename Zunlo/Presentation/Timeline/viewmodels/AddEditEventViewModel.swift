@@ -37,6 +37,7 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var color: String = EventColor.yellow.rawValue
     @Published var isCancelled: Bool = false
     @Published var isSaving: Bool = false
+    @Published var reminderTriggers: [ReminderTrigger]?
 
     /// UI uses 0=Sunday...6=Saturday.
     /// calendarByWeekday maps to Calendar's 1=Sunday...7=Saturday.
@@ -95,6 +96,7 @@ final class AddEditEventViewModel: ObservableObject {
             until = nil
             count = ""
             color = EventColor.yellow.rawValue
+            reminderTriggers = []
         case .editAll(let event, let rule):
             title = event.title
             notes = event.description ?? ""
@@ -103,6 +105,7 @@ final class AddEditEventViewModel: ObservableObject {
             location = event.location ?? ""
             isRecurring = event.isRecurring
             color = event.color.rawValue
+            reminderTriggers = event.reminderTriggers ?? []
             if let rule = rule {
                 recurrenceType = rule.freq
                 recurrenceInterval = rule.interval
@@ -175,7 +178,8 @@ final class AddEditEventViewModel: ObservableObject {
             location: location.isEmpty ? nil : location,
             createdAt: now,
             updatedAt: now,
-            color: EventColor(rawValue: color) ?? . yellow
+            color: EventColor(rawValue: color) ?? . yellow,
+            reminderTriggers: reminderTriggers
         )
         
         let addedEvents = try await repository.save(newEvent)
@@ -214,7 +218,8 @@ final class AddEditEventViewModel: ObservableObject {
             location: location.isEmpty ? nil : location,
             createdAt: event.createdAt,
             updatedAt: now,
-            color: EventColor(rawValue: color) ?? . yellow
+            color: EventColor(rawValue: color) ?? . yellow,
+            reminderTriggers: event.reminderTriggers
         )
         
         try await repository.update(updatedEvent)

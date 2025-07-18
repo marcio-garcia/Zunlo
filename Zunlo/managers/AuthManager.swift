@@ -8,6 +8,7 @@
 import Combine
 
 enum AuthState: Equatable {
+    case loading
     case authenticated(Auth)
     case unauthenticated
 }
@@ -24,7 +25,7 @@ protocol AuthSession {
 }
 
 final class AuthManager: AuthSession, ObservableObject {
-    @Published private(set) var state: AuthState = .unauthenticated
+    @Published private(set) var state: AuthState = .loading
     
     private let tokenStorage: TokenStorage
     private let authService: AuthServicing

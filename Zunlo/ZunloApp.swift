@@ -77,7 +77,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 5, // <- increment this every time you change schema!
+        schemaVersion: 7, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 2 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,

@@ -23,6 +23,7 @@ extension Event {
         self.createdAt = created_at
         self.updatedAt = remote.updated_at
         self.color = remote.color ?? .yellow
+        self.reminderTriggers = remote.reminder_triggers
     }
 
     init(local: EventLocal) {
@@ -37,6 +38,7 @@ extension Event {
         self.createdAt = local.createdAt
         self.updatedAt = local.updatedAt
         self.color = local.color ?? .yellow
+        self.reminderTriggers = local.reminderTriggersArray
     }
 }
 
@@ -53,6 +55,7 @@ extension EventRemote {
         self.created_at = domain.createdAt
         self.updated_at = domain.updatedAt
         self.color = domain.color
+        self.reminder_triggers = domain.reminderTriggers
     }
 }
 
@@ -72,7 +75,8 @@ extension EventLocal {
             location: domain.location,
             createdAt: domain.createdAt,
             updatedAt: domain.updatedAt,
-            color: domain.color
+            color: domain.color,
+            reminderTriggers: domain.reminderTriggers ?? []
         )
     }
     
@@ -91,7 +95,8 @@ extension EventLocal {
             location: remote.location,
             createdAt: created_at,
             updatedAt: remote.updated_at,
-            color: remote.color ?? .yellow
+            color: remote.color ?? .yellow,
+            reminderTriggers: remote.reminder_triggers ?? []
         )
     }
     
@@ -104,5 +109,6 @@ extension EventLocal {
         self.isRecurring = event.is_recurring
         self.updatedAt = event.updated_at
         self.color = event.color ?? .yellow
+        self.reminderTriggersArray = event.reminder_triggers ?? []
     }
 }

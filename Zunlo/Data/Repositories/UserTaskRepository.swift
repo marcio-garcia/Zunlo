@@ -1,5 +1,5 @@
 //
-//  TaskRepository.swift
+//  UserTaskRepository.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 7/13/25.
@@ -11,12 +11,14 @@ import MiniSignalEye
 final class UserTaskRepository {
     private let localStore: UserTaskLocalStore
     private let remoteStore: UserTaskRemoteStore
-
+    private let reminderScheduler: ReminderScheduler<UserTask>
+    
     private(set) var tasks = Observable<[UserTask]>([])
 
     init(localStore: UserTaskLocalStore, remoteStore: UserTaskRemoteStore) {
         self.localStore = localStore
         self.remoteStore = remoteStore
+        self.reminderScheduler = ReminderScheduler()
     }
 
     func fetchAll() async throws {
@@ -29,17 +31,22 @@ final class UserTaskRepository {
     }
 
     func save(_ task: UserTask) async throws {
-        let inserted = try await remoteStore.save(UserTaskRemote(domain: task))
-        for task in inserted {
-            try await localStore.save(task)
+        let savedRemote = try await remoteStore.save(UserTaskRemote(domain: task))
+        for remote in savedRemote {
+            try await localStore.save(remote)
+            let domain = UserTask(remote: remote)
+            reminderScheduler.scheduleReminders(for: domain)
         }
         self.tasks.value = try await localStore.fetchAll()
     }
 
     func update(_ task: UserTask) async throws {
-        let updated = try await remoteStore.update(UserTaskRemote(domain: task))
-        for task in updated {
-            try await localStore.update(task)
+        let updatedRemote = try await remoteStore.update(UserTaskRemote(domain: task))
+        for remote in updatedRemote {
+            try await localStore.update(remote)
+            let domain = UserTask(remote: remote)
+            reminderScheduler.cancelReminders(for: domain)
+            reminderScheduler.scheduleReminders(for: domain)
         }
         self.tasks.value = try await localStore.fetchAll()
     }
@@ -51,6 +58,7 @@ final class UserTaskRepository {
                 try await localStore.delete(id: id)
             }
         }
+        reminderScheduler.cancelReminders(for: task)
         self.tasks.value = try await localStore.fetchAll()
     }
 }

@@ -22,6 +22,8 @@ struct RootView: View {
                 }
             } else {
                 switch authManager.state {
+                case .loading:
+                    ProgressView("Loading...")
                 case .unauthenticated:
                     AuthView()
                 case .authenticated(_):

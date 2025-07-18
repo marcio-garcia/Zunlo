@@ -71,6 +71,8 @@ struct AddEditEventView: View {
                         else if viewModel.until == nil { viewModel.until = Date() }
                     })
                 }
+                
+                ReminderEditorView(triggers: $viewModel.reminderTriggers.replacingNil(with: []))
 
                 // Cancel single occurrence for override
                 if viewModel.showsCancelSection && viewModel.isEditingSingleOrOverride {

@@ -1,5 +1,5 @@
 //
-//  TaskRemote.swift
+//  UserTaskRemote.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 7/13/25.
@@ -20,6 +20,7 @@ struct UserTaskRemote: Codable, Identifiable {
     var priority: UserTaskPriority?
     var parent_event_id: UUID?
     var tags: [String]
+    var reminder_triggers: [ReminderTrigger]?
 
     init(domain: UserTask) {
         self.id = domain.id
@@ -34,6 +35,7 @@ struct UserTaskRemote: Codable, Identifiable {
         self.priority = domain.priority
         self.parent_event_id = domain.parentEventId
         self.tags = domain.tags
+        self.reminder_triggers = domain.reminderTriggers
     }
 
     func toDomain() -> UserTask {
@@ -49,7 +51,8 @@ struct UserTaskRemote: Codable, Identifiable {
             dueDate: due_date,
             priority: priority,
             parentEventId: parent_event_id,
-            tags: tags
+            tags: tags,
+            reminderTriggers: reminder_triggers
         )
     }
 }

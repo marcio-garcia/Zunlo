@@ -20,6 +20,19 @@ class EventLocal: Object {
     @Persisted var createdAt: Date = Date()
     @Persisted var updatedAt: Date = Date()
     @Persisted var color: EventColor? = .yellow
+    @Persisted var reminderTriggers: List<ReminderTriggerLocal>
+    
+    var reminderTriggersArray: [ReminderTrigger] {
+        get {
+            return reminderTriggers.map { $0.toDomain }
+        }
+        set {
+            reminderTriggers.removeAll()
+            newValue.forEach { rem in
+                reminderTriggers.append(rem.toLocal())
+            }
+        }
+    }
     
     convenience init(
         id: UUID,
@@ -32,7 +45,8 @@ class EventLocal: Object {
         location: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
-        color: EventColor? = .yellow
+        color: EventColor? = .yellow,
+        reminderTriggers: [ReminderTrigger]
     ) {
         self.init() // <-- MUST call the default init
         self.id = id
@@ -46,5 +60,6 @@ class EventLocal: Object {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.color = color
+        self.reminderTriggersArray = reminderTriggers
     }
 }

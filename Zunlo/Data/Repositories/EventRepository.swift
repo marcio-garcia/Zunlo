@@ -23,6 +23,8 @@ final class EventRepository {
     private let eventOverrideLocalStore: EventOverrideLocalStore
     private let eventOverrideRemoteStore: EventOverrideRemoteStore
     
+    private let reminderScheduler: ReminderScheduler<Event>
+    
     init(
         eventLocalStore: EventLocalStore,
         eventRemoteStore: EventRemoteStore,
@@ -37,6 +39,7 @@ final class EventRepository {
         self.recurrenceRuleRemoteStore = recurrenceRuleRemoteStore
         self.eventOverrideLocalStore = eventOverrideLocalStore
         self.eventOverrideRemoteStore = eventOverrideRemoteStore
+        self.reminderScheduler = ReminderScheduler()
     }
 
     // MARK: - Fetch & Compose All (from local, for UI)
@@ -79,18 +82,21 @@ final class EventRepository {
     // MARK: - CRUD for Events
 
     func save(_ event: Event) async throws -> [Event] {
-        let inserted = try await eventRemoteStore.save(EventRemote(domain: event))
-        for event in inserted {
-            try await eventLocalStore.save(event)
+        let savedRemote = try await eventRemoteStore.save(EventRemote(domain: event))
+        for remote in savedRemote {
+            try await eventLocalStore.save(remote)
+            reminderScheduler.scheduleReminders(for: Event(remote: remote))
         }
         occurrences.value = try await fetchRemote()
-        return inserted.compactMap { Event(remote: $0) }
+        return savedRemote.compactMap { Event(remote: $0) }
     }
 
     func update(_ event: Event) async throws {
-        let updated = try await eventRemoteStore.update(EventRemote(domain: event))
-        for event in updated {
-            try await eventLocalStore.update(event)
+        let updatedRemote = try await eventRemoteStore.update(EventRemote(domain: event))
+        for remote in updatedRemote {
+            try await eventLocalStore.update(remote)
+            reminderScheduler.cancelReminders(for: Event(remote: remote))
+            reminderScheduler.scheduleReminders(for: Event(remote: remote))
         }
         occurrences.value = try await fetchRemote()
     }
@@ -102,6 +108,7 @@ final class EventRepository {
                 try await eventLocalStore.delete(id: id)
             }
         }
+        reminderScheduler.cancelReminders(for: event)
         occurrences.value = try await fetchRemote()
     }
 

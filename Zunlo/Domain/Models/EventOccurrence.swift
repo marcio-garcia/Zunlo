@@ -18,6 +18,7 @@ struct EventOccurrence: Identifiable, Hashable {
     let isRecurring: Bool
     let location: String?
     let color: EventColor
+    let reminderTriggers: [ReminderTrigger]?
     let isOverride: Bool
     let isCancelled: Bool
     let updatedAt: Date
@@ -37,6 +38,7 @@ struct EventOccurrence: Identifiable, Hashable {
         isRecurring: Bool = false,
         location: String? = nil,
         color: EventColor,
+        reminderTriggers: [ReminderTrigger]? = nil,
         isOverride: Bool = false,
         isCancelled: Bool = false,
         updatedAt: Date,
@@ -55,6 +57,7 @@ struct EventOccurrence: Identifiable, Hashable {
         self.isRecurring = isRecurring
         self.location = location
         self.color = color
+        self.reminderTriggers = reminderTriggers
         self.isOverride = isOverride
         self.isCancelled = isCancelled
         self.updatedAt = updatedAt

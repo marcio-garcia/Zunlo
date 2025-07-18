@@ -19,4 +19,9 @@ struct Event: Identifiable, Codable, Hashable {
     let createdAt: Date
     let updatedAt: Date
     let color: EventColor
+    var reminderTriggers: [ReminderTrigger]?
+}
+
+extension Event: SchedulableReminderItem {
+    var dueDateForReminder: Date? { startDate } // or endDate?
 }
