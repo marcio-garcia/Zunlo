@@ -15,7 +15,6 @@ struct UserTaskRemote: Codable, Identifiable {
     var is_completed: Bool
     var created_at: Date?
     var updated_at: Date
-    var scheduled_date: Date?
     var due_date: Date?
     var priority: UserTaskPriority?
     var parent_event_id: UUID?
@@ -34,21 +33,15 @@ struct UserTaskRemote: Codable, Identifiable {
         self.tags = try container.decodeSafely([String].self, forKey: .tags)
         self.reminder_triggers = try? container.decodeSafely([ReminderTrigger].self, forKey: .reminder_triggers)
         
-        let scheduled_date = try? container.decode(String.self, forKey: .scheduled_date)
         let due_date = try? container.decodeSafely(String.self, forKey: .due_date)
         let created_at = try? container.decodeSafely(String.self, forKey: .created_at)
         let updated_at = try container.decodeSafely(String.self, forKey: .updated_at)
         
         self.updated_at = DateFormatter.iso8601WithoutFractionalSeconds.date(from: updated_at) ?? Date()
         
-        self.scheduled_date = nil
-        if let date = scheduled_date {
-            self.scheduled_date = Date.formattedDate(from: date, format: "YYYY-MM-dd")
-        }
-        
         self.due_date = nil
         if let date = due_date {
-            self.due_date = Date.formattedDate(from: date, format: "YYYY-MM-dd")
+            self.due_date = DateFormatter.iso8601WithoutFractionalSeconds.date(from: date)
         }
         
         self.created_at = nil
@@ -65,7 +58,6 @@ struct UserTaskRemote: Codable, Identifiable {
         self.is_completed = domain.isCompleted
         self.created_at = domain.createdAt
         self.updated_at = domain.updatedAt
-        self.scheduled_date = domain.scheduledDate
         self.due_date = domain.dueDate
         self.priority = domain.priority
         self.parent_event_id = domain.parentEventId
@@ -82,7 +74,6 @@ struct UserTaskRemote: Codable, Identifiable {
             isCompleted: is_completed,
             createdAt: created_at ?? Date(),
             updatedAt: updated_at,
-            scheduledDate: scheduled_date,
             dueDate: due_date,
             priority: priority,
             parentEventId: parent_event_id,

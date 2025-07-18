@@ -19,10 +19,20 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     @Published var dueDate: Date?
     @Published var isCompleted: Bool = false
     @Published var priority: UserTaskPriority = .medium
-    @Published var tags: String = ""
+    @Published var tags: [String] = []
     @Published var isSaving = false
     @Published var reminderTriggers: [ReminderTrigger] = []
-
+    
+    @Published var hasDueDate: Bool = false {
+        didSet {
+            if !hasDueDate {
+                dueDate = nil
+            } else if dueDate == nil {
+                dueDate = Date()
+            }
+        }
+    }
+    
     let mode: Mode
     let repository: UserTaskRepository
 
@@ -52,10 +62,10 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         isSaving = true
 
         let now = Date()
-        let tagArray = tags
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+//        let tagArray = tags
+//            .split(separator: ",")
+//            .map { $0.trimmingCharacters(in: .whitespaces) }
+//            .filter { !$0.isEmpty }
 
         var id: UUID? = nil
         if case .edit(let userTask) = mode {
@@ -70,11 +80,10 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             isCompleted: isCompleted,
             createdAt: now,
             updatedAt: now,
-            scheduledDate: scheduledDate,
             dueDate: dueDate,
             priority: priority,
             parentEventId: nil,
-            tags: tagArray,
+            tags: tags,
             reminderTriggers: reminderTriggers
         )
 
@@ -86,10 +95,14 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
                 case .edit:
                     try await repository.update(task)
                 }
-                isSaving = false
+                await MainActor.run {
+                    self.isSaving = false
+                }
                 completion(.success(()))
             } catch {
-                isSaving = false
+                await MainActor.run {
+                    self.isSaving = false
+                }
                 completion(.failure(error))
             }
         }
@@ -100,10 +113,10 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             title = task.title
             notes = task.notes ?? ""
             isCompleted = task.isCompleted
-            scheduledDate = task.scheduledDate
             dueDate = task.dueDate
             priority = task.priority ?? .medium
-            tags = task.tags.joined(separator: ", ")
+//            tags = task.tags.joined(separator: ", ")
+            tags = task.tags
             reminderTriggers = task.reminderTriggers ?? []
         }
     }

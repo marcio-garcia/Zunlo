@@ -17,7 +17,8 @@ struct TodayView: View {
     @State private var showAddTask = false
     @State private var showAddEvent = false
     @State private var showRequestPush = false
-
+    @State private var editableUserTask: UserTask?
+    
     private let eventRepository: EventRepository
     private let taskRepository: UserTaskRepository
     private let locationService: LocationService
@@ -71,6 +72,9 @@ struct TodayView: View {
                 .sheet(isPresented: $showAddTask) {
                     AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: taskRepository))
                 }
+                .sheet(item: $editableUserTask, content: { userTask in
+                    AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .edit(userTask), repository: taskRepository))
+                })
                 .sheet(isPresented: $showAddEvent) {
                     AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: eventRepository))
                 }
@@ -148,7 +152,9 @@ struct TodayView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(viewModel.todaysTasks) { task in
                             TaskRow(task: task) {
-                                // handle complete toggle
+                                viewModel.toggleTaskCompletion(for: task)
+                            } onTap: {
+                                editableUserTask = task
                             }
                         }
                     }

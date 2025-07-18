@@ -52,6 +52,15 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         try? await eventRepository.fetchAll()
     }
 
+    func toggleTaskCompletion(for task: UserTask) {
+        var updated = task
+        updated.isCompleted.toggle()
+        Task {
+            try? await taskRepository.update(updated)
+            await fetchData()
+        }
+    }
+    
     private func updateGreeting(date: Date = Date()) {
         let hour = Calendar.current.component(.hour, from: date)
 

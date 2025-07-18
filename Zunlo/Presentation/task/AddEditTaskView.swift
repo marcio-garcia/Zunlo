@@ -68,6 +68,12 @@ struct AddEditTaskView: View {
 
             TextField("Notes", text: $viewModel.notes, axis: .vertical)
 
+            Picker("Priority", selection: $viewModel.priority) {
+                ForEach(UserTaskPriority.allCases, id: \.self) { priority in
+                    Text(priority.rawValue.capitalized).tag(priority)
+                }
+            }
+            
             Toggle("Completed", isOn: $viewModel.isCompleted)
         } header: {
             Text("Task Details")
@@ -76,25 +82,28 @@ struct AddEditTaskView: View {
 
     private var taskTimingSection: some View {
         Section {
-            Picker("Priority", selection: $viewModel.priority) {
-                ForEach(UserTaskPriority.allCases, id: \.self) { priority in
-                    Text(priority.rawValue.capitalized).tag(priority)
-                }
+            Toggle(isOn: $viewModel.hasDueDate) { Text("Set due date").themedBody() }
+            
+            if viewModel.hasDueDate {
+                DatePicker("Due Date",
+                           selection: $viewModel.dueDate.replacingNil(with: Date()),
+                           displayedComponents: [.date])
+                .themedBody()
+                    .environment(\.locale, .autoupdatingCurrent)
             }
-
-            DatePicker("Scheduled Date", selection: $viewModel.scheduledDate.replacingNil(with: Date()), displayedComponents: [.date])
-                .environment(\.locale, .autoupdatingCurrent)
-
-            DatePicker("Due Date", selection: $viewModel.dueDate.replacingNil(with: Date()), displayedComponents: [.date])
-                .environment(\.locale, .autoupdatingCurrent)
-        } header: {
-            Text("When")
         }
     }
 
     private var taskTagsSection: some View {
         Section {
-            TextField("Tags (comma-separated)", text: $viewModel.tags)
+//            TextField("Tags (comma-separated)", text: $viewModel.tags)
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Tags")
+                    .font(.headline)
+//                TagCloudView(tags: viewModel.tags)
+                EditableTagInputView(tags: $viewModel.tags)
+            }
+            .padding()
         } header: {
             Text("Tags")
         }

@@ -10,6 +10,7 @@ import SwiftUI
 struct TaskRow: View {
     var task: UserTask
     var onToggle: () -> Void
+    var onTap: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -46,6 +47,10 @@ struct TaskRow: View {
             }
         }
         .padding(.vertical, 8)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
     }
 
     private func priorityColor(_ priority: UserTaskPriority) -> Color {

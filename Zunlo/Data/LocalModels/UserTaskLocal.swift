@@ -16,7 +16,6 @@ class UserTaskLocal: Object {
     @Persisted var isCompleted: Bool = false
     @Persisted var createdAt: Date = Date()
     @Persisted var updatedAt: Date = Date()
-    @Persisted var scheduledDate: Date?
     @Persisted var dueDate: Date?
     @Persisted var priority: UserTaskPriorityLocal?
     @Persisted var parentEventId: UUID?
@@ -52,7 +51,6 @@ class UserTaskLocal: Object {
         self.isCompleted = remote.is_completed
         self.createdAt = remote.created_at ?? Date()
         self.updatedAt = remote.updated_at
-        self.scheduledDate = remote.scheduled_date
         self.dueDate = remote.due_date
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)
         self.parentEventId = remote.parent_event_id
@@ -69,7 +67,6 @@ class UserTaskLocal: Object {
             isCompleted: isCompleted,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            scheduledDate: scheduledDate,
             dueDate: dueDate,
             priority: priority?.toDomain(),
             parentEventId: parentEventId,
@@ -83,7 +80,6 @@ class UserTaskLocal: Object {
         self.notes = remote.notes
         self.isCompleted = remote.is_completed
         self.updatedAt = remote.updated_at
-        self.scheduledDate = remote.scheduled_date
         self.dueDate = remote.due_date
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)
         self.parentEventId = remote.parent_event_id

@@ -28,10 +28,6 @@ class UserTaskInboxViewModel: ObservableObject {
         }
     }
 
-    var unscheduledTasks: [UserTask] {
-        tasks.filter { !$0.isCompleted && $0.scheduledDate == nil }
-    }
-
     func fetchTasks() async {
         do {
             try await repository.fetchAll()

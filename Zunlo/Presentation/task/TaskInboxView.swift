@@ -9,7 +9,8 @@ import SwiftUI
 
 struct TaskInboxView: View {
     @StateObject private var viewModel: UserTaskInboxViewModel
-
+    @State private var editableUserTask: UserTask?
+    
     init(repository: UserTaskRepository) {
         _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(repository: repository))
     }
@@ -39,6 +40,8 @@ struct TaskInboxView: View {
                             ForEach(viewModel.incompleteTasks) { task in
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
+                                } onTap: {
+                                    editableUserTask = task
                                 }
                             }
                             
@@ -47,6 +50,8 @@ struct TaskInboxView: View {
                             ForEach(viewModel.completeTasks) { task in
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
+                                } onTap: {
+                                    editableUserTask = task
                                 }
                             }
                         }
@@ -69,6 +74,11 @@ struct TaskInboxView: View {
                     viewModel: AddEditTaskViewModel(mode: .add, repository: viewModel.repository)
                 )
             }
+            .sheet(item: $editableUserTask, content: { task in
+                AddEditTaskView(
+                    viewModel: AddEditTaskViewModel(mode: .edit(task), repository: viewModel.repository)
+                )
+            })
             .task {
                 await viewModel.fetchTasks()
             }

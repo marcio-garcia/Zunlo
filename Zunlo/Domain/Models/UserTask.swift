@@ -20,7 +20,6 @@ struct UserTask: Identifiable, Codable, Hashable {
     var isCompleted: Bool
     var createdAt: Date
     var updatedAt: Date
-    var scheduledDate: Date?
     var dueDate: Date?
     var priority: UserTaskPriority?
     var parentEventId: UUID?
@@ -34,7 +33,6 @@ struct UserTask: Identifiable, Codable, Hashable {
                   isCompleted: Bool,
                   createdAt: Date,
                   updatedAt: Date,
-                  scheduledDate: Date? = nil,
                   dueDate: Date? = nil,
                   priority: UserTaskPriority? = nil,
                   parentEventId: UUID? = nil,
@@ -47,7 +45,6 @@ struct UserTask: Identifiable, Codable, Hashable {
         self.isCompleted = isCompleted
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.scheduledDate = scheduledDate
         self.dueDate = dueDate
         self.priority = priority
         self.parentEventId = parentEventId
@@ -69,7 +66,6 @@ extension UserTask {
         self.isCompleted = local.isCompleted
         self.createdAt = local.createdAt
         self.updatedAt = local.updatedAt
-        self.scheduledDate = local.scheduledDate
         self.dueDate = local.dueDate
         self.priority = local.priority?.toDomain()
         self.parentEventId = local.parentEventId
@@ -87,7 +83,6 @@ extension UserTask {
         self.isCompleted = remote.is_completed
         self.createdAt = remote.created_at ?? Date()
         self.updatedAt = remote.updated_at
-        self.scheduledDate = remote.scheduled_date
         self.dueDate = remote.due_date
         self.priority = remote.priority
         self.parentEventId = remote.parent_event_id
