@@ -38,42 +38,79 @@ public final class SupabaseDatabase: @unchecked Sendable {
         self.httpClient = NetworkClient(config: config, session: session)
     }
     
-    public func fetch<T: Decodable>(from table: String,
-                                    as type: T.Type = T.self,
-                                    query: [String: String]? = nil) async throws -> [T] {
-        let (data, response) = try await httpClient.sendRequest(
+    public func fetch<T: Codable>(
+        from table: String,
+        as type: T.Type = T.self,
+        query: [String: String]? = nil
+    ) async throws -> [T] {
+        try await performRequest(
             path: "/rest/v1/\(table)",
             method: "GET",
             query: query
         )
-        guard 200..<300 ~= response.statusCode else {
-            throw URLError(.badServerResponse)
-        }
-        return try decode(data)
     }
-    
-    public func fetchOccurrences<T: Decodable>(as type: T.Type = T.self) async throws -> [T] {
-        let (data, response) = try await httpClient.sendRequest(
-            baseURL: config.functionsBaseURL,
+
+    public func fetchOccurrences<T: Codable>(
+        as type: T.Type = T.self
+    ) async throws -> [T] {
+        try await performRequest(
             path: "/get_user_events",
             method: "GET"
         )
-        guard 200..<300 ~= response.statusCode else {
-            throw URLError(.badServerResponse)
-        }
-        return try decode(data)
     }
     
-    public func insert<T: Codable>(_ object: T,
-                                   into table: String,
-                                   additionalHeaders: [String: String]? = nil) async throws -> [T] {
+    public func insert<T: Codable>(
+        _ object: T,
+        into table: String,
+        additionalHeaders: [String: String]? = nil
+    ) async throws -> [T] {
+        try await performRequest(
+            path: "/rest/v1/\(table)",
+            method: "POST",
+            bodyObject: object,
+            additionalHeaders: additionalHeaders
+        )
+    }
+
+    public func update<T: Codable>(
+        _ object: T,
+        in table: String,
+        filter: [String: String]
+    ) async throws -> [T] {
+        try await performRequest(
+            path: "/rest/v1/\(table)",
+            method: "PATCH",
+            bodyObject: object,
+            query: filter
+        )
+    }
+    
+    public func delete<T: Codable>(
+        from table: String,
+        filter: [String: String]
+    ) async throws -> [T] {
+        try await performRequest(
+            path: "/rest/v1/\(table)",
+            method: "DELETE",
+            query: filter
+        )
+    }
+    
+    private func performRequest<T: Codable>(
+        path: String,
+        method: String,
+        bodyObject: T? = nil,
+        query: [String: String]? = nil,
+        additionalHeaders: [String: String]? = nil
+    ) async throws -> [T] {
         do {
-            let body = try encode(object)
+            let body = try encode(bodyObject)
             let headers = additionalHeaders?.merging(["Content-Type": "application/json"]) { _, new in new } ?? ["Content-Type": "application/json"]
             
             let (data, response) = try await httpClient.sendRequest(
-                path: "/rest/v1/\(table)",
-                method: "POST",
+                path: path,
+                method: method,
+                query: query,
                 body: body,
                 additionalHeaders: headers
             )
@@ -92,36 +129,6 @@ public final class SupabaseDatabase: @unchecked Sendable {
         } catch {
             throw SupabaseServiceError.networkError(error)
         }
-    }
-    
-    public func update<T: Codable>(_ object: T,
-                                   in table: String,
-                                   filter: [String: String]) async throws -> [T] {
-        let body = try encode(object)
-        let (data, response) = try await httpClient.sendRequest(
-            path: "/rest/v1/\(table)",
-            method: "PATCH",
-            query: filter,
-            body: body,
-            additionalHeaders: ["Content-Type": "application/json"]
-        )
-        guard 200..<300 ~= response.statusCode else {
-            throw URLError(.badServerResponse)
-        }
-        return try decode(data)
-    }
-    
-    public func delete<T: Codable>(from table: String,
-                                   filter: [String: String]) async throws -> [T] {
-        let (data, response) = try await httpClient.sendRequest(
-            path: "/rest/v1/\(table)",
-            method: "DELETE",
-            query: filter
-        )
-        guard 200..<300 ~= response.statusCode else {
-            throw URLError(.badServerResponse)
-        }
-        return try decode(data)
     }
     
     private func encode<T: Encodable>(_ object: T) throws -> Data {
