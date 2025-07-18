@@ -114,3 +114,13 @@ struct ThemedSecondaryButtonModifier: ViewModifier {
             .cornerRadius(8)
     }
 }
+
+struct ThemedTertiaryButtonModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(3)
+            .background(Color.clear)
+            .foregroundColor(Color.theme.accent)
+            .font(AppFont.caption())
+    }
+}

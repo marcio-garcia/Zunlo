@@ -15,31 +15,34 @@ struct TaskRow: View {
         HStack(alignment: .top, spacing: 12) {
             Button(action: onToggle) {
                 Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(task.isCompleted ? .green : .gray)
+                    .foregroundColor(task.isCompleted ? Color.theme.accent : .gray)
                     .imageScale(.large)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(task.title)
-                    .font(.body)
+                    .themedBody()
                     .strikethrough(task.isCompleted, color: .gray)
                     .foregroundColor(task.isCompleted ? .gray : .primary)
 
                 if let notes = task.notes, !notes.isEmpty {
                     Text(notes)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .themedCallout()
+                        .strikethrough(task.isCompleted, color: .gray)
+                        .foregroundColor(task.isCompleted ? .gray : .primary)
                 }
-
-                if let priority = task.priority {
-                    Text(priority.rawValue.capitalized)
-                        .font(.caption)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(priorityColor(priority))
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
-                }
+            }
+            
+            Spacer()
+            
+            if let priority = task.priority {
+                Text(priority.rawValue.capitalized)
+                    .themedCaption()
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(priorityColor(priority))
+                    .foregroundColor(.black)
+                    .clipShape(Capsule())
             }
         }
         .padding(.vertical, 8)
@@ -47,9 +50,9 @@ struct TaskRow: View {
 
     private func priorityColor(_ priority: UserTaskPriority) -> Color {
         switch priority {
-        case .high: return .red
-        case .medium: return .orange
-        case .low: return .blue
+        case .high: return .red.opacity(0.3)
+        case .medium: return .orange.opacity(0.3)
+        case .low: return .blue.opacity(0.3)
         }
     }
 }

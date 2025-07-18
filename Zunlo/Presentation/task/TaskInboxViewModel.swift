@@ -9,13 +9,23 @@ import SwiftUI
 
 class UserTaskInboxViewModel: ObservableObject {
     @Published var state: ViewState = .loading
-    @Published var tasks: [UserTask] = []
+    @Published var completeTasks: [UserTask] = []
+    @Published var incompleteTasks: [UserTask] = []
     @Published var showAddSheet: Bool = false
 
     let repository: UserTaskRepository
+    var tasks: [UserTask] = []
 
     init(repository: UserTaskRepository) {
         self.repository = repository
+        self.repository.tasks.observe(owner: self, fireNow: false) { [weak self] tasks in
+            guard let self else { return }
+            self.tasks = tasks
+            self.completeTasks = tasks.filter { $0.isCompleted }
+            self.incompleteTasks = tasks.filter { !$0.isCompleted }
+//            self?.state = self?.unscheduledTasks.isEmpty ? .empty : .loaded
+            self.state = .loaded
+        }
     }
 
     var unscheduledTasks: [UserTask] {
@@ -27,7 +37,7 @@ class UserTaskInboxViewModel: ObservableObject {
             try await repository.fetchAll()
             await MainActor.run {
                 tasks = repository.tasks.value
-                state = unscheduledTasks.isEmpty ? .empty : .loaded
+                
             }
         } catch {
             await MainActor.run {

@@ -13,7 +13,14 @@ final class RealmUserTaskLocalStore: UserTaskLocalStore {
     func fetchAll() async throws -> [UserTask] {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
-            let eventsLocal = Array(realm.objects(UserTaskLocal.self).sorted(byKeyPath: "startDate", ascending: true))
+            let eventsLocal = Array(
+                realm.objects(UserTaskLocal.self).sorted(by: [
+                    SortDescriptor(keyPath: "priority", ascending: false),
+                    SortDescriptor(keyPath: "dueDate", ascending: false),
+                    SortDescriptor(keyPath: "scheduledDate", ascending: false),
+                ])
+            )
+            
             return eventsLocal.map { $0.toDomain() }
         }.value
     }

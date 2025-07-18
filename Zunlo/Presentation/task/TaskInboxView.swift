@@ -35,7 +35,16 @@ struct TaskInboxView: View {
                 case .loaded:
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 16) {
-                            ForEach(viewModel.unscheduledTasks) { task in
+                            
+                            ForEach(viewModel.incompleteTasks) { task in
+                                TaskRow(task: task) {
+                                    viewModel.toggleCompletion(for: task)
+                                }
+                            }
+                            
+                            Divider()
+                            
+                            ForEach(viewModel.completeTasks) { task in
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
                                 }

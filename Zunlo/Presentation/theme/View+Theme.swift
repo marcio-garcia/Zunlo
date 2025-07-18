@@ -55,6 +55,10 @@ extension View {
     func themedSecondaryButton() -> some View {
         self.modifier(ThemedSecondaryButtonModifier())
     }
+    
+    func themedTertiaryButton() -> some View {
+        self.modifier(ThemedTertiaryButtonModifier())
+    }
 }
 
 // MARK: - Example Usage

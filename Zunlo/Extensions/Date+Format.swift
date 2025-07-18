@@ -25,6 +25,13 @@ extension Date {
         Date.formatter.locale = Locale(identifier: "en_US_POSIX")
         return Date.formatter.string(from: self)
     }
+    
+    static func formattedDate(from string: String, format: String) -> Date? {
+        Date.formatter.dateFormat = format
+        Date.formatter.locale = Locale(identifier: "en_US_POSIX")
+        Date.formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return Date.formatter.date(from: string)
+    }
 }
 
 extension Date {
