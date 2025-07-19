@@ -16,9 +16,9 @@ public enum SupabaseServiceError: Error {
 
 public struct SupabaseErrorResponse: Decodable, Error {
     public let code: String
-    public let details: String
+    public let details: String?
     public let hint: String?
-    public let message: String
+    public let message: String?
 }
 
 public final class SupabaseDatabase: @unchecked Sendable {
@@ -45,7 +45,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
     ) async throws -> [T] {
         try await performRequest(
             path: "/rest/v1/\(table)",
-            method: "GET",
+            method: .get,
             query: query
         )
     }
@@ -56,7 +56,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
         try await performRequest(
             baseURL: config.functionsBaseURL,
             path: "/get_user_events",
-            method: "GET"
+            method: .get
         )
     }
     
@@ -67,7 +67,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
     ) async throws -> [T] {
         try await performRequest(
             path: "/rest/v1/\(table)",
-            method: "POST",
+            method: .post,
             bodyObject: object,
             additionalHeaders: additionalHeaders
         )
@@ -80,7 +80,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
     ) async throws -> [T] {
         try await performRequest(
             path: "/rest/v1/\(table)",
-            method: "PATCH",
+            method: .patch,
             bodyObject: object,
             query: filter
         )
@@ -92,7 +92,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
     ) async throws -> [T] {
         try await performRequest(
             path: "/rest/v1/\(table)",
-            method: "DELETE",
+            method: .delete,
             query: filter
         )
     }
@@ -100,14 +100,14 @@ public final class SupabaseDatabase: @unchecked Sendable {
     private func performRequest<T: Codable>(
         baseURL: URL? = nil,
         path: String,
-        method: String,
+        method: HTTPMethod,
         bodyObject: T? = nil,
         query: [String: String]? = nil,
         additionalHeaders: [String: String]? = nil
     ) async throws -> [T] {
         do {
             let body = bodyObject == nil ? nil : try encode(bodyObject!)
-            let headers = additionalHeaders?.merging(["Content-Type": "application/json"]) { _, new in new } ?? ["Content-Type": "application/json"]
+            let headers = buildHeaders(additionalHeaders)
             
             let (data, response) = try await httpClient.sendRequest(
                 baseURL: baseURL,
@@ -118,10 +118,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
                 additionalHeaders: headers
             )
             
-            guard 200..<300 ~= response.statusCode else {
-                let decodedError = try? JSONDecoder().decode(SupabaseErrorResponse.self, from: data)
-                throw SupabaseServiceError.serverError(statusCode: response.statusCode, body: data, supabaseError: decodedError)
-            }
+            try throwIfNotSuccessStatus(response.statusCode, data: data, decoder: JSONDecoder())
             
             return try decode(data)
             
@@ -129,11 +126,40 @@ public final class SupabaseDatabase: @unchecked Sendable {
             throw SupabaseServiceError.decodingError(decodingError)
         } catch let encodingError as EncodingError {
             throw SupabaseServiceError.encodingError(encodingError)
+        } catch let knownError as SupabaseServiceError {
+            throw knownError
         } catch {
             throw SupabaseServiceError.networkError(error)
         }
     }
     
+    private func buildHeaders(_ additional: [String: String]?) -> [String: String] {
+        var headers = additional ?? [:]
+        headers["Content-Type"] = "application/json"
+        return headers
+    }
+
+    private func throwIfNotSuccessStatus(
+        _ statusCode: Int,
+        data: Data,
+        decoder: JSONDecoder = .init()
+    ) throws {
+        guard 200..<300 ~= statusCode else {
+            do {
+                let decodedError = try decoder.decode(SupabaseErrorResponse.self, from: data)
+                throw SupabaseServiceError.serverError(
+                    statusCode: statusCode,
+                    body: data,
+                    supabaseError: decodedError
+                )
+            } catch let knownError as SupabaseServiceError {
+                throw knownError
+            } catch {
+                throw SupabaseServiceError.decodingError(error)
+            }
+        }
+    }
+
     private func encode<T: Encodable>(_ object: T) throws -> Data {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601

@@ -45,9 +45,9 @@ struct EventRow: View {
     }
     
     func formatDate(start: Date, end: Date?) -> String {
-        var text = occurrence.startDate.formattedDate(dateFormat: "HH:mm")
+        var text = occurrence.startDate.formattedDate(dateFormat: .time)
         if let endDate = end {
-            text.append(" - \(endDate.formattedDate(dateFormat: "HH:mm"))")
+            text.append(" - \(endDate.formattedDate(dateFormat: .time))")
         }
         return text
     }

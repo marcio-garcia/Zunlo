@@ -16,10 +16,25 @@ struct UserTaskRemote: Codable, Identifiable {
     var created_at: Date?
     var updated_at: Date
     var due_date: Date?
-    var priority: UserTaskPriority?
+    var priority: UserTaskPriority
     var parent_event_id: UUID?
     var tags: [String]
     var reminder_triggers: [ReminderTrigger]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case user_id = "user_id"
+        case title
+        case notes
+        case is_completed = "is_completed"
+        case created_at = "created_at"
+        case updated_at = "updated_at"
+        case due_date = "due_date"
+        case priority
+        case parent_event_id = "parent_event_id"
+        case tags
+        case reminder_triggers = "reminder_triggers"
+    }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -28,7 +43,7 @@ struct UserTaskRemote: Codable, Identifiable {
         self.title = try container.decodeSafely(String.self, forKey: .title)
         self.notes = try? container.decodeSafely(String.self, forKey: .notes)
         self.is_completed = try container.decodeSafely(Bool.self, forKey: .is_completed)
-        self.priority = try? container.decodeSafely(UserTaskPriority.self, forKey: .priority)
+        self.priority = try container.decodeSafely(UserTaskPriority.self, forKey: .priority)
         self.parent_event_id = try? container.decodeSafely(UUID.self, forKey: .parent_event_id)
         self.tags = try container.decodeSafely([String].self, forKey: .tags)
         self.reminder_triggers = try? container.decodeSafely([ReminderTrigger].self, forKey: .reminder_triggers)

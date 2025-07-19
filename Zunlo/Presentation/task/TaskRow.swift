@@ -36,28 +36,25 @@ struct TaskRow: View {
             
             Spacer()
             
-            if let priority = task.priority {
-                Text(priority.rawValue.capitalized)
+            VStack(alignment: HorizontalAlignment.trailing) {
+                Text(task.priority.rawValue.capitalized)
                     .themedCaption()
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(priorityColor(priority))
+                    .background(task.priority.color)
                     .foregroundColor(.black)
                     .clipShape(Capsule())
+                
+                if let due = task.dueDate {
+                    Text(due.formattedDate(dateFormat: .regular))
+                        .themedCaption()
+                }
             }
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
         .onTapGesture {
             onTap()
-        }
-    }
-
-    private func priorityColor(_ priority: UserTaskPriority) -> Color {
-        switch priority {
-        case .high: return .red.opacity(0.3)
-        case .medium: return .orange.opacity(0.3)
-        case .low: return .blue.opacity(0.3)
         }
     }
 }

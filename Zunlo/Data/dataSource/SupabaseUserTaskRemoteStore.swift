@@ -22,8 +22,19 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
         self.authManager = authManager
     }
 
+    func propertyName<T, V>(_ keyPath: KeyPath<T, V>) -> String? {
+        return NSExpression(forKeyPath: keyPath).keyPath
+    }
+    
     func fetchAll() async throws -> [UserTaskRemote] {
-        try await database.fetch(from: tableName, as: UserTaskRemote.self, query: ["select": "*"])
+        try await database.fetch(
+            from: tableName,
+            as: UserTaskRemote.self,
+            query: [
+                "select": "*",
+                "order": "\(UserTaskRemote.CodingKeys.priority.rawValue).desc,\(UserTaskRemote.CodingKeys.due_date.rawValue).asc"
+            ]
+        )
     }
     
     func fecthOccurrences() async throws -> [EventOccurrenceRemote] {

@@ -28,7 +28,7 @@ struct CalendarScheduleView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
                             ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
-                                let monthName = monthDate.formattedDate(dateFormat: "LLLL")
+                                let monthName = monthDate.formattedDate(dateFormat: .monthName)
                                 let imageName = viewModel.monthHeaderImageName(for: monthDate)
                                 let daysDict = viewModel.occurrencesByMonthAndDay[monthDate] ?? [:]
                                 let sortedDays = daysDict.keys.sorted()
@@ -41,7 +41,7 @@ struct CalendarScheduleView: View {
                                         let occurrences = daysDict[day] ?? []
                                         VStack(alignment: .leading, spacing: 0) {
                                             Group {
-                                                Text(day.formattedDate(dateFormat: "E d"))
+                                                Text(day.formattedDate(dateFormat: .weekAndDay))
                                                     .font(.headline)
                                                     .padding(.horizontal, 10)
                                                     .padding(.vertical, 4)

@@ -16,8 +16,7 @@ final class RealmUserTaskLocalStore: UserTaskLocalStore {
             let eventsLocal = Array(
                 realm.objects(UserTaskLocal.self).sorted(by: [
                     SortDescriptor(keyPath: "priority", ascending: false),
-                    SortDescriptor(keyPath: "dueDate", ascending: false),
-                    SortDescriptor(keyPath: "scheduledDate", ascending: false),
+                    SortDescriptor(keyPath: "dueDate", ascending: true)
                 ])
             )
             

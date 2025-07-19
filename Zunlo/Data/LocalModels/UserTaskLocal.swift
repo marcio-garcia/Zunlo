@@ -17,7 +17,7 @@ class UserTaskLocal: Object {
     @Persisted var createdAt: Date = Date()
     @Persisted var updatedAt: Date = Date()
     @Persisted var dueDate: Date?
-    @Persisted var priority: UserTaskPriorityLocal?
+    @Persisted var priority: UserTaskPriorityLocal = .medium
     @Persisted var parentEventId: UUID?
     @Persisted var tags: List<String>
     @Persisted var reminderTriggers: List<ReminderTriggerLocal>
@@ -68,7 +68,7 @@ class UserTaskLocal: Object {
             createdAt: createdAt,
             updatedAt: updatedAt,
             dueDate: dueDate,
-            priority: priority?.toDomain(),
+            priority: priority.toDomain(),
             parentEventId: parentEventId,
             tags: Array(tags),
             reminderTriggers: reminderTriggersArray
@@ -99,12 +99,11 @@ enum UserTaskPriorityLocal: String, Codable, PersistableEnum {
         }
     }
     
-    static func fromDomain(domain: UserTaskPriority?) -> UserTaskPriorityLocal? {
+    static func fromDomain(domain: UserTaskPriority) -> UserTaskPriorityLocal {
         switch domain {
         case .low: return UserTaskPriorityLocal.low
         case .medium: return UserTaskPriorityLocal.medium
         case .high: return UserTaskPriorityLocal.high
-        case .none: return nil
         }
     }
 }

@@ -8,6 +8,16 @@
 import Foundation
 
 extension Date {
+    enum DateFormat: String {
+        case regular = "dd MMM YYYY"
+        case dayMonth = "dd MMM"
+        case monthName = "LLLL"
+        case time = "HH:mm"
+        case weekAndDay = "E d"
+    }
+    
+    static var format = DateFormat.regular
+    
     static var formatter: DateFormatter = {
         let df = DateFormatter()
         return df
@@ -20,8 +30,12 @@ extension Date {
         return Date.formatter
     }()
     
-    func formattedDate(dateFormat: String) -> String {
-        Date.formatter.dateFormat = dateFormat
+    func formattedDate(dateFormat: DateFormat) -> String {
+        return formattedDate(format: dateFormat.rawValue)
+    }
+    
+    func formattedDate(format: String) -> String {
+        Date.formatter.dateFormat = format
         Date.formatter.locale = Locale(identifier: "en_US_POSIX")
         return Date.formatter.string(from: self)
     }

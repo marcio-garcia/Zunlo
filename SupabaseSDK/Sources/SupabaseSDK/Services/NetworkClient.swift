@@ -7,6 +7,13 @@
 
 import Foundation
 
+public enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case patch = "PATCH"
+    case delete = "DELETE"
+}
+
 final class NetworkClient {
     private let session: URLSession
     private let config: SupabaseConfig
@@ -20,7 +27,7 @@ final class NetworkClient {
     
     func sendRequest(baseURL: URL? = nil,
                      path: String,
-                     method: String,
+                     method: HTTPMethod,
                      query: [String: String]? = nil,
                      body: Data? = nil,
                      additionalHeaders: [String: String]? = nil) async throws -> (Data, HTTPURLResponse) {
@@ -33,7 +40,7 @@ final class NetworkClient {
         }
         
         var request = URLRequest(url: url)
-        request.httpMethod = method
+        request.httpMethod = method.rawValue
         if let token = authToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }

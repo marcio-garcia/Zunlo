@@ -5,11 +5,19 @@
 //  Created by Marcio Garcia on 7/13/25.
 //
 
-import Foundation
+import SwiftUI
 import RealmSwift
 
 enum UserTaskPriority: String, CaseIterable, Codable {
     case low, medium, high
+    
+    var color: Color {
+        switch self {
+        case .high: return .red.opacity(0.3)
+        case .medium: return .orange.opacity(0.3)
+        case .low: return .blue.opacity(0.3)
+        }
+    }
 }
 
 struct UserTask: Identifiable, Codable, Hashable {
@@ -21,7 +29,7 @@ struct UserTask: Identifiable, Codable, Hashable {
     var createdAt: Date
     var updatedAt: Date
     var dueDate: Date?
-    var priority: UserTaskPriority?
+    var priority: UserTaskPriority
     var parentEventId: UUID?
     var tags: [String]
     var reminderTriggers: [ReminderTrigger]?
@@ -34,7 +42,7 @@ struct UserTask: Identifiable, Codable, Hashable {
                   createdAt: Date,
                   updatedAt: Date,
                   dueDate: Date? = nil,
-                  priority: UserTaskPriority? = nil,
+                  priority: UserTaskPriority,
                   parentEventId: UUID? = nil,
                   tags: [String],
                   reminderTriggers: [ReminderTrigger]?) {
@@ -67,7 +75,7 @@ extension UserTask {
         self.createdAt = local.createdAt
         self.updatedAt = local.updatedAt
         self.dueDate = local.dueDate
-        self.priority = local.priority?.toDomain()
+        self.priority = local.priority.toDomain()
         self.parentEventId = local.parentEventId
         self.tags = local.tagsArray
         self.reminderTriggers = local.reminderTriggersArray

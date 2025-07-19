@@ -96,6 +96,7 @@ struct TodayView: View {
         .task {
             await viewModel.fetchData()
         }
+        .errorAlert(viewModel.errorHandler)
     }
 
     private var greetingSection: some View {

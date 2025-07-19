@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import SupabaseSDK
 import MiniSignalEye
 
+@MainActor
 final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var todaysTasks: [UserTask] = []
     @Published var todaysEvents: [EventOccurrence] = []
@@ -15,11 +17,13 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
 
     private let taskRepository: UserTaskRepository
     private let eventRepository: EventRepository
+    
+    let errorHandler = ErrorHandler()
 
     init(taskRepository: UserTaskRepository, eventRepository: EventRepository) {
         self.taskRepository = taskRepository
         self.eventRepository = eventRepository
-
+        
         observeRepositories()
         updateGreeting()
     }
@@ -28,8 +32,11 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         taskRepository.tasks.observe(owner: self, fireNow: false) { [weak self] tasks in
             let today = Calendar.current.startOfDay(for: Date())
             let filtered = tasks.filter {
-                guard let due = $0.dueDate else { return false }
-                return Calendar.current.isDate(due, inSameDayAs: today)
+                if let due = $0.dueDate {
+                    return Calendar.current.isDate(due, inSameDayAs: today)
+                } else {
+                    return !$0.isCompleted
+                }
             }
             DispatchQueue.main.async {
                 self?.todaysTasks = filtered
@@ -48,8 +55,12 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
 
     func fetchData() async {
-        try? await taskRepository.fetchAll()
-        try? await eventRepository.fetchAll()
+        do {
+            try await taskRepository.fetchAll()
+            try await eventRepository.fetchAll()
+        } catch {
+            errorHandler.handle(error)
+        }
     }
 
     func toggleTaskCompletion(for task: UserTask) {
