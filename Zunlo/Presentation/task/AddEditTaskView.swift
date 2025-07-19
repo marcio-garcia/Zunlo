@@ -70,7 +70,7 @@ struct AddEditTaskView: View {
 
             Picker("Priority", selection: $viewModel.priority) {
                 ForEach(UserTaskPriority.allCases, id: \.self) { priority in
-                    Text(priority.rawValue.capitalized).tag(priority)
+                    Text(priority.description.capitalized).tag(priority)
                 }
             }
             

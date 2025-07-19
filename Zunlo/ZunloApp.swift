@@ -77,9 +77,9 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 9, // <- increment this every time you change schema!
+        schemaVersion: 10, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
-            if oldSchemaVersion < 2 {
+            if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,
                 // Realm will auto-initialize it to the default value.
                 // If you want to set a custom default, do it here:
@@ -89,6 +89,16 @@ func setupRealm() {
 //                migration.enumerateObjects(ofType: EventOverrideLocal.className()) { oldObject, newObject in
 //                    newObject?["color"] = "#FFD966"
 //                }
+                migration.enumerateObjects(ofType: UserTaskLocal.className()) { oldObject, newObject in
+                    if let obj = newObject?["priority"] as? String, obj == "low" {
+                        newObject?["priority"] = 0
+                    } else if let obj = newObject?["priority"] as? String, obj == "high" {
+                        newObject?["priority"] = 2
+                    } else {
+                        newObject?["priority"] = 1
+                    }
+                    
+                }
             }
         }
     )

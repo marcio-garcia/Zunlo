@@ -88,7 +88,7 @@ class UserTaskLocal: Object {
     }
 }
 
-enum UserTaskPriorityLocal: String, Codable, PersistableEnum {
+enum UserTaskPriorityLocal: Int, Codable, PersistableEnum {
     case low, medium, high
     
     func toDomain() -> UserTaskPriority {

@@ -8,7 +8,7 @@
 import SwiftUI
 import RealmSwift
 
-enum UserTaskPriority: String, CaseIterable, Codable {
+enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
     case low, medium, high
     
     var color: Color {
@@ -16,6 +16,14 @@ enum UserTaskPriority: String, CaseIterable, Codable {
         case .high: return .red.opacity(0.3)
         case .medium: return .orange.opacity(0.3)
         case .low: return .blue.opacity(0.3)
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .high: return "high"
+        case .medium: return "medium"
+        case .low: return "low"
         }
     }
 }

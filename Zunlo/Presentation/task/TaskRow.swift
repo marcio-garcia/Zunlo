@@ -37,7 +37,7 @@ struct TaskRow: View {
             Spacer()
             
             VStack(alignment: HorizontalAlignment.trailing) {
-                Text(task.priority.rawValue.capitalized)
+                Text(task.priority.description.capitalized)
                     .themedCaption()
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
