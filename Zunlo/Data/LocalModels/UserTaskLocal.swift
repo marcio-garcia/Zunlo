@@ -45,17 +45,17 @@ class UserTaskLocal: Object {
     convenience init(from remote: UserTaskRemote) {
         self.init()
         self.id = remote.id ?? UUID()
-        self.userId = remote.user_id
+        self.userId = remote.userId
         self.title = remote.title
         self.notes = remote.notes
-        self.isCompleted = remote.is_completed
-        self.createdAt = remote.created_at ?? Date()
-        self.updatedAt = remote.updated_at
-        self.dueDate = remote.due_date
+        self.isCompleted = remote.isCompleted
+        self.createdAt = remote.createdAt ?? Date()
+        self.updatedAt = remote.updatedAt
+        self.dueDate = remote.dueDate
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)
-        self.parentEventId = remote.parent_event_id
+        self.parentEventId = remote.parentEventId
         self.tags.append(objectsIn: remote.tags)
-        self.reminderTriggersArray = remote.reminder_triggers ?? []
+        self.reminderTriggersArray = remote.reminderTriggers ?? []
     }
 
     func toDomain() -> UserTask {
@@ -78,13 +78,13 @@ class UserTaskLocal: Object {
     func getUpdateFields(remote: UserTaskRemote) {
         self.title = remote.title
         self.notes = remote.notes
-        self.isCompleted = remote.is_completed
-        self.updatedAt = remote.updated_at
-        self.dueDate = remote.due_date
+        self.isCompleted = remote.isCompleted
+        self.updatedAt = remote.updatedAt
+        self.dueDate = remote.dueDate
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)
-        self.parentEventId = remote.parent_event_id
+        self.parentEventId = remote.parentEventId
         self.tags.append(objectsIn: remote.tags)
-        self.reminderTriggersArray = remote.reminder_triggers ?? []
+        self.reminderTriggersArray = remote.reminderTriggers ?? []
     }
 }
 

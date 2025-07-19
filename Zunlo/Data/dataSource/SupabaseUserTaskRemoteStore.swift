@@ -32,7 +32,7 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
             as: UserTaskRemote.self,
             query: [
                 "select": "*",
-                "order": "\(UserTaskRemote.CodingKeys.priority.rawValue).desc,\(UserTaskRemote.CodingKeys.due_date.rawValue).asc"
+                "order": "\(UserTaskRemote.CodingKeys.priority.rawValue).desc,\(UserTaskRemote.CodingKeys.dueDate.rawValue).asc"
             ]
         )
     }
@@ -45,8 +45,8 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
         // Only nil the ID if creating a new record and let Supabase/DB handle it
         var tk = task
         tk.id = nil
-        tk.user_id = nil
-        tk.created_at = nil
+        tk.userId = nil
+        tk.createdAt = nil
         return try await database.insert(tk, into: tableName)
     }
 
@@ -57,8 +57,8 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
         }
         var tk = task
         tk.id = nil
-        tk.user_id = nil
-        tk.created_at = nil
+        tk.userId = nil
+        tk.createdAt = nil
         return try await database.update(tk, in: tableName, filter: ["id": "eq.\(id)"])
     }
 

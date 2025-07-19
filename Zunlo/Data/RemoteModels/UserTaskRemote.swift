@@ -9,91 +9,91 @@ import Foundation
 
 struct UserTaskRemote: Codable, Identifiable {
     var id: UUID?
-    var user_id: UUID?
+    var userId: UUID?
     var title: String
     var notes: String?
-    var is_completed: Bool
-    var created_at: Date?
-    var updated_at: Date
-    var due_date: Date?
+    var isCompleted: Bool
+    var createdAt: Date?
+    var updatedAt: Date
+    var dueDate: Date?
     var priority: UserTaskPriority
-    var parent_event_id: UUID?
+    var parentEventId: UUID?
     var tags: [String]
-    var reminder_triggers: [ReminderTrigger]?
+    var reminderTriggers: [ReminderTrigger]?
     
     enum CodingKeys: String, CodingKey {
         case id
-        case user_id = "user_id"
+        case userId = "user_id"
         case title
         case notes
-        case is_completed = "is_completed"
-        case created_at = "created_at"
-        case updated_at = "updated_at"
-        case due_date = "due_date"
+        case isCompleted = "is_completed"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case dueDate = "due_date"
         case priority
-        case parent_event_id = "parent_event_id"
+        case parentEventId = "parent_event_id"
         case tags
-        case reminder_triggers = "reminder_triggers"
+        case reminderTriggers = "reminder_triggers"
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decodeSafely(UUID.self, forKey: .id)
-        self.user_id = try container.decodeSafely(UUID.self, forKey: .user_id)
+        self.userId = try container.decodeSafely(UUID.self, forKey: .userId)
         self.title = try container.decodeSafely(String.self, forKey: .title)
         self.notes = try? container.decodeSafely(String.self, forKey: .notes)
-        self.is_completed = try container.decodeSafely(Bool.self, forKey: .is_completed)
+        self.isCompleted = try container.decodeSafely(Bool.self, forKey: .isCompleted)
         self.priority = try container.decodeSafely(UserTaskPriority.self, forKey: .priority)
-        self.parent_event_id = try? container.decodeSafely(UUID.self, forKey: .parent_event_id)
+        self.parentEventId = try? container.decodeSafely(UUID.self, forKey: .parentEventId)
         self.tags = try container.decodeSafely([String].self, forKey: .tags)
-        self.reminder_triggers = try? container.decodeSafely([ReminderTrigger].self, forKey: .reminder_triggers)
+        self.reminderTriggers = try? container.decodeSafely([ReminderTrigger].self, forKey: .reminderTriggers)
         
-        let due_date = try? container.decodeSafely(String.self, forKey: .due_date)
-        let created_at = try? container.decodeSafely(String.self, forKey: .created_at)
-        let updated_at = try container.decodeSafely(String.self, forKey: .updated_at)
+        let dueDate = try? container.decodeSafely(String.self, forKey: .dueDate)
+        let createdAt = try? container.decodeSafely(String.self, forKey: .createdAt)
+        let updatedAt = try container.decodeSafely(String.self, forKey: .updatedAt)
         
-        self.updated_at = DateFormatter.iso8601WithoutFractionalSeconds.date(from: updated_at) ?? Date()
+        self.updatedAt = DateFormatter.iso8601WithoutFractionalSeconds.date(from: updatedAt) ?? Date()
         
-        self.due_date = nil
-        if let date = due_date {
-            self.due_date = DateFormatter.iso8601WithoutFractionalSeconds.date(from: date)
+        self.dueDate = nil
+        if let date = dueDate {
+            self.dueDate = DateFormatter.iso8601WithoutFractionalSeconds.date(from: date)
         }
         
-        self.created_at = nil
-        if let date = created_at {
-            self.created_at = DateFormatter.iso8601WithFractionalSeconds.date(from: date)
+        self.createdAt = nil
+        if let date = createdAt {
+            self.createdAt = DateFormatter.iso8601WithFractionalSeconds.date(from: date)
         }
     }
     
     init(domain: UserTask) {
         self.id = domain.id
-        self.user_id = domain.userId
+        self.userId = domain.userId
         self.title = domain.title
         self.notes = domain.notes
-        self.is_completed = domain.isCompleted
-        self.created_at = domain.createdAt
-        self.updated_at = domain.updatedAt
-        self.due_date = domain.dueDate
+        self.isCompleted = domain.isCompleted
+        self.createdAt = domain.createdAt
+        self.updatedAt = domain.updatedAt
+        self.dueDate = domain.dueDate
         self.priority = domain.priority
-        self.parent_event_id = domain.parentEventId
+        self.parentEventId = domain.parentEventId
         self.tags = domain.tags
-        self.reminder_triggers = domain.reminderTriggers
+        self.reminderTriggers = domain.reminderTriggers
     }
 
     func toDomain() -> UserTask {
         UserTask(
             id: id ?? UUID(),
-            userId: user_id,
+            userId: userId,
             title: title,
             notes: notes,
-            isCompleted: is_completed,
-            createdAt: created_at ?? Date(),
-            updatedAt: updated_at,
-            dueDate: due_date,
+            isCompleted: isCompleted,
+            createdAt: createdAt ?? Date(),
+            updatedAt: updatedAt,
+            dueDate: dueDate,
             priority: priority,
-            parentEventId: parent_event_id,
+            parentEventId: parentEventId,
             tags: tags,
-            reminderTriggers: reminder_triggers
+            reminderTriggers: reminderTriggers
         )
     }
 }

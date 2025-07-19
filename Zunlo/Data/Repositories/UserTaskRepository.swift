@@ -23,7 +23,7 @@ final class UserTaskRepository {
 
     func fetchAll() async throws {
         let remoteTasks = try await remoteStore.fetchAll()
-        try await localStore.deleteAll(for: remoteTasks.first?.user_id ?? UUID())
+        try await localStore.deleteAll(for: remoteTasks.first?.userId ?? UUID())
         for remote in remoteTasks {
             try await localStore.save(remote)
         }
