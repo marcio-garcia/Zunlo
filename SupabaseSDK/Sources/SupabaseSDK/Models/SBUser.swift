@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SBUser: Codable, Sendable {
+public struct SBUser: Codable {
     public let id: String    // The unique id of the identity of the user.
     public let aud: String    // The audience claim.
     public let role: String    // The role claim used by Postgres to perform Row Level Security (RLS) checks.

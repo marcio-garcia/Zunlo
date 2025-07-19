@@ -5,7 +5,7 @@
 //  Created by Marcio Garcia on 6/24/25.
 //
 
-public struct SBIdentities: Codable, Sendable {
+public struct SBIdentities: Codable {
     public let identityId: String
     public let id: String
     public let userId: String

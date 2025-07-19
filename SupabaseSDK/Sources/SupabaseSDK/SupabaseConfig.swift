@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SupabaseConfig: Sendable {
+public struct SupabaseConfig {
     public let anonKey: String
     public let baseURL: URL
     public let functionsBaseURL: URL?

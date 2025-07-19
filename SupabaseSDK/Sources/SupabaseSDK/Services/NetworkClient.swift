@@ -16,12 +16,16 @@ public enum HTTPMethod: String {
 
 final class NetworkClient {
     private let session: URLSession
-    private let config: SupabaseConfig
+    private let baseURL: URL
+    private let apiKey: String
     
     var authToken: String?
     
-    init(config: SupabaseConfig, session: URLSession = .shared) {
-        self.config = config
+    init(baseURL: URL,
+         apiKey: String,
+         session: URLSession = .shared) {
+        self.baseURL = baseURL
+        self.apiKey = apiKey
         self.session = session
     }
     
@@ -31,7 +35,7 @@ final class NetworkClient {
                      query: [String: String]? = nil,
                      body: Data? = nil,
                      additionalHeaders: [String: String]? = nil) async throws -> (Data, HTTPURLResponse) {
-        let base = baseURL ?? config.baseURL
+        let base = baseURL ?? self.baseURL
         var url = base.appendingPathComponent(path)
         if let query = query, !query.isEmpty {
             var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
@@ -45,7 +49,7 @@ final class NetworkClient {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("\(config.anonKey)", forHTTPHeaderField: "apikey")
+        request.setValue("\(apiKey)", forHTTPHeaderField: "apikey")
         request.setValue("return=representation", forHTTPHeaderField: "Prefer")
         additionalHeaders?.forEach { key, value in
             request.setValue(value, forHTTPHeaderField: key)

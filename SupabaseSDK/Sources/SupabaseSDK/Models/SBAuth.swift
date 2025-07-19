@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SBAuth: Codable, Sendable {
+public struct SBAuth: Codable {
     public let accessToken: String
     public let tokenType: String
     public let expiresIn: Int
