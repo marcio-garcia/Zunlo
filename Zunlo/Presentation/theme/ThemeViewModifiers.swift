@@ -92,6 +92,19 @@ struct ThemedCardModifier: ViewModifier {
     }
 }
 
+struct ThemedBannerModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding()
+            .background(Color.theme.background)
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.theme.border, lineWidth: 1)
+            )
+    }
+}
+
 struct ThemedPrimaryButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content

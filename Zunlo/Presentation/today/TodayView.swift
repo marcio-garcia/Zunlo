@@ -11,7 +11,12 @@ struct TodayView: View {
     var namespace: Namespace.ID
     @Binding var showChat: Bool
 
+    @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
+    @AppStorage("hasDismissedUpgradeReminder") private var dismissed = false
+    
     @StateObject private var viewModel: TodayViewModel
+    
     @State private var showSchedule = false
     @State private var showTaskInbox = false
     @State private var showAddTask = false
@@ -32,6 +37,7 @@ struct TodayView: View {
             taskRepository: appState.userTaskRepository,
             eventRepository: appState.eventRepository)
         )
+        dismissed = false
     }
 
     var body: some View {
@@ -41,6 +47,16 @@ struct TodayView: View {
                 ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 24) {
                         greetingSection
+                        if authManager.isAnonymous && !dismissed {
+                            UpgradeReminderBanner(
+                                onUpgradeTap: {
+                                    upgradeFlowManager.shouldShowUpgradeFlow = true
+                                },
+                                onDismissTap: {
+                                    dismissed = true
+                                }
+                            )
+                        }
                         eventsTodaySection
                         tasksTodaySection
                         quickAddSection

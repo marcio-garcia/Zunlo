@@ -47,6 +47,10 @@ extension View {
     func themedCard() -> some View {
         self.modifier(ThemedCardModifier())
     }
+    
+    func themedBanner() -> some View {
+        self.modifier(ThemedBannerModifier())
+    }
 
     func themedPrimaryButton() -> some View {
         self.modifier(ThemedPrimaryButtonModifier())

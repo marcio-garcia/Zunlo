@@ -31,6 +31,7 @@ struct RootView: View {
                     AuthView()
                 case .authenticated(_):
                     MainView(factory: DefaultViewFactory(appState: appState))
+                        .environmentObject(upgradeFlowManager)
                 }
             }
         }

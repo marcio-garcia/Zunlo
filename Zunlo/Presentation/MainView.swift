@@ -10,6 +10,8 @@ import SwiftUI
 struct MainView: View {
     @Namespace private var animationNamespace
     @State private var isShowingChat = false
+    
+    @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     @StateObject private var viewModel: MainViewModel
     
     private let factory: ViewFactory
@@ -34,6 +36,8 @@ struct MainView: View {
                 TodayView(namespace: animationNamespace,
                           showChat: $isShowingChat,
                           appState: viewModel.appState)
+                .environmentObject(viewModel.appState.authManager)
+                .environmentObject(upgradeFlowManager)
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.90), value: isShowingChat)
