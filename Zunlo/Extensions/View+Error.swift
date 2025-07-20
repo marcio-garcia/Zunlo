@@ -15,12 +15,18 @@ extension View {
 
 struct ErrorAlertModifier: ViewModifier {
     @ObservedObject var handler: ErrorHandler
-
+    
     func body(content: Content) -> some View {
         content
             .alert("Error", isPresented: Binding<Bool>(
                 get: { handler.message != nil },
-                set: { if !$0 { handler.clear() } }
+                set: { newValue in
+                    if !newValue {
+                        DispatchQueue.main.async {
+                            handler.clear()
+                        }
+                    }
+                }
             )) {
                 Button("OK", role: .cancel) {}
             } message: {

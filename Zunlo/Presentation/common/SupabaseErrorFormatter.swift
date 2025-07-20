@@ -5,6 +5,7 @@
 //  Created by Marcio Garcia on 7/19/25.
 //
 
+import Foundation
 import SupabaseSDK
 
 enum SupabaseErrorFormatter {
@@ -23,6 +24,12 @@ enum SupabaseErrorFormatter {
             guard let supabaseError else {
                 return "status code: \(statusCode) - \(error.localizedDescription)"
             }
+            
+            guard supabaseError.message != "Unauthorized" else {
+                NotificationCenter.default.post(name: Notification.Name.accessUnauthorized, object: nil)
+                return ""
+            }
+            
             let description = [
                 supabaseError.message,
                 supabaseError.details,

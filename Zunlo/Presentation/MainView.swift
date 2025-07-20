@@ -33,10 +33,7 @@ struct MainView: View {
             } else {
                 TodayView(namespace: animationNamespace,
                           showChat: $isShowingChat,
-                          eventRepository: viewModel.eventRepository,
-                          taskRepository: viewModel.userTaskRepository,
-                          locationService: viewModel.locationService,
-                          pushService: viewModel.pushService)
+                          appState: viewModel.appState)
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.90), value: isShowingChat)

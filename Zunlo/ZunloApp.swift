@@ -13,6 +13,7 @@ import Firebase
 @main
 struct ZunloApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject var upgradeFlowManager = UpgradeFlowManager()
     
     private let appState: AppState
     
@@ -71,6 +72,7 @@ struct ZunloApp: App {
             RootView(appState: appState)
                 .environmentObject(appState.authManager)
                 .environmentObject(appState.locationService)
+                .environmentObject(upgradeFlowManager)
         }
     }
 }

@@ -23,11 +23,7 @@ final class DefaultViewFactory: ViewFactory {
         let userId = UUID(uuidString: appState.authManager.auth?.user.id ?? "")
         let chatVM = ChatScreenViewModel(repository: DefaultChatRepository(store: RealmChatLocalStore(),
                                                                            userId: userId))
-        return MainViewModel(eventRepository: appState.eventRepository,
-                             userTaskRepository: appState.userTaskRepository,
-                             chatViewModel: chatVM,
-                             locationService: appState.locationService,
-                             pushService: appState.pushNotificationService)
+        return MainViewModel(appState: appState)
     }
     
     func makeChatScreenViewModel() -> ChatScreenViewModel {

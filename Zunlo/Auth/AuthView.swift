@@ -14,13 +14,6 @@ struct AuthView: View {
     @State private var error: String?
     @State private var isLoading = false
     
-    // To logout in any other view
-    //    @EnvironmentObject var authManager: AuthManager
-    //
-    //    Button("Log out") {
-    //        authManager.logout()
-    //    }
-    
     var body: some View {
         VStack(spacing: 24) {
             Text("Supabase Auth Demo")
@@ -44,7 +37,6 @@ struct AuthView: View {
                             self.error = error.localizedDescription
                         }
                     }
-                    //                        Task { await repository.signUp(email: email, password: password) }
                 }
                 .buttonStyle(.bordered)
                 .disabled(isLoading)
@@ -59,7 +51,6 @@ struct AuthView: View {
                             self.error = error.localizedDescription
                         }
                     }
-                    //                        Task { await repository.signIn(email: email, password: password) }
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(isLoading)

@@ -8,4 +8,5 @@
 struct User: Codable, Sendable, Equatable {
     let id: String
     let email: String
+    let isAnonymous: Bool
 }

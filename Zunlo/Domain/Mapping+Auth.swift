@@ -20,7 +20,10 @@ extension SBAuth {
 
 extension SBUser {
     func toDomain() -> User {
-        return User(id: self.id,
-                    email: self.email)
+        return User(
+            id: self.id,
+            email: self.email,
+            isAnonymous: self.isAnonymous
+        )
     }
 }

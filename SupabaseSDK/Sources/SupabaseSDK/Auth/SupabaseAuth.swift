@@ -11,13 +11,19 @@ public class SupabaseAuth {
     private let config: SupabaseConfig
     private let httpService: NetworkService
     
+    public var authToken: String? {
+        didSet {
+            httpService.authToken = authToken
+        }
+    }
+    
     public init(config: SupabaseConfig, session: URLSession = .shared) {
         self.config = config
         self.httpService = NetworkService(config: config, session: session)
     }
     
     public func signUp(email: String, password: String) async throws -> SBAuth {
-        return try await httpService.performRequest(
+        return try await httpService.perform(
             path: "auth/v1/signup",
             method: .post,
             bodyObject: ["email": email, "password": password],
@@ -26,7 +32,7 @@ public class SupabaseAuth {
     }
 
     public func signIn(email: String, password: String) async throws -> SBAuth {
-        return try await httpService.performRequest(
+        return try await httpService.perform(
             path: "auth/v1/token",
             method: .post,
             bodyObject: ["email": email, "password": password],
@@ -35,7 +41,7 @@ public class SupabaseAuth {
     }
     
     public func refreshSession(refreshToken: String) async throws -> SBAuth {
-        return try await httpService.performRequest(
+        return try await httpService.perform(
             path: "auth/v1/token",
             method: .post,
             bodyObject: ["refresh_token": refreshToken],
@@ -43,24 +49,26 @@ public class SupabaseAuth {
         )
     }
     
-//    private func authenticate(request: URLRequest) async throws -> SBAuth {
-//        do {
-//            let (data, response) = try await URLSession.shared.data(for: request)
-//            guard let http = response as? HTTPURLResponse else {
-//                throw SBAuthError.invalidResponse
-//            }
-//            guard (200..<300).contains(http.statusCode) else {
-//                let sbAuthErrorMsg = try JSONDecoder().decode(SBAuthErrorMsg.self, from: data)
-//                throw SBAuthError.authError(sbAuthErrorMsg)
-//            }
-//            
-//            let sbAuth = try JSONDecoder().decode(SBAuth.self, from: data)
-//            return sbAuth
-//        } catch {
-//            if let err = error as? DecodingError {
-//                debugPrint("Decoding error: \(err.errorDescription ?? "")")
-//            }
-//            throw error
-//        }
-//    }
+    public func signInAnonymously() async throws -> SBAuth {
+        return try await httpService.performRequest(
+            path: "auth/v1/token",
+            method: .post,
+            query: ["grant_type": "anonymous"]
+        )
+    }
+
+    public func signOut() async throws {
+        try await httpService.performRequest(
+            path: "auth/v1/logout",
+            method: .post
+        )
+    }
+
+    public func linkIdentityWithMagicLink(email: String) async throws {
+        try await httpService.performRequest(
+            path: "auth/v1/user/identities",
+            method: .post,
+            bodyObject: ["email": email, "provider": "email"]
+        )
+    }
 }

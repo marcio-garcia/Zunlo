@@ -5,7 +5,9 @@
 //  Created by Marcio Garcia on 6/25/25.
 //
 
+import Foundation
 import Combine
+import RealmSwift
 
 enum AuthState: Equatable {
     case loading
@@ -28,7 +30,7 @@ final class AuthManager: AuthSession, ObservableObject {
     @Published private(set) var state: AuthState = .loading
     
     private let tokenStorage: TokenStorage
-    private let authService: AuthServicing
+    private var authService: AuthServicing
     
     var auth: Auth? {
         if case .authenticated(let auth) = state { return auth }
@@ -43,6 +45,14 @@ final class AuthManager: AuthSession, ObservableObject {
          authService: AuthServicing = AuthService(envConfig: EnvConfig.shared)) {
         self.tokenStorage = tokenStorage
         self.authService = authService
+        
+        NotificationCenter.default.addObserver(forName: .accessUnauthorized,
+                                               object: nil,
+                                               queue: nil) { _ in
+            Task {
+                await self.unauthenticated()
+            }
+        }
     }
 
     public func bootstrap() async {
@@ -53,7 +63,7 @@ final class AuthManager: AuthSession, ObservableObject {
             }
 
             if authService.validateToken(auth.token) {
-                await updateState(.authenticated(auth))
+                await authenticated(auth)
                 return
             }
 
@@ -77,22 +87,25 @@ final class AuthManager: AuthSession, ObservableObject {
         }
     }
     
-    @MainActor
-    private func updateState(_ state: AuthState) {
-        self.state = state
+    private func updateState(_ state: AuthState) async {
+        await MainActor.run {
+            self.state = state
+        }
     }
     
     private func authenticated(_ auth: Auth) async {
         do {
             try tokenStorage.save(token: auth)
+            authService.authToken = auth.token.accessToken
             await updateState(.authenticated(auth))
         } catch {
-            await updateState(.unauthenticated)
+            await unauthenticated()
         }
     }
     
     private func unauthenticated() async {
         try? tokenStorage.clear()
+        authService.authToken = nil
         await updateState(.unauthenticated)
     }
 
@@ -106,9 +119,40 @@ final class AuthManager: AuthSession, ObservableObject {
         await authenticated(auth)
     }
 
-    @MainActor
-    func logout() {
-        try? tokenStorage.clear()
-        updateState(.unauthenticated)
+    func signOut(preserveLocalData: Bool = true) async throws {
+        do {
+            // Revoke token with Supabase
+            try await authService.signOut()
+            
+            // Clear session tokens
+            try tokenStorage.clear()
+            
+            // Wipe local database
+            if !preserveLocalData {
+                try await Task.detached(priority: .background) {
+                    let realm = try Realm()
+                    try realm.write {
+                        realm.deleteAll()
+                    }
+                }.value
+            }
+            
+            // 3. Set app state to "unauthenticated"
+            await updateState(.unauthenticated)
+            
+            // 4. Create a new anonymous session automatically (optional)
+            //        let session = try? await supabaseAuth.signInAnonymously()
+            //        sessionManager.set(session)
+        } catch {
+            print(error)
+            try tokenStorage.clear()
+        }
+    }
+    
+    public func linkIdentityWithMagicLink(email: String) async throws {
+        guard let accessToken else {
+            return
+        }
+        try await authService.linkIdentityWithMagicLink(email: email)
     }
 }

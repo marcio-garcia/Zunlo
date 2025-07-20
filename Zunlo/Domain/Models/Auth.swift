@@ -14,7 +14,17 @@ struct Auth: Codable, Sendable, Equatable {
 
 extension Auth {
     static var empty: Auth {
-        return Auth(token: AuthToken(accessToken: "", refreshToken: nil, expiresAt: Date()), user: User(id: "", email: ""))
+        return Auth(
+            token: AuthToken(
+                accessToken: "",
+                refreshToken: nil,
+                expiresAt: Date()
+            ),
+            user: User(
+                id: "",
+                email: "",
+                isAnonymous: true)
+        )
     }
 }
 

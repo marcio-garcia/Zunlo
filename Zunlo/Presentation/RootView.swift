@@ -11,12 +11,15 @@ struct RootView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var locationService: LocationService
+    @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     var appState: AppState
     
     
     var body: some View {
         Group {
-            if !hasCompletedOnboarding {
+            if upgradeFlowManager.shouldShowUpgradeFlow {
+                UpgradeAccountView(authManager: authManager)
+            } else if !hasCompletedOnboarding {
                 OnboardingView(appState: appState) {
                     hasCompletedOnboarding = true
                 }

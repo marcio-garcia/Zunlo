@@ -10,15 +10,24 @@ import SwiftData
 import SupabaseSDK
 
 protocol AuthServicing {
+    var authToken: String? { get set }
     func signIn(email: String, password: String) async throws -> Auth
     func signUp(email: String, password: String) async throws -> Auth
     func refreshToken(_ refreshToken: String) async throws -> Auth
     func validateToken(_ token: AuthToken) -> Bool
+    func signOut() async throws
+    func linkIdentityWithMagicLink(email: String) async throws
 }
 
 class AuthService: AuthServicing {
     
     private var supabase: SupabaseSDK
+    
+    var authToken: String? {
+        didSet {
+            supabase.auth.authToken = authToken
+        }
+    }
     
     init(envConfig: EnvConfig) {
         let config = SupabaseConfig(anonKey: envConfig.apiKey,
@@ -56,5 +65,13 @@ class AuthService: AuthServicing {
     
     func validateToken(_ token: AuthToken) -> Bool {
         return !token.accessToken.isEmpty && token.expiresAt > Date()
+    }
+    
+    func signOut() async throws {
+        try await supabase.auth.signOut()
+    }
+    
+    func linkIdentityWithMagicLink(email: String) async throws {
+        try await supabase.auth.linkIdentityWithMagicLink(email: email)
     }
 }

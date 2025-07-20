@@ -21,6 +21,13 @@ public protocol SupabaseErrorType: Codable, Sendable {
     var hint: String? { get }
 }
 
+struct SupabaseStorageErrorResponse: SupabaseErrorType {
+    public let code: String
+    public let details: String?
+    public let hint: String?
+    public let message: String
+}
+
 struct SupabaseAuthErrorResponse: SupabaseErrorType {
     public let code: String
     public let errorCode: String
@@ -34,13 +41,42 @@ struct SupabaseAuthErrorResponse: SupabaseErrorType {
         case message = "msg"
         case details
         case hint
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
+        self.errorCode = try container.decode(String.self, forKey: .errorCode)
+        self.message = try container.decode(String.self, forKey: .message)
+        
+        let code = try container.decode(Int.self, forKey: .code)
+        
+        self.code = String(code)
+        
+        self.details = nil
+        self.hint = nil
     }
 }
 
-struct SupabaseStorageErrorResponse: SupabaseErrorType {
+struct SupabaseUnauthorizedErrorResponse: SupabaseErrorType {
     public let code: String
     public let details: String?
     public let hint: String?
     public let message: String
+    
+    private enum CodingKeys: String, CodingKey {
+        case code
+        case message = "error"
+        case details
+        case hint
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.message = try container.decode(String.self, forKey: .message)
+        self.code = "0"
+        self.details = nil
+        self.hint = nil
+    }
 }

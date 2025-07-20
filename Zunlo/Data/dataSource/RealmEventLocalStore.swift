@@ -21,7 +21,7 @@ final class RealmEventLocalStore: EventLocalStore {
     func save(_ remoteEvent: EventRemote) async throws {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
-            let event = EventLocal(remote: remoteEvent) // Construct here
+            let event = EventLocal(remote: remoteEvent)
             try realm.write {
                 realm.add(event, update: .all)
             }

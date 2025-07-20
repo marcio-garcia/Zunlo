@@ -51,7 +51,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
         into table: String,
         additionalHeaders: [String: String]? = nil
     ) async throws -> [T] {
-        try await httpService.performRequest(
+        try await httpService.perform(
             path: "/rest/v1/\(table)",
             method: .post,
             bodyObject: object,
@@ -64,7 +64,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
         in table: String,
         filter: [String: String]
     ) async throws -> [T] {
-        try await httpService.performRequest(
+        try await httpService.perform(
             path: "/rest/v1/\(table)",
             method: .patch,
             bodyObject: object,
