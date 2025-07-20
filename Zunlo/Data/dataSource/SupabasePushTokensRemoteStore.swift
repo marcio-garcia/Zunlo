@@ -13,7 +13,7 @@ final class SupabasePushTokensRemoteStore: PushTokensRemoteStore {
     private var supabase: SupabaseSDK
     private var authManager: AuthSession
 
-    private var authToken: String? { authManager.accessToken }
+    private var authToken: String? { authManager.authToken?.accessToken }
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
     init(supabase: SupabaseSDK, authManager: AuthSession) {

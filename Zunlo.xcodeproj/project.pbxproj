@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		252D730E2E2D5E6C002320B8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 252D730D2E2D5E6C002320B8 /* Auth */; };
+		252D73102E2D5E6C002320B8 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 252D730F2E2D5E6C002320B8 /* Functions */; };
+		252D73122E2D5E6C002320B8 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73112E2D5E6C002320B8 /* PostgREST */; };
+		252D73142E2D5E6C002320B8 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73132E2D5E6C002320B8 /* Realtime */; };
+		252D73162E2D5E6C002320B8 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73152E2D5E6C002320B8 /* Storage */; };
+		252D73182E2D5E6C002320B8 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73172E2D5E6C002320B8 /* Supabase */; };
 		255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */ = {isa = PBXBuildFile; productRef = 255B93752E1C6FFB00D8CD8A /* MiniSignalEye */; };
 		25857B842E1C85C800676F8B /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; };
 		25857E4B2E1DF95700676F8B /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -89,10 +95,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				252D73182E2D5E6C002320B8 /* Supabase in Frameworks */,
+				252D73142E2D5E6C002320B8 /* Realtime in Frameworks */,
 				25857B842E1C85C800676F8B /* RealmSwift in Frameworks */,
 				25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */,
+				252D730E2E2D5E6C002320B8 /* Auth in Frameworks */,
 				25ACE3482E25F028009F0218 /* FirebaseMessaging in Frameworks */,
+				252D73122E2D5E6C002320B8 /* PostgREST in Frameworks */,
+				252D73102E2D5E6C002320B8 /* Functions in Frameworks */,
 				25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */,
+				252D73162E2D5E6C002320B8 /* Storage in Frameworks */,
 				255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -169,6 +181,12 @@
 				25857B832E1C85C800676F8B /* RealmSwift */,
 				25ACE3452E25F028009F0218 /* FirebaseCore */,
 				25ACE3472E25F028009F0218 /* FirebaseMessaging */,
+				252D730D2E2D5E6C002320B8 /* Auth */,
+				252D730F2E2D5E6C002320B8 /* Functions */,
+				252D73112E2D5E6C002320B8 /* PostgREST */,
+				252D73132E2D5E6C002320B8 /* Realtime */,
+				252D73152E2D5E6C002320B8 /* Storage */,
+				252D73172E2D5E6C002320B8 /* Supabase */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -256,6 +274,7 @@
 				255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */,
 				25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */,
 				25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 25FA19FE2E0854F800E740A3 /* Products */;
@@ -792,6 +811,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
 		255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/marcio-garcia/MiniSignalEye";
@@ -819,6 +846,36 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		252D730D2E2D5E6C002320B8 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		252D730F2E2D5E6C002320B8 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		252D73112E2D5E6C002320B8 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		252D73132E2D5E6C002320B8 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		252D73152E2D5E6C002320B8 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		252D73172E2D5E6C002320B8 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
 		255B93752E1C6FFB00D8CD8A /* MiniSignalEye */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */;

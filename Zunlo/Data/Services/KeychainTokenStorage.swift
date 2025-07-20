@@ -12,8 +12,8 @@ final class KeychainTokenStorage: TokenStorage {
     private let service = "com.zunlo.app.token"
     private let account = "auth"
 
-    func save(token: Auth) throws {
-        let data = try JSONEncoder().encode(token)
+    func save(authToken: AuthToken) throws {
+        let data = try JSONEncoder().encode(authToken)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -29,7 +29,7 @@ final class KeychainTokenStorage: TokenStorage {
         guard status == errSecSuccess else { throw NSError(domain: "Keychain", code: Int(status)) }
     }
 
-    func loadToken() throws -> Auth? {
+    func loadToken() throws -> AuthToken? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -43,7 +43,7 @@ final class KeychainTokenStorage: TokenStorage {
         guard status == errSecSuccess, let data = dataRef as? Data else {
             throw NSError(domain: "Keychain", code: Int(status))
         }
-        return try JSONDecoder().decode(Auth.self, from: data)
+        return try JSONDecoder().decode(AuthToken.self, from: data)
     }
 
     func clear() throws {

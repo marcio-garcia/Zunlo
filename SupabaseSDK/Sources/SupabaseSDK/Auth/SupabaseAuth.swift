@@ -51,9 +51,8 @@ public class SupabaseAuth {
     
     public func signInAnonymously() async throws -> SBAuth {
         return try await httpService.performRequest(
-            path: "auth/v1/token",
-            method: .post,
-            query: ["grant_type": "anonymous"]
+            path: "auth/v1/anonymous",
+            method: .post
         )
     }
 

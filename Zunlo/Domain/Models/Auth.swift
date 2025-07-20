@@ -8,7 +8,7 @@
 import Foundation
 
 struct Auth: Codable, Sendable, Equatable {
-    let token: AuthToken
+    let token: AuthToken?
     let user: User
 }
 
@@ -21,8 +21,8 @@ extension Auth {
                 expiresAt: Date()
             ),
             user: User(
-                id: "",
-                email: "",
+                id: UUID(),
+                email: nil,
                 isAnonymous: true)
         )
     }

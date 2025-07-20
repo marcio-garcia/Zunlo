@@ -11,19 +11,19 @@ import RealmSwift
 
 enum AuthState: Equatable {
     case loading
-    case authenticated(Auth)
+    case authenticated(AuthToken)
     case unauthenticated
 }
 
 protocol TokenStorage {
-    func save(token: Auth) throws
-    func loadToken() throws -> Auth?
+    func save(authToken: AuthToken) throws
+    func loadToken() throws -> AuthToken?
     func clear() throws
 }
 
 protocol AuthSession {
-    var auth: Auth? { get }
-    var accessToken: String? { get }
+    var authToken: AuthToken? { get }
+    var user: User? { get }
 }
 
 final class AuthManager: AuthSession, ObservableObject {
@@ -32,13 +32,11 @@ final class AuthManager: AuthSession, ObservableObject {
     private let tokenStorage: TokenStorage
     private var authService: AuthServicing
     
-    var auth: Auth? {
-        if case .authenticated(let auth) = state { return auth }
-        return nil
-    }
+    var user: User?
     
-    var accessToken: String? {
-        auth?.token.accessToken
+    var authToken: AuthToken? {
+        if case .authenticated(let token) = state { return token }
+        return nil
     }
     
     init(tokenStorage: TokenStorage = KeychainTokenStorage(),
@@ -57,35 +55,63 @@ final class AuthManager: AuthSession, ObservableObject {
 
     public func bootstrap() async {
         do {
-            guard let auth = try tokenStorage.loadToken() else {
-                await unauthenticated()
+            if let authToken = try tokenStorage.loadToken(), authService.validateToken(authToken) {
+                try await authenticated(authToken)
                 return
             }
 
-            if authService.validateToken(auth.token) {
-                await authenticated(auth)
-                return
-            }
-
-            guard let refreshToken = auth.token.refreshToken else {
-                await unauthenticated()
-                return
-            }
-
-            do {
-                let newAuth = try await authService.refreshToken(refreshToken)
-                if authService.validateToken(newAuth.token) {
-                    await authenticated(newAuth)
-                    return
+            if let authToken = try tokenStorage.loadToken(), let refreshToken = authToken.refreshToken {
+                do {
+                    let newAuth = try await authService.refreshToken(refreshToken)
+                    if authService.validateToken(newAuth) {
+                        try await authenticated(newAuth)
+                        return
+                    }
+                } catch {
+                    // refresh failed, fall back to anon
                 }
-                await unauthenticated()
-            } catch {
-                await unauthenticated()
             }
+
+            // fallback to anonymous
+            let authToken = try await authService.signInAnonymously()
+            try await authenticated(authToken)
+
         } catch {
             await unauthenticated()
         }
     }
+
+//    public func bootstrap() async {
+//        do {
+//            guard let auth = try tokenStorage.loadToken() else {
+//                await unauthenticated()
+//                return
+//            }
+//
+//            if authService.validateToken(auth.token) {
+//                await authenticated(auth)
+//                return
+//            }
+//
+//            guard let refreshToken = auth.token.refreshToken else {
+//                await unauthenticated()
+//                return
+//            }
+//
+//            do {
+//                let newAuth = try await authService.refreshToken(refreshToken)
+//                if authService.validateToken(newAuth.token) {
+//                    await authenticated(newAuth)
+//                    return
+//                }
+//                await unauthenticated()
+//            } catch {
+//                await unauthenticated()
+//            }
+//        } catch {
+//            await unauthenticated()
+//        }
+//    }
     
     private func updateState(_ state: AuthState) async {
         await MainActor.run {
@@ -93,30 +119,35 @@ final class AuthManager: AuthSession, ObservableObject {
         }
     }
     
-    private func authenticated(_ auth: Auth) async {
-        do {
-            try tokenStorage.save(token: auth)
-            authService.authToken = auth.token.accessToken
-            await updateState(.authenticated(auth))
-        } catch {
-            await unauthenticated()
-        }
+    private func authenticated(_ authToken: AuthToken) async throws {
+        try tokenStorage.save(authToken: authToken)
+        await updateState(.authenticated(authToken))
     }
     
     private func unauthenticated() async {
         try? tokenStorage.clear()
-        authService.authToken = nil
+        try? await authService.signOut()
         await updateState(.unauthenticated)
     }
 
     func signIn(email: String, password: String) async throws {
         let auth = try await authService.signIn(email: email, password: password)
-        await authenticated(auth)
+        try await authenticated(auth)
     }
     
     func signUp(email: String, password: String) async throws {
         let auth = try await authService.signUp(email: email, password: password)
-        await authenticated(auth)
+        self.user = auth.user
+        guard let authToken = auth.token else {
+            await unauthenticated()
+            return
+        }
+        try await authenticated(authToken)
+    }
+    
+    func signInAnonymously() async throws {
+        let auth = try await authService.signInAnonymously()
+        try await authenticated(auth)
     }
 
     func signOut(preserveLocalData: Bool = true) async throws {
@@ -137,22 +168,16 @@ final class AuthManager: AuthSession, ObservableObject {
                 }.value
             }
             
-            // 3. Set app state to "unauthenticated"
-            await updateState(.unauthenticated)
-            
-            // 4. Create a new anonymous session automatically (optional)
-            //        let session = try? await supabaseAuth.signInAnonymously()
-            //        sessionManager.set(session)
+            // Create a new anonymous session automatically (optional)
+            let authToken = try await authService.signInAnonymously()
+            try await authenticated(authToken)
         } catch {
             print(error)
-            try tokenStorage.clear()
+            await unauthenticated()
         }
     }
     
     public func linkIdentityWithMagicLink(email: String) async throws {
-        guard let accessToken else {
-            return
-        }
         try await authService.linkIdentityWithMagicLink(email: email)
     }
 }

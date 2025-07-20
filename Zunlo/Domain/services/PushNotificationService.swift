@@ -108,7 +108,7 @@ final class PushNotificationService: NSObject {
 
         let payload = PushTokenRemote(
             id: nil,
-            user_id: userId,
+            user_id: userId.uuidString,
             token: token,
             platform: "iOS",
             app_version: EnvConfig.shared.appVersion
@@ -130,11 +130,11 @@ final class PushNotificationService: NSObject {
     }
     
     private func getAccessToken() -> String? {
-        return authManager.accessToken
+        return authManager.authToken?.accessToken
     }
 
-    private func getUserId() -> String? {
-        return authManager.auth?.user.id
+    private func getUserId() -> UUID? {
+        return authManager.user?.id
     }
 }
 

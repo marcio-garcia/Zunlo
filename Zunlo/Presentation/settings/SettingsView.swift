@@ -31,7 +31,7 @@ struct SettingsView: View {
             LogoutPromptDialog(viewModel: viewModel)
         }
         .onAppear {
-            viewModel.isAnonymousUser = authManager.auth?.user.isAnonymous ?? true
+            viewModel.isAnonymousUser = authManager.user?.isAnonymous ?? true
             viewModel.onLogoutComplete = {
                 dismiss()
             }
