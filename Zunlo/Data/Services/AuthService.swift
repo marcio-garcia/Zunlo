@@ -17,6 +17,7 @@ protocol AuthServicing {
     func signOut() async throws
     func signInAnonymously() async throws -> AuthToken
     func linkIdentityWithMagicLink(email: String) async throws
+    func getUser(jwt: String?) async throws -> User
 }
 
 class AuthService: AuthServicing {
@@ -59,5 +60,10 @@ class AuthService: AuthServicing {
     
     func linkIdentityWithMagicLink(email: String) async throws {
 //        try await supabase.auth.linkIdentityWithMagicLink(email: email)
+    }
+    
+    func getUser(jwt: String?) async throws -> User {
+        let user = try await supabase.auth.user(jwt: jwt)
+        return user.toDomain()
     }
 }

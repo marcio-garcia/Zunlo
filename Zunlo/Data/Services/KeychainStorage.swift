@@ -1,35 +1,42 @@
 //
-//  KeychainTokenStorage.swift
+//  KeychainStorage.swift
 //  Zunlo
 //
-//  Created by Marcio Garcia on 6/25/25.
+//  Created by Marcio Garcia on 7/20/25.
 //
 
 import Foundation
 import Security
 
-final class KeychainTokenStorage: TokenStorage {
-    private let service = "com.zunlo.app.token"
-    private let account = "auth"
+final class KeychainStorage<T: Codable> {
+    private let service: String
+    private let account: String
 
-    func save(authToken: AuthToken) throws {
-        let data = try JSONEncoder().encode(authToken)
+    init(service: String, account: String) {
+        self.service = service
+        self.account = account
+    }
+
+    func save(_ object: T) throws {
+        let data = try JSONEncoder().encode(object)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
-        SecItemDelete(query as CFDictionary) // Remove any existing
+        SecItemDelete(query as CFDictionary) // Remove any existing item
         let attributes: [String: Any] = [
             kSecValueData as String: data
         ]
         var addQuery = query
         addQuery.merge(attributes) { $1 }
         let status = SecItemAdd(addQuery as CFDictionary, nil)
-        guard status == errSecSuccess else { throw NSError(domain: "Keychain", code: Int(status)) }
+        guard status == errSecSuccess else {
+            throw NSError(domain: "Keychain", code: Int(status), userInfo: nil)
+        }
     }
 
-    func loadToken() throws -> AuthToken? {
+    func load() throws -> T? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -39,11 +46,13 @@ final class KeychainTokenStorage: TokenStorage {
         ]
         var dataRef: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &dataRef)
-        if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess, let data = dataRef as? Data else {
-            throw NSError(domain: "Keychain", code: Int(status))
+        if status == errSecItemNotFound {
+            return nil
         }
-        return try JSONDecoder().decode(AuthToken.self, from: data)
+        guard status == errSecSuccess, let data = dataRef as? Data else {
+            throw NSError(domain: "Keychain", code: Int(status), userInfo: nil)
+        }
+        return try JSONDecoder().decode(T.self, from: data)
     }
 
     func clear() throws {

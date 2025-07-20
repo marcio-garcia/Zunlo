@@ -30,14 +30,9 @@ import Supabase
 
 extension AuthResponse {
     func toDomain() -> Auth {
-        let user = User(
-            id: self.user.id,
-            email: self.user.email,
-            isAnonymous: self.user.isAnonymous
-        )
         return Auth(
             token: self.session?.toDomain(),
-            user: user
+            user: self.user.toDomain()
         )
     }
 }
@@ -48,5 +43,15 @@ extension Session {
             accessToken: self.accessToken,
             refreshToken: self.refreshToken,
             expiresAt: Date(timeIntervalSince1970: self.expiresAt))
+    }
+}
+
+extension Supabase.User {
+    func toDomain() -> User {
+        return User(
+            id: self.id,
+            email: self.email,
+            isAnonymous: self.isAnonymous
+        )
     }
 }

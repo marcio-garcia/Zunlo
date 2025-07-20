@@ -21,6 +21,12 @@ protocol TokenStorage {
     func clear() throws
 }
 
+protocol UserStorage {
+    func save(user: User) throws
+    func loadUser() throws -> User?
+    func clear() throws
+}
+
 protocol AuthSession {
     var authToken: AuthToken? { get }
     var user: User? { get }
@@ -29,8 +35,9 @@ protocol AuthSession {
 final class AuthManager: AuthSession, ObservableObject {
     @Published private(set) var state: AuthState = .loading
     
-    private let tokenStorage: TokenStorage
     private var authService: AuthServicing
+    private let tokenStorage: TokenStorage
+    private let userStorage: UserStorage
     
     var user: User?
     
@@ -39,10 +46,14 @@ final class AuthManager: AuthSession, ObservableObject {
         return nil
     }
     
-    init(tokenStorage: TokenStorage = KeychainTokenStorage(),
-         authService: AuthServicing = AuthService(envConfig: EnvConfig.shared)) {
-        self.tokenStorage = tokenStorage
+    init(
+        authService: AuthServicing = AuthService(envConfig: EnvConfig.shared),
+        tokenStorage: TokenStorage = AuthTokenStorage(),
+        userStorage: UserStorage = AuthUserStorage()
+    ) {
         self.authService = authService
+        self.tokenStorage = tokenStorage
+        self.userStorage = userStorage
         
         NotificationCenter.default.addObserver(forName: .accessUnauthorized,
                                                object: nil,
@@ -73,8 +84,7 @@ final class AuthManager: AuthSession, ObservableObject {
             }
 
             // fallback to anonymous
-            let authToken = try await authService.signInAnonymously()
-            try await authenticated(authToken)
+            try await signInAnonymously()
 
         } catch {
             await unauthenticated()
@@ -138,6 +148,7 @@ final class AuthManager: AuthSession, ObservableObject {
     func signUp(email: String, password: String) async throws {
         let auth = try await authService.signUp(email: email, password: password)
         self.user = auth.user
+        try userStorage.save(user: auth.user)
         guard let authToken = auth.token else {
             await unauthenticated()
             return
@@ -146,8 +157,10 @@ final class AuthManager: AuthSession, ObservableObject {
     }
     
     func signInAnonymously() async throws {
-        let auth = try await authService.signInAnonymously()
-        try await authenticated(auth)
+        let authToken = try await authService.signInAnonymously()
+        let user = try await authService.getUser(jwt: authToken.accessToken)
+        try userStorage.save(user: user)
+        try await authenticated(authToken)
     }
 
     func signOut(preserveLocalData: Bool = true) async throws {
@@ -168,9 +181,9 @@ final class AuthManager: AuthSession, ObservableObject {
                 }.value
             }
             
-            // Create a new anonymous session automatically (optional)
-            let authToken = try await authService.signInAnonymously()
-            try await authenticated(authToken)
+            // Create a new anonymous session automatically
+            try await signInAnonymously()
+            
         } catch {
             print(error)
             await unauthenticated()
