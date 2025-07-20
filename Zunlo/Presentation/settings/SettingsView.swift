@@ -19,23 +19,30 @@ struct SettingsView: View {
     var authManager: AuthManager
     
     var body: some View {
-        VStack {
-            Button("Log Out") {
-                viewModel.confirmLogout()
+        NavigationStack {
+            VStack {
+                Button("Log Out") {
+                    viewModel.confirmLogout()
+                }
+                
+                if viewModel.isLoggingOut {
+                    ProgressView("Logging out...")
+                }
+                
+#if DEBUG
+                NavigationLink("Debug Menu") {
+                    DebugMenuView()
+                }
+#endif
+                LogoutPromptDialog(viewModel: viewModel)
             }
-
-            if viewModel.isLoggingOut {
-                ProgressView("Logging out...")
+            .onAppear {
+                viewModel.isAnonymousUser = authManager.user?.isAnonymous ?? true
+                viewModel.onLogoutComplete = {
+                    dismiss()
+                }
             }
-
-            LogoutPromptDialog(viewModel: viewModel)
+            .errorAlert(viewModel.errorHandler)
         }
-        .onAppear {
-            viewModel.isAnonymousUser = authManager.user?.isAnonymous ?? true
-            viewModel.onLogoutComplete = {
-                dismiss()
-            }
-        }
-        .errorAlert(viewModel.errorHandler)
     }
 }

@@ -12,8 +12,9 @@ struct RootView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var locationService: LocationService
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
-    var appState: AppState
+    @EnvironmentObject var upgradeReminderManager: UpgradeReminderManager
     
+    var appState: AppState
     
     var body: some View {
         Group {
@@ -40,6 +41,7 @@ struct RootView: View {
         .task {
             await authManager.bootstrap()
             locationService.checkStatus()
+            upgradeReminderManager.recordSessionIfNeeded()
         }
     }
 }

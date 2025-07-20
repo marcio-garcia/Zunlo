@@ -13,7 +13,13 @@ struct TodayView: View {
 
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
+    @EnvironmentObject var upgradeReminderManager: UpgradeReminderManager
+    
+    @AppStorage("firstLaunchTimestamp") private var firstLaunchTimestamp: Double = 0
+    @AppStorage("sessionCount") private var sessionCount = 0
     @AppStorage("hasDismissedUpgradeReminder") private var dismissed = false
+    private let minSessionsBeforeShowing = 5
+    private let daysUntilBanner = 3
     
     @StateObject private var viewModel: TodayViewModel
     
@@ -37,9 +43,24 @@ struct TodayView: View {
             taskRepository: appState.userTaskRepository,
             eventRepository: appState.eventRepository)
         )
-        dismissed = false
+    }
+    
+    func getFirstLaunchDate() -> Date {
+        Date(timeIntervalSince1970: firstLaunchTimestamp)
     }
 
+    func setFirstLaunchDate(_ date: Date) {
+        firstLaunchTimestamp = date.timeIntervalSince1970
+    }
+    
+    var shouldShowUpgradeReminder: Bool {
+        let daysUntilBanner = 3
+        let elapsed = Date().timeIntervalSince(getFirstLaunchDate())
+        return authManager.isAnonymous &&
+               elapsed > TimeInterval(60 * 60 * 24 * daysUntilBanner) &&
+               !dismissed
+    }
+    
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Color.white.ignoresSafeArea()
@@ -47,16 +68,7 @@ struct TodayView: View {
                 ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 24) {
                         greetingSection
-                        if authManager.isAnonymous && !dismissed {
-                            UpgradeReminderBanner(
-                                onUpgradeTap: {
-                                    upgradeFlowManager.shouldShowUpgradeFlow = true
-                                },
-                                onDismissTap: {
-                                    dismissed = true
-                                }
-                            )
-                        }
+                        showBannerIfNeeded
                         eventsTodaySection
                         tasksTodaySection
                         quickAddSection
@@ -116,6 +128,12 @@ struct TodayView: View {
             }
             .padding()
         }
+        .onAppear {
+            sessionCount += 1
+            if firstLaunchTimestamp == 0 {
+                setFirstLaunchDate(Date())
+            }
+        }
         .task {
             await viewModel.fetchData()
         }
@@ -125,6 +143,21 @@ struct TodayView: View {
     private var greetingSection: some View {
         Text(viewModel.greeting)
             .themedTitle()
+    }
+    
+    private var showBannerIfNeeded: some View {
+        HStack {
+            if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
+                UpgradeReminderBanner(
+                    onUpgradeTap: {
+                        upgradeFlowManager.shouldShowUpgradeFlow = true
+                    },
+                    onDismissTap: {
+                        upgradeReminderManager.dismissReminder()
+                    }
+                )
+            }
+        }
     }
 
     private var eventsTodaySection: some View {

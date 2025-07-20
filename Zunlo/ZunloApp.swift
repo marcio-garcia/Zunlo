@@ -14,6 +14,7 @@ import Firebase
 struct ZunloApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject var upgradeFlowManager = UpgradeFlowManager()
+    @StateObject var upgradeReminderManager = UpgradeReminderManager()
     
     private let appState: AppState
     
@@ -73,6 +74,7 @@ struct ZunloApp: App {
                 .environmentObject(appState.authManager)
                 .environmentObject(appState.locationService)
                 .environmentObject(upgradeFlowManager)
+                .environmentObject(upgradeReminderManager)
         }
     }
 }
