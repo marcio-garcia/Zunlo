@@ -9,15 +9,18 @@ import SwiftUI
 
 struct AddEditTaskView: View {
     @Environment(\.dismiss) private var dismiss
-    @FocusState private var focusTitle: Bool
     @State private var error: String?
     @StateObject var viewModel: AddEditTaskViewModel
 
     var body: some View {
         NavigationStack {
             formContent
-                .navigationTitle(viewModel.navigationTitle())
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text(viewModel.navigationTitle())
+                            .themedSubtitle()
+                    }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
                             viewModel.save { result in
@@ -29,11 +32,13 @@ struct AddEditTaskView: View {
                                 }
                             }
                         }
-                        .disabled(viewModel.title.trimmingCharacters(in: .whitespaces).isEmpty || viewModel.isSaving)
+                        .themedSecondaryButton(isEnabled: isEnabled)
+                        .disabled(!isEnabled)
                     }
 
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") { dismiss() }
+                            .themedSecondaryButton()
                     }
                 }
                 .alert("Error Saving Task", isPresented: isShowingError) {
@@ -41,11 +46,7 @@ struct AddEditTaskView: View {
                 } message: {
                     Text(error ?? "Unknown error.")
                 }
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        focusTitle = true
-                    }
-                }
+                .themedBody()
         }
     }
 
@@ -63,8 +64,6 @@ struct AddEditTaskView: View {
     private var taskDetailsSection: some View {
         Section {
             TextField("Title", text: $viewModel.title)
-                .focused($focusTitle)
-                .submitLabel(.done)
 
             TextField("Notes", text: $viewModel.notes, axis: .vertical)
 
@@ -96,14 +95,8 @@ struct AddEditTaskView: View {
 
     private var taskTagsSection: some View {
         Section {
-//            TextField("Tags (comma-separated)", text: $viewModel.tags)
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Tags")
-                    .font(.headline)
-//                TagCloudView(tags: viewModel.tags)
-                EditableTagInputView(tags: $viewModel.tags)
-            }
-            .padding()
+            TagEditorView(tags: $viewModel.tags)
+                .frame(height: 200)
         } header: {
             Text("Tags")
         }
@@ -114,5 +107,9 @@ struct AddEditTaskView: View {
             get: { error != nil },
             set: { if !$0 { error = nil } }
         )
+    }
+    
+    private var isEnabled: Bool {
+        return !(viewModel.title.trimmingCharacters(in: .whitespaces).isEmpty || viewModel.isSaving)
     }
 }

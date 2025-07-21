@@ -56,8 +56,8 @@ extension View {
         self.modifier(ThemedPrimaryButtonModifier())
     }
     
-    func themedSecondaryButton() -> some View {
-        self.modifier(ThemedSecondaryButtonModifier())
+    func themedSecondaryButton(isEnabled: Bool = true) -> some View {
+        self.modifier(ThemedSecondaryButtonModifier(isEnabled: isEnabled))
     }
     
     func themedTertiaryButton() -> some View {

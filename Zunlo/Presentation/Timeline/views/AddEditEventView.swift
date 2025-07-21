@@ -34,7 +34,7 @@ struct AddEditEventView: View {
                     deleteSection
                 }
             }
-            .navigationBarTitleDisplayMode(.inline) // or .large
+            .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog(
                 "Delete Event",
                 isPresented: $viewModel.showDeleteConfirmation,

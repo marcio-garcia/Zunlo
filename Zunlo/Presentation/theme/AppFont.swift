@@ -7,62 +7,74 @@
 
 import SwiftUI
 
-enum AppFont {
-    private static func loadFont(name: String, size: CGFloat, fallback: Font) -> Font {
-        if UIFont(name: name, size: size) != nil {
-            return .custom(name, size: size)
-        } else {
-            return fallback
+enum AppFontStyle {
+    case largeTitle
+    case title
+    case subtitle
+    case heading
+    case body
+    case callout
+    case button
+    case caption
+    case footnote
+    case label
+
+    var fontName: String {
+        switch self {
+        case .largeTitle, .title: return "Quicksand-Bold"
+        case .subtitle, .caption: return "Quicksand-Medium"
+        case .heading, .button: return "Quicksand-SemiBold"
+        case .body, .callout, .footnote, .label: return "Quicksand-Regular"
         }
     }
 
-    static func largeTitle(size: CGFloat = 34) -> Font {
-        loadFont(name: "Quicksand-Bold", size: size,
-                 fallback: .system(size: size, weight: .bold, design: .rounded))
+    var weight: Font.Weight {
+        switch self {
+        case .largeTitle: return .bold
+        case .title: return .semibold
+        case .subtitle, .caption: return .medium
+        case .heading, .button: return .semibold
+        case .body, .callout, .footnote, .label: return .regular
+        }
+    }
+    
+    var fallbackWeight: UIFont.Weight {
+        switch self {
+        case .largeTitle: return .bold
+        case .title: return .semibold
+        case .subtitle, .caption: return .medium
+        case .heading, .button: return .semibold
+        case .body, .callout, .footnote, .label: return .regular
+        }
+    }
+    
+    var size: CGFloat {
+        switch self {
+        case .largeTitle: return 34
+        case .title: return 28
+        case .subtitle: return 22
+        case .heading: return 20
+        case .body: return 17
+        case .callout: return 16
+        case .button: return 16
+        case .caption: return 13
+        case .footnote: return 12
+        case .label: return 11
+        }
     }
 
-    static func title(size: CGFloat = 28) -> Font {
-        loadFont(name: "Quicksand-Bold", size: size,
-                 fallback: .system(size: size, weight: .semibold, design: .rounded))
+    func font(size: CGFloat? = nil) -> Font {
+        let fontSize = size ?? self.size
+        if UIFont(name: fontName, size: fontSize) != nil {
+            return .custom(fontName, size: fontSize)
+        } else {
+            return .system(size: fontSize, weight: weight, design: .rounded)
+        }
     }
 
-    static func subtitle(size: CGFloat = 22) -> Font {
-        loadFont(name: "Quicksand-Medium", size: size,
-                 fallback: .system(size: size, weight: .medium, design: .rounded))
-    }
-
-    static func heading(size: CGFloat = 20) -> Font {
-        loadFont(name: "Quicksand-SemiBold", size: size,
-                 fallback: .system(size: size, weight: .semibold, design: .rounded))
-    }
-
-    static func body(size: CGFloat = 17) -> Font {
-        loadFont(name: "Quicksand-Regular", size: size,
-                 fallback: .system(size: size, weight: .regular, design: .rounded))
-    }
-
-    static func callout(size: CGFloat = 16) -> Font {
-        loadFont(name: "Quicksand-Regular", size: size,
-                 fallback: .system(size: size, weight: .regular, design: .rounded))
-    }
-
-    static func button(size: CGFloat = 16) -> Font {
-        loadFont(name: "Quicksand-SemiBold", size: size,
-                 fallback: .system(size: size, weight: .semibold, design: .rounded))
-    }
-
-    static func caption(size: CGFloat = 13) -> Font {
-        loadFont(name: "Quicksand-Medium", size: size,
-                 fallback: .system(size: size, weight: .medium, design: .rounded))
-    }
-
-    static func footnote(size: CGFloat = 12) -> Font {
-        loadFont(name: "Quicksand-Regular", size: size,
-                 fallback: .system(size: size, weight: .regular, design: .rounded))
-    }
-
-    static func label(size: CGFloat = 11) -> Font {
-        loadFont(name: "Quicksand-Regular", size: size,
-                 fallback: .system(size: size, weight: .regular, design: .rounded))
+    func uiFont(size: CGFloat? = nil) -> UIFont {
+        let fontSize = size ?? self.size
+        return UIFont(name: fontName, size: fontSize)
+        ?? .systemFont(ofSize: fontSize, weight: fallbackWeight)
     }
 }

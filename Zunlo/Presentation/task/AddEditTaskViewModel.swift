@@ -19,7 +19,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     @Published var dueDate: Date?
     @Published var isCompleted: Bool = false
     @Published var priority: UserTaskPriority = .medium
-    @Published var tags: [String] = []
+    @Published var tags: [Tag] = []
     @Published var isSaving = false
     @Published var reminderTriggers: [ReminderTrigger] = []
     
@@ -62,11 +62,6 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         isSaving = true
 
         let now = Date()
-//        let tagArray = tags
-//            .split(separator: ",")
-//            .map { $0.trimmingCharacters(in: .whitespaces) }
-//            .filter { !$0.isEmpty }
-
         var id: UUID? = nil
         if case .edit(let userTask) = mode {
             id = userTask.id
@@ -83,7 +78,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             dueDate: dueDate,
             priority: priority,
             parentEventId: nil,
-            tags: tags,
+            tags: tags.map({ $0.text }),
             reminderTriggers: reminderTriggers
         )
 
@@ -114,9 +109,10 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             notes = task.notes ?? ""
             isCompleted = task.isCompleted
             dueDate = task.dueDate
-            priority = task.priority ?? .medium
-//            tags = task.tags.joined(separator: ", ")
-            tags = task.tags
+            priority = task.priority
+            tags = task.tags.map({ text in
+                return Tag(id: UUID(), text: text, color: UIColor.accent)
+            })
             reminderTriggers = task.reminderTriggers ?? []
         }
     }

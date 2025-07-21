@@ -17,6 +17,7 @@ struct Theme {
     let secondaryText: Color
     let success: Color
     let border: Color
+    let disabled: Color
 
     // Add more semantic roles as needed
 
@@ -27,7 +28,8 @@ struct Theme {
         text: Color(hex: "#44403C")!, // Warm Graphite
         secondaryText: Color(hex: "#6B4C46")!, // Slightly lighter warm gray
         success: Color(hex: "#C9E4CA")!, // Mint Cream
-        border: Color(hex: "#DAB7AB")! // Dusty Blush
+        border: Color(hex: "#DAB7AB")!, // Dusty Blush
+        disabled: Color.gray
     )
 
     static let dark = Theme(
@@ -37,6 +39,7 @@ struct Theme {
         text: Color(hex: "#EAE2DF")!,
         secondaryText: Color(hex: "#C9BBB5")!,
         success: Color(hex: "#98C9A3")!,
-        border: Color(hex: "#5A4944")!
+        border: Color(hex: "#5A4944")!,
+        disabled: Color.gray
     )
 }

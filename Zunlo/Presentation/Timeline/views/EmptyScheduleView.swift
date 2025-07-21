@@ -16,7 +16,7 @@ struct EmptyScheduleView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 64, height: 64)
-                .foregroundColor(.accentColor)
+                .foregroundColor(Color.theme.accent)
                 .padding(.top, 60)
 
             Text("No Events Yet")

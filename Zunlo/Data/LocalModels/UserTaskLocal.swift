@@ -54,6 +54,7 @@ class UserTaskLocal: Object {
         self.dueDate = remote.dueDate
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)
         self.parentEventId = remote.parentEventId
+        self.tags.removeAll()
         self.tags.append(objectsIn: remote.tags)
         self.reminderTriggersArray = remote.reminderTriggers ?? []
     }
@@ -83,6 +84,7 @@ class UserTaskLocal: Object {
         self.dueDate = remote.dueDate
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)
         self.parentEventId = remote.parentEventId
+        self.tags.removeAll()
         self.tags.append(objectsIn: remote.tags)
         self.reminderTriggersArray = remote.reminderTriggers ?? []
     }

@@ -12,17 +12,26 @@ struct EmptyInboxView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text("Your task inbox is empty.")
-                .font(.title2)
+            Image(systemName: "calendar.badge.plus")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 64, height: 64)
+                .foregroundColor(Color.theme.accent)
+                .padding(.top, 60)
+
+            Text("No Tasks Yet")
+                .themedHeadline()
+
+            Text("Start by adding your first task.")
+                .themedBody()
                 .multilineTextAlignment(.center)
 
             Button(action: onAdd) {
-                Label("Add your first task", systemImage: "plus")
-                    .padding()
-                    .background(Color.accentColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                Label("Add your first task", systemImage: "plus.circle.fill")
             }
+            .themedPrimaryButton()
+
+            Spacer()
         }
         .padding()
     }
