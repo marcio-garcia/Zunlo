@@ -24,6 +24,7 @@ struct EmptyScheduleView: View {
 
             Text("Start by adding your first event to your schedule.")
                 .themedBody()
+                .padding()
                 .multilineTextAlignment(.center)
 
             Button(action: onAdd) {
@@ -33,6 +34,6 @@ struct EmptyScheduleView: View {
 
             Spacer()
         }
-        .padding()
+        .frame(maxWidth: .infinity)
     }
 }

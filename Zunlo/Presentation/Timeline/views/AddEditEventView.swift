@@ -17,23 +17,27 @@ struct AddEditEventView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                eventDetailsSection
-                dateTimeSection
-                colorSection
-
-                if viewModel.showsRecurrenceSection {
-                    recurrenceSection
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    eventDetailsSection
+                    dateTimeSection
+                    colorSection
+                    
+                    if viewModel.showsRecurrenceSection {
+                        recurrenceSection
+                    }
+                    
+                    ReminderEditorView(triggers: $viewModel.reminderTriggers.replacingNil(with: []))
+                    
+                    if viewModel.showsCancelSection && viewModel.isEditingSingleOrOverride {
+                        cancelSection
+                    } else if viewModel.isEditingAll {
+                        deleteSection
+                    }
                 }
-
-                ReminderEditorView(triggers: $viewModel.reminderTriggers.replacingNil(with: []))
-
-                if viewModel.showsCancelSection && viewModel.isEditingSingleOrOverride {
-                    cancelSection
-                } else if viewModel.isEditingAll {
-                    deleteSection
-                }
+                .padding()
             }
+            .defaultBackground()
             .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog(
                 "Delete Event",
@@ -89,21 +93,18 @@ struct AddEditEventView: View {
     }
 
     private var eventDetailsSection: some View {
-        Section {
+        RoundedSection(title: "Event Details") {
             Group {
                 TextField("Title", text: $viewModel.title)
                 TextField("Location", text: $viewModel.location)
                 TextField("Notes", text: $viewModel.notes, axis: .vertical)
             }
             .themedBody()
-        } header: {
-            Text("Event Details")
-                .themedCaption()
         }
     }
 
     private var dateTimeSection: some View {
-        Section {
+        RoundedSection(title: "Date & Time") {
             DatePicker(selection: $viewModel.startDate, displayedComponents: [.date, .hourAndMinute]) {
                 Text("Start")
                     .themedBody()
@@ -112,29 +113,32 @@ struct AddEditEventView: View {
                 Text("End")
                     .themedBody()
             }
-        } header: {
-            Text("Date & Time")
-                .themedCaption()
         }
     }
 
     private var colorSection: some View {
-        Section {
+        RoundedSection {
             ColorPickerView(selectedColor: $viewModel.color)
         }
     }
 
     private var recurrenceSection: some View {
-        Section {
+        RoundedSection(title: "Recurrence") {
             Toggle(isOn: $viewModel.isRecurring) { Text("Recurring") .themedBody() }
 
             if viewModel.isRecurring {
-                Picker("Repeat", selection: $viewModel.recurrenceType) {
-                    ForEach(recurrenceOptions, id: \.self) { option in
-                        Text(option.capitalized).tag(option)
+                HStack {
+                    Text("Repeat")
+                        .themedBody()
+                    Spacer()
+                    Picker("", selection: $viewModel.recurrenceType) {
+                        ForEach(recurrenceOptions, id: \.self) { option in
+                            Text(option.capitalized).tag(option)
+                                .themedBody()
+                        }
                     }
+                    .pickerStyle(.menu) // or .segmented, .wheel, etc.
                 }
-                .themedBody()
 
                 Stepper("Interval: \(viewModel.recurrenceInterval)",
                         value: $viewModel.recurrenceInterval,
@@ -162,9 +166,6 @@ struct AddEditEventView: View {
                     .themedBody()
                 }
             }
-        } header: {
-            Text("Recurrence")
-                .themedCaption()
         }
         .onChange(of: showUntil) { oldValue, newValue in
             if !newValue {
@@ -176,7 +177,7 @@ struct AddEditEventView: View {
     }
 
     private var cancelSection: some View {
-        Section {
+        RoundedSection {
             Toggle("Cancelled", isOn: $viewModel.isCancelled)
                 .themedBody()
                 .tint(.red)
@@ -184,7 +185,7 @@ struct AddEditEventView: View {
     }
 
     private var deleteSection: some View {
-        Section {
+        RoundedSection {
             HStack {
                 Spacer()
                 Button {

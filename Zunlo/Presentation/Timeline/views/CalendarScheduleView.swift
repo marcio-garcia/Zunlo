@@ -71,6 +71,7 @@ struct CalendarScheduleView: View {
                                 }
                             }
                         }
+                        .defaultBackground()
                     }
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
@@ -100,15 +101,24 @@ struct CalendarScheduleView: View {
                     }
                 }
             case .loading:
-                ProgressView("Loading...")
-            case .empty:
-                EmptyScheduleView {
-                    viewModel.showAddSheet = true
+                VStack {
+                    ProgressView("Loading...")
                 }
+                .defaultBackground()
+            case .empty:
+                VStack {
+                    EmptyScheduleView {
+                        viewModel.showAddSheet = true
+                    }
+                }
+                .defaultBackground()
                 .transition(.opacity)
                 .animation(.easeInOut, value: viewModel.eventOccurrences.isEmpty)
             case .error(let message):
-                Text(message)
+                VStack {
+                    Text(message)
+                        .defaultBackground()
+                }
             }
         }
         .navigationTitle("Schedule")

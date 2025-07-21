@@ -18,9 +18,7 @@ struct RootView: View {
     
     var body: some View {
         Group {
-            if upgradeFlowManager.shouldShowUpgradeFlow {
-                UpgradeAccountView(authManager: authManager)
-            } else if !hasCompletedOnboarding {
+            if !hasCompletedOnboarding {
                 OnboardingView(appState: appState) {
                     hasCompletedOnboarding = true
                 }
@@ -43,5 +41,8 @@ struct RootView: View {
             locationService.checkStatus()
             upgradeReminderManager.recordSessionIfNeeded()
         }
+//        .sheet(isPresented: $upgradeFlowManager.shouldShowUpgradeFlow) {
+//            UpgradeAccountView(authManager: authManager)
+//        }
     }
 }

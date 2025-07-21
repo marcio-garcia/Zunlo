@@ -59,6 +59,7 @@ struct TaskInboxView: View {
                     }
                 }
             }
+            .defaultBackground()
             .navigationTitle("Task Inbox")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

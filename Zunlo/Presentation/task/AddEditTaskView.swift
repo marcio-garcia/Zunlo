@@ -53,34 +53,43 @@ struct AddEditTaskView: View {
     // MARK: - View Sections
 
     private var formContent: some View {
-        Form {
-            taskDetailsSection
-            taskTimingSection
-            taskTagsSection
-            ReminderEditorView(triggers: $viewModel.reminderTriggers)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                taskDetailsSection
+                taskTimingSection
+                taskTagsSection
+                ReminderEditorView(triggers: $viewModel.reminderTriggers)
+            }
+            .padding()
         }
+        .defaultBackground()
     }
 
     private var taskDetailsSection: some View {
-        Section {
+        RoundedSection(title: "Task Details") {
             TextField("Title", text: $viewModel.title)
 
             TextField("Notes", text: $viewModel.notes, axis: .vertical)
 
-            Picker("Priority", selection: $viewModel.priority) {
-                ForEach(UserTaskPriority.allCases, id: \.self) { priority in
-                    Text(priority.description.capitalized).tag(priority)
+            HStack {
+                Text("Priority")
+                    .themedBody()
+                Spacer()
+                Picker("", selection: $viewModel.priority) {
+                    ForEach(UserTaskPriority.allCases, id: \.self) { priority in
+                        Text(priority.description.capitalized).tag(priority)
+                            .themedBody()
+                    }
                 }
+                .pickerStyle(.menu) // or .segmented, .wheel, etc.
             }
             
             Toggle("Completed", isOn: $viewModel.isCompleted)
-        } header: {
-            Text("Task Details")
         }
     }
 
     private var taskTimingSection: some View {
-        Section {
+        RoundedSection {
             Toggle(isOn: $viewModel.hasDueDate) { Text("Set due date").themedBody() }
             
             if viewModel.hasDueDate {
@@ -94,11 +103,9 @@ struct AddEditTaskView: View {
     }
 
     private var taskTagsSection: some View {
-        Section {
+        RoundedSection(title: "Tags") {
             TagEditorView(tags: $viewModel.tags)
                 .frame(height: 200)
-        } header: {
-            Text("Tags")
         }
     }
 

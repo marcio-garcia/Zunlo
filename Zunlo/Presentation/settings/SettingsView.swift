@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     @StateObject private var viewModel: LogoutViewModel
     
     init(authManager: AuthManager) {
@@ -20,21 +21,56 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
-                Button("Log Out") {
-                    viewModel.confirmLogout()
-                }
-                
-                if viewModel.isLoggingOut {
-                    ProgressView("Logging out...")
-                }
-                
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
 #if DEBUG
-                NavigationLink("Debug Menu") {
-                    DebugMenuView()
-                }
+                    RoundedSection {
+                        HStack {
+                            NavigationLink("Debug Menu") {
+                                DebugMenuView()
+                            }
+                            .themedBody()
+                            Spacer()
+                        }
+                    }
 #endif
-                LogoutPromptDialog(viewModel: viewModel)
+                    RoundedSection(title: "Account") {
+                        HStack {
+                            if authManager.isAnonymous {
+                                NavigationLink("Create Account to Save My Tasks") {
+                                    UpgradeAccountView(authManager: authManager)
+                                }
+                                .themedBody()
+                            } else {
+                                Text("You're signed in")
+                                    .themedBody()
+                            }
+                            Spacer()
+                        }
+                    }
+                    
+                    HStack {
+                        Spacer()
+                        Button("Log Out") {
+                            viewModel.confirmLogout()
+                        }
+                        if viewModel.isLoggingOut {
+                            ProgressView()
+                        }
+                        LogoutPromptDialog(viewModel: viewModel)
+                        Spacer()
+                    }
+                    .padding(.vertical, 30)
+                }
+                .padding()
+            }
+            .defaultBackground()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Settings")
+                        .themedSubtitle()
+                }
             }
             .onAppear {
                 viewModel.isAnonymousUser = authManager.user?.isAnonymous ?? true

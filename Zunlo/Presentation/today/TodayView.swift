@@ -63,7 +63,6 @@ struct TodayView: View {
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            Color.white.ignoresSafeArea()
             NavigationStack {
                 ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 24) {
@@ -75,6 +74,7 @@ struct TodayView: View {
                     }
                     .padding()
                 }
+                .defaultBackground()
                 .navigationTitle("Zunlo")
                 .navigationBarTitleDisplayMode(.inline)
                 .sheet(isPresented: $showSchedule) {
@@ -103,13 +103,14 @@ struct TodayView: View {
                 }
                 .sheet(isPresented: $showSettings) {
                     SettingsView(authManager: appState.authManager)
+                        .environmentObject(upgradeFlowManager)
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             showSettings = true
                         } label: {
-                            Label("Sign Out", systemImage: "gear")
+                            Label("Settings", systemImage: "slider.horizontal.3")
                         }
                     }
                 }

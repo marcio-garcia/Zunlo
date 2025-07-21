@@ -8,6 +8,10 @@
 import SwiftUI
 
 extension View {
+    func defaultBackground() -> some View {
+        self.modifier(DefaultBackground())
+    }
+
     func themedLargeTitle() -> some View {
         self.modifier(ThemedLargeTitleModifier())
     }

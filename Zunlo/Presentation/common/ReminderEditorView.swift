@@ -11,7 +11,7 @@ struct ReminderEditorView: View {
     @Binding var triggers: [ReminderTrigger]
 
     var body: some View {
-        Section("Reminders") {
+        RoundedSection(title: "Reminders") {
             ForEach(triggers.indices, id: \.self) { index in
                 VStack {
                     TextField("Note for the reminder", text: Binding(

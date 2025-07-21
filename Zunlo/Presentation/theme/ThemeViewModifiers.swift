@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+struct DefaultBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(Color.theme.background.ignoresSafeArea())
+    }
+}
+
 struct ThemedBodyModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -99,7 +106,7 @@ struct ThemedBannerModifier: ViewModifier {
             .background(Color.theme.background)
             .cornerRadius(8)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .stroke(Color.theme.border, lineWidth: 1)
             )
     }
