@@ -12,17 +12,26 @@
 	<string>$(API_PROTOCOL)</string>
 	<key>ENVIRONMENT</key>
 	<string>$(ENVIRONMENT)</string>
-    <key>UIAppFonts</key>
-    <array>
-        <string>Quicksand-Regular.ttf</string>
-        <string>Quicksand-Medium.ttf</string>
-        <string>Quicksand-SemiBold.ttf</string>
-        <string>Quicksand-Bold.ttf</string>
-        <string>Quicksand-Light.ttf</string>
-    </array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Quicksand-Regular.ttf</string>
+		<string>Quicksand-Medium.ttf</string>
+		<string>Quicksand-SemiBold.ttf</string>
+		<string>Quicksand-Bold.ttf</string>
+		<string>Quicksand-Light.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>zunloapp</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

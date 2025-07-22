@@ -58,9 +58,17 @@ final class AuthManager: AuthSession, ObservableObject {
         
         NotificationCenter.default.addObserver(forName: .accessUnauthorized,
                                                object: nil,
-                                               queue: nil) { _ in
+                                               queue: .main) { _ in
             Task {
                 await self.unauthenticated()
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: .supabaseMagicLinkReceived,
+                                               object: nil,
+                                               queue: .main) { notif in
+            if let url = notif.object as? URL {
+                self.handleMagicLink(url: url)
             }
         }
     }
@@ -102,6 +110,7 @@ final class AuthManager: AuthSession, ObservableObject {
     private func authenticated(_ authToken: AuthToken) async throws {
         try tokenStorage.save(authToken: authToken)
         let user = try await authService.getUser(jwt: authToken.accessToken)
+        self.user = user
         try userStorage.save(user: user)
         await updateState(.authenticated(authToken))
     }
@@ -119,8 +128,6 @@ final class AuthManager: AuthSession, ObservableObject {
     
     func signUp(email: String, password: String) async throws {
         let auth = try await authService.signUp(email: email, password: password)
-        self.user = auth.user
-        try userStorage.save(user: auth.user)
         guard let authToken = auth.token else {
             await unauthenticated()
             return
@@ -133,6 +140,20 @@ final class AuthManager: AuthSession, ObservableObject {
         try await authenticated(authToken)
     }
 
+    func handleMagicLink(url: URL) {
+        Task {
+            do {
+                let (authToken, user) = try await authService.session(from: url)
+                self.user = user
+                try await authenticated(authToken)
+            } catch {
+                print(error)
+                await unauthenticated()
+            }
+        }
+        
+    }
+    
     func signOut(preserveLocalData: Bool = true) async throws {
         do {
             // Revoke token with Supabase
@@ -150,6 +171,8 @@ final class AuthManager: AuthSession, ObservableObject {
                     }
                 }.value
             }
+            
+            await unauthenticated()
             
             // Create a new anonymous session automatically
             try await signInAnonymously()

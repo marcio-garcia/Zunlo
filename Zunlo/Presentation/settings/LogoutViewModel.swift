@@ -16,7 +16,7 @@ final class LogoutViewModel: ObservableObject {
     let errorHandler = ErrorHandler()
     
     var authManager: AuthManager
-    var isAnonymousUser: Bool = true  // Set based on current session
+    var isAnonymousUser: Bool = true
     var onLogoutComplete: (() -> Void)?
 
     init(authManager: AuthManager) {

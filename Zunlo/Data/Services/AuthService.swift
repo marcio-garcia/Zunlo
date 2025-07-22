@@ -12,12 +12,13 @@ import Supabase
 protocol AuthServicing {
     func signUp(email: String, password: String) async throws -> Auth
     func signIn(email: String, password: String) async throws -> AuthToken
-    func refreshToken(_ refreshToken: String) async throws -> AuthToken
-    func validateToken(_ token: AuthToken) -> Bool
-    func signOut() async throws
     func signInAnonymously() async throws -> AuthToken
-    func linkIdentityWithMagicLink(email: String) async throws
+    func refreshToken(_ refreshToken: String) async throws -> AuthToken
+    func session(from url: URL) async throws -> (AuthToken, User)
+    func validateToken(_ token: AuthToken) -> Bool
     func getUser(jwt: String?) async throws -> User
+    func signOut() async throws
+    func linkIdentityWithMagicLink(email: String) async throws
 }
 
 class AuthService: AuthServicing {
@@ -59,7 +60,12 @@ class AuthService: AuthServicing {
     }
     
     func linkIdentityWithMagicLink(email: String) async throws {
-//        try await supabase.auth.linkIdentityWithMagicLink(email: email)
+        try await supabase.auth.update(user: UserAttributes(email: email), redirectTo: URL(string: "zunloapp://auth-callback"))
+    }
+    
+    func session(from url: URL) async throws -> (AuthToken, User) {
+        let session = try await supabase.auth.session(from: url)
+        return (session.toDomain(), session.user.toDomain())
     }
     
     func getUser(jwt: String?) async throws -> User {
