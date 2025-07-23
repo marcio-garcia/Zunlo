@@ -21,12 +21,12 @@ enum StoreError: Error, LocalizedError {
 final class SupabaseEventRemoteStore: EventRemoteStore {
     private let tableName = "events"
     private var supabase: SupabaseSDK
-    private var authManager: AuthSession
+    private var authManager: AuthManager
 
     private var authToken: String? { authManager.authToken?.accessToken }
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
-    init(supabase: SupabaseSDK, authManager: AuthSession) {
+    init(supabase: SupabaseSDK, authManager: AuthManager) {
         self.supabase = supabase
         self.authManager = authManager
     }

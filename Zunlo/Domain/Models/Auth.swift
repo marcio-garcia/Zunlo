@@ -7,14 +7,14 @@
 
 import Foundation
 
-struct Auth: Codable, Sendable, Equatable {
+struct AuthSession: Codable, Sendable, Equatable {
     let token: AuthToken?
     let user: User
 }
 
-extension Auth {
-    static var empty: Auth {
-        return Auth(
+extension AuthSession {
+    static var empty: AuthSession {
+        return AuthSession(
             token: AuthToken(
                 accessToken: "",
                 refreshToken: nil,

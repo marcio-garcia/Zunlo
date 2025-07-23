@@ -84,7 +84,7 @@ struct UpgradeAccountView: View {
         successMessage = nil
         
         do {
-            try await authManager.linkIdentityWithMagicLink(email: email)
+            try await authManager.updateUser(email: email)
             successMessage = "Check your inbox to complete the upgrade."
         } catch {
             errorMessage = "Failed to send magic link: \(error.localizedDescription)"

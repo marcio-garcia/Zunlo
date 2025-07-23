@@ -10,15 +10,17 @@ import SwiftData
 import Supabase
 
 protocol AuthServicing {
-    func signUp(email: String, password: String) async throws -> Auth
+    func signUp(email: String, password: String) async throws -> AuthSession
     func signIn(email: String, password: String) async throws -> AuthToken
     func signInAnonymously() async throws -> AuthToken
     func refreshToken(_ refreshToken: String) async throws -> AuthToken
     func session(from url: URL) async throws -> (AuthToken, User)
     func validateToken(_ token: AuthToken) -> Bool
-    func getUser(jwt: String?) async throws -> User
+    func user(by jwt: String?) async throws -> User
     func signOut() async throws
-    func linkIdentityWithMagicLink(email: String) async throws
+    func updateUser(email: String) async throws
+    func getOTPType(from typeString: String) -> EmailOTPType
+    func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession
 }
 
 class AuthService: AuthServicing {
@@ -29,9 +31,22 @@ class AuthService: AuthServicing {
         guard let url = URL(string: envConfig.apiBaseUrl) else { return }
         supabase = SupabaseClient(supabaseURL: url,
                                   supabaseKey: envConfig.apiKey)
+        
+        Task {
+            await supabase.auth.onAuthStateChange { event, session in
+                switch event {
+                case .signedIn, .tokenRefreshed:
+                    if let user = session?.user, !user.isAnonymous {
+                        // Anonymous user was successfully converted
+                    }
+                default:
+                    break
+                }
+            }
+        }
     }
     
-    func signUp(email: String, password: String) async throws -> Auth {
+    func signUp(email: String, password: String) async throws -> AuthSession {
         let authResponse = try await supabase.auth.signUp(email: email, password: password)
         return authResponse.toDomain()
     }
@@ -59,8 +74,9 @@ class AuthService: AuthServicing {
         return session.toDomain()
     }
     
-    func linkIdentityWithMagicLink(email: String) async throws {
-        try await supabase.auth.update(user: UserAttributes(email: email), redirectTo: URL(string: "zunloapp://auth-callback"))
+    func updateUser(email: String) async throws {
+        try await supabase.auth.update(user: UserAttributes(email: email),
+                                       redirectTo: URL(string: "zunloapp://auth-callback"))
     }
     
     func session(from url: URL) async throws -> (AuthToken, User) {
@@ -68,8 +84,28 @@ class AuthService: AuthServicing {
         return (session.toDomain(), session.user.toDomain())
     }
     
-    func getUser(jwt: String?) async throws -> User {
+    func user(by jwt: String?) async throws -> User {
         let user = try await supabase.auth.user(jwt: jwt)
         return user.toDomain()
+    }
+    
+    func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession {
+        let authResponse = try await supabase.auth.verifyOTP(tokenHash: tokenHash, type: type)
+        return authResponse.toDomain()
+    }
+    
+    func getOTPType(from typeString: String) -> EmailOTPType {
+        switch typeString {
+        case "email_change":
+            return .emailChange
+        case "email":
+            return .email
+        case "signup":
+            return .signup
+        case "magiclink":
+            return .magiclink
+        default:
+            return .email
+        }
     }
 }

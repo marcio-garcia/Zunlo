@@ -76,30 +76,42 @@ struct ZunloApp: App {
                 .environmentObject(upgradeFlowManager)
                 .environmentObject(upgradeReminderManager)
                 .onOpenURL { url in
-                    handleAuthCallback(url: url)
+                    handleDeepLink(url: url)
                 }
         }
     }
     
-    private func handleAuthCallback(url: URL) {
+    private func handleDeepLink(url: URL) {
         print("Received URL: \(url)")
         
-        if url.scheme == "zunloapp" {
-            Task {
-                await processSupabaseCallback(url: url)
+        
+        
+        guard
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            let scheme = components.scheme,
+            let host = components.host
+        else {
+            return
+        }
+        
+        switch scheme {
+        case "zunloapp":
+            switch host {
+            case "supabase":
+                Task {
+                    await processSupabaseCallback(url: url)
+                }
+            default:
+                break
             }
+            
+        default:
+            break
         }
     }
     
     private func processSupabaseCallback(url: URL) async {
-        NotificationCenter.default.post(name: .supabaseMagicLinkReceived, object: url)
-        
-        // Supabase should automatically handle the session
-        // You can also manually process if needed
-//        if let user = supabase.auth.currentUser {
-//            print("User upgraded successfully: \(user.email ?? "No email")")
-//            // Update your app state accordingly
-//        }
+        NotificationCenter.default.post(name: .supabaseEmailConfirmationLinkReceived, object: url)
     }
 }
 

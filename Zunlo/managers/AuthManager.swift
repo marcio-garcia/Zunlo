@@ -27,12 +27,7 @@ protocol UserStorage {
     func clear() throws
 }
 
-protocol AuthSession {
-    var authToken: AuthToken? { get }
-    var user: User? { get }
-}
-
-final class AuthManager: AuthSession, ObservableObject {
+final class AuthManager: ObservableObject {
     @Published private(set) var state: AuthState = .loading
     @Published var isAnonymous: Bool = false
     
@@ -64,11 +59,11 @@ final class AuthManager: AuthSession, ObservableObject {
             }
         }
         
-        NotificationCenter.default.addObserver(forName: .supabaseMagicLinkReceived,
+        NotificationCenter.default.addObserver(forName: .supabaseEmailConfirmationLinkReceived,
                                                object: nil,
                                                queue: .main) { notif in
             if let url = notif.object as? URL {
-                self.handleMagicLink(url: url)
+                self.handleDeepLink(url: url)
             }
         }
     }
@@ -109,7 +104,7 @@ final class AuthManager: AuthSession, ObservableObject {
     
     private func authenticated(_ authToken: AuthToken) async throws {
         try tokenStorage.save(authToken: authToken)
-        let user = try await authService.getUser(jwt: authToken.accessToken)
+        let user = try await authService.user(by: authToken.accessToken)
         self.user = user
         try userStorage.save(user: user)
         await updateState(.authenticated(authToken))
@@ -138,20 +133,6 @@ final class AuthManager: AuthSession, ObservableObject {
     func signInAnonymously() async throws {
         let authToken = try await authService.signInAnonymously()
         try await authenticated(authToken)
-    }
-
-    func handleMagicLink(url: URL) {
-        Task {
-            do {
-                let (authToken, user) = try await authService.session(from: url)
-                self.user = user
-                try await authenticated(authToken)
-            } catch {
-                print(error)
-                await unauthenticated()
-            }
-        }
-        
     }
     
     func signOut(preserveLocalData: Bool = true) async throws {
@@ -183,7 +164,33 @@ final class AuthManager: AuthSession, ObservableObject {
         }
     }
     
-    public func linkIdentityWithMagicLink(email: String) async throws {
-        try await authService.linkIdentityWithMagicLink(email: email)
+    public func updateUser(email: String) async throws {
+        try await authService.updateUser(email: email)
+    }
+    
+    func handleDeepLink(url: URL) {
+        Task {
+            do {
+                guard let session = authToken else { return }
+                try await authenticated(session)
+            } catch {
+                print(error)
+                await unauthenticated()
+            }
+        }
+    }
+    
+    private func verifyAuthToken(tokenHash: String, type: String) async throws {
+        let otpType = authService.getOTPType(from: type)
+        let auth = try await authService.verifyOTP(
+            tokenHash: tokenHash,
+            type: otpType
+        )
+        
+        guard let authToken = auth.token else {
+            await unauthenticated()
+            return
+        }
+        try await authenticated(authToken)
     }
 }

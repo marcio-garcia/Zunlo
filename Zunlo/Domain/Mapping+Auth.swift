@@ -9,28 +9,9 @@ import Foundation
 import SupabaseSDK
 import Supabase
 
-//extension SBAuth {
-//    func toDomain() -> Auth {
-//        return Auth(token: AuthToken(accessToken: self.accessToken,
-//                                     refreshToken: self.refreshToken,
-//                                     expiresAt: expiresAt),
-//                    user: self.user.toDomain())
-//    }
-//}
-//
-//extension SBUser {
-//    func toDomain() -> User {
-//        return User(
-//            id: self.id,
-//            email: self.email,
-//            isAnonymous: self.isAnonymous
-//        )
-//    }
-//}
-
 extension AuthResponse {
-    func toDomain() -> Auth {
-        return Auth(
+    func toDomain() -> AuthSession {
+        return AuthSession(
             token: self.session?.toDomain(),
             user: self.user.toDomain()
         )

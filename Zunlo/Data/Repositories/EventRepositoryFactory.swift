@@ -12,7 +12,7 @@ import SupabaseSDK
 final class EventRepositoryFactory {
     static func make(
         supabase: SupabaseSDK,
-        authManager: AuthSession
+        authManager: AuthManager
     ) -> EventRepository {
         let eventRemoteStore: EventRemoteStore
         let eventLocalStore: EventLocalStore
