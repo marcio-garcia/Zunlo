@@ -15,12 +15,15 @@ protocol AuthServicing {
     func signInAnonymously() async throws -> AuthToken
     func refreshToken(_ refreshToken: String) async throws -> AuthToken
     func session(from url: URL) async throws -> (AuthToken, User)
+    func session() async throws -> (AuthToken, User)
     func validateToken(_ token: AuthToken) -> Bool
     func user(by jwt: String?) async throws -> User
     func signOut() async throws
+    func signInWithOTP(email: String, redirectTo: URL?) async throws
     func updateUser(email: String) async throws
     func getOTPType(from typeString: String) -> EmailOTPType
     func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession
+    func verifyOTP(email: String, token: String, type: EmailOTPType) async throws -> AuthSession
 }
 
 class AuthService: AuthServicing {
@@ -31,19 +34,6 @@ class AuthService: AuthServicing {
         guard let url = URL(string: envConfig.apiBaseUrl) else { return }
         supabase = SupabaseClient(supabaseURL: url,
                                   supabaseKey: envConfig.apiKey)
-        
-        Task {
-            await supabase.auth.onAuthStateChange { event, session in
-                switch event {
-                case .signedIn, .tokenRefreshed:
-                    if let user = session?.user, !user.isAnonymous {
-                        // Anonymous user was successfully converted
-                    }
-                default:
-                    break
-                }
-            }
-        }
     }
     
     func signUp(email: String, password: String) async throws -> AuthSession {
@@ -84,13 +74,32 @@ class AuthService: AuthServicing {
         return (session.toDomain(), session.user.toDomain())
     }
     
+    func session() async throws -> (AuthToken, User) {
+        let session = try await supabase.auth.session
+        return (session.toDomain(), session.user.toDomain())
+    }
+    
     func user(by jwt: String?) async throws -> User {
         let user = try await supabase.auth.user(jwt: jwt)
         return user.toDomain()
     }
     
+    func signInWithOTP(email: String, redirectTo: URL?) async throws {
+        try await supabase.auth.signInWithOTP(email: email,
+                                              redirectTo: redirectTo)
+    }
+    
     func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession {
         let authResponse = try await supabase.auth.verifyOTP(tokenHash: tokenHash, type: type)
+        return authResponse.toDomain()
+    }
+    
+    func verifyOTP(email: String, token: String, type: EmailOTPType) async throws -> AuthSession {
+        let authResponse = try await supabase.auth.verifyOTP(
+            email: email,
+            token: token,
+            type: type
+        )
         return authResponse.toDomain()
     }
     

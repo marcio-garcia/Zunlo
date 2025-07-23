@@ -54,10 +54,6 @@ struct SettingsView: View {
                         Button("Log Out") {
                             viewModel.confirmLogout()
                         }
-                        if viewModel.isLoggingOut {
-                            ProgressView()
-                        }
-                        LogoutPromptDialog(viewModel: viewModel)
                         Spacer()
                     }
                     .padding(.vertical, 30)
@@ -79,6 +75,32 @@ struct SettingsView: View {
                 }
             }
             .errorAlert(viewModel.errorHandler)
+            .confirmationDialog(
+                "You're using a guest account. Logging out will delete your tasks unless you create an account",
+                isPresented: $viewModel.showLogoutPrompt,
+                titleVisibility: viewModel.isAnonymousUser ? Visibility.visible : Visibility.hidden
+            ) {
+                if viewModel.isAnonymousUser {
+                    Button("Create account") {
+                        viewModel.showLogoutPrompt = false
+                        dismiss()
+                        viewModel.upgradeInstead()
+                    }
+                    .themedSecondaryButton()
+                }
+                
+                Button("Log out") {
+                    Task {
+                        await viewModel.performLogout(preserveLocalData: viewModel.isAnonymousUser)
+                    }
+                }
+                .themedSecondaryButton()
+                
+                Button("Cancel", role: .cancel) {
+                    viewModel.showLogoutPrompt = false
+                }
+                .themedSecondaryButton()
+            }
         }
     }
 }

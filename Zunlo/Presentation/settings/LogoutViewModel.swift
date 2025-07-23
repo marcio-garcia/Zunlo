@@ -42,6 +42,5 @@ final class LogoutViewModel: ObservableObject {
     func upgradeInstead() {
         // Trigger upgrade flow — e.g. show signup sheet
         NotificationCenter.default.post(name: .showUpgradeFlow, object: nil)
-        showLogoutPrompt = false
     }
 }

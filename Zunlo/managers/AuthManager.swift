@@ -35,8 +35,9 @@ final class AuthManager: ObservableObject {
     private let tokenStorage: TokenStorage
     private let userStorage: UserStorage
     
-    var user: User?
+    private var emailForMagicLink: String?
     
+    var user: User?
     var authToken: AuthToken? {
         if case .authenticated(let token) = state { return token }
         return nil
@@ -59,7 +60,7 @@ final class AuthManager: ObservableObject {
             }
         }
         
-        NotificationCenter.default.addObserver(forName: .supabaseEmailConfirmationLinkReceived,
+        NotificationCenter.default.addObserver(forName: .supabaseDeepLink,
                                                object: nil,
                                                queue: .main) { notif in
             if let url = notif.object as? URL {
@@ -135,6 +136,19 @@ final class AuthManager: ObservableObject {
         try await authenticated(authToken)
     }
     
+    func signInWithOTP(email: String) async throws {
+        do {
+            emailForMagicLink = email
+            try await authService.signInWithOTP(
+                email: email,
+                redirectTo: URL(string: "zunloapp://supabase/magiclink")
+            )
+        } catch {
+            emailForMagicLink = nil
+            throw error
+        }
+    }
+        
     func signOut(preserveLocalData: Bool = true) async throws {
         do {
             // Revoke token with Supabase
@@ -154,10 +168,6 @@ final class AuthManager: ObservableObject {
             }
             
             await unauthenticated()
-            
-            // Create a new anonymous session automatically
-            try await signInAnonymously()
-            
         } catch {
             print(error)
             await unauthenticated()
@@ -169,14 +179,42 @@ final class AuthManager: ObservableObject {
     }
     
     func handleDeepLink(url: URL) {
-        Task {
-            do {
-                guard let session = authToken else { return }
-                try await authenticated(session)
-            } catch {
-                print(error)
-                await unauthenticated()
+        guard
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            let scheme = components.scheme,
+            let host = components.host,
+            let queryItems = components.queryItems
+        else {
+            return
+        }
+        
+        var path = components.path.split(separator: "/")
+        
+        switch scheme {
+        case "zunloapp":
+            switch host {
+            case "supabase":
+                Task {
+                    do {
+                        switch path.removeFirst() {
+                        case "magiclink":
+                            let (authToken, _) = try await authService.session(from: url)
+                            try await authenticated(authToken)
+                        default:
+                            guard let session = authToken else { return }
+                            try await authenticated(session)
+                        }
+                    } catch {
+                        print(error)
+                        await unauthenticated()
+                    }
+                }
+            default:
+                break
             }
+            
+        default:
+            break
         }
     }
     

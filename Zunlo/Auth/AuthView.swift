@@ -38,7 +38,7 @@ struct AuthView: View {
                         }
                     }
                 }
-                .buttonStyle(.bordered)
+                .themedPrimaryButton()
                 .disabled(isLoading)
                 
                 Button("Sign In") {
@@ -52,8 +52,20 @@ struct AuthView: View {
                         }
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .themedSecondaryButton()
                 .disabled(isLoading)
+            }
+            
+            Button("Sign in with Magic Link") {
+                Task {
+                    do {
+                        isLoading = true
+                        defer { isLoading = false }
+                        try await authManager.signInWithOTP(email: email)
+                    } catch {
+                        self.error = error.localizedDescription
+                    }
+                }
             }
             
             if let error = error {

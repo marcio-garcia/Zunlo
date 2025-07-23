@@ -84,8 +84,6 @@ struct ZunloApp: App {
     private func handleDeepLink(url: URL) {
         print("Received URL: \(url)")
         
-        
-        
         guard
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
             let scheme = components.scheme,
@@ -98,9 +96,7 @@ struct ZunloApp: App {
         case "zunloapp":
             switch host {
             case "supabase":
-                Task {
-                    await processSupabaseCallback(url: url)
-                }
+                NotificationCenter.default.post(name: .supabaseDeepLink, object: url)
             default:
                 break
             }
@@ -108,10 +104,6 @@ struct ZunloApp: App {
         default:
             break
         }
-    }
-    
-    private func processSupabaseCallback(url: URL) async {
-        NotificationCenter.default.post(name: .supabaseEmailConfirmationLinkReceived, object: url)
     }
 }
 
