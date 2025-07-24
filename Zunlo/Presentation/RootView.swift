@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RootView: View {
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @EnvironmentObject var appSettings: AppSettings
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var locationService: LocationService
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
@@ -18,9 +18,9 @@ struct RootView: View {
     
     var body: some View {
         Group {
-            if !hasCompletedOnboarding {
+            if !appSettings.hasCompletedOnboarding {
                 OnboardingView(appState: appState) {
-                    hasCompletedOnboarding = true
+                    appSettings.hasCompletedOnboarding = true
                 }
             } else {
                 switch authManager.state {
@@ -37,7 +37,7 @@ struct RootView: View {
         .animation(.easeInOut, value: authManager.state)
         .transition(.opacity)
         .task {
-            await authManager.bootstrap()
+            await authManager.bootstrap(hasCompletedOnboarding: appSettings.hasCompletedOnboarding)
             locationService.checkStatus()
             upgradeReminderManager.recordSessionIfNeeded()
         }

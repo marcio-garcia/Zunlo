@@ -69,7 +69,7 @@ final class AuthManager: ObservableObject {
         }
     }
 
-    public func bootstrap() async {
+    public func bootstrap(hasCompletedOnboarding: Bool) async {
         do {
             if let authToken = try tokenStorage.loadToken(), authService.validateToken(authToken) {
                 try await authenticated(authToken)
@@ -84,12 +84,16 @@ final class AuthManager: ObservableObject {
                         return
                     }
                 } catch {
-                    // refresh failed, fall back to anon
+                    await unauthenticated()
                 }
             }
 
-            // fallback to anonymous
-            try await signInAnonymously()
+            if hasCompletedOnboarding {
+                await unauthenticated()
+            } else {
+                // fallback to anonymous
+                try await signInAnonymously()
+            }
 
         } catch {
             await unauthenticated()

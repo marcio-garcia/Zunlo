@@ -15,6 +15,7 @@ struct ZunloApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject var upgradeFlowManager = UpgradeFlowManager()
     @StateObject var upgradeReminderManager = UpgradeReminderManager()
+    @StateObject var appSettings = AppSettings()
     
     private let appState: AppState
     
@@ -71,6 +72,7 @@ struct ZunloApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(appState: appState)
+                .environmentObject(appSettings)
                 .environmentObject(appState.authManager)
                 .environmentObject(appState.locationService)
                 .environmentObject(upgradeFlowManager)
