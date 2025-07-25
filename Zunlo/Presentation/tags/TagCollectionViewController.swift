@@ -31,7 +31,7 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
         collectionView.register(AddTagCell.self, forCellWithReuseIdentifier: AddTagCell.reuseIdentifier)
         collectionView.delegate = self
         collectionView.dataSource = self
-        collectionView.isScrollEnabled = false
+        collectionView.isScrollEnabled = true
         collectionView.backgroundColor = .clear
 
         view.addSubview(collectionView)

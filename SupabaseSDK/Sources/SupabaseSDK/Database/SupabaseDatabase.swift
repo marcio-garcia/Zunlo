@@ -12,7 +12,7 @@ public final class SupabaseDatabase: @unchecked Sendable {
     private let session: URLSession
     private let httpService: NetworkService
     
-    var authToken: String? {
+    public var authToken: String? {
         didSet {
             httpService.authToken = authToken
         }

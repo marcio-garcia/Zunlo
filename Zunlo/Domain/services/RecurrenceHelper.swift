@@ -136,7 +136,7 @@ class RecurrenceHelper {
         within range: ClosedRange<Date>,
         calendar: Calendar
     ) -> [Date] {
-        var dates: [Date] = []
+        var dates: [Date] = [start]
         let interval = max(1, rule.interval)
         let monthdays = rule.byMonthday ?? [calendar.component(.day, from: start)]
         var date = start
@@ -149,7 +149,8 @@ class RecurrenceHelper {
                 comps.minute = calendar.component(.minute, from: start)
                 if let nextDate = calendar.date(from: comps),
                    calendar.component(.month, from: nextDate) == comps.month,
-                   calendar.component(.year, from: nextDate) == comps.year
+                   calendar.component(.year, from: nextDate) == comps.year,
+                   nextDate >= start
                 {
                     occurrences += 1
                     if nextDate >= range.lowerBound && nextDate <= range.upperBound {

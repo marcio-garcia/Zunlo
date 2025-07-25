@@ -32,7 +32,7 @@ struct EventOccurrenceService {
                     rule: rule,
                     within: range
                 )
-                
+                                
                 let eventOverrides = overrideDict[rawOcc.eventId] ?? []
 
                 for date in dates {

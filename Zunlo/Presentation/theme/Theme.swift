@@ -23,7 +23,7 @@ struct Theme {
 
     static let light = Theme(
         accent: Color(hex: "#F6A192")!, // Coral Peach
-        background: Color(hex: "#FAF3F0")!, // Porcelain Pink
+        background: Color(hex: "#FAF4F2")!, // Porcelain Pink
         surface: Color(hex: "#FDF1E7")!, // Light Sand
         text: Color(hex: "#44403C")!, // Warm Graphite
         secondaryText: Color(hex: "#6B4C46")!, // Slightly lighter warm gray

@@ -26,6 +26,25 @@ struct SupabaseStorageErrorResponse: SupabaseErrorType {
     public let details: String?
     public let hint: String?
     public let message: String
+    
+    private enum CodingKeys: String, CodingKey {
+        case code
+        case details
+        case hint
+        case message
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.details = try? container.decode(String.self, forKey: .details)
+        self.hint = try? container.decode(String.self, forKey: .hint)
+        self.message = try container.decode(String.self, forKey: .message)
+        
+        let code = try container.decode(Int.self, forKey: .code)
+        
+        self.code = String(code)
+    }
 }
 
 struct SupabaseAuthErrorResponse: SupabaseErrorType {

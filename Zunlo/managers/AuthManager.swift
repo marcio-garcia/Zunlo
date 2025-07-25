@@ -78,11 +78,11 @@ final class AuthManager: ObservableObject {
 
             if let authToken = try tokenStorage.loadToken(), let refreshToken = authToken.refreshToken {
                 do {
-                    let newAuth = try await authService.refreshToken(refreshToken)
-                    if authService.validateToken(newAuth) {
-                        try await authenticated(newAuth)
+                    guard let newAuth = try await refreshSession(refreshToken: refreshToken) else {
+                        await unauthenticated()
                         return
                     }
+                    try await authenticated(newAuth)
                 } catch {
                     await unauthenticated()
                 }
@@ -98,27 +98,6 @@ final class AuthManager: ObservableObject {
         } catch {
             await unauthenticated()
         }
-    }
-    
-    private func updateState(_ state: AuthState) async {
-        await MainActor.run {
-            self.state = state
-            self.isAnonymous = user?.isAnonymous ?? true
-        }
-    }
-    
-    private func authenticated(_ authToken: AuthToken) async throws {
-        try tokenStorage.save(authToken: authToken)
-        let user = try await authService.user(by: authToken.accessToken)
-        self.user = user
-        try userStorage.save(user: user)
-        await updateState(.authenticated(authToken))
-    }
-    
-    private func unauthenticated() async {
-        try? tokenStorage.clear()
-        try? await authService.signOut()
-        await updateState(.unauthenticated)
     }
 
     func signIn(email: String, password: String) async throws {
@@ -178,11 +157,51 @@ final class AuthManager: ObservableObject {
         }
     }
     
+    public func refreshSession(refreshToken: String? = nil) async throws -> AuthToken? {
+        var token = ""
+        
+        if let refreshToken {
+            token = refreshToken
+        } else if let refrtoken = authToken?.refreshToken {
+            token = refrtoken
+        } else {
+            return nil
+        }
+        
+        let newAuth = try await authService.refreshToken(token)
+        if authService.validateToken(newAuth) {
+            try await authenticated(newAuth)
+            return newAuth
+        }
+        return nil
+    }
+    
     public func updateUser(email: String) async throws {
         try await authService.updateUser(email: email)
     }
     
-    func handleDeepLink(url: URL) {
+    private func updateState(_ state: AuthState) async {
+        await MainActor.run {
+            self.state = state
+            self.isAnonymous = user?.isAnonymous ?? true
+        }
+    }
+    
+    private func authenticated(_ authToken: AuthToken) async throws {
+        try tokenStorage.save(authToken: authToken)
+        let user = try await authService.user(by: authToken.accessToken)
+        self.user = user
+        try userStorage.save(user: user)
+        await updateState(.authenticated(authToken))
+    }
+    
+    private func unauthenticated() async {
+        try? tokenStorage.clear()
+        try? await authService.signOut()
+        await updateState(.unauthenticated)
+    }
+    
+    private func handleDeepLink(url: URL) {
         guard
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
             let scheme = components.scheme,

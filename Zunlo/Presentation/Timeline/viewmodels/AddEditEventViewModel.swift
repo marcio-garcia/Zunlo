@@ -93,7 +93,8 @@ final class AddEditEventViewModel: ObservableObject {
     private func loadFields() {
         switch mode {
         case .add:
-            endDate = startDate.addingTimeInterval(3600)
+            startDate = Date()
+            updateEndDate()
             isRecurring = false
             recurrenceType = "daily"
             recurrenceInterval = 1
@@ -107,7 +108,11 @@ final class AddEditEventViewModel: ObservableObject {
             title = event.title
             notes = event.description ?? ""
             startDate = event.startDate
-            endDate = event.endDate ?? event.startDate.addingTimeInterval(3600)
+            if let end = event.endDate {
+                endDate = end
+            } else {
+                updateEndDate()
+            }
             location = event.location ?? ""
             isRecurring = event.isRecurring
             color = event.color.rawValue
@@ -131,7 +136,11 @@ final class AddEditEventViewModel: ObservableObject {
             title = parent.title
             notes = parent.description ?? ""
             startDate = occurrence.startDate
-            endDate = occurrence.endDate ?? occurrence.startDate.addingTimeInterval(3600)
+            if let end = occurrence.endDate {
+                endDate = end
+            } else {
+                updateEndDate()
+            }
             location = parent.location ?? ""
             color = parent.color.rawValue
             isCancelled = false
@@ -139,7 +148,11 @@ final class AddEditEventViewModel: ObservableObject {
             title = override.overriddenTitle ?? ""
             notes = override.notes ?? ""
             startDate = override.overriddenStartDate ?? override.occurrenceDate
-            endDate = override.overriddenEndDate ?? (override.overriddenStartDate?.addingTimeInterval(3600) ?? override.occurrenceDate.addingTimeInterval(3600))
+            if let end = override.overriddenEndDate {
+                endDate = end
+            } else {
+                updateEndDate()
+            }
             location = override.overriddenLocation ?? ""
             isCancelled = override.isCancelled
             color = override.color.rawValue
@@ -148,7 +161,7 @@ final class AddEditEventViewModel: ObservableObject {
     
     func delete(completion: @escaping (Result<Void, Error>) -> Void) {
         isProcessing = true
-        if case .editAll(let event, let recurrenceRule) = mode {
+        if case .editAll(let event, _) = mode {
             Task {
                 do {
                     try await repository.delete(id: event.eventId, reminderTriggers: event.reminderTriggers)
@@ -306,6 +319,10 @@ final class AddEditEventViewModel: ObservableObject {
             color: EventColor(rawValue: color) ?? . yellow
         )
         try await repository.updateOverride(updatedOverride)
+    }
+    
+    func updateEndDate() {
+        endDate = Calendar.current.date(byAdding: .hour, value: 1, to: startDate) ?? startDate
     }
 }
 

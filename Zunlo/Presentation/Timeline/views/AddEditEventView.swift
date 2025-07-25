@@ -109,10 +109,17 @@ struct AddEditEventView: View {
                 Text("Start")
                     .themedBody()
             }
-            DatePicker(selection: $viewModel.endDate, displayedComponents: [.date, .hourAndMinute]) {
+            .onChange(of: viewModel.startDate) { _, newStartDate in
+                viewModel.updateEndDate()
+            }
+            
+            DatePicker(selection: $viewModel.endDate, in: viewModel.startDate..., displayedComponents: [.date, .hourAndMinute]) {
                 Text("End")
                     .themedBody()
             }
+        }
+        .onAppear() {
+            UIDatePicker.appearance().minuteInterval = 5
         }
     }
 

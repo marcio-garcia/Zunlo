@@ -104,6 +104,7 @@ struct CalendarScheduleView: View {
                 VStack {
                     ProgressView("Loading...")
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .defaultBackground()
             case .empty:
                 VStack {
@@ -111,14 +112,16 @@ struct CalendarScheduleView: View {
                         viewModel.showAddSheet = true
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .defaultBackground()
                 .transition(.opacity)
                 .animation(.easeInOut, value: viewModel.eventOccurrences.isEmpty)
             case .error(let message):
                 VStack {
                     Text(message)
-                        .defaultBackground()
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .defaultBackground()
             }
         }
         .navigationTitle("Schedule")

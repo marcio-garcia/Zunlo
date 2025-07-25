@@ -75,7 +75,7 @@ final class EventRepository {
     }
     
     private func fetchRemote() async throws -> [EventOccurrence] {
-        let occurrences = try await eventRemoteStore.fecthOccurrences()
+        let occurrences = try await eventRemoteStore.fetchOccurrences()
         return occurrences.map { EventOccurrence(remote: $0) }
     }
 

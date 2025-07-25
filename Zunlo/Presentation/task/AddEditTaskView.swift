@@ -105,7 +105,7 @@ struct AddEditTaskView: View {
     private var taskTagsSection: some View {
         RoundedSection(title: "Tags") {
             TagEditorView(tags: $viewModel.tags)
-                .frame(height: 200)
+                .frame(height: 50)
         }
     }
 

@@ -35,8 +35,21 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
         try await database.fetch(from: tableName, as: EventRemote.self, query: ["select": "*"])
     }
     
-    func fecthOccurrences() async throws -> [EventOccurrenceRemote] {
-        try await database.fetchOccurrences(as: EventOccurrenceRemote.self)
+    func fetchOccurrences() async throws -> [EventOccurrenceRemote] {
+        do {
+            return try await database.fetchOccurrences(as: EventOccurrenceRemote.self)
+        } catch let error as SupabaseServiceError {
+            if case let .serverError(statusCode, _, _) = error, statusCode == 401 {
+                guard let session = try await authManager.refreshSession() else {
+                    throw error
+                }
+                database.authToken = session.accessToken
+                return try await database.fetchOccurrences(as: EventOccurrenceRemote.self)
+            }
+            throw error
+        } catch {
+            throw error
+        }
     }
 
     func save(_ event: EventRemote) async throws -> [EventRemote] {

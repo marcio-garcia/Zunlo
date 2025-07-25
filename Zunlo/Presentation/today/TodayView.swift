@@ -74,6 +74,11 @@ struct TodayView: View {
                     }
                     .padding()
                 }
+                .refreshable {
+                    Task {
+                        await viewModel.fetchData()
+                    }
+                }
                 .defaultBackground()
                 .navigationTitle("Zunlo")
                 .navigationBarTitleDisplayMode(.inline)
