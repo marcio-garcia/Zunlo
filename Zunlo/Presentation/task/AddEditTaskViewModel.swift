@@ -15,7 +15,6 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
 
     @Published var title: String = ""
     @Published var notes: String = ""
-    @Published var scheduledDate: Date?
     @Published var dueDate: Date?
     @Published var isCompleted: Bool = false
     @Published var priority: UserTaskPriority = .medium
@@ -35,7 +34,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     
     let mode: Mode
     let repository: UserTaskRepository
-
+    var createdAt: Date?
+    
     var id: String {
         switch mode {
         case .add: return "add"
@@ -73,7 +73,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             title: title,
             notes: notes.isEmpty ? nil : notes,
             isCompleted: isCompleted,
-            createdAt: now,
+            createdAt: createdAt ?? now,
             updatedAt: now,
             dueDate: dueDate,
             priority: priority,
@@ -109,7 +109,9 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             notes = task.notes ?? ""
             isCompleted = task.isCompleted
             dueDate = task.dueDate
+            hasDueDate = task.dueDate != nil
             priority = task.priority
+            createdAt = task.createdAt
             tags = task.tags.map({ text in
                 return Tag(id: UUID(), text: text, color: UIColor.accent)
             })

@@ -80,6 +80,47 @@ struct UserTaskRemote: Codable, Identifiable {
         self.reminderTriggers = domain.reminderTriggers
     }
 
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(title, forKey: .title)
+        try container.encode(isCompleted, forKey: .isCompleted)
+        try container.encode(updatedAt, forKey: .updatedAt)
+        try container.encode(priority, forKey: .priority)
+        try container.encode(tags, forKey: .tags)
+
+        if let id = self.id {
+            try container.encode(id, forKey: .id)
+        }
+        if let userId = self.userId {
+            try container.encode(userId, forKey: .userId)
+        }
+        if let createdAt = self.createdAt {
+            try container.encode(createdAt, forKey: .createdAt)
+        }
+        if let reminderTriggers = self.reminderTriggers {
+            try container.encode(reminderTriggers, forKey: .reminderTriggers)
+        }
+        
+        if let notes = self.notes {
+            try container.encode(notes, forKey: .notes)
+        } else {
+            try container.encodeNil(forKey: .notes)
+        }
+        
+        if let dueDate = self.dueDate {
+            try container.encode(dueDate, forKey: .dueDate)
+        } else {
+            try container.encodeNil(forKey: .dueDate)
+        }
+        
+        if let parentEventId = self.parentEventId {
+            try container.encode(parentEventId, forKey: .parentEventId)
+        } else {
+            try container.encodeNil(forKey: .parentEventId)
+        }
+    }
+    
     func toDomain() -> UserTask {
         UserTask(
             id: id ?? UUID(),
