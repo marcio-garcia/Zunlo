@@ -12,10 +12,12 @@ struct WelcomeView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Welcome to MyApp!")
-                .font(.largeTitle)
+            Text("Welcome to Zunlo!")
+                .themedLargeTitle()
             Text("Let’s set up your experience.")
+                .themedHeadline()
             Button("Get Started", action: onContinue)
+                .themedSecondaryButton()
         }
         .padding()
     }

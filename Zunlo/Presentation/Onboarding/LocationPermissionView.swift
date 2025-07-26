@@ -28,12 +28,14 @@ struct LocationPermissionView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("We need your location to show local content.")
+                .themedHeadline()
             Button("Allow Location Access") {
                 locationService.requestPermission()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     onContinue()
                 }
             }
+            .themedSecondaryButton()
         }
         .padding()
     }

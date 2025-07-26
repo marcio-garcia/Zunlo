@@ -14,6 +14,7 @@ struct NotificationPermissionView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("Enable push notifications to get reminders and updates.")
+                .themedHeadline()
             Button("Allow Notifications") {
                 pushService.requestNotificationPermissions { granted in
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -21,6 +22,7 @@ struct NotificationPermissionView: View {
                     }
                 }
             }
+            .themedSecondaryButton()
         }
         .padding()
     }
