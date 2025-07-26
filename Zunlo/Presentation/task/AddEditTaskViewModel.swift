@@ -22,6 +22,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     @Published var isSaving = false
     @Published var reminderTriggers: [ReminderTrigger] = []
     
+    @Published var selectedTags: [String] = []
+
     @Published var hasDueDate: Bool = false {
         didSet {
             if !hasDueDate {
@@ -117,5 +119,14 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             })
             reminderTriggers = task.reminderTriggers ?? []
         }
+    }
+    
+    func loadFilteredTasks() async {
+//        let filter = TaskFilter(tags: selectedTags)
+//        tasks = try await repository.fetchTasks(filteredBy: filter)
+    }
+    
+    func fetchAllTags() async throws -> [String] {
+        try await repository.fetchAllUniqueTags()
     }
 }

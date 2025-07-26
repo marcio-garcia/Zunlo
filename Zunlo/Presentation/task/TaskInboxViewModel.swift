@@ -12,6 +12,7 @@ class UserTaskInboxViewModel: ObservableObject {
     @Published var completeTasks: [UserTask] = []
     @Published var incompleteTasks: [UserTask] = []
     @Published var showAddSheet: Bool = false
+    @Published var tags: [Tag] = []
 
     let repository: UserTaskRepository
     var tasks: [UserTask] = []
@@ -33,7 +34,6 @@ class UserTaskInboxViewModel: ObservableObject {
             try await repository.fetchAll()
             await MainActor.run {
                 tasks = repository.tasks.value
-                
             }
         } catch {
             await MainActor.run {
@@ -42,6 +42,35 @@ class UserTaskInboxViewModel: ObservableObject {
         }
     }
 
+    func fetchTags() async {
+        do {
+            let tags = try await repository.fetchAllUniqueTags()
+            let tagObjects = tags.map { Tag(text: $0) }
+            await MainActor.run {
+                self.tags = tagObjects
+            }
+        } catch {
+            await MainActor.run {
+                state = .error(error.localizedDescription)
+            }
+        }
+    }
+    
+    func filter(tag: Set<Tag>) async  {
+        do {
+            let filter = tag.isEmpty ? nil : tag.map({ $0.text })
+            let taskFilter = TaskFilter(tags: filter)
+            try await repository.fetchTasks(filteredBy: taskFilter)
+            await MainActor.run {
+                tasks = repository.tasks.value
+            }
+        } catch {
+            await MainActor.run {
+                state = .error(error.localizedDescription)
+            }
+        }
+    }
+    
     func toggleCompletion(for task: UserTask) {
         var updated = task
         updated.isCompleted.toggle()

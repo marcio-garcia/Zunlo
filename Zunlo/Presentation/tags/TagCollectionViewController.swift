@@ -15,7 +15,10 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
     }
 
     var onTagsChanged: (([Tag]) -> Void)?
-
+    var onTagTapped: ((Set<Tag>) -> Void)?
+    var readOnly: Bool = false
+    
+    private var selectedTags: Set<Tag> = []
     private var collectionView: UICollectionView!
 
     override func viewDidLoad() {
@@ -45,14 +48,23 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        tags.count + 1 // +1 for add tag chip
+        readOnly ? tags.count : tags.count + 1 // +1 for add tag chip
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if indexPath.item < tags.count {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TagCell.reuseIdentifier, for: indexPath) as! TagCell
             let tag = tags[indexPath.item]
-            cell.configure(with: tag) {
+            cell.configure(with: tag, showDelete: !readOnly) { [weak self] tag in
+                guard let self, readOnly else { return }
+                if self.selectedTags.contains(tag) {
+                    self.selectedTags.remove(tag)
+                } else {
+                    self.selectedTags.insert(tag)
+                }
+                self.onTagTapped?(self.selectedTags)
+            } onDelete: { [weak self] in
+                guard let self, !readOnly else { return }
                 self.tags.removeAll { $0.id == tag.id }
                 self.onTagsChanged?(self.tags)
             }
@@ -68,4 +80,10 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
             return cell
         }
     }
+    
+//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//        guard indexPath.item < tags.count else { return }
+//        let tag = tags[indexPath.item]
+//        onTagTapped?(tag)
+//    }
 }

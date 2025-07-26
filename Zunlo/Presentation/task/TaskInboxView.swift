@@ -37,6 +37,13 @@ struct TaskInboxView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 16) {
                             
+                            TagEditorView(tags: $viewModel.tags, readOnly: true) { tag in
+                                Task { await viewModel.filter(tag: tag) }
+                            }
+                            .frame(height: 100)
+                            
+                            Divider()
+                            
                             ForEach(viewModel.incompleteTasks) { task in
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
@@ -82,6 +89,7 @@ struct TaskInboxView: View {
             })
             .task {
                 await viewModel.fetchTasks()
+                await viewModel.fetchTags()
             }
         }
     }

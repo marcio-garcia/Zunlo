@@ -7,7 +7,7 @@
 
 import UIKit
 
-struct Tag: Identifiable, Equatable {
+struct Tag: Identifiable, Equatable, Hashable {
     let id: UUID
     var text: String
     var color: UIColor
@@ -25,6 +25,13 @@ class TagCell: UICollectionViewCell {
     private let label = UILabel()
     private let deleteButton = UIButton(type: .custom)
     private var onDelete: (() -> Void)?
+    private var onTap: ((Tag) -> Void)?
+    
+    private var tagObject: Tag?
+    private var isTagHighlighted: Bool = false
+    private var color: UIColor {
+        return isTagHighlighted ? .orange : .systemGray5
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -53,19 +60,42 @@ class TagCell: UICollectionViewCell {
             stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
         ])
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(viewTapped))
+        addGestureRecognizer(tap)
     }
-
-    @objc private func deleteTapped() {
-        onDelete?()
-    }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(with tag: Tag, onDelete: @escaping () -> Void) {
+    func configure(
+        with tag: Tag,
+        showDelete: Bool,
+        onTap: @escaping (Tag) -> Void,
+        onDelete: @escaping () -> Void
+    ) {
+        tagObject = tag
         label.text = tag.text
-        contentView.backgroundColor = tag.color
+        self.onTap = onTap
         self.onDelete = onDelete
+        deleteButton.isHidden = !showDelete
+    }
+    
+    func setBackgroundColor(color: UIColor) {
+        contentView.backgroundColor = color
+    }
+    
+    @objc private func deleteTapped() {
+        onDelete?()
+    }
+    
+    @objc private func viewTapped() {
+        guard let tag = tagObject else { return }
+        isTagHighlighted.toggle()
+        DispatchQueue.main.async {
+            self.contentView.backgroundColor = self.color
+        }
+        onTap?(tag)
     }
 }

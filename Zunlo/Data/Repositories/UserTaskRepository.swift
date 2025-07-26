@@ -21,15 +21,6 @@ final class UserTaskRepository {
         self.reminderScheduler = ReminderScheduler()
     }
 
-    func fetchAll() async throws {
-        let remoteTasks = try await remoteStore.fetchAll()
-        try await localStore.deleteAll(for: remoteTasks.first?.userId ?? UUID())
-        for remote in remoteTasks {
-            try await localStore.save(remote)
-        }
-        self.tasks.value = remoteTasks.map { $0.toDomain() }
-    }
-
     func save(_ task: UserTask) async throws {
         let savedRemote = try await remoteStore.save(UserTaskRemote(domain: task))
         for remote in savedRemote {
@@ -60,5 +51,24 @@ final class UserTaskRepository {
         }
         reminderScheduler.cancelReminders(for: task)
         self.tasks.value = try await localStore.fetchAll()
+    }
+    
+    func fetchAll() async throws {
+        let remoteTasks = try await remoteStore.fetchAll()
+        try await localStore.deleteAll(for: remoteTasks.first?.userId ?? UUID())
+        for remote in remoteTasks {
+            try await localStore.save(remote)
+        }
+        self.tasks.value = remoteTasks.map { $0.toDomain() }
+    }
+    
+    func fetchTasks(filteredBy filter: TaskFilter?) async throws {
+        // Prefer local first, or merge with remote if needed
+        let localTasks = try await localStore.fetchTasks(filteredBy: filter)
+        self.tasks.value = localTasks
+    }
+    
+    func fetchAllUniqueTags() async throws -> [String] {
+        try await localStore.fetchAllUniqueTags()
     }
 }
