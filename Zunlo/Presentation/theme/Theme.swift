@@ -18,7 +18,11 @@ struct Theme {
     let success: Color
     let border: Color
     let disabled: Color
-
+    let highlightWarm1: Color
+    let highlightWarm2: Color
+    let highlightNeutral: Color
+    let highlightCool1: Color
+    
     // Add more semantic roles as needed
 
     static let light = Theme(
@@ -29,7 +33,11 @@ struct Theme {
         secondaryText: Color(hex: "#6B4C46")!, // Slightly lighter warm gray
         success: Color(hex: "#C9E4CA")!, // Mint Cream
         border: Color(hex: "#DAB7AB")!, // Dusty Blush
-        disabled: Color.gray
+        disabled: Color.gray,
+        highlightWarm1: Color(hex: "#F6DAD1")!,
+        highlightWarm2: Color(hex: "#F9EDE3")!,
+        highlightNeutral: Color(hex: "#E8DED9")!,
+        highlightCool1: Color(hex: "#D5EBDD")!
     )
 
     static let dark = Theme(
@@ -40,6 +48,21 @@ struct Theme {
         secondaryText: Color(hex: "#C9BBB5")!,
         success: Color(hex: "#98C9A3")!,
         border: Color(hex: "#5A4944")!,
-        disabled: Color.gray
+        disabled: Color.gray,
+        highlightWarm1: Color(hex: "#3F3532")!,
+        highlightWarm2: Color(hex: "#514642")!,
+        highlightNeutral: Color(hex: "#4C403C")!,
+        highlightCool1: Color(hex: "#415C4C")!
     )
+    
+    static func highlightColor(for text: String) -> Color {
+        let options: [Color] = [
+            Color.theme.highlightWarm1,
+            Color.theme.highlightWarm2,
+            Color.theme.highlightNeutral,
+            Color.theme.highlightCool1
+        ]
+        let index = abs(text.hashValue) % options.count
+        return options[index]
+    }
 }

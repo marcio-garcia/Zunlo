@@ -44,7 +44,7 @@ class UserTaskInboxViewModel: ObservableObject {
     func fetchTags() async {
         do {
             let tags = try await repository.fetchAllUniqueTags()
-            let tagObjects = tags.map { Tag(text: $0) }
+            let tagObjects = tags.map { Tag(text: $0, color: Theme.highlightColor(for: $0)) }
             await MainActor.run {
                 self.tags = tagObjects
             }

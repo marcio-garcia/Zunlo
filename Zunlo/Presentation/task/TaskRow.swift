@@ -32,6 +32,14 @@ struct TaskRow: View {
                         .strikethrough(task.isCompleted, color: .gray)
                         .foregroundColor(task.isCompleted ? .gray : .primary)
                 }
+                
+                if !task.tags.isEmpty {
+                    HStack(spacing: 2) {
+                        ForEach(task.tags, id: \.self) { tag in
+                            tagCapsuleView(for: tag)
+                        }
+                    }
+                }
             }
             
             Spacer()
@@ -56,6 +64,16 @@ struct TaskRow: View {
         .onTapGesture {
             onTap()
         }
+    }
+    
+    func tagCapsuleView(for tag: String) -> some View {
+        Text(tag)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .foregroundStyle(Color.theme.text)
+            .background(Theme.highlightColor(for: tag))
+            .clipShape(Capsule())
+            .themedCaption()
     }
 }
 

@@ -68,13 +68,17 @@ struct TaskInboxView: View {
                 }
             }
             .defaultBackground()
-            .navigationTitle("Task Inbox")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Task inbox")
+                        .themedSubtitle()
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.showAddSheet = true
                     } label: {
-                        Label("Add Task", systemImage: "plus")
+                        Label("Add task", systemImage: "plus")
                     }
                 }
             }

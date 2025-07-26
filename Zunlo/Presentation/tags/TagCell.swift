@@ -17,7 +17,7 @@ class TagCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        contentView.layer.cornerRadius = 16
+        contentView.layer.cornerRadius = 15
         contentView.layer.masksToBounds = true
         contentView.backgroundColor = .systemGray5
 
@@ -39,7 +39,8 @@ class TagCell: UICollectionViewCell {
             stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
+            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
+            contentView.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
     
@@ -55,7 +56,7 @@ class TagCell: UICollectionViewCell {
         label.text = tag.text
         self.onDelete = onDelete
         deleteButton.isHidden = !showDelete
-        contentView.backgroundColor = tag.selected ? UIColor.systemBlue : tag.color
+        contentView.backgroundColor = tag.selected ? UIColor.systemBlue : UIColor(tag.color)
         label.textColor = tag.selected ? .white : .label
     }
     

@@ -5,18 +5,18 @@
 //  Created by Marcio Garcia on 7/26/25.
 //
 
-import UIKit
+import SwiftUI
 
 struct Tag: Identifiable, Equatable, Hashable {
     let id: UUID
     var text: String
-    var color: UIColor
+    var color: Color
     var selected: Bool = false
     
     init(
         id: UUID = UUID(),
         text: String,
-        color: UIColor = .systemGray5,
+        color: Color = Color.secondary,
         selected: Bool = false
     ) {
         self.id = id

@@ -169,7 +169,7 @@ struct TodayView: View {
     private var eventsTodaySection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Events Today")
+                Text("Events today")
                     .themedHeadline()
                 
                 if viewModel.todaysEvents.isEmpty {
@@ -186,7 +186,7 @@ struct TodayView: View {
                     .themedBody()
                 }
 
-                Button("View Full Schedule") {
+                Button("View full schedule") {
                     if appState.pushNotificationService.pushPermissionsGranted {
                         showSchedule = true
                     } else {
@@ -204,7 +204,7 @@ struct TodayView: View {
     private var tasksTodaySection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Tasks Today")
+                Text("Tasks today")
                     .themedHeadline()
 
                 if viewModel.todaysTasks.isEmpty {
@@ -224,7 +224,7 @@ struct TodayView: View {
                     .themedBody()
                 }
 
-                Button("View Task Inbox") {
+                Button("View task inbox") {
                     showTaskInbox = true
                 }
                 .themedTertiaryButton()
@@ -239,11 +239,11 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Button(action: { showAddTask = true }) {
-                    Label("Add Task", systemImage: "plus")
+                    Label("Add task", systemImage: "plus")
                 }
                 .themedSecondaryButton()
                 Button(action: { showAddEvent = true }) {
-                    Label("Add Event", systemImage: "calendar.badge.plus")
+                    Label("Add event", systemImage: "calendar.badge.plus")
                 }
                 .themedSecondaryButton()
             }

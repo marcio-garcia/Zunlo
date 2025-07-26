@@ -50,6 +50,7 @@ struct CalendarScheduleView: View {
                                                     )
                                             }
                                             .padding(.leading, 16)
+                                            .padding(.top, isToday(date: day) ? 8 : 0)
                                             
                                             if isToday(date: day), occurrences[0].title == "Fake today" {
                                                 EmptyView()
@@ -73,7 +74,12 @@ struct CalendarScheduleView: View {
                         }
                         .defaultBackground()
                     }
+                    .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            Text("Events")
+                                .themedSubtitle()
+                        }
                         ToolbarItem(placement: .topBarTrailing) {
                             HStack(spacing: 12) {
                                 Button {

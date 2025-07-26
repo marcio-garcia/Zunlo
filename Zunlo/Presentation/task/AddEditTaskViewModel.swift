@@ -115,7 +115,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             priority = task.priority
             createdAt = task.createdAt
             tags = task.tags.map({ text in
-                return Tag(id: UUID(), text: text, color: UIColor.accent)
+                return Tag(id: UUID(), text: text, color: Theme.light.accent)
             })
             reminderTriggers = task.reminderTriggers ?? []
         }
