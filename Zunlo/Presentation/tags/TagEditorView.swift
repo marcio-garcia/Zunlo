@@ -9,8 +9,9 @@ import SwiftUI
 
 struct TagEditorView: UIViewControllerRepresentable {
     @Binding var tags: [Tag]
+    @Binding var height: CGFloat
     var readOnly: Bool = false
-    var onTagTapped: ((Set<Tag>) -> Void)? = nil
+    var onTagTapped: ((Tag) -> Void)? = nil
     
     func makeUIViewController(context: Context) -> TagCollectionViewController {
         let controller = TagCollectionViewController()
@@ -18,6 +19,13 @@ struct TagEditorView: UIViewControllerRepresentable {
         controller.readOnly = readOnly
         controller.onTagsChanged = { updatedTags in
             self.tags = updatedTags
+        }
+        controller.onHeightChanged = { newHeight in
+            if self.height != newHeight {
+                DispatchQueue.main.async {
+                    self.height = newHeight
+                }
+            }
         }
         controller.onTagTapped = onTagTapped
         return controller

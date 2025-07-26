@@ -10,12 +10,19 @@ import UIKit
 class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     var tags: [Tag] = [] {
         didSet {
-            if isViewLoaded { collectionView.reloadData() }
+            if isViewLoaded {
+                collectionView.reloadData()
+                collectionView.layoutIfNeeded()
+                let contentHeight = collectionView.collectionViewLayout.collectionViewContentSize.height
+                onHeightChanged?(contentHeight)
+            }
         }
     }
 
     var onTagsChanged: (([Tag]) -> Void)?
-    var onTagTapped: ((Set<Tag>) -> Void)?
+    var onTagTapped: ((Tag) -> Void)?
+    var onHeightChanged: ((CGFloat) -> Void)?
+    
     var readOnly: Bool = false
     
     private var selectedTags: Set<Tag> = []
@@ -47,6 +54,12 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
         ])
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let contentHeight = collectionView.collectionViewLayout.collectionViewContentSize.height
+        onHeightChanged?(contentHeight)
+    }
+
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         readOnly ? tags.count : tags.count + 1 // +1 for add tag chip
     }
@@ -55,15 +68,7 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
         if indexPath.item < tags.count {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TagCell.reuseIdentifier, for: indexPath) as! TagCell
             let tag = tags[indexPath.item]
-            cell.configure(with: tag, showDelete: !readOnly) { [weak self] tag in
-                guard let self, readOnly else { return }
-                if self.selectedTags.contains(tag) {
-                    self.selectedTags.remove(tag)
-                } else {
-                    self.selectedTags.insert(tag)
-                }
-                self.onTagTapped?(self.selectedTags)
-            } onDelete: { [weak self] in
+            cell.configure(with: tag, showDelete: !readOnly) { [weak self] in
                 guard let self, !readOnly else { return }
                 self.tags.removeAll { $0.id == tag.id }
                 self.onTagsChanged?(self.tags)
@@ -81,9 +86,13 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
         }
     }
     
-//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        guard indexPath.item < tags.count else { return }
-//        let tag = tags[indexPath.item]
-//        onTagTapped?(tag)
-//    }
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard indexPath.item < tags.count else { return }
+
+        let tag = tags[indexPath.item]
+        tags[indexPath.item].selected.toggle()
+        onTagsChanged?(tags)
+        collectionView.reloadItems(at: [indexPath])
+        onTagTapped?(tag)
+    }
 }

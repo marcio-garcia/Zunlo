@@ -10,6 +10,7 @@ import SwiftUI
 struct TaskInboxView: View {
     @StateObject private var viewModel: UserTaskInboxViewModel
     @State private var editableUserTask: UserTask?
+    @State private var tagEditorHeight: CGFloat = .zero
     
     init(repository: UserTaskRepository) {
         _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(repository: repository))
@@ -36,11 +37,11 @@ struct TaskInboxView: View {
                 case .loaded:
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 16) {
-                            
-                            TagEditorView(tags: $viewModel.tags, readOnly: true) { tag in
-                                Task { await viewModel.filter(tag: tag) }
+                            TagEditorView(tags: $viewModel.tags, height: $tagEditorHeight, readOnly: true) { tag in
+                                Task { await viewModel.filter() }
                             }
-                            .frame(height: 100)
+                            .frame(height: tagEditorHeight)
+                            .animation(.default, value: tagEditorHeight)
                             
                             Divider()
                             

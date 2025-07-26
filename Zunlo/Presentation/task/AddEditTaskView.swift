@@ -10,6 +10,7 @@ import SwiftUI
 struct AddEditTaskView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var error: String?
+    @State private var tagEditorHeight: CGFloat = .zero
     @StateObject var viewModel: AddEditTaskViewModel
 
     var body: some View {
@@ -104,8 +105,9 @@ struct AddEditTaskView: View {
 
     private var taskTagsSection: some View {
         RoundedSection(title: "Tags") {
-            TagEditorView(tags: $viewModel.tags)
-                .frame(height: 50)
+            TagEditorView(tags: $viewModel.tags, height: $tagEditorHeight)
+                .frame(height: tagEditorHeight)
+                .animation(.default, value: tagEditorHeight)
         }
     }
 

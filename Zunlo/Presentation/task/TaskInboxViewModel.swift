@@ -24,7 +24,6 @@ class UserTaskInboxViewModel: ObservableObject {
             self.tasks = tasks
             self.completeTasks = tasks.filter { $0.isCompleted }
             self.incompleteTasks = tasks.filter { !$0.isCompleted }
-//            self?.state = self?.unscheduledTasks.isEmpty ? .empty : .loaded
             self.state = .loaded
         }
     }
@@ -56,9 +55,10 @@ class UserTaskInboxViewModel: ObservableObject {
         }
     }
     
-    func filter(tag: Set<Tag>) async  {
+    func filter() async  {
         do {
-            let filter = tag.isEmpty ? nil : tag.map({ $0.text })
+            let selectedTags = tags.filter({ $0.selected })
+            let filter = selectedTags.isEmpty ? nil : selectedTags.map({ $0.text })
             let taskFilter = TaskFilter(tags: filter)
             try await repository.fetchTasks(filteredBy: taskFilter)
             await MainActor.run {
