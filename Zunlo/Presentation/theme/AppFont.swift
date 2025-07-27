@@ -12,6 +12,7 @@ enum AppFontStyle {
     case title
     case subtitle
     case heading
+    case strongBody
     case body
     case callout
     case button
@@ -23,7 +24,7 @@ enum AppFontStyle {
         switch self {
         case .largeTitle, .title: return "Quicksand-Bold"
         case .subtitle, .caption: return "Quicksand-Medium"
-        case .heading, .button: return "Quicksand-SemiBold"
+        case .heading, .button, .strongBody: return "Quicksand-SemiBold"
         case .body, .callout, .footnote, .label: return "Quicksand-Regular"
         }
     }
@@ -33,7 +34,7 @@ enum AppFontStyle {
         case .largeTitle: return .bold
         case .title: return .semibold
         case .subtitle, .caption: return .medium
-        case .heading, .button: return .semibold
+        case .heading, .button, .strongBody: return .semibold
         case .body, .callout, .footnote, .label: return .regular
         }
     }
@@ -43,7 +44,7 @@ enum AppFontStyle {
         case .largeTitle: return .bold
         case .title: return .semibold
         case .subtitle, .caption: return .medium
-        case .heading, .button: return .semibold
+        case .heading, .button, .strongBody: return .semibold
         case .body, .callout, .footnote, .label: return .regular
         }
     }
@@ -54,6 +55,7 @@ enum AppFontStyle {
         case .title: return 28
         case .subtitle: return 22
         case .heading: return 20
+        case .strongBody: return 17
         case .body: return 17
         case .callout: return 16
         case .button: return 16

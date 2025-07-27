@@ -24,10 +24,10 @@ struct CalendarScheduleView: View {
     var body: some View {
         NavigationStack {
             switch viewModel.state {
-            case .loaded:
+            case .loaded(let referenceDate):
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 0) {
+                        VStack(alignment: .leading, spacing: 0) {
                             ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
                                 let monthName = monthDate.formattedDate(dateFormat: .monthName)
                                 let imageName = viewModel.monthHeaderImageName(for: monthDate)
@@ -37,47 +37,75 @@ struct CalendarScheduleView: View {
                                 CartoonImageHeader(title: monthName, imageName: imageName)
                                     .frame(maxWidth: .infinity)
                                 
-                                LazyVStack(alignment: .leading, spacing: 0) {
+                                VStack(alignment: .leading, spacing: 0) {
                                     ForEach(sortedDays, id: \.self) { day in
                                         let occurrences = daysDict[day] ?? []
-                                        LazyVStack(alignment: .leading, spacing: 0) {
-                                            Group {
-                                                Text(day.formattedDate(dateFormat: .weekAndDay))
-                                                    .font(.headline)
-                                                    .padding(.horizontal, 10)
-                                                    .padding(.vertical, 4)
-                                                    .background(
-                                                        isToday(date: day) ? Capsule().fill(Color.blue) : nil
-                                                    )
-                                            }
-                                            .padding(.leading, 16)
-                                            .padding(.top, isToday(date: day) ? 8 : 0)
-                                            
-                                            if isToday(date: day), occurrences[0].title == "Fake today" {
-                                                EmptyView()
+                                        VStack(alignment: .leading, spacing: 0) {
+                                            if occurrences.isEmpty {
+                                                EventPlaceholderRow(date: day, onTap: {
+                                                    viewModel.showAddSheet = true
+                                                })
                                             } else {
+                                                HStack {
+                                                    Text(day.formattedDate(dateFormat: .weekAndDay))
+                                                        .foregroundStyle(Color.theme.text)
+                                                        .font(AppFontStyle.strongBody.font())
+                                                        .padding(.horizontal, 10)
+                                                        .padding(.vertical, 4)
+                                                        .background(
+                                                            isToday(date: day) ? Capsule().fill(Color.blue) : nil
+                                                        )
+                                                    Text(day.formattedDate(dateFormat: .year))
+                                                        .foregroundStyle(Color.theme.text)
+                                                        .font(AppFontStyle.caption.font())
+                                                }
+                                                .padding(.leading, 16)
+                                                .padding(.top, isToday(date: day) ? 8 : 0)
+                                                
                                                 ForEach(occurrences) { occurrence in
-                                                    EventRow(
-                                                        occurrence: occurrence,
-                                                        onTap: { viewModel.handleEdit(occurrence: occurrence) }
-                                                    )
+                                                    EventRow(occurrence: occurrence, onTap: { viewModel.handleEdit(occurrence: occurrence) })
                                                 }
                                             }
                                         }
-                                        .background(Color(.systemBackground))
+                                        .background(
+                                            GeometryReader { geo in
+                                                Color.clear.preference(
+                                                    key: DayPositionPreferenceKey.self,
+                                                    value: [day: geo.frame(in: .global).minY]
+                                                )
+                                            }
+                                        )
+                                        .background(Color.white)
                                         .cornerRadius(10)
+                                        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                                         .padding(.horizontal, 20)
                                         .padding(.bottom, 16)
-                                        .id(day)
-                                        .onAppear {
-                                            edgeExecutor.execute(id: "edge-check") {
-                                                viewModel.checkIfNearVisibleEdge(day)
-                                            }
-                                        }
+                                        .id(day.startOfDay)
+                                    }
+                                }
+                                .onAppear {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                        edgeExecutor.cancelAll()
+                                        proxy.scrollTo(referenceDate.startOfDay, anchor: .top)
                                     }
                                 }
                             }
                         }
+                        .scrollEdgeObserver(
+                            onEdgeNearTop: {
+                                edgeExecutor.execute(id: "top-edge-check") {
+                                    viewModel.checkIfNearVisibleEdge(viewModel.visibleRange.lowerBound)
+                                }
+                            },
+                            onEdgeNearBottom: {
+                                edgeExecutor.execute(id: "bottom-edge-check") {
+                                    viewModel.checkIfNearVisibleEdge(viewModel.visibleRange.upperBound)
+                                }
+                            },
+                            currentTopDayChanged: { day in
+                                viewModel.currentTopVisibleDay = day
+                            }
+                        )
                         .defaultBackground()
                     }
                     .navigationBarTitleDisplayMode(.inline)
@@ -104,11 +132,6 @@ struct CalendarScheduleView: View {
                                     Label("Add", systemImage: "plus")
                                 }
                             }
-                        }
-                    }
-                    .onAppear {
-                        DispatchQueue.main.async {
-                            proxy.scrollTo(Date().startOfDay, anchor: .top)
                         }
                     }
                 }

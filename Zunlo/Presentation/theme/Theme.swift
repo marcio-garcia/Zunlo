@@ -33,7 +33,7 @@ struct Theme {
         secondaryText: Color(hex: "#6B4C46")!, // Slightly lighter warm gray
         success: Color(hex: "#C9E4CA")!, // Mint Cream
         border: Color(hex: "#DAB7AB")!, // Dusty Blush
-        disabled: Color.gray,
+        disabled: Color(hex: "#E0E0E0")!,
         highlightWarm1: Color(hex: "#F6DAD1")!,
         highlightWarm2: Color(hex: "#F9EDE3")!,
         highlightNeutral: Color(hex: "#E8DED9")!,
@@ -48,7 +48,7 @@ struct Theme {
         secondaryText: Color(hex: "#C9BBB5")!,
         success: Color(hex: "#98C9A3")!,
         border: Color(hex: "#5A4944")!,
-        disabled: Color.gray,
+        disabled: Color(hex: "#E0E0E0")!,
         highlightWarm1: Color(hex: "#3F3532")!,
         highlightWarm2: Color(hex: "#514642")!,
         highlightNeutral: Color(hex: "#4C403C")!,

@@ -17,12 +17,16 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var editMode: AddEditEventViewModel.Mode?
     @Published var showEditChoiceDialog = false
     @Published var editChoiceContext: EditChoiceContext?
-
+    @Published var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] = [:]
+    
     // For grouping and access
     var allOccurrences: [EventOccurrence] = []
+    var allRecurringParentOccurrences: [EventOccurrence] = []
     var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
     let expansionThreshold: TimeInterval = 60 * 60 * 24 * 30 // ~1 month
-
+    
+    var currentTopVisibleDay: Date = Date()
+    
     var repository: EventRepository
     var visibleRange: ClosedRange<Date> = Date()...Date()
     var locationService: LocationService
@@ -49,6 +53,7 @@ class CalendarScheduleViewModel: ObservableObject {
         occurObservID = repository.occurrences.observe(owner: self, fireNow: false, onChange: { [weak self] occurrences in
             guard let self else { return }
             self.allOccurrences = occurrences
+            self.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
             self.handleOccurrences(occurrences, in: self.visibleRange)
         })
     }
@@ -68,17 +73,12 @@ class CalendarScheduleViewModel: ObservableObject {
 
     func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
         do {
-            eventOccurrences = try composeOccurrences(occurrences, in: range)
-            state = occurrences.isEmpty ? .empty : .loaded
+            eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
+            occurrencesByMonthAndDay = groupOccurrencesByMonthAndDay()
+            state = occurrences.isEmpty ? .empty : .loaded(referenceDate: currentTopVisibleDay)
         } catch {
             state = .error(error.localizedDescription)
         }
-    }
-    
-    func composeOccurrences(_ occurrences: [EventOccurrence],
-                            in range: ClosedRange<Date>? = nil) throws -> [EventOccurrence] {
-        let usedRange = range ?? defaultDateRange()
-        return try EventOccurrenceService.generate(rawOccurrences: occurrences, in: usedRange)
     }
     
     private func defaultDateRange() -> ClosedRange<Date> {
@@ -88,20 +88,36 @@ class CalendarScheduleViewModel: ObservableObject {
         return start...end
     }
     
-    var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] {
+    func groupOccurrencesByMonthAndDay() -> [Date: [Date: [EventOccurrence]]] {
         let calendar = Calendar.current
-        return Dictionary(
-            grouping: eventOccurrences
-        ) { occurrence in
-            calendar.date(from: calendar.dateComponents([.year, .month],
-                                                        from: occurrence.startDate.startOfDay))!
+
+        let allDays = Self.allDays(in: visibleRange, calendar: calendar)
+        let grouped = Dictionary(grouping: eventOccurrences) { occurrence in
+            calendar.date(from: calendar.dateComponents([.year, .month], from: occurrence.startDate.startOfDay))!
+        }.mapValues { monthEvents in
+            Dictionary(grouping: monthEvents) { $0.startDate.startOfDay }
         }
-        .mapValues { occurrencesInMonth in
-            Dictionary(
-                grouping: occurrencesInMonth
-            ) { $0.startDate.startOfDay }
-            .mapValues { $0.sorted { $0.startDate < $1.startDate } }
+
+        // Ensure days with no events are still represented
+        var result: [Date: [Date: [EventOccurrence]]] = [:]
+        for day in allDays {
+            let monthKey = calendar.date(from: calendar.dateComponents([.year, .month], from: day))!
+            result[monthKey, default: [:]][day, default: []] = grouped[monthKey]?[day] ?? []
         }
+        return result
+    }
+    
+    static func allDays(in range: ClosedRange<Date>, calendar: Calendar) -> [Date] {
+        var days: [Date] = []
+        var current = calendar.startOfDay(for: range.lowerBound)
+
+        while current <= range.upperBound {
+            days.append(current)
+            guard let next = calendar.date(byAdding: .day, value: 1, to: current) else { break }
+            current = next
+        }
+
+        return days
     }
 
     func handleEdit(occurrence: EventOccurrence) {
@@ -109,7 +125,7 @@ class CalendarScheduleViewModel: ObservableObject {
             if let override = occurrence.overrides.first(where: { $0.id == occurrence.id }) {
                 editMode = .editOverride(override: override)
             }
-        } else if let parent = eventOccurrences.first(where: { $0.id == occurrence.eventId }) {
+        } else if let parent = allRecurringParentOccurrences.first(where: { $0.id == occurrence.eventId }) {
             let rule = occurrence.recurrence_rules.first(where: { $0.eventId == parent.eventId })
             if parent.isRecurring {
                 editChoiceContext = EditChoiceContext(occurrence: occurrence, parentEvent: parent, rule: rule)
@@ -161,7 +177,18 @@ class CalendarScheduleViewModel: ObservableObject {
         handleOccurrences(allOccurrences, in: visibleRange)
     }
 
-    
+    func handleScrollOffset(_ offset: CGFloat) {
+        let screenHeight = UIScreen.main.bounds.height
+
+        if offset > -screenHeight * 0.5 {
+            // Near top
+            checkIfNearVisibleEdge(visibleRange.lowerBound)
+        } else if offset < -screenHeight * 2.5 {
+            // Near bottom
+            checkIfNearVisibleEdge(visibleRange.upperBound)
+        }
+    }
+
     private func season(by date: Date) -> Season {
         let month = Calendar.current.component(.month, from: date)
         return season(for: month,

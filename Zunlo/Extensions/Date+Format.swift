@@ -14,6 +14,8 @@ extension Date {
         case monthName = "LLLL"
         case time = "HH:mm"
         case weekAndDay = "E d"
+        case day = "d"
+        case year = "YYYY"
     }
     
     static var format = DateFormat.regular

@@ -23,12 +23,10 @@ struct EventRow: View {
                     .cornerRadius(3)
                 VStack(alignment: .leading) {
                     Text(occurrence.title)
-                        .font(.subheadline)
-                        .foregroundStyle(.black)
+                        .themedCallout()
                     if !occurrence.isFakeOccForEmptyToday {
                         Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
-                            .font(.caption)
-                            .foregroundStyle(.gray)
+                            .themedFootnote()
                     }
                 }
                 Spacer()
@@ -39,9 +37,6 @@ struct EventRow: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
     
     func formatDate(start: Date, end: Date?) -> String {
