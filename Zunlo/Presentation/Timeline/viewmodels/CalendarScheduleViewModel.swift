@@ -19,17 +19,19 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var editChoiceContext: EditChoiceContext?
 
     // For grouping and access
+    var allOccurrences: [EventOccurrence] = []
     var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
-    
+    let expansionThreshold: TimeInterval = 60 * 60 * 24 * 30 // ~1 month
+
     var repository: EventRepository
-    let visibleRange: ClosedRange<Date>
+    var visibleRange: ClosedRange<Date> = Date()...Date()
     var locationService: LocationService
     
     var occurObservID: UUID?
     var eventsObservID: UUID?
     var overridesObservID: UUID?
     var rulesObservID: UUID?
-        
+    
     struct EditChoiceContext {
         let occurrence: EventOccurrence
         let parentEvent: EventOccurrence
@@ -41,14 +43,13 @@ class CalendarScheduleViewModel: ObservableObject {
         
         self.repository = repository
         self.locationService = locationService
-        let cal = Calendar.current
-        let start = cal.date(byAdding: .month, value: -6, to: Date())!
-        let end = cal.date(byAdding: .month, value: 6, to: Date())!
-        self.visibleRange = start...end
+        self.visibleRange = defaultDateRange()
 
         // Bind to repository data observers
         occurObservID = repository.occurrences.observe(owner: self, fireNow: false, onChange: { [weak self] occurrences in
-            self?.handleOccurrences(occurrences)
+            guard let self else { return }
+            self.allOccurrences = occurrences
+            self.handleOccurrences(occurrences, in: self.visibleRange)
         })
     }
     
@@ -65,17 +66,17 @@ class CalendarScheduleViewModel: ObservableObject {
     
     // MARK: - Compose occurrences for the UI
 
-    func handleOccurrences(_ occ: [EventOccurrence]) {
+    func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
         do {
-            eventOccurrences = try composeOccurrences(in: visibleRange, occurrences: occ)
-            state = occ.isEmpty ? .empty : .loaded
+            eventOccurrences = try composeOccurrences(occurrences, in: range)
+            state = occurrences.isEmpty ? .empty : .loaded
         } catch {
             state = .error(error.localizedDescription)
         }
     }
     
-    func composeOccurrences(in range: ClosedRange<Date>? = nil,
-                            occurrences: [EventOccurrence]) throws -> [EventOccurrence] {
+    func composeOccurrences(_ occurrences: [EventOccurrence],
+                            in range: ClosedRange<Date>? = nil) throws -> [EventOccurrence] {
         let usedRange = range ?? defaultDateRange()
         return try EventOccurrenceService.generate(rawOccurrences: occurrences, in: usedRange)
     }
@@ -135,6 +136,31 @@ class CalendarScheduleViewModel: ObservableObject {
     func handleDelete(occurrence: EventOccurrence) {
         // Implement actual delete logic here
     }
+    
+    func checkIfNearVisibleEdge(_ date: Date) {
+        let startDistance = date.timeIntervalSince(visibleRange.lowerBound)
+        let endDistance = visibleRange.upperBound.timeIntervalSince(date)
+
+        if startDistance < expansionThreshold {
+            expandVisibleRange(toEarlier: true)
+        } else if endDistance < expansionThreshold {
+            expandVisibleRange(toEarlier: false)
+        }
+    }
+    
+    func expandVisibleRange(toEarlier: Bool) {
+        let cal = Calendar.current
+        if toEarlier {
+            let newStart = cal.date(byAdding: .month, value: -6, to: visibleRange.lowerBound)!
+            visibleRange = newStart...visibleRange.upperBound
+        } else {
+            let newEnd = cal.date(byAdding: .month, value: 6, to: visibleRange.upperBound)!
+            visibleRange = visibleRange.lowerBound...newEnd
+        }
+        print("-------- visible range: \(visibleRange)")
+        handleOccurrences(allOccurrences, in: visibleRange)
+    }
+
     
     private func season(by date: Date) -> Season {
         let month = Calendar.current.component(.month, from: date)

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CalendarScheduleView: View {
     @StateObject var viewModel: CalendarScheduleViewModel
+    let edgeExecutor = DebouncedExecutor(delay: 0.5)
     
     init(repository: EventRepository, locationService: LocationService) {
         _viewModel = StateObject(wrappedValue: CalendarScheduleViewModel(repository: repository,
@@ -26,7 +27,7 @@ struct CalendarScheduleView: View {
             case .loaded:
                 ScrollViewReader { proxy in
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 0) {
+                        LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(viewModel.occurrencesByMonthAndDay.keys.sorted(), id: \.self) { monthDate in
                                 let monthName = monthDate.formattedDate(dateFormat: .monthName)
                                 let imageName = viewModel.monthHeaderImageName(for: monthDate)
@@ -36,10 +37,10 @@ struct CalendarScheduleView: View {
                                 CartoonImageHeader(title: monthName, imageName: imageName)
                                     .frame(maxWidth: .infinity)
                                 
-                                VStack(alignment: .leading, spacing: 0) {
+                                LazyVStack(alignment: .leading, spacing: 0) {
                                     ForEach(sortedDays, id: \.self) { day in
                                         let occurrences = daysDict[day] ?? []
-                                        VStack(alignment: .leading, spacing: 0) {
+                                        LazyVStack(alignment: .leading, spacing: 0) {
                                             Group {
                                                 Text(day.formattedDate(dateFormat: .weekAndDay))
                                                     .font(.headline)
@@ -68,6 +69,11 @@ struct CalendarScheduleView: View {
                                         .padding(.horizontal, 20)
                                         .padding(.bottom, 16)
                                         .id(day)
+                                        .onAppear {
+                                            edgeExecutor.execute(id: "edge-check") {
+                                                viewModel.checkIfNearVisibleEdge(day)
+                                            }
+                                        }
                                     }
                                 }
                             }
