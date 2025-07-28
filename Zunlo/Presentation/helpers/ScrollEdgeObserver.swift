@@ -20,19 +20,12 @@ struct ScrollEdgePreferenceKey: PreferenceKey {
     }
 }
 
-struct DayPositionPreferenceKey: PreferenceKey {
-    static var defaultValue: [Date: CGFloat] = [:]
-
-    static func reduce(value: inout [Date: CGFloat], nextValue: () -> [Date: CGFloat]) {
-        value.merge(nextValue(), uniquingKeysWith: { $1 })
-    }
-}
-
 struct ScrollEdgeObserver: ViewModifier {
     let onEdgeNearTop: () -> Void
     let onEdgeNearBottom: () -> Void
-    let currentTopDayChanged: (Date) -> Void
 
+    @State private var hasScrolledOnce = false
+    
     func body(content: Content) -> some View {
         content
             .background(GeometryReader { geo in
@@ -48,15 +41,20 @@ struct ScrollEdgeObserver: ViewModifier {
                 let bottom = values[.bottom] ?? 0
                 let screenHeight = UIScreen.main.bounds.height
 
+    
+                // Detect real scroll activity once
+                if !hasScrolledOnce, abs(top) > 400 {
+                    hasScrolledOnce = true
+                }
+                
+                // Skip initial trigger until scroll has moved
+                guard hasScrolledOnce else { return }
+                
+                print("------- top: \(top), -screenHeight * 2: \(-screenHeight * 2)")
                 if top > -screenHeight * 2 {
                     onEdgeNearTop()
                 } else if bottom < screenHeight * 2.5 {
                     onEdgeNearBottom()
-                }
-            }
-            .onPreferenceChange(DayPositionPreferenceKey.self) { positions in
-                if let (topDay, _) = positions.min(by: { $0.value < $1.value }) {
-                    currentTopDayChanged(topDay)
                 }
             }
     }
@@ -65,14 +63,12 @@ struct ScrollEdgeObserver: ViewModifier {
 extension View {
     func scrollEdgeObserver(
         onEdgeNearTop: @escaping () -> Void,
-        onEdgeNearBottom: @escaping () -> Void,
-        currentTopDayChanged: @escaping (Date) -> Void
+        onEdgeNearBottom: @escaping () -> Void
     ) -> some View {
         self.modifier(
             ScrollEdgeObserver(
                 onEdgeNearTop: onEdgeNearTop,
-                onEdgeNearBottom: onEdgeNearBottom,
-                currentTopDayChanged: currentTopDayChanged
+                onEdgeNearBottom: onEdgeNearBottom
             )
         )
     }

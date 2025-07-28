@@ -19,13 +19,18 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var editChoiceContext: EditChoiceContext?
     @Published var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] = [:]
     
+    var scrollViewProxy: ScrollViewProxy?
+    let edgeExecutor = DebouncedExecutor(delay: 0.8)
+    var hasFinishedLoading = false
+    var oldTopItemDate = Date()
+    
     // For grouping and access
     var allOccurrences: [EventOccurrence] = []
     var allRecurringParentOccurrences: [EventOccurrence] = []
     var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
     let expansionThreshold: TimeInterval = 60 * 60 * 24 * 30 // ~1 month
     
-    var currentTopVisibleDay: Date = Date()
+    private var currentTopVisibleDay: Date = Date()
     
     var repository: EventRepository
     var visibleRange: ClosedRange<Date> = Date()...Date()
@@ -75,7 +80,17 @@ class CalendarScheduleViewModel: ObservableObject {
         do {
             eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
             occurrencesByMonthAndDay = groupOccurrencesByMonthAndDay()
-            state = occurrences.isEmpty ? .empty : .loaded(referenceDate: currentTopVisibleDay)
+            self.state = occurrences.isEmpty ? .empty : .loaded(referenceDate: self.currentTopVisibleDay)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                print("------- will scroll to date: \(self.currentTopVisibleDay.startOfDay)")
+                withAnimation {
+                    self.scrollViewProxy?.scrollTo(self.oldTopItemDate.formattedDate(dateFormat: .regular), anchor: .top)
+                }
+                print("------- will cancel debounced work items")
+                self.edgeExecutor.cancelAll()
+                self.isCheckingEdge = false
+                self.hasFinishedLoading = true
+            }
         } catch {
             state = .error(error.localizedDescription)
         }
@@ -153,6 +168,38 @@ class CalendarScheduleViewModel: ObservableObject {
         // Implement actual delete logic here
     }
     
+    private var isCheckingEdge = false
+    func checkTop() {
+        if hasFinishedLoading, !isCheckingEdge {
+            isCheckingEdge = true
+            print("----- isCheckingEdge = true")
+            edgeExecutor.execute(id: "top-edge-check") {
+                self.checkIfNearVisibleEdge(self.visibleRange.lowerBound)
+                print("----- isCheckingEdge = false")
+                self.isCheckingEdge = false
+            }
+        }
+    }
+    
+    func checkBottom() {
+        if hasFinishedLoading, !isCheckingEdge {
+            isCheckingEdge = true
+            print("----- isCheckingEdge = true")
+            edgeExecutor.execute(id: "bottom-edge-check") {
+                self.checkIfNearVisibleEdge(self.visibleRange.upperBound)
+                print("----- isCheckingEdge = false")
+                self.isCheckingEdge = false
+            }
+        }
+    }
+
+    func setCurrentTopVisibleDay(date: Date) {
+        if hasFinishedLoading, !isCheckingEdge {
+            print("----- currentTopVisibleDay = \(date)")
+            currentTopVisibleDay = date
+        }
+    }
+    
     func checkIfNearVisibleEdge(_ date: Date) {
         let startDistance = date.timeIntervalSince(visibleRange.lowerBound)
         let endDistance = visibleRange.upperBound.timeIntervalSince(date)
@@ -168,6 +215,7 @@ class CalendarScheduleViewModel: ObservableObject {
         let cal = Calendar.current
         if toEarlier {
             let newStart = cal.date(byAdding: .month, value: -6, to: visibleRange.lowerBound)!
+            oldTopItemDate = visibleRange.lowerBound
             visibleRange = newStart...visibleRange.upperBound
         } else {
             let newEnd = cal.date(byAdding: .month, value: 6, to: visibleRange.upperBound)!

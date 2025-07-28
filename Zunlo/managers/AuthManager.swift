@@ -69,36 +69,68 @@ final class AuthManager: ObservableObject {
         }
     }
 
+//    public func bootstrap(hasCompletedOnboarding: Bool) async {
+//        do {
+//            let token = try tokenStorage.loadToken()
+//            
+//            if let authToken = token, authService.validateToken(authToken) {
+//                try await authenticated(authToken)
+//                return
+//            }
+//
+//            if let authToken = token, let refreshToken = authToken.refreshToken {
+//                do {
+//                    guard let newAuth = try await refreshSession(refreshToken: refreshToken) else {
+//                        await unauthenticated()
+//                        return
+//                    }
+//                    return
+//                } catch {
+//                    await unauthenticated()
+//                }
+//            }
+//
+//            if hasCompletedOnboarding {
+//                await unauthenticated()
+//            } else {
+//                // fallback to anonymous
+//                try await signInAnonymously()
+//            }
+//        } catch {
+//            await unauthenticated()
+//        }
+//    }
+    
     public func bootstrap(hasCompletedOnboarding: Bool) async {
         do {
-            if let authToken = try tokenStorage.loadToken(), authService.validateToken(authToken) {
-                try await authenticated(authToken)
+            guard let token = try tokenStorage.loadToken() else {
+                return try await handleNoToken(hasCompletedOnboarding: hasCompletedOnboarding)
+            }
+            
+            if authService.validateToken(token) {
+                try await authenticated(token)
                 return
             }
 
-            if let authToken = try tokenStorage.loadToken(), let refreshToken = authToken.refreshToken {
-                do {
-                    guard let newAuth = try await refreshSession(refreshToken: refreshToken) else {
-                        await unauthenticated()
-                        return
-                    }
-                    try await authenticated(newAuth)
-                } catch {
-                    await unauthenticated()
-                }
+            if let refreshToken = token.refreshToken {
+                try await refreshSession(refreshToken: refreshToken)
+                return
             }
 
-            if hasCompletedOnboarding {
-                await unauthenticated()
-            } else {
-                // fallback to anonymous
-                try await signInAnonymously()
-            }
-
+            await unauthenticated()
         } catch {
             await unauthenticated()
         }
     }
+
+    private func handleNoToken(hasCompletedOnboarding: Bool) async throws {
+        if hasCompletedOnboarding {
+            await unauthenticated()
+        } else {
+            try await signInAnonymously()
+        }
+    }
+    
 
     func signIn(email: String, password: String) async throws {
         let auth = try await authService.signIn(email: email, password: password)
@@ -157,6 +189,7 @@ final class AuthManager: ObservableObject {
         }
     }
     
+    @discardableResult
     public func refreshSession(refreshToken: String? = nil) async throws -> AuthToken? {
         var token = ""
         

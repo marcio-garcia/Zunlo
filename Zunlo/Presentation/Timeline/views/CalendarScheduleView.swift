@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CalendarScheduleView: View {
     @StateObject var viewModel: CalendarScheduleViewModel
-    let edgeExecutor = DebouncedExecutor(delay: 0.5)
+    @State private var currentItemID: String?
     
     init(repository: EventRepository, locationService: LocationService) {
         _viewModel = StateObject(wrappedValue: CalendarScheduleViewModel(repository: repository,
@@ -24,7 +24,7 @@ struct CalendarScheduleView: View {
     var body: some View {
         NavigationStack {
             switch viewModel.state {
-            case .loaded(let referenceDate):
+            case .loaded:
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
@@ -67,46 +67,28 @@ struct CalendarScheduleView: View {
                                                 }
                                             }
                                         }
-                                        .background(
-                                            GeometryReader { geo in
-                                                Color.clear.preference(
-                                                    key: DayPositionPreferenceKey.self,
-                                                    value: [day: geo.frame(in: .global).minY]
-                                                )
-                                            }
-                                        )
                                         .background(Color.white)
                                         .cornerRadius(10)
                                         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                                         .padding(.horizontal, 20)
                                         .padding(.bottom, 16)
-                                        .id(day.startOfDay)
-                                    }
-                                }
-                                .onAppear {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                        edgeExecutor.cancelAll()
-                                        proxy.scrollTo(referenceDate.startOfDay, anchor: .top)
+                                        .id(day.formattedDate(dateFormat: .regular))
                                     }
                                 }
                             }
                         }
                         .scrollEdgeObserver(
                             onEdgeNearTop: {
-                                edgeExecutor.execute(id: "top-edge-check") {
-                                    viewModel.checkIfNearVisibleEdge(viewModel.visibleRange.lowerBound)
-                                }
+                                viewModel.checkTop()
                             },
                             onEdgeNearBottom: {
-                                edgeExecutor.execute(id: "bottom-edge-check") {
-                                    viewModel.checkIfNearVisibleEdge(viewModel.visibleRange.upperBound)
-                                }
-                            },
-                            currentTopDayChanged: { day in
-                                viewModel.currentTopVisibleDay = day
+                                viewModel.checkBottom()
                             }
                         )
                         .defaultBackground()
+                    }
+                    .onAppear {
+                        viewModel.scrollViewProxy = proxy
                     }
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
