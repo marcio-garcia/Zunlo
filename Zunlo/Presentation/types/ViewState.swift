@@ -9,7 +9,7 @@ import Foundation
 
 enum ViewState {
     case loading
-    case loaded(referenceDate: Date)
+    case loaded
     case empty
     case error(_ message: String)
 }

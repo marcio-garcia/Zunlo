@@ -83,7 +83,13 @@ struct TodayView: View {
                 .navigationTitle("Zunlo")
                 .navigationBarTitleDisplayMode(.inline)
                 .sheet(isPresented: $showSchedule) {
-                    CalendarScheduleView(repository: appState.eventRepository, locationService: appState.locationService)
+//                    CalendarScheduleView(repository: appState.eventRepository, locationService: appState.locationService)
+                    CalendarScheduleContainer(
+                        viewModel: CalendarScheduleViewModel(
+                            repository: appState.eventRepository,
+                            locationService: appState.locationService
+                        )
+                    )
                 }
                 .sheet(isPresented: $showRequestPush, onDismiss: {
                     showSchedule = true

@@ -77,14 +77,14 @@ struct CalendarScheduleView: View {
                                 }
                             }
                         }
-                        .scrollEdgeObserver(
-                            onEdgeNearTop: {
-                                viewModel.checkTop()
-                            },
-                            onEdgeNearBottom: {
-                                viewModel.checkBottom()
-                            }
-                        )
+//                        .scrollEdgeObserver(
+//                            onEdgeNearTop: {
+//                                viewModel.checkTop()
+//                            },
+//                            onEdgeNearBottom: {
+//                                viewModel.checkBottom()
+//                            }
+//                        )
                         .defaultBackground()
                     }
                     .onAppear {

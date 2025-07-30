@@ -24,7 +24,7 @@ class UserTaskInboxViewModel: ObservableObject {
             self.tasks = tasks
             self.completeTasks = tasks.filter { $0.isCompleted }
             self.incompleteTasks = tasks.filter { !$0.isCompleted }
-            self.state = .loaded(referenceDate: Date())
+            self.state = .loaded
         }
     }
 

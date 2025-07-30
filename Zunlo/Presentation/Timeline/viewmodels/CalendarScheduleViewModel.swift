@@ -20,15 +20,15 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] = [:]
     
     var scrollViewProxy: ScrollViewProxy?
-    let edgeExecutor = DebouncedExecutor(delay: 0.8)
-    var hasFinishedLoading = false
-    var oldTopItemDate = Date()
+    let edgeExecutor = DebouncedExecutor(delay: 0.2)
+    private var isCheckingEdge = false
+    var itemDateToScrollTo = Date()
     
     // For grouping and access
     var allOccurrences: [EventOccurrence] = []
     var allRecurringParentOccurrences: [EventOccurrence] = []
     var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
-    let expansionThreshold: TimeInterval = 60 * 60 * 24 * 30 // ~1 month
+//    let expansionThreshold: TimeInterval = 60 * 60 * 24 * 30 // ~1 month
     
     private var currentTopVisibleDay: Date = Date()
     
@@ -80,17 +80,7 @@ class CalendarScheduleViewModel: ObservableObject {
         do {
             eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
             occurrencesByMonthAndDay = groupOccurrencesByMonthAndDay()
-            self.state = occurrences.isEmpty ? .empty : .loaded(referenceDate: self.currentTopVisibleDay)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                print("------- will scroll to date: \(self.currentTopVisibleDay.startOfDay)")
-                withAnimation {
-                    self.scrollViewProxy?.scrollTo(self.oldTopItemDate.formattedDate(dateFormat: .regular), anchor: .top)
-                }
-                print("------- will cancel debounced work items")
-                self.edgeExecutor.cancelAll()
-                self.isCheckingEdge = false
-                self.hasFinishedLoading = true
-            }
+            self.state = occurrences.isEmpty ? .empty : .loaded
         } catch {
             state = .error(error.localizedDescription)
         }
@@ -168,73 +158,50 @@ class CalendarScheduleViewModel: ObservableObject {
         // Implement actual delete logic here
     }
     
-    private var isCheckingEdge = false
-    func checkTop() {
-        if hasFinishedLoading, !isCheckingEdge {
+    func checkTop(date: Date) {
+        if !isCheckingEdge {
             isCheckingEdge = true
-            print("----- isCheckingEdge = true")
             edgeExecutor.execute(id: "top-edge-check") {
-                self.checkIfNearVisibleEdge(self.visibleRange.lowerBound)
-                print("----- isCheckingEdge = false")
+                self.itemDateToScrollTo = date
+                self.expandVisibleRange(toEarlier: true)
                 self.isCheckingEdge = false
             }
         }
     }
     
-    func checkBottom() {
-        if hasFinishedLoading, !isCheckingEdge {
+    func checkBottom(date: Date) {
+        if !isCheckingEdge {
             isCheckingEdge = true
-            print("----- isCheckingEdge = true")
             edgeExecutor.execute(id: "bottom-edge-check") {
-                self.checkIfNearVisibleEdge(self.visibleRange.upperBound)
-                print("----- isCheckingEdge = false")
+                self.itemDateToScrollTo = date
+                self.expandVisibleRange(toEarlier: false)
                 self.isCheckingEdge = false
             }
         }
     }
-
-    func setCurrentTopVisibleDay(date: Date) {
-        if hasFinishedLoading, !isCheckingEdge {
-            print("----- currentTopVisibleDay = \(date)")
-            currentTopVisibleDay = date
-        }
-    }
     
-    func checkIfNearVisibleEdge(_ date: Date) {
-        let startDistance = date.timeIntervalSince(visibleRange.lowerBound)
-        let endDistance = visibleRange.upperBound.timeIntervalSince(date)
-
-        if startDistance < expansionThreshold {
-            expandVisibleRange(toEarlier: true)
-        } else if endDistance < expansionThreshold {
-            expandVisibleRange(toEarlier: false)
-        }
-    }
+//    func checkIfNearVisibleEdge(_ date: Date) {
+//        let startDistance = date.timeIntervalSince(visibleRange.lowerBound)
+//        let endDistance = visibleRange.upperBound.timeIntervalSince(date)
+//
+//        if startDistance < expansionThreshold {
+//            expandVisibleRange(toEarlier: true)
+//        } else if endDistance < expansionThreshold {
+//            expandVisibleRange(toEarlier: false)
+//        }
+//    }
     
     func expandVisibleRange(toEarlier: Bool) {
         let cal = Calendar.current
         if toEarlier {
             let newStart = cal.date(byAdding: .month, value: -6, to: visibleRange.lowerBound)!
-            oldTopItemDate = visibleRange.lowerBound
+            itemDateToScrollTo = visibleRange.lowerBound
             visibleRange = newStart...visibleRange.upperBound
         } else {
             let newEnd = cal.date(byAdding: .month, value: 6, to: visibleRange.upperBound)!
             visibleRange = visibleRange.lowerBound...newEnd
         }
-        print("-------- visible range: \(visibleRange)")
         handleOccurrences(allOccurrences, in: visibleRange)
-    }
-
-    func handleScrollOffset(_ offset: CGFloat) {
-        let screenHeight = UIScreen.main.bounds.height
-
-        if offset > -screenHeight * 0.5 {
-            // Near top
-            checkIfNearVisibleEdge(visibleRange.lowerBound)
-        } else if offset < -screenHeight * 2.5 {
-            // Near bottom
-            checkIfNearVisibleEdge(visibleRange.upperBound)
-        }
     }
 
     private func season(by date: Date) -> Season {
