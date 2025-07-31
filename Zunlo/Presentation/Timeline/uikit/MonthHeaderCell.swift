@@ -37,11 +37,10 @@ class MonthHeaderCell: UICollectionViewCell {
         NSLayoutConstraint.activate([
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            imageView.topAnchor.constraint(equalTo: topAnchor),
-            imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            imageView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
             imageView.widthAnchor.constraint(equalTo: widthAnchor),
             imageView.heightAnchor.constraint(equalToConstant: 120),
-//            imageView.heightAnchor.constraint(equalTo: widthAnchor, multiplier: 0.61017),
 
             label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             label.topAnchor.constraint(equalTo: topAnchor, constant: 30)

@@ -20,8 +20,10 @@ enum CalendarItem: Hashable {
 }
 
 class CalendarScheduleViewController: UIViewController {
-    private let viewModel: CalendarScheduleViewModel
+    private let topBarView = CalendarTopBarView()
     private var collectionView: UICollectionView!
+    
+    private let viewModel: CalendarScheduleViewModel
     private var dataSource: UICollectionViewDiffableDataSource<Int, CalendarItem>!
     private var didScrollToToday = false
     
@@ -42,11 +44,50 @@ class CalendarScheduleViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        setupViews()
+        setupConstraints()
+        setupTheme()
+    }
+    
+    private func setupViews() {
+        topBarView.configure(title: "Events", accentColor: UIColor(Color.theme.accent))
+        topBarView.onTapClose = { [weak self] in
+            self?.dismiss(animated: true)
+        }
+        topBarView.onTapToday = { [weak self] in
+            self?.scrollTo(date: Date(), animated: true)
+        }
+        topBarView.onTapAdd = { [weak self] in
+            self?.presentAddEvent()
+        }
+        
         setupCollectionView()
+        
+        view.addSubview(topBarView)
+        
         Task {
             await viewModel.fetchEvents()
         }
+    }
+    
+    private func setupConstraints() {
+        topBarView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
         
+        NSLayoutConstraint.activate([
+            topBarView.topAnchor.constraint(equalTo: view.topAnchor), // includes safe area internally
+            topBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            topBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            collectionView.topAnchor.constraint(equalTo: view.topAnchor),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    private func setupTheme() {
         view.backgroundColor = UIColor(Color.theme.background)
     }
     
@@ -61,6 +102,14 @@ class CalendarScheduleViewController: UIViewController {
         } else {
             print("cell for \(date) not found in snapshot")
         }
+    }
+    
+    @objc private func presentAddEvent() {
+        let vm = AddEditEventViewModel(mode: .add, repository: viewModel.repository)
+        let addView = AddEditEventView(viewModel: vm)
+        let host = UIHostingController(rootView: addView)
+        host.modalPresentationStyle = .formSheet
+        present(host, animated: true)
     }
 }
 
