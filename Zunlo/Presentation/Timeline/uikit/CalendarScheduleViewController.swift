@@ -91,18 +91,31 @@ class CalendarScheduleViewController: UIViewController {
         view.backgroundColor = UIColor(Color.theme.background)
     }
     
-    func scrollTo(date: Date, animated: Bool = false) {
-        let today = date.startOfDay
-        let todayItem = CalendarItem.day(today)
+    func scrollTo(date: Date, animated: Bool = false, extraOffset: CGFloat = 56) {
+        let targetDate = date.startOfDay
+        let item = CalendarItem.day(targetDate)
 
         let snapshot = dataSource.snapshot()
-        if let itemIndex = snapshot.itemIdentifiers(inSection: 0).firstIndex(of: todayItem) {
-            let indexPath = IndexPath(item: itemIndex, section: 0)
-            collectionView.scrollToItem(at: indexPath, at: .top, animated: animated)
-        } else {
+        guard let itemIndex = snapshot.itemIdentifiers(inSection: 0).firstIndex(of: item) else {
             print("cell for \(date) not found in snapshot")
+            return
+        }
+
+        let indexPath = IndexPath(item: itemIndex, section: 0)
+
+        collectionView.scrollToItem(at: indexPath, at: .top, animated: animated)
+
+        // Adjust offset after animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + (animated ? 0.35 : 0)) { [weak self] in
+            guard let self = self else { return }
+
+            var offset = self.collectionView.contentOffset
+            offset.y -= extraOffset
+            offset.y = max(-self.collectionView.adjustedContentInset.top, offset.y) // don’t scroll above content
+            self.collectionView.setContentOffset(offset, animated: false)
         }
     }
+
     
     @objc private func presentAddEvent() {
         let vm = AddEditEventViewModel(mode: .add, repository: viewModel.repository)
