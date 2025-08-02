@@ -32,8 +32,8 @@ class DayEventCell: UICollectionViewCell {
         super.prepareForReuse()
         weatherIconImageView.image = nil
         weatherLabel.text = nil
-        weatherIconImageView.isHidden = true
-        weatherLabel.isHidden = true
+        weatherIconImageView.alpha = 0
+        weatherLabel.alpha = 0
     }
 
     private func setupViews() {
@@ -146,8 +146,8 @@ class DayEventCell: UICollectionViewCell {
     }
     
     private func updateWeatherUI(with weather: WeatherInfo) {
-        weatherIconImageView.image = UIImage(systemName: weather.conditionCode.symbolName())
-        weatherLabel.text = "\(Int(weather.temperature.value))°"
+        weatherIconImageView.image = UIImage(systemName: weather.condition.symbolName())
+        weatherLabel.text = "\(Int(weather.temperature))°"
 
         UIView.animate(withDuration: 0.2) {
             self.weatherIconImageView.alpha = 1

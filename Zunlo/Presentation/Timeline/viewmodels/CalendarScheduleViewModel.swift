@@ -18,8 +18,9 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var showEditChoiceDialog = false
     @Published var editChoiceContext: EditChoiceContext?
     @Published var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] = [:]
-    private var weatherCache: [Date: WeatherInfo] = [:]
-    
+
+    private let weatherCache = WeatherCache()
+
     var scrollViewProxy: ScrollViewProxy?
     let edgeExecutor = DebouncedExecutor(delay: 0.2)
     private var isCheckingEdge = false
@@ -96,20 +97,22 @@ class CalendarScheduleViewModel: ObservableObject {
     func groupOccurrencesByMonthAndDay() -> [Date: [Date: [EventOccurrence]]] {
         let calendar = Calendar.current
 
-        let allDays = Self.allDays(in: visibleRange, calendar: calendar)
+//        let allDays = Self.allDays(in: visibleRange, calendar: calendar)
         let grouped = Dictionary(grouping: eventOccurrences) { occurrence in
             calendar.date(from: calendar.dateComponents([.year, .month], from: occurrence.startDate.startOfDay))!
         }.mapValues { monthEvents in
             Dictionary(grouping: monthEvents) { $0.startDate.startOfDay }
         }
 
+        return grouped
+        
         // Ensure days with no events are still represented
-        var result: [Date: [Date: [EventOccurrence]]] = [:]
-        for day in allDays {
-            let monthKey = calendar.date(from: calendar.dateComponents([.year, .month], from: day))!
-            result[monthKey, default: [:]][day, default: []] = grouped[monthKey]?[day] ?? []
-        }
-        return result
+//        var result: [Date: [Date: [EventOccurrence]]] = [:]
+//        for day in allDays {
+//            let monthKey = calendar.date(from: calendar.dateComponents([.year, .month], from: day))!
+//            result[monthKey, default: [:]][day, default: []] = grouped[monthKey]?[day] ?? []
+//        }
+//        return result
     }
     
     static func allDays(in range: ClosedRange<Date>, calendar: Calendar) -> [Date] {
@@ -237,7 +240,7 @@ extension CalendarScheduleViewModel {
     func fetchWeather(for date: Date, completion: @escaping (WeatherInfo?) -> Void) {
         let normalizedDate = Calendar.current.startOfDay(for: date)
 
-        if let cached = weatherCache[normalizedDate] {
+        if let cached = weatherCache.get(for: normalizedDate) {
             completion(cached)
             return
         }
@@ -250,11 +253,13 @@ extension CalendarScheduleViewModel {
 
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
-        Task {
+        Task { [weak self] in
+            guard let self = self else { return }
+
             do {
                 if let info = try await WeatherService.shared.fetchWeather(for: date, location: location) {
+                    weatherCache.set(info, for: normalizedDate)
                     DispatchQueue.main.async {
-                        self.weatherCache[normalizedDate] = info
                         completion(info)
                     }
                 } else {
@@ -266,4 +271,5 @@ extension CalendarScheduleViewModel {
             }
         }
     }
+
 }
