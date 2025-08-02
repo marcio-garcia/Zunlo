@@ -18,6 +18,7 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var showEditChoiceDialog = false
     @Published var editChoiceContext: EditChoiceContext?
     @Published var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] = [:]
+    private var weatherCache: [Date: WeatherInfo] = [:]
     
     var scrollViewProxy: ScrollViewProxy?
     let edgeExecutor = DebouncedExecutor(delay: 0.2)
@@ -28,7 +29,6 @@ class CalendarScheduleViewModel: ObservableObject {
     var allOccurrences: [EventOccurrence] = []
     var allRecurringParentOccurrences: [EventOccurrence] = []
     var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
-//    let expansionThreshold: TimeInterval = 60 * 60 * 24 * 30 // ~1 month
     
     private var currentTopVisibleDay: Date = Date()
     
@@ -180,17 +180,6 @@ class CalendarScheduleViewModel: ObservableObject {
         }
     }
     
-//    func checkIfNearVisibleEdge(_ date: Date) {
-//        let startDistance = date.timeIntervalSince(visibleRange.lowerBound)
-//        let endDistance = visibleRange.upperBound.timeIntervalSince(date)
-//
-//        if startDistance < expansionThreshold {
-//            expandVisibleRange(toEarlier: true)
-//        } else if endDistance < expansionThreshold {
-//            expandVisibleRange(toEarlier: false)
-//        }
-//    }
-    
     func expandVisibleRange(toEarlier: Bool) {
         let cal = Calendar.current
         if toEarlier {
@@ -207,7 +196,7 @@ class CalendarScheduleViewModel: ObservableObject {
     private func season(by date: Date) -> Season {
         let month = Calendar.current.component(.month, from: date)
         return season(for: month,
-                      hemisphere: hemisphere(for: locationService.latitude))
+                      hemisphere: hemisphere(for: locationService.coordinate?.latitude ?? 40))
     }
     
     private func hemisphere(for latitude: CLLocationDegrees) -> String {
@@ -243,3 +232,38 @@ class CalendarScheduleViewModel: ObservableObject {
     }
 }
 
+extension CalendarScheduleViewModel {
+    @MainActor
+    func fetchWeather(for date: Date, completion: @escaping (WeatherInfo?) -> Void) {
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+
+        if let cached = weatherCache[normalizedDate] {
+            completion(cached)
+            return
+        }
+
+        guard Calendar.current.isDateInToday(date),
+              let coordinate = locationService.coordinate else {
+            completion(nil)
+            return
+        }
+
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+
+        Task {
+            do {
+                if let info = try await WeatherService.shared.fetchWeather(for: date, location: location) {
+                    DispatchQueue.main.async {
+                        self.weatherCache[normalizedDate] = info
+                        completion(info)
+                    }
+                } else {
+                    completion(nil)
+                }
+            } catch {
+                print("Weather error: \(error)")
+                completion(nil)
+            }
+        }
+    }
+}

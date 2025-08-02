@@ -177,7 +177,7 @@ extension CalendarScheduleViewController {
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "DayEventCell", for: indexPath) as! DayEventCell
                 let monthDate = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: dayDate))!
                 let events = self.viewModel.occurrencesByMonthAndDay[monthDate]?[dayDate] ?? []
-                cell.configure(with: dayDate, events: events)
+                cell.configure(with: dayDate, events: events, viewModel: viewModel)
                 return cell
             }
         }

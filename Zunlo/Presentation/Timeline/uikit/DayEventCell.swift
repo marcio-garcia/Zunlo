@@ -10,7 +10,10 @@ import SwiftUI
 
 class DayEventCell: UICollectionViewCell {
     private let containerView = UIView()
+    private let titleStackView = UIStackView()
     private let dayLabel = UILabel()
+    private let weatherIconImageView = UIImageView()
+    private let weatherLabel = UILabel()
     private let eventsStack = UIStackView()
     private let contentStackView = UIStackView()
 
@@ -24,13 +27,35 @@ class DayEventCell: UICollectionViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        weatherIconImageView.image = nil
+        weatherLabel.text = nil
+        weatherIconImageView.isHidden = true
+        weatherLabel.isHidden = true
+    }
 
     private func setupViews() {
         containerView.layer.cornerRadius = 8
         containerView.layer.borderWidth = 1
 
+        titleStackView.axis = .horizontal
+        titleStackView.spacing = 4
+        titleStackView.alignment = .leading
+        
         dayLabel.font = AppFontStyle.strongBody.uiFont()
 
+        weatherIconImageView.contentMode = .scaleAspectFit
+        weatherIconImageView.tintColor = .label // or a softer tone
+        weatherIconImageView.translatesAutoresizingMaskIntoConstraints = false
+        weatherIconImageView.alpha = 0
+
+        weatherLabel.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        weatherLabel.textColor = .secondaryLabel
+        weatherLabel.translatesAutoresizingMaskIntoConstraints = false
+        weatherLabel.alpha = 0
+        
         eventsStack.axis = .vertical
         eventsStack.spacing = 4
         eventsStack.alignment = .fill
@@ -41,7 +66,11 @@ class DayEventCell: UICollectionViewCell {
         contentStackView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
         contentStackView.isLayoutMarginsRelativeArrangement = true
 
-        contentStackView.addArrangedSubview(dayLabel)
+        titleStackView.addArrangedSubview(dayLabel)
+        titleStackView.addArrangedSubview(weatherIconImageView)
+        titleStackView.addArrangedSubview(weatherLabel)
+        
+        contentStackView.addArrangedSubview(titleStackView)
         contentStackView.addArrangedSubview(eventsStack)
 
         contentView.addSubview(containerView)
@@ -63,6 +92,9 @@ class DayEventCell: UICollectionViewCell {
             contentStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
             contentStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             contentStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            
+            weatherIconImageView.widthAnchor.constraint(equalToConstant: 16),
+            weatherIconImageView.heightAnchor.constraint(equalToConstant: 16)
         ])
     }
 
@@ -73,9 +105,26 @@ class DayEventCell: UICollectionViewCell {
         dayLabel.textColor = UIColor(Color.theme.text)
     }
     
-    func configure(with date: Date, events: [EventOccurrence]) {
+    func configure(with date: Date, events: [EventOccurrence], viewModel: CalendarScheduleViewModel) {
+        // Basic event UI
+        self.configure(with: date, events: events, weather: nil)
+
+        // Trigger weather fetch for today
+        guard date.isSameDay(as: Date()) else { return }
+
+        viewModel.fetchWeather(for: date) { [weak self] weather in
+            guard let self = self, let weather else { return }
+
+            DispatchQueue.main.async {
+                self.updateWeatherUI(with: weather)
+            }
+        }
+    }
+
+    func configure(with date: Date, events: [EventOccurrence], weather: WeatherInfo?) {
+        let isToday = date.isSameDay(as: Date())
         dayLabel.text = date.formattedDate(dateFormat: .weekAndDay)
-        dayLabel.textColor = date.isSameDay(as: Date()) ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
+        dayLabel.textColor = isToday ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
         
         eventsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
@@ -93,6 +142,16 @@ class DayEventCell: UICollectionViewCell {
                 row.tag = occ.id.hashValue // or use a map
                 eventsStack.addArrangedSubview(row)
             }
+        }
+    }
+    
+    private func updateWeatherUI(with weather: WeatherInfo) {
+        weatherIconImageView.image = UIImage(systemName: weather.conditionCode.symbolName())
+        weatherLabel.text = "\(Int(weather.temperature.value))°"
+
+        UIView.animate(withDuration: 0.2) {
+            self.weatherIconImageView.alpha = 1
+            self.weatherLabel.alpha = 1
         }
     }
     

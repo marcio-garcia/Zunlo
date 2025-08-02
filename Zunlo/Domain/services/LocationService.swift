@@ -8,8 +8,9 @@
 import CoreLocation
 
 class LocationService: NSObject, ObservableObject {
-    @Published var latitude: CLLocationDegrees = 40.0 // Default to Northern Hemisphere (fake)
+//    @Published var latitude: CLLocationDegrees = 40.0 // Default to Northern Hemisphere (fake)
     @Published var status: CLAuthorizationStatus = .notDetermined
+    @Published var coordinate: CLLocationCoordinate2D?
     
     private let manager = CLLocationManager()
     
@@ -39,7 +40,8 @@ class LocationService: NSObject, ObservableObject {
 extension LocationService: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let loc = locations.first {
-            latitude = loc.coordinate.latitude
+            coordinate = loc.coordinate
+//            latitude = loc.coordinate.latitude
         }
     }
     

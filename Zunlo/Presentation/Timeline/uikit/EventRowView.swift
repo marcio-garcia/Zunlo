@@ -85,7 +85,7 @@ class EventRowView: UIControl {
     func configure(with occurrence: EventOccurrence) {
         self.occurrence = occurrence
         titleLabel.text = occurrence.title
-
+        
         if occurrence.isFakeOccForEmptyToday {
             timeLabel.text = nil
         } else {
