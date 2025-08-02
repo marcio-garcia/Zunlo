@@ -8,21 +8,31 @@
 import SwiftUI
 import SupabaseSDK
 import MiniSignalEye
+import CoreLocation
 
 @MainActor
 final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var todaysTasks: [UserTask] = []
     @Published var todaysEvents: [EventOccurrence] = []
     @Published var greeting: String = ""
+    @Published var weather: WeatherInfo?
 
     private let taskRepository: UserTaskRepository
     private let eventRepository: EventRepository
+    private let locationService: LocationService
     
     let errorHandler = ErrorHandler()
 
-    init(taskRepository: UserTaskRepository, eventRepository: EventRepository) {
+    init(
+        taskRepository: UserTaskRepository,
+        eventRepository: EventRepository,
+        locationService: LocationService
+    ) {
         self.taskRepository = taskRepository
         self.eventRepository = eventRepository
+        self.locationService = locationService
+        
+        locationService.startUpdatingLocation()
         
         observeRepositories()
         updateGreeting()
@@ -75,11 +85,30 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     private func updateGreeting(date: Date = Date()) {
         let hour = Calendar.current.component(.hour, from: date)
 
+//        greeting = switch hour {
+//        case 5..<12: "Good morning! 👋"
+//        case 12..<17: "Good afternoon! ☀️"
+//        case 17..<22: "Good evening! 🌆"
+//        default: "Good night! 🌙"
+//        }
         greeting = switch hour {
-        case 5..<12: "Good morning! 👋"
-        case 12..<17: "Good afternoon! ☀️"
-        case 17..<22: "Good evening! 🌆"
-        default: "Good night! 🌙"
+        case 5..<12: "Good morning!"
+        case 12..<17: "Good afternoon!"
+        case 17..<22: "Good evening!"
+        default: "Good night!"
+        }
+    }
+    
+    func fetchWeather() async {
+        guard let coordinate = locationService.coordinate else { return }
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+
+        do {
+            if let info = try await WeatherService.shared.fetchWeather(for: Date(), location: location) {
+                self.weather = info
+            }
+        } catch {
+            print("Failed to fetch weather:", error)
         }
     }
 }

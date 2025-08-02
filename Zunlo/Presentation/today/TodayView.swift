@@ -41,7 +41,8 @@ struct TodayView: View {
         self.appState = appState
         _viewModel = StateObject(wrappedValue: TodayViewModel(
             taskRepository: appState.userTaskRepository,
-            eventRepository: appState.eventRepository)
+            eventRepository: appState.eventRepository,
+            locationService: appState.locationService)
         )
     }
     
@@ -66,8 +67,13 @@ struct TodayView: View {
             NavigationStack {
                 ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 24) {
-                        greetingSection
-                        showBannerIfNeeded
+//                        greetingSection
+                        if let weather = viewModel.weather {
+                            TodayWeatherView(weather: weather, greeting: viewModel.greeting)
+                        }
+                        if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
+                            showBannerSection
+                        }
                         eventsTodaySection
                         tasksTodaySection
                         quickAddSection
@@ -147,6 +153,7 @@ struct TodayView: View {
         }
         .task {
             await viewModel.fetchData()
+            await viewModel.fetchWeather()
         }
         .errorAlert(viewModel.errorHandler)
     }
@@ -156,19 +163,15 @@ struct TodayView: View {
             .themedTitle()
     }
     
-    private var showBannerIfNeeded: some View {
-        HStack {
-            if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
-                UpgradeReminderBanner(
-                    onUpgradeTap: {
-                        upgradeFlowManager.shouldShowUpgradeFlow = true
-                    },
-                    onDismissTap: {
-                        upgradeReminderManager.dismissReminder()
-                    }
-                )
+    private var showBannerSection: some View {
+        UpgradeReminderBanner(
+            onUpgradeTap: {
+                upgradeFlowManager.shouldShowUpgradeFlow = true
+            },
+            onDismissTap: {
+                upgradeReminderManager.dismissReminder()
             }
-        }
+        )
     }
 
     private var eventsTodaySection: some View {
