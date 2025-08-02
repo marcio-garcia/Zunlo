@@ -94,7 +94,7 @@ struct ThemedCardModifier: ViewModifier {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.theme.border, lineWidth: 1)
+                    .stroke(Color.theme.lightBorder, lineWidth: 1)
             )
     }
 }

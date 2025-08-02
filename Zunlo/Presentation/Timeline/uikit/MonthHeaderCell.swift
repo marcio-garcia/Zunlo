@@ -6,14 +6,17 @@
 //
 
 import UIKit
+import SwiftUI
 
 class MonthHeaderCell: UICollectionViewCell {
     private let imageView = UIImageView()
-    private let label = UILabel()
+    private let monthLabel = UILabel()
+    private let yearLabel = UILabel()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
+        setupTheme()
     }
 
     required init?(coder: NSCoder) {
@@ -21,34 +24,47 @@ class MonthHeaderCell: UICollectionViewCell {
     }
 
     private func setup() {
-        label.font = UIFont.preferredFont(forTextStyle: .headline)
-        label.textColor = .label
-
+        monthLabel.font = AppFontStyle.title.uiFont()
+        yearLabel.font = AppFontStyle.heading.uiFont()
+        
         imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 8
         imageView.setContentHuggingPriority(.required, for: .horizontal)
         imageView.clipsToBounds = true
 
         addSubview(imageView)
-        addSubview(label)
+        addSubview(monthLabel)
+        addSubview(yearLabel)
         
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        label.translatesAutoresizingMaskIntoConstraints = false
+        monthLabel.translatesAutoresizingMaskIntoConstraints = false
+        yearLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            imageView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            imageView.widthAnchor.constraint(equalTo: widthAnchor),
-            imageView.heightAnchor.constraint(equalToConstant: 120),
+            imageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            imageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 20),
+            imageView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10),
+            imageView.heightAnchor.constraint(equalToConstant: 50),
 
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            label.topAnchor.constraint(equalTo: topAnchor, constant: 30)
+            monthLabel.leadingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: 20),
+            monthLabel.centerYAnchor.constraint(equalTo: imageView.centerYAnchor),
+            
+            yearLabel.leadingAnchor.constraint(equalTo: monthLabel.trailingAnchor, constant: 4),
+            yearLabel.centerYAnchor.constraint(equalTo: imageView.centerYAnchor, constant: 3)
         ])
     }
+    
+    private func setupTheme() {
+        monthLabel.textColor = UIColor(Color.theme.text)
+        yearLabel.textColor = UIColor(Color.theme.secondaryText)
+        
+    }
 
-    func configure(title: String, imageName: String) {
-        label.text = title
+    func configure(title: String, subtitle: String, imageName: String) {
+        monthLabel.text = title
         imageView.image = UIImage(named: imageName) ?? UIImage(systemName: "calendar")
+        imageView.alpha = 0.4
+        yearLabel.text = subtitle
     }
 }

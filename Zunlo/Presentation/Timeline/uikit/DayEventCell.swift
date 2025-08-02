@@ -11,7 +11,6 @@ import SwiftUI
 class DayEventCell: UICollectionViewCell {
     private let containerView = UIView()
     private let dayLabel = UILabel()
-    private let yearLabel = UILabel()
     private let eventsStack = UIStackView()
     private let contentStackView = UIStackView()
 
@@ -27,18 +26,10 @@ class DayEventCell: UICollectionViewCell {
     }
 
     private func setupViews() {
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 1)
-        containerView.layer.cornerRadius = 10
-        containerView.layer.shadowOpacity = 0.1
-        containerView.layer.shadowRadius = 2
+        containerView.layer.cornerRadius = 8
+        containerView.layer.borderWidth = 1
 
-        dayLabel.font = AppFontStyle.heading.uiFont()
-        yearLabel.font = AppFontStyle.callout.uiFont()
-
-        let titleStack = UIStackView(arrangedSubviews: [dayLabel, yearLabel])
-        titleStack.axis = .horizontal
-        titleStack.spacing = 8
-        titleStack.alignment = .leading
+        dayLabel.font = AppFontStyle.strongBody.uiFont()
 
         eventsStack.axis = .vertical
         eventsStack.spacing = 4
@@ -50,7 +41,7 @@ class DayEventCell: UICollectionViewCell {
         contentStackView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
         contentStackView.isLayoutMarginsRelativeArrangement = true
 
-        contentStackView.addArrangedSubview(titleStack)
+        contentStackView.addArrangedSubview(dayLabel)
         contentStackView.addArrangedSubview(eventsStack)
 
         contentView.addSubview(containerView)
@@ -77,16 +68,13 @@ class DayEventCell: UICollectionViewCell {
 
     private func setupTheme() {
         contentView.backgroundColor = .clear
-        containerView.backgroundColor = .white
-        containerView.layer.shadowColor = UIColor.black.cgColor
+        containerView.backgroundColor = UIColor(Color.theme.eventCellBackground)
+        containerView.layer.borderColor = UIColor(Color.theme.lightBorder).cgColor
         dayLabel.textColor = UIColor(Color.theme.text)
-        yearLabel.textColor = UIColor(Color.theme.secondaryText)
     }
     
     func configure(with date: Date, events: [EventOccurrence]) {
         dayLabel.text = date.formattedDate(dateFormat: .weekAndDay)
-        yearLabel.text = date.formattedDate(dateFormat: .year)
-
         dayLabel.textColor = date.isSameDay(as: Date()) ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
         
         eventsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -94,8 +82,8 @@ class DayEventCell: UICollectionViewCell {
         if events.isEmpty {
             let label = UILabel()
             label.text = "No events"
-            label.font = UIFont.italicSystemFont(ofSize: 14)
-            label.textColor = .secondaryLabel
+            label.font = AppFontStyle.footnote.uiFont()
+            label.textColor = UIColor(Color.theme.secondaryText)
             eventsStack.addArrangedSubview(label)
         } else {
             for occ in events {

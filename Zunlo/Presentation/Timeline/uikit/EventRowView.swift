@@ -31,7 +31,7 @@ class EventRowView: UIControl {
     private func setup() {
         colorIndicator.layer.cornerRadius = 3
         
-        titleLabel.font = AppFontStyle.callout.uiFont()
+        titleLabel.font = AppFontStyle.heading.uiFont()
         titleLabel.numberOfLines = 1
 
         timeLabel.font = AppFontStyle.footnote.uiFont()

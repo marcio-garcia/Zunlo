@@ -168,8 +168,9 @@ extension CalendarScheduleViewController {
             case .monthHeader(let monthDate):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MonthHeaderCell", for: indexPath) as! MonthHeaderCell
                 let title = monthDate.formattedDate(dateFormat: .monthName)
+                let subtitle = monthDate.formattedDate(dateFormat: .year)
                 let image = self.viewModel.monthHeaderImageName(for: monthDate)
-                cell.configure(title: title, imageName: image)
+                cell.configure(title: title, subtitle: subtitle, imageName: image)
                 return cell
 
             case .day(let dayDate):
