@@ -58,7 +58,6 @@ struct TodayView: View {
                         if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
                             showBannerSection
                         }
-//                        quickAddSection
                         eventsTodaySection
                         tasksTodaySection
                     }
@@ -70,14 +69,11 @@ struct TodayView: View {
                     }
                 }
                 .background(
-                    Image(backgroundImageName)
-                        .resizable()
-                        .scaledToFill()
-                        .opacity(Theme.isDarkMode ? 0.5 : 1.0) 
-                        .overlay(Theme.isDarkMode ? Color.black.opacity(0.3) : Color.white.opacity(0.3))
-                        .transition(.opacity)
-                        .animation(.easeInOut(duration: 0.4), value: backgroundImageName)
-                        .ignoresSafeArea()
+                    RemoteBackgroundImage(
+                        lowResName: lowResName(for: viewModel.weather),
+                        remoteName: remoteName(for: viewModel.weather)
+                    )
+                    .ignoresSafeArea()
                 )
                 .navigationTitle("Zunlo")
                 .navigationBarTitleDisplayMode(.inline)
@@ -272,6 +268,19 @@ struct TodayView: View {
                !dismissed
     }
     
+    func lowResName(for weather: WeatherInfo?) -> String {
+        var name = backgroundImageName
+        return "\(name)_low"
+    }
+
+    func remoteName(for weather: WeatherInfo?) -> String? {
+        var name = backgroundImageName
+        if name == "bg_default" {
+            return nil
+        }
+        return "\(name).heic"
+    }
+
     private var backgroundImageName: String {
         let hour = Calendar.current.component(.hour, from: Date())
         let isDay = (6...18).contains(hour)
@@ -281,9 +290,10 @@ struct TodayView: View {
         switch weather.condition {
         case .clear, .mostlyClear: return isDay ? "bg_clear_day" : "bg_clear_night"
         case .partlyCloudy, .mostlyCloudy: return isDay ? "bg_partly_cloudy_day" : "bg_partly_cloudy_night"
-        case .cloudy: return "bg_cloudy"
-        case .rain: return "bg_rain"
-        case .snow: return "bg_snow"
+        case .cloudy: return isDay ? "bg_cloudy_day" : "bg_cloudy_night"
+        case .rain: return isDay ? "bg_rain_day" : "bg_rain_night"
+        case .snow: return isDay ? "bg_snow_day" : "bg_snow_night"
+        case .foggy: return isDay ? "bg_fog_day" : "bg_fog_night"
         default: return "bg_default"
         }
     }
