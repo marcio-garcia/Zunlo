@@ -13,14 +13,6 @@ struct TodayWeatherView: View {
     
     var body: some View {
         ZStack {
-            Image(backgroundImageName)
-                .resizable()
-                .scaledToFill()
-                .frame(height: 80)
-            //                .clipped()
-                .cornerRadius(8)
-//                .overlay(Color.black.opacity(0.3).blur(radius: 4))
-            
             VStack(alignment: .leading, spacing: 4) {
                 Text(greeting)
                     .themedTitle()
@@ -28,17 +20,15 @@ struct TodayWeatherView: View {
                     Image(systemName: weather.condition.symbolName(for: Date()))
                         .themedSubtitle()
                     
-                    VStack(alignment: .leading) {
-                        Text("\(Int(weather.measurement.value))°")
-                            .themedBody()
-                        
-                        Text(description)
-                            .themedCallout()
-                    }
+                    Text("\(Int(weather.measurement.value))°")
+                        .themedBody()
+                    
+                    Text(description)
+                        .themedCallout()
                     Spacer()
                 }
             }
-            .padding(.horizontal, 16)
+            .themedCard(blurBackground: true)
         }
     }
     

@@ -87,10 +87,22 @@ struct ThemedSubtitleModifier: ViewModifier {
 }
 
 struct ThemedCardModifier: ViewModifier {
+    var blurBackground: Bool = false
+
     func body(content: Content) -> some View {
         content
             .padding()
-            .background(Color.theme.surface)
+            .background(
+                Group {
+                    if blurBackground {
+                        Color.theme.surface
+                            .opacity(0.3)
+                            .background(.ultraThinMaterial) // system blur layer
+                    } else {
+                        Color.theme.surface
+                    }
+                }
+            )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

@@ -48,8 +48,8 @@ extension View {
         self.modifier(ThemedLabelModifier())
     }
 
-    func themedCard() -> some View {
-        self.modifier(ThemedCardModifier())
+    func themedCard(blurBackground: Bool = false) -> some View {
+        self.modifier(ThemedCardModifier(blurBackground: blurBackground))
     }
     
     func themedBanner() -> some View {

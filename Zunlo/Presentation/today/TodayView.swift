@@ -62,21 +62,37 @@ struct TodayView: View {
                !dismissed
     }
     
+    private var backgroundImageName: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let isDay = (6...18).contains(hour)
+        
+        guard let weather = viewModel.weather else { return "bg_default"}
+        return "bg_clear_night"
+        switch weather.condition {
+        case .clear, .mostlyClear: return isDay ? "bg_clear_day" : "bg_clear_night"
+        case .partlyCloudy, .mostlyCloudy: return isDay ? "bg_partly_cloudy_day" : "bg_partly_cloudy_night"
+        case .cloudy: return "bg_cloudy"
+        case .rain: return "bg_rain"
+        case .snow: return "bg_snow"
+        default: return "bg_default"
+        }
+    }
+    
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
+            Color.theme.background.ignoresSafeArea()
             NavigationStack {
                 ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 24) {
-//                        greetingSection
                         if let weather = viewModel.weather {
                             TodayWeatherView(weather: weather, greeting: viewModel.greeting)
                         }
                         if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
                             showBannerSection
                         }
+                        quickAddSection
                         eventsTodaySection
                         tasksTodaySection
-                        quickAddSection
                     }
                     .padding()
                 }
@@ -85,7 +101,15 @@ struct TodayView: View {
                         await viewModel.fetchData()
                     }
                 }
-                .defaultBackground()
+                .background(
+                    Image(backgroundImageName)
+                        .resizable()
+                        .scaledToFill()
+                        .overlay(Color.white.opacity(0.3))
+                        .transition(.opacity)
+                        .animation(.easeInOut(duration: 0.4), value: backgroundImageName)
+                        .ignoresSafeArea()
+                )
                 .navigationTitle("Zunlo")
                 .navigationBarTitleDisplayMode(.inline)
                 .sheet(isPresented: $showSchedule) {
@@ -157,11 +181,6 @@ struct TodayView: View {
         }
         .errorAlert(viewModel.errorHandler)
     }
-
-    private var greetingSection: some View {
-        Text(viewModel.greeting)
-            .themedTitle()
-    }
     
     private var showBannerSection: some View {
         UpgradeReminderBanner(
@@ -206,7 +225,7 @@ struct TodayView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
-        .themedCard()
+        .themedCard(blurBackground: true)
     }
 
     private var tasksTodaySection: some View {
@@ -240,7 +259,7 @@ struct TodayView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
-        .themedCard()
+        .themedCard(blurBackground: true)
     }
 
     private var quickAddSection: some View {
