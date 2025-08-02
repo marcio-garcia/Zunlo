@@ -22,7 +22,7 @@ struct TaskRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(task.title)
-                    .themedBody()
+                    .themedSubtitle()
                     .strikethrough(task.isCompleted, color: .gray)
                     .foregroundColor(task.isCompleted ? .gray : .primary)
 

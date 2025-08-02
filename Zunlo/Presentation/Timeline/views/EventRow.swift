@@ -23,7 +23,7 @@ struct EventRow: View {
                     .cornerRadius(3)
                 VStack(alignment: .leading) {
                     Text(occurrence.title)
-                        .themedCallout()
+                        .themedSubtitle()
                     if !occurrence.isFakeOccForEmptyToday {
                         Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
                             .themedFootnote()

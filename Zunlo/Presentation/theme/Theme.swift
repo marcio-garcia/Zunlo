@@ -61,6 +61,10 @@ struct Theme {
         highlightCool1: Color(hex: "#415C4C")!
     )
     
+    static var isDarkMode: Bool {
+        UITraitCollection.current.userInterfaceStyle == .dark
+    }
+    
     static func highlightColor(for text: String) -> Color {
         let options: [Color] = [
             Color.theme.highlightWarm1,

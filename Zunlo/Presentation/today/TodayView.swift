@@ -46,38 +46,6 @@ struct TodayView: View {
         )
     }
     
-    func getFirstLaunchDate() -> Date {
-        Date(timeIntervalSince1970: firstLaunchTimestamp)
-    }
-
-    func setFirstLaunchDate(_ date: Date) {
-        firstLaunchTimestamp = date.timeIntervalSince1970
-    }
-    
-    var shouldShowUpgradeReminder: Bool {
-        let daysUntilBanner = 3
-        let elapsed = Date().timeIntervalSince(getFirstLaunchDate())
-        return authManager.isAnonymous &&
-               elapsed > TimeInterval(60 * 60 * 24 * daysUntilBanner) &&
-               !dismissed
-    }
-    
-    private var backgroundImageName: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        let isDay = (6...18).contains(hour)
-        
-        guard let weather = viewModel.weather else { return "bg_default"}
-        return "bg_clear_night"
-        switch weather.condition {
-        case .clear, .mostlyClear: return isDay ? "bg_clear_day" : "bg_clear_night"
-        case .partlyCloudy, .mostlyCloudy: return isDay ? "bg_partly_cloudy_day" : "bg_partly_cloudy_night"
-        case .cloudy: return "bg_cloudy"
-        case .rain: return "bg_rain"
-        case .snow: return "bg_snow"
-        default: return "bg_default"
-        }
-    }
-    
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Color.theme.background.ignoresSafeArea()
@@ -90,7 +58,7 @@ struct TodayView: View {
                         if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
                             showBannerSection
                         }
-                        quickAddSection
+//                        quickAddSection
                         eventsTodaySection
                         tasksTodaySection
                     }
@@ -98,14 +66,15 @@ struct TodayView: View {
                 }
                 .refreshable {
                     Task {
-                        await viewModel.fetchData()
+                        await fetchInfo()
                     }
                 }
                 .background(
                     Image(backgroundImageName)
                         .resizable()
                         .scaledToFill()
-                        .overlay(Color.white.opacity(0.3))
+                        .opacity(Theme.isDarkMode ? 0.5 : 1.0) 
+                        .overlay(Theme.isDarkMode ? Color.black.opacity(0.3) : Color.white.opacity(0.3))
                         .transition(.opacity)
                         .animation(.easeInOut(duration: 0.4), value: backgroundImageName)
                         .ignoresSafeArea()
@@ -146,11 +115,24 @@ struct TodayView: View {
                         .environmentObject(upgradeFlowManager)
                 }
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarItem(placement: .topBarLeading) {
                         Button {
                             showSettings = true
                         } label: {
                             Label("Settings", systemImage: "slider.horizontal.3")
+                        }
+                    }
+                    
+                    ToolbarItem(placement: .topBarTrailing) {
+                        HStack(alignment: .center, spacing: 0) {
+                            Button(action: { showAddTask = true }) {
+                                Label("Add task", systemImage: "plus")
+                            }
+                            .themedSecondaryButton()
+                            Button(action: { showAddEvent = true }) {
+                                Label("Add event", systemImage: "calendar.badge.plus")
+                            }
+                            .themedSecondaryButton()
                         }
                     }
                 }
@@ -176,8 +158,7 @@ struct TodayView: View {
             }
         }
         .task {
-            await viewModel.fetchData()
-            await viewModel.fetchWeather()
+            await fetchInfo()
         }
         .errorAlert(viewModel.errorHandler)
     }
@@ -197,7 +178,7 @@ struct TodayView: View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Events today")
-                    .themedHeadline()
+                    .themedBody()
                 
                 if viewModel.todaysEvents.isEmpty {
                     Text("No events for today.")
@@ -210,7 +191,6 @@ struct TodayView: View {
                             EventRow(occurrence: event, onTap: { /* handle tap */ })
                         }
                     }
-                    .themedBody()
                 }
 
                 Button("View full schedule") {
@@ -232,7 +212,7 @@ struct TodayView: View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Tasks today")
-                    .themedHeadline()
+                    .themedBody()
 
                 if viewModel.todaysTasks.isEmpty {
                     Text("No tasks for today.")
@@ -248,7 +228,6 @@ struct TodayView: View {
                             }
                         }
                     }
-                    .themedBody()
                 }
 
                 Button("View task inbox") {
@@ -275,5 +254,42 @@ struct TodayView: View {
                 .themedSecondaryButton()
             }
         }
+    }
+    
+    func getFirstLaunchDate() -> Date {
+        Date(timeIntervalSince1970: firstLaunchTimestamp)
+    }
+
+    func setFirstLaunchDate(_ date: Date) {
+        firstLaunchTimestamp = date.timeIntervalSince1970
+    }
+    
+    var shouldShowUpgradeReminder: Bool {
+        let daysUntilBanner = 3
+        let elapsed = Date().timeIntervalSince(getFirstLaunchDate())
+        return authManager.isAnonymous &&
+               elapsed > TimeInterval(60 * 60 * 24 * daysUntilBanner) &&
+               !dismissed
+    }
+    
+    private var backgroundImageName: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let isDay = (6...18).contains(hour)
+        
+        guard let weather = viewModel.weather else { return "bg_default"}
+        
+        switch weather.condition {
+        case .clear, .mostlyClear: return isDay ? "bg_clear_day" : "bg_clear_night"
+        case .partlyCloudy, .mostlyCloudy: return isDay ? "bg_partly_cloudy_day" : "bg_partly_cloudy_night"
+        case .cloudy: return "bg_cloudy"
+        case .rain: return "bg_rain"
+        case .snow: return "bg_snow"
+        default: return "bg_default"
+        }
+    }
+    
+    private func fetchInfo() async {
+        await viewModel.fetchData()
+        await viewModel.fetchWeather()
     }
 }
