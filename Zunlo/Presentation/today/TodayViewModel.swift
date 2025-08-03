@@ -12,17 +12,19 @@ import CoreLocation
 
 @MainActor
 final class TodayViewModel: ObservableObject, @unchecked Sendable {
-    @Published var todaysTasks: [UserTask] = []
-    @Published var todaysEvents: [EventOccurrence] = []
-    @Published var greeting: String = ""
+    @Published var state: ViewState = .loading
     @Published var weather: WeatherInfo?
     @Published var eventEditHandler = EventEditHandler()
-    
+
     private let taskRepository: UserTaskRepository
     private let eventRepository: EventRepository
     private let locationService: LocationService
-    
+
     let errorHandler = ErrorHandler()
+
+    var todaysTasks: [UserTask] = []
+    var todaysEvents: [EventOccurrence] = []
+    var greeting: String = ""    
 
     init(
         taskRepository: UserTaskRepository,
@@ -51,6 +53,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
             }
             DispatchQueue.main.async {
                 self?.todaysTasks = filtered
+                self?.state = filtered.isEmpty ? .empty : .loaded
             }
         }
 
@@ -63,6 +66,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
             DispatchQueue.main.async {
                 self?.eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
                 self?.todaysEvents = filtered
+                self?.state = filtered.isEmpty ? .empty : .loaded
             }
         }
     }

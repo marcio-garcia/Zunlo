@@ -10,7 +10,7 @@ import SwiftUI
 struct TodayView: View {
     var namespace: Namespace.ID
     @Binding var showChat: Bool
-
+    
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     @EnvironmentObject var upgradeReminderManager: UpgradeReminderManager
@@ -32,7 +32,7 @@ struct TodayView: View {
     @State private var editableUserTask: UserTask?
     
     private let appState: AppState
-
+    
     init(namespace: Namespace.ID,
          showChat: Binding<Bool>,
          appState: AppState
@@ -50,121 +50,139 @@ struct TodayView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Color.theme.background.ignoresSafeArea()
-            NavigationStack {
-                ScrollView(.vertical) {
-                    VStack(alignment: .leading, spacing: 24) {
-                        if let weather = viewModel.weather {
-                            TodayWeatherView(weather: weather, greeting: viewModel.greeting)
-                        }
-                        if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
-                            showBannerSection
-                        }
-                        eventsTodaySection
-                        tasksTodaySection
-                    }
-                    .padding()
-                }
-                .refreshable {
-                    Task {
-                        await fetchInfo()
-                    }
-                }
-                .background(
-                    RemoteBackgroundImage(
-                        lowResName: lowResName(for: viewModel.weather),
-                        remoteName: remoteName(for: viewModel.weather)
-                    )
-                    .ignoresSafeArea()
-                )
-                .navigationTitle("Zunlo")
-                .navigationBarTitleDisplayMode(.inline)
-                .sheet(isPresented: $showSchedule) {
-                    CalendarScheduleContainer(
-                        viewModel: CalendarScheduleViewModel(
-                            repository: appState.eventRepository,
-                            locationService: appState.locationService
-                        )
-                    )
-                }
-                .sheet(isPresented: $showRequestPush, onDismiss: {
-                    showSchedule = true
-                }, content: {
-                    RequestPushPermissionsView(pushPermissionsDenied: appState.pushNotificationService.pushPermissionsDenied) {
-                        appState.pushNotificationService.requestNotificationPermissions { granted in
-                            showRequestPush = false
-                        }
-                    }
-                })
-                .sheet(isPresented: $showTaskInbox) {
-                    TaskInboxView(repository: appState.userTaskRepository)
-                }
-                .sheet(isPresented: $showAddTask) {
-                    AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: appState.userTaskRepository))
-                }
-                .sheet(item: $editableUserTask, content: { userTask in
-                    AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .edit(userTask), repository: appState.userTaskRepository))
-                })
-                .sheet(isPresented: $showAddEvent) {
-                    AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: appState.eventRepository))
-                }
-                .sheet(item: $viewModel.eventEditHandler.editMode) { mode in
-                    AddEditEventView(viewModel: AddEditEventViewModel(mode: mode, repository: appState.eventRepository))
-                }
-                .confirmationDialog(
-                    "Edit Recurring Event",
-                    isPresented: $viewModel.eventEditHandler.showEditChoiceDialog,
-                    titleVisibility: .visible
-                ) {
-                    Button("Edit only this occurrence") {
-                        viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
-                    }
-                    Button("Edit all occurrences") {
-                        viewModel.eventEditHandler.selectEditAllOccurrences()
-                    }
-                    Button("Cancel", role: .cancel) {
-                        viewModel.eventEditHandler.showEditChoiceDialog = false
-                    }
-                }
-                .sheet(isPresented: $showSettings) {
-                    SettingsView(authManager: appState.authManager)
-                        .environmentObject(upgradeFlowManager)
-                }
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Label("Settings", systemImage: "slider.horizontal.3")
-                        }
-                    }
-                    
-                    ToolbarItem(placement: .topBarTrailing) {
-                        HStack(alignment: .center, spacing: 0) {
-                            Button(action: { showAddTask = true }) {
-                                Label("Add task", systemImage: "note.text.badge.plus")
+            
+            switch viewModel.state {
+            case .empty, .loaded:
+                NavigationStack {
+                    ScrollView(.vertical) {
+                        VStack(alignment: .leading, spacing: 24) {
+                            if let weather = viewModel.weather {
+                                TodayWeatherView(weather: weather, greeting: viewModel.greeting)
                             }
-                            .themedSecondaryButton()
-                            Button(action: { showAddEvent = true }) {
-                                Label("Add event", systemImage: "calendar.badge.plus")
+                            if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
+                                showBannerSection
                             }
-                            .themedSecondaryButton()
+                            eventsTodaySection
+                            tasksTodaySection
+                        }
+                        .padding()
+                    }
+                    .refreshable {
+                        Task {
+                            await fetchInfo()
                         }
                     }
-                }
-            }
-
-            Button(action: { showChat = true }) {
-                Image(systemName: "bubble.left.and.bubble.right.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.white)
-                    .padding()
                     .background(
-                        Circle()
-                            .fill(Color.accentColor)
-                            .matchedGeometryEffect(id: "chatMorph", in: namespace)
+                        RemoteBackgroundImage(
+                            lowResName: lowResName(for: viewModel.weather),
+                            remoteName: remoteName(for: viewModel.weather)
+                        )
+                        .ignoresSafeArea()
                     )
+                    .navigationTitle("Zunlo")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .sheet(isPresented: $showSchedule) {
+                        CalendarScheduleContainer(
+                            viewModel: CalendarScheduleViewModel(
+                                repository: appState.eventRepository,
+                                locationService: appState.locationService
+                            )
+                        )
+                    }
+                    .sheet(isPresented: $showRequestPush, onDismiss: {
+                        showSchedule = true
+                    }, content: {
+                        RequestPushPermissionsView(pushPermissionsDenied: appState.pushNotificationService.pushPermissionsDenied) {
+                            appState.pushNotificationService.requestNotificationPermissions { granted in
+                                showRequestPush = false
+                            }
+                        }
+                    })
+                    .sheet(isPresented: $showTaskInbox) {
+                        TaskInboxView(repository: appState.userTaskRepository)
+                    }
+                    .sheet(isPresented: $showAddTask) {
+                        AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: appState.userTaskRepository))
+                    }
+                    .sheet(item: $editableUserTask, content: { userTask in
+                        AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .edit(userTask), repository: appState.userTaskRepository))
+                    })
+                    .sheet(isPresented: $showAddEvent) {
+                        AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: appState.eventRepository))
+                    }
+                    .sheet(item: $viewModel.eventEditHandler.editMode) { mode in
+                        AddEditEventView(viewModel: AddEditEventViewModel(mode: mode, repository: appState.eventRepository))
+                    }
+                    .confirmationDialog(
+                        "Edit Recurring Event",
+                        isPresented: $viewModel.eventEditHandler.showEditChoiceDialog,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Edit only this occurrence") {
+                            viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
+                        }
+                        Button("Edit all occurrences") {
+                            viewModel.eventEditHandler.selectEditAllOccurrences()
+                        }
+                        Button("Cancel", role: .cancel) {
+                            viewModel.eventEditHandler.showEditChoiceDialog = false
+                        }
+                    }
+                    .sheet(isPresented: $showSettings) {
+                        SettingsView(authManager: appState.authManager)
+                            .environmentObject(upgradeFlowManager)
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                showSettings = true
+                            } label: {
+                                Label("Settings", systemImage: "slider.horizontal.3")
+                            }
+                        }
+                        
+                        ToolbarItem(placement: .topBarTrailing) {
+                            HStack(alignment: .center, spacing: 0) {
+                                Button(action: { showAddTask = true }) {
+                                    Label("Add task", systemImage: "note.text.badge.plus")
+                                }
+                                .themedSecondaryButton()
+                                Button(action: { showAddEvent = true }) {
+                                    Label("Add event", systemImage: "calendar.badge.plus")
+                                }
+                                .themedSecondaryButton()
+                            }
+                        }
+                    }
+                }
+                
+                Button(action: { showChat = true }) {
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(
+                            Circle()
+                                .fill(Color.accentColor)
+                                .matchedGeometryEffect(id: "chatMorph", in: namespace)
+                        )
+                }
+                .padding()
+                
+            case .loading:
+                VStack {
+                    ProgressView("Loading...")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .defaultBackground()
+                
+            case .error(let message):
+                VStack {
+                    Text(message)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .defaultBackground()
             }
-            .padding()
         }
         .onAppear {
             sessionCount += 1
@@ -188,7 +206,7 @@ struct TodayView: View {
             }
         )
     }
-
+    
     private var eventsTodaySection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
@@ -225,7 +243,7 @@ struct TodayView: View {
         .frame(maxWidth: .infinity)
         .themedCard(blurBackground: true)
     }
-
+    
     private var tasksTodaySection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
@@ -243,7 +261,7 @@ struct TodayView: View {
                             .foregroundColor(Color.theme.text)
                     }
                 }
-
+                
                 if viewModel.todaysTasks.isEmpty {
                     Text("No tasks for today.")
                         .themedBody()
@@ -268,7 +286,7 @@ struct TodayView: View {
     func getFirstLaunchDate() -> Date {
         Date(timeIntervalSince1970: firstLaunchTimestamp)
     }
-
+    
     func setFirstLaunchDate(_ date: Date) {
         firstLaunchTimestamp = date.timeIntervalSince1970
     }
@@ -277,23 +295,23 @@ struct TodayView: View {
         let daysUntilBanner = 3
         let elapsed = Date().timeIntervalSince(getFirstLaunchDate())
         return authManager.isAnonymous &&
-               elapsed > TimeInterval(60 * 60 * 24 * daysUntilBanner) &&
-               !dismissed
+        elapsed > TimeInterval(60 * 60 * 24 * daysUntilBanner) &&
+        !dismissed
     }
     
     func lowResName(for weather: WeatherInfo?) -> String {
         let name = backgroundImageName
         return "\(name)_low"
     }
-
+    
     func remoteName(for weather: WeatherInfo?) -> String? {
         let name = backgroundImageName
         return name == "bg_default" ? nil : "\(name).heic"
     }
-
+    
     private var backgroundImageName: String {
         let hour = Calendar.current.component(.hour, from: Date())
-        let isDay = (6...18).contains(hour)
+        let isDay = (6...17).contains(hour)
         
         guard let weather = viewModel.weather else { return "bg_default"}
         

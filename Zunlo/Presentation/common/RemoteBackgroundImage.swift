@@ -27,9 +27,9 @@ struct RemoteBackgroundImage: View {
                     .transition(.opacity.animation(.easeInOut(duration: 0.5)))
             }
         }
-        .task(id: remoteName) {
-            await loadRemoteImage()
-        }
+//        .task(id: remoteName) {
+//            await loadRemoteImage()
+//        }
     }
 
     private func loadRemoteImage() async {

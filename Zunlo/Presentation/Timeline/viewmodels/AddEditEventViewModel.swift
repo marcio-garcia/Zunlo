@@ -65,10 +65,10 @@ final class AddEditEventViewModel: ObservableObject {
 
     func navigationTitle() -> String {
         switch mode {
-        case .add: return "Add event"
-        case .editAll: return "Edit all events"
-        case .editSingle: return "Edit this occurrence"
-        case .editOverride: return "Edit this occurrence"
+        case .add: return "Add"
+        case .editAll: return "Edit"
+        case .editSingle: return "Edit"
+        case .editOverride: return "Edit"
         }
     }
 
