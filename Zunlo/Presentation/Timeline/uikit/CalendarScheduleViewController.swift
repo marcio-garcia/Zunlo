@@ -59,7 +59,7 @@ class CalendarScheduleViewController: UIViewController {
             self?.scrollTo(date: Date(), animated: true)
         }
         topBarView.onTapAdd = { [weak self] in
-            self?.presentAddEvent()
+            self?.showAddEventView(mode: .add)
         }
         
         setupCollectionView()
@@ -116,13 +116,34 @@ class CalendarScheduleViewController: UIViewController {
         }
     }
 
-    
-    @objc private func presentAddEvent() {
-        let vm = AddEditEventViewModel(mode: .add, repository: viewModel.repository)
-        let addView = AddEditEventView(viewModel: vm)
+    private func showAddEventView(mode: AddEditEventViewMode) {
+        let vm = AddEditEventViewModel(mode: mode, repository: viewModel.repository)
+        let addView = AddEditEventView(viewModel: vm) { [weak self] updatedEventStartDate in
+            guard let self else { return }
+            self.collectionView.reloadData()
+            // TODO: Make the callback return the updatd event then update the model and apply to the dataSource
+//            let occ = self.findOccurrence(startDate: updatedEventStartDate)
+//           currentEvents[index] = updatedEvent
+//           var snapshot = NSDiffableDataSourceSnapshot<Section, Event>()
+//           snapshot.appendSections([.main]) // Adjust if using multiple sections
+//           snapshot.appendItems(currentEvents, toSection: .main)
+//           dataSource.apply(snapshot, animatingDifferences: true)
+        }
         let host = UIHostingController(rootView: addView)
         host.modalPresentationStyle = .formSheet
         present(host, animated: true)
+    }
+    
+    private func findOccurrence(startDate targetDate: Date) -> EventOccurrence? {
+        let calendar = Calendar.current
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: targetDate))!
+        let startOfDay = calendar.startOfDay(for: targetDate)
+
+        if let dayDict = viewModel.occurrencesByMonthAndDay[startOfMonth],
+           let occurrences = dayDict[startOfDay] {
+            return occurrences.first(where: { $0.startDate == targetDate })
+        }
+        return nil
     }
 }
 
@@ -178,6 +199,17 @@ extension CalendarScheduleViewController {
                 let monthDate = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: dayDate))!
                 let events = self.viewModel.occurrencesByMonthAndDay[monthDate]?[dayDate] ?? []
                 cell.configure(with: dayDate, events: events, viewModel: viewModel)
+                cell.onTap = { occurrence in
+                    guard let occurrence else { return }
+                    self.viewModel.onEventEditTapped(occurrence) { mode, showDialog in
+                        if showDialog {
+                            self.showActionSheet()
+                        } else {
+                            guard let mode else { return }
+                            self.showAddEventView(mode: mode)
+                        }
+                    }
+                }
                 return cell
             }
         }
@@ -264,5 +296,41 @@ extension CalendarScheduleViewController: UICollectionViewDelegate {
         }
         
         return date
+    }
+}
+
+extension CalendarScheduleViewController {
+    func showActionSheet() {
+        let sheet = UIAlertController(
+            title: "Edit Recurring Event",
+            message: nil,
+            preferredStyle: .actionSheet
+        )
+        
+        sheet.addAction(UIAlertAction(
+            title: "Edit only this occurrence",
+            style: .default,
+            handler: { action in
+                self.viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
+                guard let editMode = self.viewModel.eventEditHandler.editMode else { return }
+                self.showAddEventView(mode: editMode)
+            }))
+        
+        sheet.addAction(UIAlertAction(
+            title: "Edit all occurrences",
+            style: .default,
+            handler: { action in
+                self.viewModel.eventEditHandler.selectEditAllOccurrences()
+                guard let editMode = self.viewModel.eventEditHandler.editMode else { return }
+                self.showAddEventView(mode: editMode)
+            }))
+        
+        sheet.addAction(UIAlertAction(
+            title: "Cancel",
+            style: .cancel,
+            handler: { action in
+                self.viewModel.eventEditHandler.showEditChoiceDialog = false
+            }))
+        present(sheet, animated: true)
     }
 }

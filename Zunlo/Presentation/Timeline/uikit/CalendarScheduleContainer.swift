@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CalendarScheduleContainer: UIViewControllerRepresentable {
-    let viewModel: CalendarScheduleViewModel
+    @ObservedObject var viewModel: CalendarScheduleViewModel
 
     func makeUIViewController(context: Context) -> CalendarScheduleViewController {
         CalendarScheduleViewController(viewModel: viewModel)

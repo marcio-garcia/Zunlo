@@ -11,14 +11,19 @@ import CoreLocation
 
 enum Season: String { case winter, spring, summer, autumn }
 
+struct EditChoiceContext {
+    let occurrence: EventOccurrence
+    let parentEvent: EventOccurrence
+    let rule: RecurrenceRule?
+}
+
 class CalendarScheduleViewModel: ObservableObject {
     @Published var state = ViewState.loading
     @Published var showAddSheet = false
-    @Published var editMode: AddEditEventViewModel.Mode?
-    @Published var showEditChoiceDialog = false
     @Published var editChoiceContext: EditChoiceContext?
     @Published var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] = [:]
-
+    @Published var eventEditHandler = EventEditHandler()
+    
     private let weatherCache = WeatherCache()
 
     var scrollViewProxy: ScrollViewProxy?
@@ -28,7 +33,6 @@ class CalendarScheduleViewModel: ObservableObject {
     
     // For grouping and access
     var allOccurrences: [EventOccurrence] = []
-    var allRecurringParentOccurrences: [EventOccurrence] = []
     var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
     
     private var currentTopVisibleDay: Date = Date()
@@ -42,24 +46,18 @@ class CalendarScheduleViewModel: ObservableObject {
     var overridesObservID: UUID?
     var rulesObservID: UUID?
     
-    struct EditChoiceContext {
-        let occurrence: EventOccurrence
-        let parentEvent: EventOccurrence
-        let rule: RecurrenceRule?
-    }
-    
     init(repository: EventRepository,
          locationService: LocationService) {
         
         self.repository = repository
         self.locationService = locationService
         self.visibleRange = defaultDateRange()
-
+        
         // Bind to repository data observers
         occurObservID = repository.occurrences.observe(owner: self, fireNow: false, onChange: { [weak self] occurrences in
             guard let self else { return }
             self.allOccurrences = occurrences
-            self.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
+            self.eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
             self.handleOccurrences(occurrences, in: self.visibleRange)
         })
     }
@@ -128,39 +126,20 @@ class CalendarScheduleViewModel: ObservableObject {
         return days
     }
 
-    func handleEdit(occurrence: EventOccurrence) {
-        if occurrence.isOverride {
-            if let override = occurrence.overrides.first(where: { $0.id == occurrence.id }) {
-                editMode = .editOverride(override: override)
-            }
-        } else if let parent = allRecurringParentOccurrences.first(where: { $0.id == occurrence.eventId }) {
-            let rule = occurrence.recurrence_rules.first(where: { $0.eventId == parent.eventId })
-            if parent.isRecurring {
-                editChoiceContext = EditChoiceContext(occurrence: occurrence, parentEvent: parent, rule: rule)
-                showEditChoiceDialog = true
-            } else {
-                editMode = .editAll(event: parent, recurrenceRule: nil)
-            }
+    func onEventEditTapped(_ occurrence: EventOccurrence, completion: (AddEditEventViewMode?, Bool) -> Void) {
+        eventEditHandler.handleEdit(occurrence: occurrence) { mode, showDialog in
+            completion(mode, showDialog)
         }
-    }
-    
-    func selectEditOnlyThisOccurrence() {
-        guard let ctx = editChoiceContext else { return }
-        editMode = .editSingle(parentEvent: ctx.parentEvent, recurrenceRule: ctx.rule, occurrence: ctx.occurrence)
-        showEditChoiceDialog = false
-        editChoiceContext = nil
-    }
-    func selectEditAllOccurrences() {
-        guard let ctx = editChoiceContext else { return }
-        editMode = .editAll(event: ctx.parentEvent, recurrenceRule: ctx.rule)
-        showEditChoiceDialog = false
-        editChoiceContext = nil
     }
 
     func handleDelete(occurrence: EventOccurrence) {
         // Implement actual delete logic here
     }
-    
+}
+
+// MARK: Expand range
+
+extension CalendarScheduleViewModel {
     func checkTop(date: Date) {
         if !isCheckingEdge {
             isCheckingEdge = true
@@ -195,45 +174,9 @@ class CalendarScheduleViewModel: ObservableObject {
         }
         handleOccurrences(allOccurrences, in: visibleRange)
     }
-
-    private func season(by date: Date) -> Season {
-        let month = Calendar.current.component(.month, from: date)
-        return season(for: month,
-                      hemisphere: hemisphere(for: locationService.coordinate?.latitude ?? 40))
-    }
-    
-    private func hemisphere(for latitude: CLLocationDegrees) -> String {
-        latitude >= 0 ? "north" : "south"
-    }
-    
-    private func season(for month: Int, hemisphere: String) -> Season {
-        // month: 1 = January ... 12 = December
-        switch (hemisphere, month) {
-        case ("north", 12), ("north", 1), ("north", 2): return .winter
-        case ("north", 3), ("north", 4), ("north", 5): return .spring
-        case ("north", 6), ("north", 7), ("north", 8): return .summer
-        case ("north", 9), ("north", 10), ("north", 11): return .autumn
-        case ("south", 6), ("south", 7), ("south", 8): return .winter
-        case ("south", 9), ("south", 10), ("south", 11): return .spring
-        case ("south", 12), ("south", 1), ("south", 2): return .summer
-        case ("south", 3), ("south", 4), ("south", 5): return .autumn
-        default: return .summer // fallback
-        }
-    }
-    
-    func monthHeaderImageName(for date: Date) -> String {
-        return imageName(for: season(by: date))
-    }
-    
-    private func imageName(for season: Season) -> String {
-        switch season {
-        case .spring: return "spring"
-        case .summer: return "summer"
-        case .autumn: return "autumn"
-        case .winter: return "winter"
-        }
-    }
 }
+
+// MARK: Weather info
 
 extension CalendarScheduleViewModel {
     @MainActor
@@ -272,4 +215,46 @@ extension CalendarScheduleViewModel {
         }
     }
 
+}
+
+// MARK: Event month header image selection
+
+extension CalendarScheduleViewModel {
+    private func season(by date: Date) -> Season {
+        let month = Calendar.current.component(.month, from: date)
+        return season(for: month,
+                      hemisphere: hemisphere(for: locationService.coordinate?.latitude ?? 40))
+    }
+    
+    private func hemisphere(for latitude: CLLocationDegrees) -> String {
+        latitude >= 0 ? "north" : "south"
+    }
+    
+    private func season(for month: Int, hemisphere: String) -> Season {
+        // month: 1 = January ... 12 = December
+        switch (hemisphere, month) {
+        case ("north", 12), ("north", 1), ("north", 2): return .winter
+        case ("north", 3), ("north", 4), ("north", 5): return .spring
+        case ("north", 6), ("north", 7), ("north", 8): return .summer
+        case ("north", 9), ("north", 10), ("north", 11): return .autumn
+        case ("south", 6), ("south", 7), ("south", 8): return .winter
+        case ("south", 9), ("south", 10), ("south", 11): return .spring
+        case ("south", 12), ("south", 1), ("south", 2): return .summer
+        case ("south", 3), ("south", 4), ("south", 5): return .autumn
+        default: return .summer // fallback
+        }
+    }
+    
+    func monthHeaderImageName(for date: Date) -> String {
+        return imageName(for: season(by: date))
+    }
+    
+    private func imageName(for season: Season) -> String {
+        switch season {
+        case .spring: return "spring"
+        case .summer: return "summer"
+        case .autumn: return "autumn"
+        case .winter: return "winter"
+        }
+    }
 }

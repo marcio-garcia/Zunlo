@@ -35,7 +35,8 @@ struct TodayView: View {
 
     init(namespace: Namespace.ID,
          showChat: Binding<Bool>,
-         appState: AppState) {
+         appState: AppState
+    ) {
         self.namespace = namespace
         self._showChat = showChat
         self.appState = appState
@@ -106,6 +107,24 @@ struct TodayView: View {
                 .sheet(isPresented: $showAddEvent) {
                     AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: appState.eventRepository))
                 }
+                .sheet(item: $viewModel.eventEditHandler.editMode) { mode in
+                    AddEditEventView(viewModel: AddEditEventViewModel(mode: mode, repository: appState.eventRepository))
+                }
+                .confirmationDialog(
+                    "Edit Recurring Event",
+                    isPresented: $viewModel.eventEditHandler.showEditChoiceDialog,
+                    titleVisibility: .visible
+                ) {
+                    Button("Edit only this occurrence") {
+                        viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
+                    }
+                    Button("Edit all occurrences") {
+                        viewModel.eventEditHandler.selectEditAllOccurrences()
+                    }
+                    Button("Cancel", role: .cancel) {
+                        viewModel.eventEditHandler.showEditChoiceDialog = false
+                    }
+                }
                 .sheet(isPresented: $showSettings) {
                     SettingsView(authManager: appState.authManager)
                         .environmentObject(upgradeFlowManager)
@@ -122,7 +141,7 @@ struct TodayView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         HStack(alignment: .center, spacing: 0) {
                             Button(action: { showAddTask = true }) {
-                                Label("Add task", systemImage: "plus")
+                                Label("Add task", systemImage: "note.text.badge.plus")
                             }
                             .themedSecondaryButton()
                             Button(action: { showAddEvent = true }) {
@@ -173,30 +192,33 @@ struct TodayView: View {
     private var eventsTodaySection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Events today")
-                    .themedBody()
+                HStack {
+                    Label {
+                        Text("Events Today").themedBody()
+                    } icon: {
+                        Image(systemName: "calendar")
+                            .foregroundColor(Color.theme.text)
+                    }
+                    Spacer()
+                    Button(action: { showSchedule = true }) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color.theme.text)
+                    }
+                }
                 
                 if viewModel.todaysEvents.isEmpty {
                     Text("No events for today.")
                         .themedBody()
-                        .foregroundColor(.gray)
-                    
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(viewModel.todaysEvents) { event in
-                            EventRow(occurrence: event, onTap: { /* handle tap */ })
+                            EventRow(occurrence: event, onTap: {
+                                viewModel.onEventEditTap(event)
+                            })
                         }
                     }
                 }
-
-                Button("View full schedule") {
-                    if appState.pushNotificationService.pushPermissionsGranted {
-                        showSchedule = true
-                    } else {
-                        showRequestPush = true
-                    }
-                }
-                .themedTertiaryButton()
             }
             Spacer()
         }
@@ -207,13 +229,24 @@ struct TodayView: View {
     private var tasksTodaySection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Tasks today")
-                    .themedBody()
+                HStack {
+                    Label {
+                        Text("Tasks Today").themedBody()
+                    } icon: {
+                        Image(systemName: "note.text")
+                            .foregroundColor(Color.theme.text)
+                    }
+                    Spacer()
+                    Button(action: { showTaskInbox = true }) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color.theme.text)
+                    }
+                }
 
                 if viewModel.todaysTasks.isEmpty {
                     Text("No tasks for today.")
                         .themedBody()
-                        .foregroundColor(.gray)
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(viewModel.todaysTasks) { task in
@@ -225,31 +258,11 @@ struct TodayView: View {
                         }
                     }
                 }
-
-                Button("View task inbox") {
-                    showTaskInbox = true
-                }
-                .themedTertiaryButton()
             }
             Spacer()
         }
         .frame(maxWidth: .infinity)
         .themedCard(blurBackground: true)
-    }
-
-    private var quickAddSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Button(action: { showAddTask = true }) {
-                    Label("Add task", systemImage: "plus")
-                }
-                .themedSecondaryButton()
-                Button(action: { showAddEvent = true }) {
-                    Label("Add event", systemImage: "calendar.badge.plus")
-                }
-                .themedSecondaryButton()
-            }
-        }
     }
     
     func getFirstLaunchDate() -> Date {
@@ -269,16 +282,13 @@ struct TodayView: View {
     }
     
     func lowResName(for weather: WeatherInfo?) -> String {
-        var name = backgroundImageName
+        let name = backgroundImageName
         return "\(name)_low"
     }
 
     func remoteName(for weather: WeatherInfo?) -> String? {
-        var name = backgroundImageName
-        if name == "bg_default" {
-            return nil
-        }
-        return "\(name).heic"
+        let name = backgroundImageName
+        return name == "bg_default" ? nil : "\(name).heic"
     }
 
     private var backgroundImageName: String {

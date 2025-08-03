@@ -12,6 +12,9 @@ struct AddEditEventView: View {
     @StateObject var viewModel: AddEditEventViewModel
     @State private var showUntil: Bool = false
     @State private var error: String?
+    @State private var updatedEventStartDate: Date?
+    
+    var onDismiss: ((Date) -> Void)?
 
     private let recurrenceOptions: [String] = ["daily", "weekly", "monthly"]
 
@@ -66,9 +69,11 @@ struct AddEditEventView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        updatedEventStartDate = nil
                         viewModel.save { result in
                             switch result {
-                            case .success:
+                            case .success(let startDate):
+                                updatedEventStartDate = startDate
                                 dismiss()
                             case .failure(let err):
                                 error = err.localizedDescription
@@ -76,6 +81,10 @@ struct AddEditEventView: View {
                         }
                     }
                     .disabled(viewModel.title.isEmpty || viewModel.isProcessing)
+                    .onDisappear {
+                        guard let updatedEventStartDate else { return }
+                        onDismiss?(updatedEventStartDate)
+                    }
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

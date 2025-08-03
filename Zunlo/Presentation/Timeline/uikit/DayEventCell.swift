@@ -17,6 +17,8 @@ class DayEventCell: UICollectionViewCell {
     private let eventsStack = UIStackView()
     private let contentStackView = UIStackView()
 
+    var onTap: ((EventOccurrence?) -> Void)?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -138,8 +140,9 @@ class DayEventCell: UICollectionViewCell {
             for occ in events {
                 let row = EventRowView()
                 row.configure(with: occ)
-                row.addTarget(self, action: #selector(eventTapped(_:)), for: .touchUpInside)
-                row.tag = occ.id.hashValue // or use a map
+                row.onTap = { [weak self] occ in
+                    self?.onTap?(occ)
+                }
                 eventsStack.addArrangedSubview(row)
             }
         }
@@ -154,10 +157,4 @@ class DayEventCell: UICollectionViewCell {
             self.weatherLabel.alpha = 1
         }
     }
-    
-    @objc private func eventTapped(_ sender: UIControl) {
-        // You can use delegation or closure callbacks to notify parent
-        print("Tapped event with tag:", sender.tag)
-    }
-
 }

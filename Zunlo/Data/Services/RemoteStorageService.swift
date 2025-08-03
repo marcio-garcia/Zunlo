@@ -14,16 +14,6 @@ final class RemoteStorageService {
     init(envConfig: EnvConfig) {
         supabase = SupabaseClient(supabaseURL: URL(string: envConfig.apiBaseUrl)!,
                                   supabaseKey: envConfig.apiKey)
-        Task {
-            do {
-                let bucket = supabase.storage.from("images")
-                let files = try await bucket.list()
-            
-                files.forEach { print($0.name) }
-            } catch {
-                print("******* error: \(error.localizedDescription)")
-            }
-        }
     }
     
     func uploadImage(_ imageData: Data, fileName: String) async {

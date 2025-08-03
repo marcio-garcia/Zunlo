@@ -14,15 +14,25 @@ enum EventError: Error {
     case errorOnEventDelete
 }
 
+enum AddEditEventViewMode: Identifiable {
+    case add
+    case editAll(event: EventOccurrence, recurrenceRule: RecurrenceRule?)
+    case editSingle(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
+    case editOverride(override: EventOverride)
+    
+    var id: String {
+        switch self {
+        case .add: return "add"
+        case .editAll(let event, _): return "editAll-\(event.id)"
+        case .editSingle(let parent, _, let occurrence):
+            return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
+        case .editOverride(let override): return "editOverride-\(override.id ?? UUID())"
+        }
+    }
+}
+
 @MainActor
 final class AddEditEventViewModel: ObservableObject {
-    enum Mode {
-        case add
-        case editAll(event: EventOccurrence, recurrenceRule: RecurrenceRule?)
-        case editSingle(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
-        case editOverride(override: EventOverride)
-    }
-
     @Published var title: String = ""
     @Published var notes: String = ""
     @Published var startDate: Date = Date()
@@ -44,10 +54,10 @@ final class AddEditEventViewModel: ObservableObject {
     /// calendarByWeekday maps to Calendar's 1=Sunday...7=Saturday.
     @Published var byWeekday: Set<Int> = []
     
-    let mode: Mode
+    let mode: AddEditEventViewMode
     let repository: EventRepository
 
-    init(mode: Mode, repository: EventRepository) {
+    init(mode: AddEditEventViewMode, repository: EventRepository) {
         self.mode = mode
         self.repository = repository
         loadFields()
@@ -175,7 +185,7 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
     
-    func save(completion: @escaping (Result<Void, Error>) -> Void) {
+    func save(completion: @escaping (Result<Date, Error>) -> Void) {
         guard !title.isEmpty else { return }
         isProcessing = true
 
@@ -192,7 +202,7 @@ final class AddEditEventViewModel: ObservableObject {
                     try await editOverride(override: override)
                 }
                 isProcessing = false
-                completion(.success(()))
+                completion(.success(self.startDate))
             } catch {
                 isProcessing = false
                 completion(.failure(error))
@@ -216,6 +226,8 @@ final class AddEditEventViewModel: ObservableObject {
             color: EventColor(rawValue: color) ?? . yellow,
             reminderTriggers: reminderTriggers
         )
+        
+        // TODO: find a way to perform both saves in a single transaction
         
         let addedEvents = try await repository.save(newEvent)
         guard let event = addedEvents.first, let newEventId = event.id else {
@@ -323,23 +335,5 @@ final class AddEditEventViewModel: ObservableObject {
     
     func updateEndDate() {
         endDate = Calendar.current.date(byAdding: .hour, value: 1, to: startDate) ?? startDate
-    }
-}
-
-extension AddEditEventViewModel.Mode: Identifiable {
-    var id: String {
-        switch self {
-        case .add: return "add"
-        case .editAll(let event, _): return "editAll-\(event.id)"
-        case .editSingle(let parent, _, let occurrence):
-            return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
-        case .editOverride(let override): return "editOverride-\(override.id)"
-        }
-    }
-}
-
-extension AddEditEventViewModel {
-    func sss() {
-        
     }
 }

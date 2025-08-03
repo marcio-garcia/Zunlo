@@ -14,9 +14,11 @@ class EventRowView: UIControl {
     private let timeLabel = UILabel()
     private let overrideIcon = UIImageView()
     private let contentStackView = UIStackView()
+    private let overlayButton = UIButton()
     
     private var occurrence: EventOccurrence?
-
+    var onTap: ((EventOccurrence?) -> Void)?
+    
     init() {
         super.init(frame: .zero)
         setup()
@@ -53,13 +55,17 @@ class EventRowView: UIControl {
         contentStackView.addArrangedSubview(UIView())
         contentStackView.addArrangedSubview(overrideIcon)
         
+        overlayButton.addTarget(self, action: #selector(viewTapped), for: .touchUpInside)
+        
         addSubview(contentStackView)
+        addSubview(overlayButton)
     }
 
     private func setupConstraints() {
         colorIndicator.translatesAutoresizingMaskIntoConstraints = false
         overrideIcon.translatesAutoresizingMaskIntoConstraints = false
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
+        overlayButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             contentStackView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
@@ -71,7 +77,12 @@ class EventRowView: UIControl {
             colorIndicator.heightAnchor.constraint(equalTo: contentStackView.heightAnchor),
             
             overrideIcon.widthAnchor.constraint(equalToConstant: 16),
-            overrideIcon.heightAnchor.constraint(equalToConstant: 16)
+            overrideIcon.heightAnchor.constraint(equalToConstant: 16),
+            
+            overlayButton.topAnchor.constraint(equalTo: topAnchor),
+            overlayButton.bottomAnchor.constraint(equalTo: bottomAnchor),
+            overlayButton.leadingAnchor.constraint(equalTo: leadingAnchor),
+            overlayButton.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
     
@@ -103,10 +114,8 @@ class EventRowView: UIControl {
 
         overrideIcon.isHidden = !occurrence.isOverride
     }
-
-//    override var isHighlighted: Bool {
-//        didSet {
-//            backgroundColor = isHighlighted ? UIColor.systemGray5 : .clear
-//        }
-//    }
+    
+    @objc func viewTapped(gesture: UITapGestureRecognizer) {
+        onTap?(occurrence)
+    }
 }
