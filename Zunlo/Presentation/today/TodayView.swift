@@ -65,6 +65,7 @@ struct TodayView: View {
                             eventsTodaySection
                             tasksTodaySection
                         }
+                        .padding(.top, 44)
                         .padding()
                     }
                     .refreshable {
@@ -79,8 +80,6 @@ struct TodayView: View {
                         )
                         .ignoresSafeArea()
                     )
-                    .navigationTitle("Zunlo")
-                    .navigationBarTitleDisplayMode(.inline)
                     .sheet(isPresented: $showSchedule) {
                         CalendarScheduleContainer(
                             viewModel: CalendarScheduleViewModel(
@@ -132,28 +131,6 @@ struct TodayView: View {
                         SettingsView(authManager: appState.authManager)
                             .environmentObject(upgradeFlowManager)
                     }
-                    .toolbar {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button {
-                                showSettings = true
-                            } label: {
-                                Label("Settings", systemImage: "slider.horizontal.3")
-                            }
-                        }
-                        
-                        ToolbarItem(placement: .topBarTrailing) {
-                            HStack(alignment: .center, spacing: 0) {
-                                Button(action: { showAddTask = true }) {
-                                    Label("Add task", systemImage: "note.text.badge.plus")
-                                }
-                                .themedSecondaryButton()
-                                Button(action: { showAddEvent = true }) {
-                                    Label("Add event", systemImage: "calendar.badge.plus")
-                                }
-                                .themedSecondaryButton()
-                            }
-                        }
-                    }
                 }
                 
                 Button(action: { showChat = true }) {
@@ -169,6 +146,31 @@ struct TodayView: View {
                 }
                 .padding()
                 
+                VStack(spacing: 0) {
+                    ToolbarView(blurStyle: Theme.isDarkMode ? .dark : .light) {
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                        }
+                        .themedSecondaryButton()
+                    } center: {
+                        Text("Zunlo")
+                            .themedHeadline()
+                    } trailing: {
+                        HStack(alignment: .center, spacing: 0) {
+                            Button(action: { showAddTask = true }) {
+                                Image(systemName: "note.text.badge.plus")
+                            }
+                            .themedSecondaryButton()
+                            Button(action: { showAddEvent = true }) {
+                                Image(systemName: "calendar.badge.plus")
+                            }
+                            .themedSecondaryButton()
+                        }
+                    }
+                    Spacer()
+                }
             case .loading:
                 VStack {
                     ProgressView("Loading...")
@@ -314,7 +316,7 @@ struct TodayView: View {
         let isDay = (6...17).contains(hour)
         
         guard let weather = viewModel.weather else { return "bg_default"}
-        
+
         switch weather.condition {
         case .clear, .mostlyClear: return isDay ? "bg_clear_day" : "bg_clear_night"
         case .partlyCloudy, .mostlyCloudy: return isDay ? "bg_partly_cloudy_day" : "bg_partly_cloudy_night"

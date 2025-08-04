@@ -24,7 +24,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
 
     var todaysTasks: [UserTask] = []
     var todaysEvents: [EventOccurrence] = []
-    var greeting: String = ""    
+    var greeting: String = ""
 
     init(
         taskRepository: UserTaskRepository,
@@ -46,7 +46,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
             let today = Calendar.current.startOfDay(for: Date())
             let filtered = tasks.filter {
                 if let due = $0.dueDate {
-                    return Calendar.current.isDate(due, inSameDayAs: today)
+                    return due <= today && !$0.isCompleted
                 } else {
                     return !$0.isCompleted
                 }

@@ -15,7 +15,7 @@ struct TodayWeatherView: View {
         ZStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(greeting)
-                    .themedTitle()
+                    .themedSubtitle()
                 HStack {
                     Image(systemName: weather.condition.symbolName(for: Date()))
                         .themedSubtitle()
