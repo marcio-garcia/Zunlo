@@ -266,7 +266,7 @@ final class AddEditEventViewModel: ObservableObject {
             createdAt: event.createdAt,
             updatedAt: now,
             color: EventColor(rawValue: color) ?? . yellow,
-            reminderTriggers: event.reminderTriggers
+            reminderTriggers: reminderTriggers
         )
         
         try await repository.update(updatedEvent)
