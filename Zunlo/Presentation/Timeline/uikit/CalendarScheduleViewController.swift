@@ -45,6 +45,12 @@ class CalendarScheduleViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+//        // Allow layout under the safe area (status bar)
+//        self.edgesForExtendedLayout = [.top, .bottom]
+//        
+//        // Ensure navigation bar (if any) is hidden
+//        self.navigationController?.setNavigationBarHidden(true, animated: false)
+        
         setupViews()
         setupConstraints()
         setupTheme()

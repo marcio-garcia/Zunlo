@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		251483592E4102A800B59FF8 /* FlowNavigator in Frameworks */ = {isa = PBXBuildFile; productRef = 251483582E4102A800B59FF8 /* FlowNavigator */; };
 		2520F8A82E351AB500B89324 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2520F8A72E351AB500B89324 /* RealmSwift */; };
 		2520F8A92E351AB500B89324 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 2520F8A72E351AB500B89324 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		252D730E2E2D5E6C002320B8 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 252D730D2E2D5E6C002320B8 /* Auth */; };
@@ -66,6 +67,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		251483572E40FB8A00B59FF8 /* FlowNavigator */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = FlowNavigator; sourceTree = "<group>"; };
 		25FA19FD2E0854F800E740A3 /* Zunlo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zunlo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FA1A0F2E0854F900E740A3 /* ZunloTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZunloTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FA1A192E0854F900E740A3 /* ZunloUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZunloUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -116,6 +118,7 @@
 				25ACE3482E25F028009F0218 /* FirebaseMessaging in Frameworks */,
 				252D73122E2D5E6C002320B8 /* PostgREST in Frameworks */,
 				252D73102E2D5E6C002320B8 /* Functions in Frameworks */,
+				251483592E4102A800B59FF8 /* FlowNavigator in Frameworks */,
 				25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */,
 				252D73162E2D5E6C002320B8 /* Storage in Frameworks */,
 				255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */,
@@ -143,6 +146,7 @@
 		25FA19F42E0854F800E740A3 = {
 			isa = PBXGroup;
 			children = (
+				251483572E40FB8A00B59FF8 /* FlowNavigator */,
 				25FAA96E2E0B6D55000AACA2 /* SupabaseSDK */,
 				25FA19FF2E0854F800E740A3 /* Zunlo */,
 				25FA1A122E0854F900E740A3 /* ZunloTests */,
@@ -201,6 +205,7 @@
 				252D73132E2D5E6C002320B8 /* Realtime */,
 				252D73152E2D5E6C002320B8 /* Storage */,
 				252D73172E2D5E6C002320B8 /* Supabase */,
+				251483582E4102A800B59FF8 /* FlowNavigator */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -862,6 +867,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		251483582E4102A800B59FF8 /* FlowNavigator */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FlowNavigator;
+		};
 		2520F8A72E351AB500B89324 /* RealmSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */;

@@ -22,7 +22,7 @@ final class CalendarTopBarView: UIView {
     private let todayButton = UIButton(type: .system)
     private let addButton = UIButton(type: .system)
     private let bottomSeparator = UIView()
-    private let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+    private let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
 
     private var titleCenterXConstraint: NSLayoutConstraint!
     
@@ -31,14 +31,14 @@ final class CalendarTopBarView: UIView {
         super.init(frame: frame)
         setupView()
         setupConstraints()
-        applyTheme()
+        setupTheme()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupView()
         setupConstraints()
-        applyTheme()
+        setupTheme()
     }
 
     // MARK: - Public API
@@ -57,28 +57,17 @@ final class CalendarTopBarView: UIView {
 
     // MARK: - Private setup
     private func setupView() {
-        backgroundColor = UIColor(Color.theme.background).withAlphaComponent(0.3)
-
-        blurView.translatesAutoresizingMaskIntoConstraints = false
         blurView.effect = UIBlurEffect(style: traitCollection.userInterfaceStyle == .dark ? .dark : .light)
-        addSubview(blurView)
         
-        contentContainer.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(contentContainer)
-
         var closeConfig = UIButton.Configuration.plain()
         closeConfig.image = UIImage(systemName: "xmark")
         closeConfig.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6)
         closeButton.configuration = closeConfig
         closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        contentContainer.addSubview(closeButton)
         
         rightStack.axis = .horizontal
         rightStack.alignment = .center
         rightStack.spacing = 4
-        rightStack.translatesAutoresizingMaskIntoConstraints = false
-        contentContainer.addSubview(rightStack)
         
         var todayConfig = UIButton.Configuration.plain()
         todayConfig.image = UIImage(systemName: "calendar.badge.clock")
@@ -94,23 +83,29 @@ final class CalendarTopBarView: UIView {
         addButton.configuration = addConfig
         addButton.addTarget(self, action: #selector(handleAddTapped), for: .touchUpInside)
 
-        rightStack.addArrangedSubview(todayButton)
-        rightStack.addArrangedSubview(addButton)
-        
         titleLabel.font = AppFontStyle.heading.uiFont()
         titleLabel.textAlignment = .center
         titleLabel.adjustsFontForContentSizeCategory = true
         titleLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(titleLabel)
         
-        // Separator
-        bottomSeparator.backgroundColor = UIColor.separator.withAlphaComponent(0.1)
-        bottomSeparator.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(blurView)
+        addSubview(contentContainer)
+        contentContainer.addSubview(closeButton)
+        contentContainer.addSubview(rightStack)
+        rightStack.addArrangedSubview(todayButton)
+        rightStack.addArrangedSubview(addButton)
+        addSubview(titleLabel)
         addSubview(bottomSeparator)
     }
 
     private func setupConstraints() {
+        blurView.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.translatesAutoresizingMaskIntoConstraints = false
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        rightStack.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        bottomSeparator.translatesAutoresizingMaskIntoConstraints = false
+        
         let topMargins = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
         
         NSLayoutConstraint.activate([
@@ -158,8 +153,10 @@ final class CalendarTopBarView: UIView {
         titleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
     }
 
-    private func applyTheme() {
+    private func setupTheme() {
+        backgroundColor = UIColor(Color.theme.background)
         titleLabel.textColor = UIColor(Color.theme.text)
+        bottomSeparator.backgroundColor = UIColor.separator.withAlphaComponent(0.1)
     }
 
     // MARK: - Actions

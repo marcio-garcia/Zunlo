@@ -9,6 +9,7 @@ import SwiftUI
 import SupabaseSDK
 import RealmSwift
 import Firebase
+import FlowNavigator
 
 @main
 struct ZunloApp: App {
@@ -16,6 +17,7 @@ struct ZunloApp: App {
     @StateObject var upgradeFlowManager = UpgradeFlowManager()
     @StateObject var upgradeReminderManager = UpgradeReminderManager()
     @StateObject var appSettings = AppSettings()
+    @StateObject var appNavigationManager = AppNavigationManager()
     
     private let appState: AppState
     
@@ -72,6 +74,7 @@ struct ZunloApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(appState: appState)
+                .environmentObject(appNavigationManager)
                 .environmentObject(appSettings)
                 .environmentObject(appState.authManager)
                 .environmentObject(appState.locationService)

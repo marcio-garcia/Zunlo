@@ -1,0 +1,69 @@
+//
+//  AppNavigationManager.swift
+//  FlowNavigator
+//
+//  Created by Marcio Garcia on 8/4/25.
+//
+
+import Combine
+
+@MainActor
+final public class AppNavigationManager: ObservableObject {
+    @Published public var sheet: SheetRoute?
+    @Published public var fullScreen: FullScreenRoute?
+    @Published public var dialog: DialogRoute?
+    @Published public var path: [StackRoute] = []
+
+    public init() {}
+    
+    public func navigate(to route: StackRoute) {
+        path.append(route)
+    }
+
+    public func popToRoot() {
+        path.removeAll()
+    }
+
+    public func showSheet(_ route: SheetRoute) {
+        print("showSheet route: \(route)")
+        sheet = route
+    }
+
+    public func showFullScreen(_ route: FullScreenRoute) {
+        fullScreen = route
+    }
+
+    public func showDialog(_ route: DialogRoute) {
+        dialog = route
+    }
+
+    public func dismissSheet() { sheet = nil }
+    public func dismissFullScreen() { fullScreen = nil }
+    public func dismissDialog() { dialog = nil }
+}
+
+// MARK: Deep links
+
+extension AppNavigationManager {
+    func handleDeepLink(_ deepLink: DeepLink) {
+        switch deepLink {
+        case .taskDetail(let id):
+            path = [.taskDetail(id)]
+
+        case .editTask(let id):
+            showSheet(.editTask(id))
+
+        case .addTask:
+            showSheet(.addTask)
+
+        case .onboarding:
+            showFullScreen(.onboarding)
+
+        case .login:
+            showFullScreen(.login)
+
+        case .showSettings:
+            showSheet(.settings)
+        }
+    }
+}
