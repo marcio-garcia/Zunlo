@@ -34,8 +34,9 @@ public struct ViewRouter {
     // MARK: - Confirmation Dialog Buttons
     static public func dialogButtons(for route: DialogRoute, navigationManager: AppNavigationManager, builders: ViewBuilders) -> some View {
         switch route {
-        case .confirmDeleteTask(let id): return checkBuilder(builders.buildDeleteTaskConfirmationView, id: id, navigationManager: navigationManager)
-        case .confirmDeleteEvent(let id): return checkBuilder(builders.buildDeleteEventConfirmationView, id: id, navigationManager: navigationManager)
+        case .deleteTask(let id): return checkBuilder(builders.buildDeleteTaskConfirmationView, id: id, navigationManager: navigationManager)
+        case .deleteEvent(let id): return checkBuilder(builders.buildDeleteEventConfirmationView, id: id, navigationManager: navigationManager)
+        case .editRecurringEvent: return checkBuilder(builders.buildEditRecurringView, navigationManager: navigationManager)
         }
     }
 

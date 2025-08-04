@@ -25,6 +25,7 @@ public struct ViewBuilders {
     public var buildEditEventView: ((_ id: UUID) -> AnyView)?
     public var buildEventDetailView: ((_ id: UUID) -> AnyView)?
     public var buildDeleteEventConfirmationView: ((_ id: UUID) -> AnyView)?
+    public var buildEditRecurringView: (() -> AnyView)?
     
     public init(
         buildOnboardingView: (() -> AnyView)? = nil,
@@ -39,7 +40,8 @@ public struct ViewBuilders {
         buildAddEventView: (() -> AnyView)? = nil,
         buildEditEventView: ((_ id: UUID) -> AnyView)? = nil,
         buildEventDetailView: ((_ id: UUID) -> AnyView)? = nil,
-        buildDeleteEventConfirmationView: ((_ id: UUID) -> AnyView)? = nil
+        buildDeleteEventConfirmationView: ((_ id: UUID) -> AnyView)? = nil,
+        buildEditRecurringView: (() -> AnyView)? = nil
     ) {
         self.buildOnboardingView = buildOnboardingView
         self.buildLoginView = buildLoginView
@@ -54,5 +56,6 @@ public struct ViewBuilders {
         self.buildEditEventView = buildEditEventView
         self.buildEventDetailView = buildEventDetailView
         self.buildDeleteEventConfirmationView = buildDeleteEventConfirmationView
+        self.buildEditRecurringView = buildEditRecurringView
     }
 }

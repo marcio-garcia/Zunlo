@@ -43,13 +43,15 @@ public enum FullScreenRoute: Identifiable, Equatable {
 }
 
 public enum DialogRoute: Identifiable, Equatable {
-    case confirmDeleteTask(id: UUID)
-    case confirmDeleteEvent(id: UUID)
+    case deleteTask(id: UUID)
+    case deleteEvent(id: UUID)
+    case editRecurringEvent
 
     public var id: String {
         switch self {
-        case .confirmDeleteTask(let id): return "confirmDeleteTask_\(id)"
-        case .confirmDeleteEvent(let id): return "confirmDeleteEvent_\(id)"
+        case .deleteTask(let id): return "deleteTask_\(id)"
+        case .deleteEvent(let id): return "deleteEvent_\(id)"
+        case .editRecurringEvent: return "editRecurringEvent"
         }
     }
 }

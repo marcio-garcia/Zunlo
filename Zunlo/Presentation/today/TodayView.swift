@@ -127,19 +127,28 @@ struct TodayView: View {
                                 }
                             ))
                         })
-                        .confirmationDialog(
-                            "Edit Recurring Event",
-                            isPresented: $viewModel.eventEditHandler.showEditChoiceDialog,
-                            titleVisibility: .visible
-                        ) {
-                            Button("Edit only this occurrence") {
-                                viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
-                            }
-                            Button("Edit all occurrences") {
-                                viewModel.eventEditHandler.selectEditAllOccurrences()
-                            }
-                            Button("Cancel", role: .cancel) {
-                                viewModel.eventEditHandler.showEditChoiceDialog = false
+                        .confirmationDialog("Edit Recurring Event", isPresented: Binding<Bool>(
+                            get: { nav.dialog != nil },
+                            set: { if !$0 { nav.dismissDialog() } }
+                        ), titleVisibility: .visible) {
+                            if let dialog = nav.dialog {
+                                ViewRouter.dialogButtons(for: dialog, navigationManager: nav, builders: ViewBuilders(
+                                    buildEditRecurringView: {
+                                        AnyView(Group {
+                                            Button("Edit only this occurrence") {
+                                                viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
+                                                nav.showSheet(.editEvent(UUID()))
+                                            }
+                                            Button("Edit all occurrences") {
+                                                viewModel.eventEditHandler.selectEditAllOccurrences()
+                                                nav.showSheet(.editEvent(UUID()))
+                                            }
+                                            Button("Cancel", role: .cancel) {
+                                                nav.dialog = nil
+                                            }
+                                        })
+                                    }
+                                ))
                             }
                         }
                         
@@ -281,7 +290,11 @@ struct TodayView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(viewModel.todaysEvents) { event in
                             EventRow(occurrence: event, onTap: {
-                                nav.showSheet(.editEvent(event.id))
+                                if event.isRecurring {
+                                    nav.showDialog(.editRecurringEvent)
+                                } else {
+                                    nav.showSheet(.editEvent(event.id))
+                                }
                                 viewModel.onEventEditTap(event)
                             })
                         }
