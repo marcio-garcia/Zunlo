@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct TaskInboxView: View {
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: UserTaskInboxViewModel
     @State private var editableUserTask: UserTask?
     @State private var tagEditorHeight: CGFloat = .zero
@@ -74,11 +75,19 @@ struct TaskInboxView: View {
                     Text("Task inbox")
                         .themedSubtitle()
                 }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 20, weight: .regular))
+                    }
+                    .themedSecondaryButton()
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.showAddSheet = true
                     } label: {
-                        Label("Add task", systemImage: "plus")
+                        Image(systemName: "plus")
+                            .font(.system(size: 22, weight: .regular))
                     }
                 }
             }

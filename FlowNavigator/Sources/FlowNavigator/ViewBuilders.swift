@@ -44,6 +44,7 @@ public struct ViewBuilders {
         self.buildOnboardingView = buildOnboardingView
         self.buildLoginView = buildLoginView
         self.buildSettingsView = buildSettingsView
+        self.buildTaskInboxView = buildTaskInboxView
         self.buildAddTaskView = buildAddTaskView
         self.buildEditTaskView = buildEditTaskView
         self.buildTaskDetailView = buildTaskDetailView
