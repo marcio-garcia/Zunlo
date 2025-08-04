@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 class TagCell: UICollectionViewCell {
     static let reuseIdentifier = "TagCell"
@@ -19,13 +20,13 @@ class TagCell: UICollectionViewCell {
 
         contentView.layer.cornerRadius = 15
         contentView.layer.masksToBounds = true
-        contentView.backgroundColor = .systemGray5
+        contentView.backgroundColor = .clear
 
         label.font = AppFontStyle.caption.uiFont()
-        label.textColor = .label
+        label.textColor = UIColor(Color.theme.text)
 
         deleteButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-        deleteButton.tintColor = .gray
+        deleteButton.tintColor = UIColor(Color.theme.disabled)
         deleteButton.addTarget(self, action: #selector(deleteTapped), for: .touchUpInside)
 
         let stack = UIStackView(arrangedSubviews: [label, deleteButton])
@@ -56,8 +57,8 @@ class TagCell: UICollectionViewCell {
         label.text = tag.text
         self.onDelete = onDelete
         deleteButton.isHidden = !showDelete
-        contentView.backgroundColor = tag.selected ? UIColor.systemBlue : UIColor(tag.color)
-        label.textColor = tag.selected ? .white : .label
+        contentView.backgroundColor = tag.selected ? UIColor(Color.theme.accent) : UIColor(tag.color)
+        label.textColor = tag.selected ? .white : UIColor(Color.theme.text)
     }
     
     @objc private func deleteTapped() {
