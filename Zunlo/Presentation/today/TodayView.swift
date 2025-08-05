@@ -43,7 +43,8 @@ struct TodayView: View {
         _viewModel = StateObject(wrappedValue: TodayViewModel(
             taskRepository: appState.userTaskRepository,
             eventRepository: appState.eventRepository,
-            locationService: appState.locationService)
+            locationService: appState.locationService,
+            adManager: appState.adManager)
         )
     }
     
@@ -305,21 +306,8 @@ struct TodayView: View {
                     }
                     Spacer()
                     Button(action: {
-                        if let rootVC = UIApplication.shared.rootViewController {
-                            appState.adManager.showAd(
-                                .interstitial(.openCalendar),
-                                from: rootVC) { event in
-                                    switch event {
-                                    case .didDismiss:
-                                        nav.showFullScreen(.eventCalendar)
-                                    case .didFailToPresent(let error):
-                                        print("❌ Failed to present: \(error.localizedDescription)")
-                                    case .didRecordImpression:
-                                        print("📺 Interstitial ad presented")
-                                    case .didClick:
-                                        print("🖱️ Interstitial ad clicked")
-                                    }
-                                }
+                        viewModel.showAd(type: .interstitial(.openCalendar)) {
+                            nav.showFullScreen(.eventCalendar)
                         }
                     }) {
                         Image(systemName: "chevron.right")
@@ -383,23 +371,10 @@ struct TodayView: View {
                 
                 Text(hasEarnedReward ? "🎉 You earned 50 coins!" : "Watch an ad to earn coins")
                 Button("Watch Ad") {
-                    if let rootVC = UIApplication.shared.rootViewController {
-                        appState.adManager.showAd(
-                            .rewarded(.chat),
-                            from: rootVC) { event in
-                                switch event {
-                                case .didDismiss:
-                                    print("🏁 Reward flow complete")
-                                case .didClick:
-                                    print("🖱️ Rewarded ad clicked")
-                                case .didFailToPresent(let error):
-                                    print("❌ Failed to present: \(error.localizedDescription)")
-                                case .didRecordImpression:
-                                    print("📺 Rewarded ad presented")
-                                }
-                            } onRewardEarned: { amount, type in
-                                hasEarnedReward = true
-                            }
+                    viewModel.showAd(type: .rewarded(.chat)) {
+                        
+                    } onRewardEarned: { amount, type in
+                        hasEarnedReward = true
                     }
                 }
                 

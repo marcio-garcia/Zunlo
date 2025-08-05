@@ -26,8 +26,6 @@ public final class AdMobManager: ObservableObject {
 
     private func initialize() async {
         await MobileAds.shared.start()
-//        await loadInterstitial()
-//        await loadRewarded()
     }
 
     // MARK: - Interstitial

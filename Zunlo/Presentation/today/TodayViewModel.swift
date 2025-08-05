@@ -9,6 +9,7 @@ import SwiftUI
 import SupabaseSDK
 import MiniSignalEye
 import CoreLocation
+import AdStack
 
 final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var state: ViewState = .loading
@@ -18,7 +19,8 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     private let taskRepository: UserTaskRepository
     private let eventRepository: EventRepository
     private let locationService: LocationService
-
+    private let adManager: AdMobManager
+    
     @MainActor let errorHandler = ErrorHandler()
 
     var todaysTasks: [UserTask] = []
@@ -28,11 +30,13 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     init(
         taskRepository: UserTaskRepository,
         eventRepository: EventRepository,
-        locationService: LocationService
+        locationService: LocationService,
+        adManager: AdMobManager
     ) {
         self.taskRepository = taskRepository
         self.eventRepository = eventRepository
         self.locationService = locationService
+        self.adManager = adManager
         
         locationService.startUpdatingLocation()
         
@@ -127,6 +131,39 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
             }
         } catch {
             print("Failed to fetch weather:", error)
+        }
+    }
+}
+
+extension TodayViewModel {
+    func loadAds() async {
+        await adManager.loadInterstitial(for: .openCalendar)
+        await adManager.loadRewarded(for: .chat)
+    }
+    
+    @MainActor
+    func showAd(
+        type: AdType,
+        onDismiss: (() -> Void)? = nil,
+        onRewardEarned: ((Double, String) -> Void)? = nil
+    ) {
+        if let rootVC = UIApplication.shared.rootViewController {
+            adManager.showAd(
+                type, // .interstitial(.openCalendar),
+                from: rootVC) { event in
+                    switch event {
+                    case .didDismiss:
+                        onDismiss?()
+                    case .didFailToPresent(let error):
+                        print("❌ Failed to present: \(error.localizedDescription)")
+                    case .didRecordImpression:
+                        print("📺 Interstitial ad presented")
+                    case .didClick:
+                        print("🖱️ Interstitial ad clicked")
+                    }
+                } onRewardEarned: { amount, type in
+                    onRewardEarned?(amount, type)
+                }
         }
     }
 }
