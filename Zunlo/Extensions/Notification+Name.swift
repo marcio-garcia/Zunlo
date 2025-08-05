@@ -10,5 +10,5 @@ import Foundation
 extension Notification.Name {
     static let showUpgradeFlow = Notification.Name("showUpgradeFlow")
     static let accessUnauthorized = Notification.Name("accessUnauthorized")
-    static let supabaseDeepLink = Notification.Name("supabaseDeepLink")
+    static let authDeepLink = Notification.Name("authDeepLink")
 }

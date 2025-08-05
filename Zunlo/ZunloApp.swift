@@ -18,6 +18,7 @@ struct ZunloApp: App {
     @StateObject var upgradeReminderManager = UpgradeReminderManager()
     @StateObject var appSettings = AppSettings()
     @StateObject var appNavigationManager = AppNavigationManager()
+    @State private var deepLinkHandler: DeepLinkHandler?
     
     private let appState: AppState
     
@@ -80,34 +81,16 @@ struct ZunloApp: App {
                 .environmentObject(appState.locationService)
                 .environmentObject(upgradeFlowManager)
                 .environmentObject(upgradeReminderManager)
+                .onAppear(perform: {
+                    if deepLinkHandler == nil {
+                        deepLinkHandler = DeepLinkHandler(navigationManager: appNavigationManager)
+                    }
+                })
                 .onOpenURL { url in
-                    handleDeepLink(url: url)
+                    if let deepLink = DeepLinkParser.parse(url: url) {
+                        deepLinkHandler?.handleDeepLink(deepLink)
+                    }
                 }
-        }
-    }
-    
-    private func handleDeepLink(url: URL) {
-        print("Received URL: \(url)")
-        
-        guard
-            let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-            let scheme = components.scheme,
-            let host = components.host
-        else {
-            return
-        }
-        
-        switch scheme {
-        case "zunloapp":
-            switch host {
-            case "supabase":
-                NotificationCenter.default.post(name: .supabaseDeepLink, object: url)
-            default:
-                break
-            }
-            
-        default:
-            break
         }
     }
 }
@@ -140,5 +123,4 @@ func setupRealm() {
         }
     )
     Realm.Configuration.defaultConfiguration = config
-    // let _ = try! Realm() // Force Realm to initialize now
 }

@@ -25,7 +25,6 @@ final public class AppNavigationManager: ObservableObject {
     }
 
     public func showSheet(_ route: SheetRoute) {
-        print("showSheet route: \(route)")
         sheet = route
     }
 
@@ -40,30 +39,4 @@ final public class AppNavigationManager: ObservableObject {
     public func dismissSheet() { sheet = nil }
     public func dismissFullScreen() { fullScreen = nil }
     public func dismissDialog() { dialog = nil }
-}
-
-// MARK: Deep links
-
-extension AppNavigationManager {
-    func handleDeepLink(_ deepLink: DeepLink) {
-        switch deepLink {
-        case .taskDetail(let id):
-            path = [.taskDetail(id)]
-
-        case .editTask(let id):
-            showSheet(.editTask(id))
-
-        case .addTask:
-            showSheet(.addTask)
-
-        case .onboarding:
-            showFullScreen(.onboarding)
-
-        case .login:
-            showFullScreen(.login)
-
-        case .showSettings:
-            showSheet(.settings)
-        }
-    }
 }

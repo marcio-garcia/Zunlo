@@ -60,46 +60,12 @@ final class AuthManager: ObservableObject {
             }
         }
         
-        NotificationCenter.default.addObserver(forName: .supabaseDeepLink,
+        NotificationCenter.default.addObserver(forName: .authDeepLink,
                                                object: nil,
-                                               queue: .main) { notif in
-            if let url = notif.object as? URL {
-                self.handleDeepLink(url: url)
-            }
+                                               queue: .main) { [weak self] notification in
+            self?.handleNotification(notification)
         }
     }
-
-//    public func bootstrap(hasCompletedOnboarding: Bool) async {
-//        do {
-//            let token = try tokenStorage.loadToken()
-//            
-//            if let authToken = token, authService.validateToken(authToken) {
-//                try await authenticated(authToken)
-//                return
-//            }
-//
-//            if let authToken = token, let refreshToken = authToken.refreshToken {
-//                do {
-//                    guard let newAuth = try await refreshSession(refreshToken: refreshToken) else {
-//                        await unauthenticated()
-//                        return
-//                    }
-//                    return
-//                } catch {
-//                    await unauthenticated()
-//                }
-//            }
-//
-//            if hasCompletedOnboarding {
-//                await unauthenticated()
-//            } else {
-//                // fallback to anonymous
-//                try await signInAnonymously()
-//            }
-//        } catch {
-//            await unauthenticated()
-//        }
-//    }
     
     public func bootstrap(hasCompletedOnboarding: Bool) async {
         do {
@@ -131,7 +97,6 @@ final class AuthManager: ObservableObject {
         }
     }
     
-
     func signIn(email: String, password: String) async throws {
         let auth = try await authService.signIn(email: email, password: password)
         try await authenticated(auth)
@@ -162,6 +127,11 @@ final class AuthManager: ObservableObject {
             emailForMagicLink = nil
             throw error
         }
+    }
+    
+    func signInWithMagicLink(url: URL) async throws {
+        let (authToken, _) = try await authService.session(from: url)
+        try await authenticated(authToken)
     }
         
     func signOut(preserveLocalData: Bool = true) async throws {
@@ -234,43 +204,15 @@ final class AuthManager: ObservableObject {
         await updateState(.unauthenticated)
     }
     
-    private func handleDeepLink(url: URL) {
-        guard
-            let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-            let scheme = components.scheme,
-            let host = components.host,
-            let queryItems = components.queryItems
-        else {
-            return
-        }
-        
-        var path = components.path.split(separator: "/")
-        
-        switch scheme {
-        case "zunloapp":
-            switch host {
-            case "supabase":
-                Task {
-                    do {
-                        switch path.removeFirst() {
-                        case "magiclink":
-                            let (authToken, _) = try await authService.session(from: url)
-                            try await authenticated(authToken)
-                        default:
-                            guard let session = authToken else { return }
-                            try await authenticated(session)
-                        }
-                    } catch {
-                        print(error)
-                        await unauthenticated()
-                    }
+    private func handleNotification(_ notification: Notification) {
+        if let url = notification.object as? URL {
+            Task {
+                do {
+                    try await self.signInWithMagicLink(url: url)
+                } catch {
+                    await unauthenticated()
                 }
-            default:
-                break
             }
-            
-        default:
-            break
         }
     }
     
