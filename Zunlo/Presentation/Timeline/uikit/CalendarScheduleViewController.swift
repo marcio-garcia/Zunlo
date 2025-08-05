@@ -115,24 +115,6 @@ class CalendarScheduleViewController: UIViewController {
             self.collectionView.setContentOffset(offset, animated: false)
         }
     }
-
-    private func showAddEventView(mode: AddEditEventViewMode) {
-        let vm = AddEditEventViewModel(mode: mode, repository: viewModel.repository)
-        let addView = AddEditEventView(viewModel: vm) { [weak self] updatedEventStartDate in
-            guard let self else { return }
-            self.collectionView.reloadData()
-            // TODO: Make the callback return the updatd event then update the model and apply to the dataSource
-//            let occ = self.findOccurrence(startDate: updatedEventStartDate)
-//           currentEvents[index] = updatedEvent
-//           var snapshot = NSDiffableDataSourceSnapshot<Section, Event>()
-//           snapshot.appendSections([.main]) // Adjust if using multiple sections
-//           snapshot.appendItems(currentEvents, toSection: .main)
-//           dataSource.apply(snapshot, animatingDifferences: true)
-        }
-        let host = UIHostingController(rootView: addView)
-        host.modalPresentationStyle = .formSheet
-        present(host, animated: true)
-    }
     
     private func findOccurrence(startDate targetDate: Date) -> EventOccurrence? {
         let calendar = Calendar.current
@@ -299,8 +281,28 @@ extension CalendarScheduleViewController: UICollectionViewDelegate {
     }
 }
 
+// MARK: Navigation
+
 extension CalendarScheduleViewController {
-    func showActionSheet() {
+    private func showAddEventView(mode: AddEditEventViewMode) {
+        let vm = AddEditEventViewModel(mode: mode, repository: viewModel.repository)
+        let addView = AddEditEventView(viewModel: vm) { [weak self] updatedEventStartDate in
+            guard let self else { return }
+            self.collectionView.reloadData()
+            // TODO: Make the callback return the updatd event then update the model and apply to the dataSource
+//            let occ = self.findOccurrence(startDate: updatedEventStartDate)
+//           currentEvents[index] = updatedEvent
+//           var snapshot = NSDiffableDataSourceSnapshot<Section, Event>()
+//           snapshot.appendSections([.main]) // Adjust if using multiple sections
+//           snapshot.appendItems(currentEvents, toSection: .main)
+//           dataSource.apply(snapshot, animatingDifferences: true)
+        }
+        let host = UIHostingController(rootView: addView)
+        host.modalPresentationStyle = .formSheet
+        present(host, animated: true)
+    }
+    
+    private func showActionSheet() {
         let sheet = UIAlertController(
             title: "Edit Recurring Event",
             message: nil,

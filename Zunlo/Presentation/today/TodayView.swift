@@ -116,12 +116,13 @@ struct TodayView: View {
                                     AnyView(TaskInboxView(repository: appState.userTaskRepository))
                                 },
                                 buildEventCalendarView: {
-                                    AnyView(CalendarScheduleContainer(
-                                        viewModel: CalendarScheduleViewModel(
-                                            repository: appState.eventRepository,
-                                            locationService: appState.locationService
+                                    AnyView(
+                                        CalendarScheduleContainer(
+                                            viewModel: CalendarScheduleViewModel(
+                                                repository: appState.eventRepository,
+                                                locationService: appState.locationService
+                                            )
                                         )
-                                    )
                                         .ignoresSafeArea()
                                     )
                                 }
