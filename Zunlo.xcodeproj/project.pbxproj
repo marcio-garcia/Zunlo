@@ -21,6 +21,8 @@
 		25857E4B2E1DF95700676F8B /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 25ACE3452E25F028009F0218 /* FirebaseCore */; };
 		25ACE3482E25F028009F0218 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 25ACE3472E25F028009F0218 /* FirebaseMessaging */; };
+		25B7BDC22E424075004E1C12 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 25B7BDC12E424075004E1C12 /* GoogleMobileAds */; };
+		25B7BDC52E4241CA004E1C12 /* AdStack in Frameworks */ = {isa = PBXBuildFile; productRef = 25B7BDC42E4241CA004E1C12 /* AdStack */; };
 		25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 25FAA9702E0B6E56000AACA2 /* SupabaseSDK */; };
 /* End PBXBuildFile section */
 
@@ -68,6 +70,7 @@
 
 /* Begin PBXFileReference section */
 		251483572E40FB8A00B59FF8 /* FlowNavigator */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = FlowNavigator; sourceTree = "<group>"; };
+		25B7BDC32E4241BC004E1C12 /* AdStack */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = AdStack; sourceTree = "<group>"; };
 		25FA19FD2E0854F800E740A3 /* Zunlo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zunlo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FA1A0F2E0854F900E740A3 /* ZunloTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZunloTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FA1A192E0854F900E740A3 /* ZunloUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZunloUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -115,8 +118,10 @@
 				25857B842E1C85C800676F8B /* RealmSwift in Frameworks */,
 				25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */,
 				252D730E2E2D5E6C002320B8 /* Auth in Frameworks */,
+				25B7BDC22E424075004E1C12 /* GoogleMobileAds in Frameworks */,
 				25ACE3482E25F028009F0218 /* FirebaseMessaging in Frameworks */,
 				252D73122E2D5E6C002320B8 /* PostgREST in Frameworks */,
+				25B7BDC52E4241CA004E1C12 /* AdStack in Frameworks */,
 				252D73102E2D5E6C002320B8 /* Functions in Frameworks */,
 				251483592E4102A800B59FF8 /* FlowNavigator in Frameworks */,
 				25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */,
@@ -146,6 +151,7 @@
 		25FA19F42E0854F800E740A3 = {
 			isa = PBXGroup;
 			children = (
+				25B7BDC32E4241BC004E1C12 /* AdStack */,
 				251483572E40FB8A00B59FF8 /* FlowNavigator */,
 				25FAA96E2E0B6D55000AACA2 /* SupabaseSDK */,
 				25FA19FF2E0854F800E740A3 /* Zunlo */,
@@ -206,6 +212,8 @@
 				252D73152E2D5E6C002320B8 /* Storage */,
 				252D73172E2D5E6C002320B8 /* Supabase */,
 				251483582E4102A800B59FF8 /* FlowNavigator */,
+				25B7BDC12E424075004E1C12 /* GoogleMobileAds */,
+				25B7BDC42E4241CA004E1C12 /* AdStack */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -296,6 +304,7 @@
 				25857B822E1C85C800676F8B /* XCRemoteSwiftPackageReference "realm-swift" */,
 				25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				25B7BDC02E424075004E1C12 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 25FA19FE2E0854F800E740A3 /* Products */;
@@ -864,6 +873,14 @@
 				minimumVersion = 11.15.0;
 			};
 		};
+		25B7BDC02E424075004E1C12 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.8.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -925,6 +942,15 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		25B7BDC12E424075004E1C12 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 25B7BDC02E424075004E1C12 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+		25B7BDC42E4241CA004E1C12 /* AdStack */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AdStack;
 		};
 		25FAA9702E0B6E56000AACA2 /* SupabaseSDK */ = {
 			isa = XCSwiftPackageProductDependency;

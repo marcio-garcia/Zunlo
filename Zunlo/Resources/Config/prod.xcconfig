@@ -8,3 +8,8 @@ GOOGLESERVICE_INFO_FILE = GoogleService-Info-prod.plist
 APP_NAME = Zunlo
 PRODUCT_BUNDLE_IDENTIFIER = net.loginode.zunloapp
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-prod
+
+
+ADMOB_BANNER_ID = ca-app-pub-xxxxxxxxxxxxxxxx/banner_prod
+ADMOB_INTERSTITIAL_ID = ca-app-pub-xxxxxxxxxxxxxxxx/interstitial_prod
+ADMOB_REWARDED_ID = ca-app-pub-xxxxxxxxxxxxxxxx/rewarded_prod

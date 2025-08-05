@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FlowNavigator
+import AdStack
 
 struct TodayView: View {
     var namespace: Namespace.ID
@@ -27,6 +28,8 @@ struct TodayView: View {
     
     @State private var showRequestPush = false
     @State private var editableUserTask: UserTask?
+    @State private var hasEarnedReward = false
+    @State private var viewWidth: CGFloat = UIScreen.main.bounds.width
     
     private let appState: AppState
     
@@ -50,177 +53,204 @@ struct TodayView: View {
             
             switch viewModel.state {
             case .empty, .loaded:
-                NavigationStack(path: $nav.path) {
-                    ZStack(alignment: .bottomTrailing) {
-                        
-                        ScrollView(.vertical) {
-                            VStack(alignment: .leading, spacing: 24) {
-                                if let weather = viewModel.weather {
-                                    TodayWeatherView(weather: weather, greeting: viewModel.greeting)
+                GeometryReader { geo in
+                    NavigationStack(path: $nav.path) {
+                        ZStack(alignment: .bottomTrailing) {
+                            
+                            ScrollView(.vertical) {
+                                VStack(alignment: .leading, spacing: 24) {
+                                    if let weather = viewModel.weather {
+                                        TodayWeatherView(weather: weather, greeting: viewModel.greeting)
+                                    }
+                                    
+                                    VStack(spacing: 0) {
+                                        Spacer()
+                                        BannerAdView(
+                                            adUnitID: BannerPlacement.home.adUnitID,
+                                            size: .adaptive,
+                                            containerWidth: geo.size.width - 32,
+                                            onEvent: { event in
+                                                switch event {
+                                                case .didReceiveAd:
+                                                    print("✅ Ad received")
+                                                case .didFailToReceiveAd(let error):
+                                                    print("❌ Failed to load ad: \(error)")
+                                                case .didClick:
+                                                    print("👆 Ad clicked")
+                                                default:
+                                                    break
+                                                }
+                                            }
+                                        )
+                                        .frame(height: 50)
+                                        .padding(.horizontal, 16)
+                                    }
+                                    .onChange(of: geo.size.width) { _, newWidth in viewWidth = newWidth }
+                                    
+                                    if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
+                                        showBannerSection
+                                    }
+                                    eventsTodaySection
+                                    tasksTodaySection
                                 }
-                                if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
-                                    showBannerSection
+                                .padding(.top, 44)
+                                .padding()
+                            }
+                            .refreshable {
+                                Task {
+                                    await fetchInfo()
                                 }
-                                eventsTodaySection
-                                tasksTodaySection
                             }
-                            .padding(.top, 44)
-                            .padding()
-                        }
-                        .refreshable {
-                            Task {
-                                await fetchInfo()
-                            }
-                        }
-                        .background(
-                            RemoteBackgroundImage(
-                                lowResName: lowResName(for: viewModel.weather),
-                                remoteName: remoteName(for: viewModel.weather)
+                            .background(
+                                RemoteBackgroundImage(
+                                    lowResName: lowResName(for: viewModel.weather),
+                                    remoteName: remoteName(for: viewModel.weather)
+                                )
+                                .ignoresSafeArea()
                             )
-                            .ignoresSafeArea()
-                        )
-                        .sheet(item: $nav.sheet, content: { route in
-                            ViewRouter.sheetView(for: route, navigationManager: nav, builders: ViewBuilders(
-                                buildSettingsView: {
-                                    AnyView(SettingsView(authManager: appState.authManager)
-                                        .environmentObject(upgradeFlowManager))
-                                },
-                                buildAddTaskView: {
-                                    AnyView(AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: appState.userTaskRepository)))
-                                },
-                                buildEditTaskView: { id in
-                                    guard let editableUserTask, editableUserTask.id == id else {
-                                        return AnyView(FallbackView(message: "Could not display edit task screen", nav: nav))
-                                    }
-                                    return AnyView(AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .edit(editableUserTask), repository: appState.userTaskRepository)))
-                                },
-                                buildAddEventView: {
-                                    AnyView(AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: appState.eventRepository)))
-                                },
-                                buildEditEventView: { id in
-                                    guard let editMode = viewModel.eventEditHandler.editMode else {
-                                        return AnyView(FallbackView(message: "Could not display edit event screen", nav: nav))
-                                    }
-                                    return AnyView(AddEditEventView(
-                                        viewModel: AddEditEventViewModel(
-                                            mode: editMode,
-                                            repository: appState.eventRepository
-                                        )
-                                    ))
-                                }
-                            ))
-                        })
-                        .fullScreenCover(item: $nav.fullScreen, content: { route in
-                            ViewRouter.fullScreenView(for: route, navigationManager: nav, builders: ViewBuilders(
-                                buildTaskInboxView: {
-                                    AnyView(TaskInboxView(repository: appState.userTaskRepository))
-                                },
-                                buildEventCalendarView: {
-                                    AnyView(
-                                        CalendarScheduleContainer(
-                                            viewModel: CalendarScheduleViewModel(
-                                                repository: appState.eventRepository,
-                                                locationService: appState.locationService
+                            .sheet(item: $nav.sheet, content: { route in
+                                ViewRouter.sheetView(for: route, navigationManager: nav, builders: ViewBuilders(
+                                    buildSettingsView: {
+                                        AnyView(SettingsView(authManager: appState.authManager)
+                                            .environmentObject(upgradeFlowManager))
+                                    },
+                                    buildAddTaskView: {
+                                        AnyView(AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: appState.userTaskRepository)))
+                                    },
+                                    buildEditTaskView: { id in
+                                        guard let editableUserTask, editableUserTask.id == id else {
+                                            return AnyView(FallbackView(message: "Could not display edit task screen", nav: nav))
+                                        }
+                                        return AnyView(AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .edit(editableUserTask), repository: appState.userTaskRepository)))
+                                    },
+                                    buildAddEventView: {
+                                        AnyView(AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: appState.eventRepository)))
+                                    },
+                                    buildEditEventView: { id in
+                                        guard let editMode = viewModel.eventEditHandler.editMode else {
+                                            return AnyView(FallbackView(message: "Could not display edit event screen", nav: nav))
+                                        }
+                                        return AnyView(AddEditEventView(
+                                            viewModel: AddEditEventViewModel(
+                                                mode: editMode,
+                                                repository: appState.eventRepository
                                             )
-                                        )
-                                        .ignoresSafeArea()
-                                    )
-                                }
-                            ))
-                        })
-                        .confirmationDialog("Edit Recurring Event", isPresented: Binding<Bool>(
-                            get: { nav.dialog != nil },
-                            set: { if !$0 { nav.dismissDialog() } }
-                        ), titleVisibility: .visible) {
-                            if let dialog = nav.dialog {
-                                ViewRouter.dialogButtons(for: dialog, navigationManager: nav, builders: ViewBuilders(
-                                    buildEditRecurringView: {
-                                        AnyView(Group {
-                                            Button("Edit only this occurrence") {
-                                                viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
-                                                nav.showSheet(.editEvent(UUID()))
-                                            }
-                                            Button("Edit all occurrences") {
-                                                viewModel.eventEditHandler.selectEditAllOccurrences()
-                                                nav.showSheet(.editEvent(UUID()))
-                                            }
-                                            Button("Cancel", role: .cancel) {
-                                                nav.dialog = nil
-                                            }
-                                        })
+                                        ))
                                     }
                                 ))
-                            }
-                        }
-                        
-                        Button(action: { showChat = true }) {
-                            Image(systemName: "bubble.left.and.bubble.right.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(
-                                    Circle()
-                                        .fill(Color.accentColor)
-                                        .matchedGeometryEffect(id: "chatMorph", in: namespace)
-                                )
-                        }
-                        .padding()
-                        
-                        VStack(spacing: 0) {
-                            ToolbarView(blurStyle: Theme.isDarkMode ? .dark : .light) {
-                                Button(action: { nav.showSheet(.settings) }) {
-                                    Image(systemName: "slider.horizontal.3")
-                                        .font(.system(size: 22, weight: .regular))
-                                }
-                            } center: {
-                                Text("Zunlo")
-                                    .themedHeadline()
-                            } trailing: {
-                                HStack(alignment: .center, spacing: 16) {
-                                    Button(action: { nav.showSheet(.addTask) }) {
-                                        Image(systemName: "note.text.badge.plus")
-                                            .font(.system(size: 22, weight: .regular))
+                            })
+                            .fullScreenCover(item: $nav.fullScreen, content: { route in
+                                ViewRouter.fullScreenView(for: route, navigationManager: nav, builders: ViewBuilders(
+                                    buildTaskInboxView: {
+                                        AnyView(TaskInboxView(repository: appState.userTaskRepository))
+                                    },
+                                    buildEventCalendarView: {
+                                        AnyView(
+                                            CalendarScheduleContainer(
+                                                viewModel: CalendarScheduleViewModel(
+                                                    repository: appState.eventRepository,
+                                                    locationService: appState.locationService
+                                                )
+                                            )
+                                            .ignoresSafeArea()
+                                        )
                                     }
-                                    .background(
-                                        Color.clear
-                                            .frame(width: 44, height: 44)
-                                            .contentShape(Rectangle())
-                                    )
-                                    
-                                    Button(action: { nav.showSheet(.addEvent) }) {
-                                        Image(systemName: "calendar.badge.plus")
-                                            .font(.system(size: 22, weight: .regular))
-                                    }
-                                    .background(
-                                        Color.clear
-                                            .frame(width: 44, height: 44)
-                                            .contentShape(Rectangle())
-                                    )
+                                ))
+                            })
+                            .confirmationDialog("Edit Recurring Event", isPresented: Binding<Bool>(
+                                get: { nav.dialog != nil },
+                                set: { if !$0 { nav.dismissDialog() } }
+                            ), titleVisibility: .visible) {
+                                if let dialog = nav.dialog {
+                                    ViewRouter.dialogButtons(for: dialog, navigationManager: nav, builders: ViewBuilders(
+                                        buildEditRecurringView: {
+                                            AnyView(Group {
+                                                Button("Edit only this occurrence") {
+                                                    viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
+                                                    nav.showSheet(.editEvent(UUID()))
+                                                }
+                                                Button("Edit all occurrences") {
+                                                    viewModel.eventEditHandler.selectEditAllOccurrences()
+                                                    nav.showSheet(.editEvent(UUID()))
+                                                }
+                                                Button("Cancel", role: .cancel) {
+                                                    nav.dialog = nil
+                                                }
+                                            })
+                                        }
+                                    ))
                                 }
                             }
-                            Spacer()
+                            
+                            Button(action: { showChat = true }) {
+                                Image(systemName: "bubble.left.and.bubble.right.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(
+                                        Circle()
+                                            .fill(Color.accentColor)
+                                            .matchedGeometryEffect(id: "chatMorph", in: namespace)
+                                    )
+                            }
+                            .padding()
+                            
+                            VStack(spacing: 0) {
+                                ToolbarView(blurStyle: Theme.isDarkMode ? .dark : .light) {
+                                    Button(action: { nav.showSheet(.settings) }) {
+                                        Image(systemName: "slider.horizontal.3")
+                                            .font(.system(size: 22, weight: .regular))
+                                    }
+                                } center: {
+                                    Text("Zunlo")
+                                        .themedHeadline()
+                                } trailing: {
+                                    HStack(alignment: .center, spacing: 16) {
+                                        Button(action: { nav.showSheet(.addTask) }) {
+                                            Image(systemName: "note.text.badge.plus")
+                                                .font(.system(size: 22, weight: .regular))
+                                        }
+                                        .background(
+                                            Color.clear
+                                                .frame(width: 44, height: 44)
+                                                .contentShape(Rectangle())
+                                        )
+                                        
+                                        Button(action: { nav.showSheet(.addEvent) }) {
+                                            Image(systemName: "calendar.badge.plus")
+                                                .font(.system(size: 22, weight: .regular))
+                                        }
+                                        .background(
+                                            Color.clear
+                                                .frame(width: 44, height: 44)
+                                                .contentShape(Rectangle())
+                                        )
+                                    }
+                                }
+                                Spacer()
+                            }
+                            
                         }
-                        
+                        //                    .navigationTitle("")
+                        //                    .navigationDestination(for: StackRoute.self, destination: { route in
+                        //                        ViewRouter.navigationDestination(for: route, navigationManager: nav, builders: ViewBuilders(
+                        //                            buildTaskInboxView: {
+                        //                                AnyView(TaskInboxView(repository: appState.userTaskRepository))
+                        //                            },
+                        //                            buildEventCalendarView: {
+                        //                                AnyView(CalendarScheduleContainer(
+                        //                                    viewModel: CalendarScheduleViewModel(
+                        //                                        repository: appState.eventRepository,
+                        //                                        locationService: appState.locationService
+                        //                                    )
+                        //                                )
+                        //                                    .navigationTitle("Title")
+                        //                                    .ignoresSafeArea()
+                        //                                )
+                        //                            }
+                        //                        ))
+                        //                    })
                     }
-//                    .navigationTitle("")
-//                    .navigationDestination(for: StackRoute.self, destination: { route in
-//                        ViewRouter.navigationDestination(for: route, navigationManager: nav, builders: ViewBuilders(
-//                            buildTaskInboxView: {
-//                                AnyView(TaskInboxView(repository: appState.userTaskRepository))
-//                            },
-//                            buildEventCalendarView: {
-//                                AnyView(CalendarScheduleContainer(
-//                                    viewModel: CalendarScheduleViewModel(
-//                                        repository: appState.eventRepository,
-//                                        locationService: appState.locationService
-//                                    )
-//                                )
-//                                    .navigationTitle("Title")
-//                                    .ignoresSafeArea()
-//                                )
-//                            }
-//                        ))
-//                    })
                 }
             case .loading:
                 VStack {
@@ -245,6 +275,8 @@ struct TodayView: View {
         }
         .task {
             await fetchInfo()
+            await appState.adManager.loadInterstitial(for: .openCalendar)
+            await appState.adManager.loadRewarded(for: .chat)
         }
         .errorAlert(viewModel.errorHandler)
     }
@@ -272,7 +304,24 @@ struct TodayView: View {
                             .foregroundColor(Color.theme.text)
                     }
                     Spacer()
-                    Button(action: { nav.showFullScreen(.eventCalendar) }) {
+                    Button(action: {
+                        if let rootVC = UIApplication.shared.rootViewController {
+                            appState.adManager.showAd(
+                                .interstitial(.openCalendar),
+                                from: rootVC) { event in
+                                    switch event {
+                                    case .didDismiss:
+                                        nav.showFullScreen(.eventCalendar)
+                                    case .didFailToPresent(let error):
+                                        print("❌ Failed to present: \(error.localizedDescription)")
+                                    case .didRecordImpression:
+                                        print("📺 Interstitial ad presented")
+                                    case .didClick:
+                                        print("🖱️ Interstitial ad clicked")
+                                    }
+                                }
+                        }
+                    }) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 22, weight: .regular))
                             .foregroundColor(Color.theme.text)
@@ -330,6 +379,28 @@ struct TodayView: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     )
+                }
+                
+                Text(hasEarnedReward ? "🎉 You earned 50 coins!" : "Watch an ad to earn coins")
+                Button("Watch Ad") {
+                    if let rootVC = UIApplication.shared.rootViewController {
+                        appState.adManager.showAd(
+                            .rewarded(.chat),
+                            from: rootVC) { event in
+                                switch event {
+                                case .didDismiss:
+                                    print("🏁 Reward flow complete")
+                                case .didClick:
+                                    print("🖱️ Rewarded ad clicked")
+                                case .didFailToPresent(let error):
+                                    print("❌ Failed to present: \(error.localizedDescription)")
+                                case .didRecordImpression:
+                                    print("📺 Rewarded ad presented")
+                                }
+                            } onRewardEarned: { amount, type in
+                                hasEarnedReward = true
+                            }
+                    }
                 }
                 
                 if viewModel.todaysTasks.isEmpty {

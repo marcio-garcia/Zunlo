@@ -6,6 +6,7 @@
 //
 
 import SupabaseSDK
+import AdStack
 
 final class AppState {
     let authManager: AuthManager
@@ -15,11 +16,13 @@ final class AppState {
     let supabase: SupabaseSDK
     let locationService: LocationService
     let pushNotificationService: PushNotificationService
+    let adManager: AdMobManager
     
     init(authManager: AuthManager,
          supabase: SupabaseSDK,
          locationService: LocationService,
          pushNotificationService: PushNotificationService,
+         adManager: AdMobManager,
          eventRepository: EventRepository,
          userTaskRepository: UserTaskRepository,
          chatRepository: ChatRepository) {
@@ -27,6 +30,7 @@ final class AppState {
         self.supabase = supabase
         self.locationService = locationService
         self.pushNotificationService = pushNotificationService
+        self.adManager = adManager
         self.eventRepository = eventRepository
         self.userTaskRepository = userTaskRepository
         self.chatRepository = chatRepository

@@ -10,7 +10,11 @@ import SupabaseSDK
 import RealmSwift
 import Firebase
 import FlowNavigator
+import AdStack
 
+/// If you're tracking in-app purchases, you must initialize your transaction observer in application:didFinishLaunchingWithOptions: before initializing Firebase,
+/// or your observer may not receive all purchase notifications. See Apple's In-App Purchase Best Practices for more information.
+/// https://developer.apple.com/documentation/storekit/in-app-purchase
 @main
 struct ZunloApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -43,6 +47,9 @@ struct ZunloApp: App {
             firebaseService: firebase
         )
         
+        AdEnvironment.configure(provider: EnvConfig.shared)
+        let adManager = AdMobManager()
+        
         let eventRepo = EventRepositoryFactory.make(
             supabase: supabase,
             authManager: authManager
@@ -60,6 +67,7 @@ struct ZunloApp: App {
             supabase: supabase,
             locationService: locationService,
             pushNotificationService: pushService,
+            adManager: adManager,
             eventRepository: eventRepo,
             userTaskRepository: taskRepo,
             chatRepository: chatRepo
@@ -123,4 +131,13 @@ func setupRealm() {
         }
     )
     Realm.Configuration.defaultConfiguration = config
+}
+
+extension UIApplication {
+    var rootViewController: UIViewController? {
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }?.rootViewController
+    }
 }

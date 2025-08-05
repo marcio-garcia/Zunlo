@@ -6,17 +6,30 @@
 //
 
 import Foundation
+import AdStack
 
 enum RuntimeEnvironment: String {
     case dev = "DEVELOPMENT"
     case prod = "PRODUCTION"
     case staging = "STAGING"
+    
+    func toAdEnvironment() -> AdEnvironmentType {
+        switch self {
+        case .dev: return AdEnvironmentType.dev
+        case .prod: return AdEnvironmentType.prod
+        case .staging: return AdEnvironmentType.staging
+        }
+    }
 }
 
-class EnvConfig {
+class EnvConfig: AdEnvironmentProvider {
+    var environment: AdStack.AdEnvironmentType = .dev
+    
     static let shared = EnvConfig()
     
-    private init() {}
+    private init() {
+        environment = current.toAdEnvironment()
+    }
     
     var current: RuntimeEnvironment {
         let envString = Bundle.main.infoDictionary?["ENVIRONMENT"] as? String ?? "UNKNOWN"
@@ -42,4 +55,16 @@ class EnvConfig {
     var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
+    
+    let adMobBannerID: String = {
+        Bundle.main.infoDictionary?["ADMOB_BANNER_ID"] as? String ?? ""
+    }()
+
+    let adMobInterstitialID: String = {
+        Bundle.main.infoDictionary?["ADMOB_INTERSTITIAL_ID"] as? String ?? ""
+    }()
+
+    let adMobRewardedID: String = {
+        Bundle.main.infoDictionary?["ADMOB_REWARDED_ID"] as? String ?? ""
+    }()
 }

@@ -33,5 +33,13 @@
 			</array>
 		</dict>
 	</array>
+    <key>ADMOB_BANNER_ID</key>
+    <string>$(ADMOB_BANNER_ID)</string>
+    <key>ADMOB_INTERSTITIAL_ID</key>
+    <string>$(ADMOB_INTERSTITIAL_ID)</string>
+    <key>ADMOB_REWARDED_ID</key>
+    <string>$(ADMOB_REWARDED_ID)</string>
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-1529837310438307~2022940710</string>
 </dict>
 </plist>
