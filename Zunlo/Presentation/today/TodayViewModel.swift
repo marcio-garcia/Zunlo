@@ -10,7 +10,6 @@ import SupabaseSDK
 import MiniSignalEye
 import CoreLocation
 
-@MainActor
 final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var state: ViewState = .loading
     @Published var weather: WeatherInfo?
@@ -20,7 +19,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     private let eventRepository: EventRepository
     private let locationService: LocationService
 
-    let errorHandler = ErrorHandler()
+    @MainActor let errorHandler = ErrorHandler()
 
     var todaysTasks: [UserTask] = []
     var todaysEvents: [EventOccurrence] = []
@@ -58,25 +57,38 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         }
 
         eventRepository.occurrences.observe(owner: self, fireNow: false) { [weak self] occurrences in
-            let today = Calendar.current.startOfDay(for: Date())
-            let filtered = occurrences.filter {
-                Calendar.current.isDate($0.startDate, inSameDayAs: today)
-            }
-            
-            DispatchQueue.main.async {
-                self?.eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
-                self?.todaysEvents = filtered
-                self?.state = filtered.isEmpty ? .empty : .loaded
-            }
+            let today = Date().startOfDay
+            guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else { return }
+            self?.handleOccurrences(occurrences, in: today...tomorrow)
         }
     }
-
+    
     func fetchData() async {
         do {
             try await taskRepository.fetchAll()
             try await eventRepository.fetchAll()
         } catch {
-            errorHandler.handle(error)
+            await errorHandler.handle(error)
+        }
+    }
+    
+    func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
+        do {
+            let today = Calendar.current.startOfDay(for: Date())
+            let filtered = occurrences.filter {
+                Calendar.current.isDate($0.startDate, inSameDayAs: today)
+            }
+            
+            todaysEvents = try EventOccurrenceService.generate(rawOccurrences: filtered, in: range)
+            
+            DispatchQueue.main.async {
+                self.eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
+                self.state = occurrences.isEmpty ? .empty : .loaded
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.state = .error(error.localizedDescription)
+            }
         }
     }
     
@@ -109,7 +121,9 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
 
         do {
             if let info = try await WeatherService.shared.fetchWeather(for: Date(), location: location) {
-                self.weather = info
+                DispatchQueue.main.async {
+                    self.weather = info
+                }
             }
         } catch {
             print("Failed to fetch weather:", error)
