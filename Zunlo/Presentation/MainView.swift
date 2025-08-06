@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import AdStack
 
 struct MainView: View {
     @Namespace private var animationNamespace
     @State private var isShowingChat = false
+    @State private var viewWidth: CGFloat = UIScreen.main.bounds.width
     
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     @StateObject private var viewModel: MainViewModel
@@ -22,24 +24,54 @@ struct MainView: View {
     }
     
     var body: some View {
-        ZStack {
-            if isShowingChat {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-                    .blur(radius: 10)
-                    .animation(.easeInOut(duration: 0.3), value: isShowingChat)
-                ChatScreenView(namespace: animationNamespace,
-                               showChat: $isShowingChat,
-                               factory: factory)
-            } else {
-                TodayView(namespace: animationNamespace,
-                          showChat: $isShowingChat,
-                          appState: viewModel.appState)
-                .environmentObject(viewModel.appState.authManager)
-                .environmentObject(upgradeFlowManager)
+        GeometryReader { geo in
+            VStack{
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .blur(radius: 10)
+                    
+                    if isShowingChat {
+                        ChatScreenView(namespace: animationNamespace,
+                                       showChat: $isShowingChat,
+                                       factory: factory)
+                    } else {
+                        TodayView(namespace: animationNamespace,
+                                  showChat: $isShowingChat,
+                                  appState: viewModel.appState)
+                        .environmentObject(viewModel.appState.authManager)
+                        .environmentObject(upgradeFlowManager)
+                    }
+                }
+                .animation(.spring(response: 0.4, dampingFraction: 0.90), value: isShowingChat)
+                
+                VStack(spacing: 0) {
+                    Spacer()
+                    BannerAdView(
+                        adUnitID: BannerPlacement.home.adUnitID,
+                        size: .adaptive,
+                        containerWidth: geo.size.width - 32,
+                        onEvent: { event in
+                            switch event {
+                            case .didReceiveAd:
+                                print("✅ Ad received")
+                            case .didFailToReceiveAd(let error):
+                                print("❌ Failed to load ad: \(error)")
+                            case .didClick:
+                                print("👆 Ad clicked")
+                            default:
+                                break
+                            }
+                        }
+                    )
+                    .frame(height: 50)
+                    .padding(.horizontal, 16)
+                }
+                .frame(height: 50)
+                .defaultBackground()
+                .onChange(of: geo.size.width) { _, newWidth in viewWidth = newWidth }
             }
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.90), value: isShowingChat)
     }
 }
