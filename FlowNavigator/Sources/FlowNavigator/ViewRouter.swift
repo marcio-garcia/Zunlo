@@ -44,6 +44,7 @@ public struct ViewRouter {
     // MARK: - NavigationStack Destinations
     static public func navigationDestination(for route: StackRoute, navigationManager: AppNavigationManager, builders: ViewBuilders) -> some View {
         switch route {
+        case .eventCalendar: return checkBuilder(builders.buildEventCalendarView, navigationManager: navigationManager)
         case .taskDetail(let id): return checkBuilder(builders.buildTaskDetailView, id: id, navigationManager: navigationManager)
         case .taskInbox: return checkBuilder(builders.buildTaskInboxView, navigationManager: navigationManager)
         }

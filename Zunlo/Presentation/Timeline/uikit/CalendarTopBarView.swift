@@ -60,7 +60,7 @@ final class CalendarTopBarView: UIView {
         blurView.effect = UIBlurEffect(style: traitCollection.userInterfaceStyle == .dark ? .dark : .light)
         
         var closeConfig = UIButton.Configuration.plain()
-        closeConfig.image = UIImage(systemName: "xmark")
+        closeConfig.image = UIImage(systemName: "chevron.left")
         closeConfig.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6)
         closeButton.configuration = closeConfig
         closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)

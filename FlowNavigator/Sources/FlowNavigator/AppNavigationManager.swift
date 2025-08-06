@@ -14,26 +14,69 @@ final public class AppNavigationManager: ObservableObject {
     @Published private var fullScreenRoutes: [UUID: FullScreenRoute] = [:]
     @Published private var dialogRoutes: [UUID: DialogRoute] = [:]
     
+    private var rootViewStack: [UUID] = []
+    
     public init() {}
     
     // MARK: - NavigationStack
     
     public func pathBinding(for viewID: UUID) -> Binding<[StackRoute]> {
-        Binding(
+        // Register this as the root for a new NavigationStack
+        if rootViewStack.last != viewID {
+            rootViewStack.append(viewID)
+        }
+
+        return Binding(
             get: { self.stackPaths[viewID, default: []] },
-            set: { newValue in self.stackPaths[viewID] = newValue }
+            set: { self.stackPaths[viewID] = $0 }
         )
     }
 
-    public func navigate(to route: StackRoute, for viewID: UUID) {
-        print("🚀 Navigating to \(route) for view \(viewID)")
-        var path = stackPaths[viewID, default: []]
-        path.append(route)
-        stackPaths[viewID] = path
+    // MARK: - Resolve current root viewID
+    private var currentRootViewID: UUID? {
+        rootViewStack.last
     }
 
-    public func popToRoot(for viewID: UUID) {
-        stackPaths[viewID] = []
+    // MARK: - Stack Navigation
+    public func navigate(to route: StackRoute) {
+        guard let rootID = currentRootViewID else { return }
+        var path = stackPaths[rootID, default: []]
+        path.append(route)
+        stackPaths[rootID] = path
+    }
+
+    public func pop() {
+        guard let rootID = currentRootViewID else { return }
+        var path = stackPaths[rootID, default: []]
+        guard !path.isEmpty else { return }
+        path.removeLast()
+        stackPaths[rootID] = path
+    }
+
+    public func popToRoot() {
+        guard let rootID = currentRootViewID else { return }
+        stackPaths[rootID] = []
+    }
+
+    public func pop(to target: StackRoute) {
+        guard let rootID = currentRootViewID else { return }
+        var path = stackPaths[rootID, default: []]
+        guard let index = path.firstIndex(of: target) else { return }
+        stackPaths[rootID] = Array(path.prefix(through: index))
+    }
+
+    public func popUntil(_ condition: (StackRoute) -> Bool) {
+        guard let rootID = currentRootViewID else { return }
+        var path = stackPaths[rootID, default: []]
+        guard let index = path.lastIndex(where: condition) else { return }
+        stackPaths[rootID] = Array(path.prefix(through: index))
+    }
+
+    // MARK: - Optional cleanup
+    public func endNavigationStack(for viewID: UUID) {
+        if rootViewStack.last == viewID {
+            rootViewStack.removeLast()
+        }
     }
     
     // MARK: - Sheet

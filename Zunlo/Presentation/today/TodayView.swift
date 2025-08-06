@@ -69,7 +69,7 @@ struct TodayView: View {
                                 eventsTodaySection
                                 tasksTodaySection
                             }
-                            .padding(.top, 44)
+                            .padding(.top, 88)
                             .padding()
                         }
                         .refreshable {
@@ -129,7 +129,10 @@ struct TodayView: View {
                                             viewModel: CalendarScheduleViewModel(
                                                 repository: appState.eventRepository,
                                                 locationService: appState.locationService
-                                            )
+                                            ),
+                                            onTapClose: {
+                                                nav.pop()
+                                            }
                                         )
                                         .ignoresSafeArea()
                                     )
@@ -209,27 +212,37 @@ struct TodayView: View {
                             }
                             Spacer()
                         }
+                        .padding(.top, 44)
                         
                     }
+                    .toolbar(.hidden, for: .navigationBar)
                     .navigationTitle("")
                     .navigationDestination(for: StackRoute.self, destination: { route in
                         ViewRouter.navigationDestination(for: route, navigationManager: nav, builders: ViewBuilders(
                             buildTaskInboxView: {
-                                AnyView(TaskInboxView(repository: appState.userTaskRepository))
+                                AnyView(
+                                    TaskInboxView(repository: appState.userTaskRepository)
+                                        .navigationBarBackButtonHidden()
+                                )
                             },
                             buildEventCalendarView: {
-                                AnyView(CalendarScheduleContainer(
-                                    viewModel: CalendarScheduleViewModel(
-                                        repository: appState.eventRepository,
-                                        locationService: appState.locationService
+                                AnyView(
+                                    CalendarScheduleContainer(
+                                        viewModel: CalendarScheduleViewModel(
+                                            repository: appState.eventRepository,
+                                            locationService: appState.locationService
+                                        ),
+                                        onTapClose: {
+                                            nav.pop()
+                                        }
                                     )
-                                )
-                                    .navigationTitle("Title")
+                                    .toolbar(.hidden, for: .navigationBar)
                                     .ignoresSafeArea()
                                 )
                             }
                         ))
                     })
+                    .ignoresSafeArea()
                 }
             case .loading:
                 VStack {
@@ -284,9 +297,10 @@ struct TodayView: View {
                     }
                     Spacer()
                     Button(action: {
-                        viewModel.showAd(type: .interstitial(.openCalendar)) {
-                            nav.showFullScreen(.eventCalendar, for: viewID)
-                        }
+                        nav.navigate(to: .eventCalendar)
+//                        viewModel.showAd(type: .interstitial(.openCalendar)) {
+//                            nav.showFullScreen(.eventCalendar, for: viewID)
+//                        }
                     }) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 22, weight: .regular))
@@ -331,13 +345,12 @@ struct TodayView: View {
                         Text("Tasks Today").themedBody()
                     } icon: {
                         Image(systemName: "note.text")
-                            .font(.system(size: 22, weight: .regular))
+                            .font(.system(size: 20, weight: .regular))
                             .foregroundColor(Color.theme.text)
                     }
                     Spacer()
                     Button(action: {
-                        //                        nav.showSheet(.taskInbox, for: viewID)
-                        nav.navigate(to: .taskInbox, for: viewID)
+                        nav.navigate(to: .taskInbox)
                     }) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 22, weight: .regular))

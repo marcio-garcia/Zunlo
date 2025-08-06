@@ -83,9 +83,12 @@ struct TaskInboxView: View {
                     .themedSubtitle()
             }
             ToolbarItem(placement: .cancellationAction) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 20, weight: .regular))
+                Button(action: {
+                    dismiss()
+                    nav.pop()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .regular))
                 }
                 .themedSecondaryButton()
             }
@@ -94,7 +97,7 @@ struct TaskInboxView: View {
                     nav.showSheet(.addTask, for: viewID)
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .regular))
+                        .font(.system(size: 20, weight: .regular))
                 }
             }
         }

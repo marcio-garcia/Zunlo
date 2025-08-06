@@ -58,6 +58,7 @@ public enum DialogRoute: Identifiable, Equatable {
 }
 
 public enum StackRoute: Hashable {
+    case eventCalendar
     case taskDetail(_ id: UUID)
     case taskInbox
 }

@@ -27,6 +27,8 @@ class CalendarScheduleViewController: UIViewController {
     private var dataSource: UICollectionViewDiffableDataSource<Int, CalendarItem>!
     private var didScrollToToday = false
     
+    var onTapClose: (() -> Void)?
+    
     init(viewModel: CalendarScheduleViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -53,7 +55,7 @@ class CalendarScheduleViewController: UIViewController {
     private func setupViews() {
         topBarView.configure(title: "Events", accentColor: UIColor(Color.theme.accent))
         topBarView.onTapClose = { [weak self] in
-            self?.dismiss(animated: true)
+            self?.onTapClose?()
         }
         topBarView.onTapToday = { [weak self] in
             self?.scrollTo(date: Date(), animated: true)
