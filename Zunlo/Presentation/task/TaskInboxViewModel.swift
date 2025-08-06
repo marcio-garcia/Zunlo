@@ -6,17 +6,18 @@
 //
 
 import SwiftUI
+import FlowNavigator
 
 class UserTaskInboxViewModel: ObservableObject {
     @Published var state: ViewState = .loading
     @Published var completeTasks: [UserTask] = []
     @Published var incompleteTasks: [UserTask] = []
-    @Published var showAddSheet: Bool = false
+//    @Published var showAddSheet: Bool = false
     @Published var tags: [Tag] = []
 
     let repository: UserTaskRepository
     var tasks: [UserTask] = []
-
+    
     init(repository: UserTaskRepository) {
         self.repository = repository
         self.repository.tasks.observe(owner: self, fireNow: false) { [weak self] tasks in

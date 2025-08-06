@@ -18,6 +18,7 @@ public struct ViewRouter {
         case .settings: return checkBuilder(builders.buildSettingsView, navigationManager: navigationManager)
         case .addEvent: return checkBuilder(builders.buildAddEventView, navigationManager: navigationManager)
         case .editEvent(let id): return checkBuilder(builders.buildEditEventView, id: id, navigationManager: navigationManager)
+        case .taskInbox: return checkBuilder(builders.buildTaskInboxView, navigationManager: navigationManager)
         }
     }
 
@@ -44,6 +45,7 @@ public struct ViewRouter {
     static public func navigationDestination(for route: StackRoute, navigationManager: AppNavigationManager, builders: ViewBuilders) -> some View {
         switch route {
         case .taskDetail(let id): return checkBuilder(builders.buildTaskDetailView, id: id, navigationManager: navigationManager)
+        case .taskInbox: return checkBuilder(builders.buildTaskInboxView, navigationManager: navigationManager)
         }
     }
     
@@ -52,7 +54,7 @@ public struct ViewRouter {
         navigationManager: AppNavigationManager
     ) -> AnyView {
         guard let view = builder?() else {
-            return AnyView(FallbackView(message: "No view found for this route.", nav: navigationManager))
+            return AnyView(FallbackView(message: "No view found for this route.", nav: navigationManager, viewID: UUID()))
         }
         return AnyView(view)
     }
@@ -63,7 +65,7 @@ public struct ViewRouter {
         navigationManager: AppNavigationManager
     ) -> AnyView {
         guard let view = builder?(id) else {
-            return AnyView(FallbackView(message: "No view found for this route.", nav: navigationManager))
+            return AnyView(FallbackView(message: "No view found for this route.", nav: navigationManager, viewID: UUID()))
         }
         return AnyView(view)
     }

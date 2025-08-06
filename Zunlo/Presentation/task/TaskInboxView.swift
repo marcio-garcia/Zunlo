@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import FlowNavigator
 
 struct TaskInboxView: View {
+    @State private var viewID = UUID()
+    
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var nav: AppNavigationManager
     @StateObject private var viewModel: UserTaskInboxViewModel
     @State private var editableUserTask: UserTask?
     @State private var tagEditorHeight: CGFloat = .zero
@@ -26,7 +30,7 @@ struct TaskInboxView: View {
 
                 case .empty:
                     EmptyInboxView {
-                        viewModel.showAddSheet = true
+                        nav.showSheet(.addTask, for: viewID)
                     }
 
                 case .error(let message):
@@ -50,7 +54,9 @@ struct TaskInboxView: View {
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
+                                    guard let id = task.id else { return }
                                     editableUserTask = task
+                                    nav.showSheet(.editTask(id), for: viewID)
                                 }
                             }
                             
@@ -60,7 +66,9 @@ struct TaskInboxView: View {
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
+                                    guard let id = task.id else { return }
                                     editableUserTask = task
+                                    nav.showSheet(.editTask(id), for: viewID)
                                 }
                             }
                         }
@@ -84,23 +92,30 @@ struct TaskInboxView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        viewModel.showAddSheet = true
+                        nav.showSheet(.addTask, for: viewID)
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 22, weight: .regular))
                     }
                 }
             }
-            .sheet(isPresented: $viewModel.showAddSheet) {
-                AddEditTaskView(
-                    viewModel: AddEditTaskViewModel(mode: .add, repository: viewModel.repository)
-                )
+            .sheet(item: nav.sheetBinding(for: viewID)) { route in
+                ViewRouter.sheetView(for: route, navigationManager: nav, builders: ViewBuilders(
+                    buildAddTaskView: {
+                        AnyView(AddEditTaskView(
+                            viewModel: AddEditTaskViewModel(mode: .add, repository: viewModel.repository)
+                        ))
+                    },
+                    buildEditTaskView: { id in
+                        guard let task = editableUserTask, task.id == id else {
+                            return AnyView(FallbackView(message: "Could not display edit task screen", nav: nav, viewID: viewID))
+                        }
+                        return AnyView(AddEditTaskView(
+                            viewModel: AddEditTaskViewModel(mode: .edit(task), repository: viewModel.repository)
+                        ))
+                    }
+                ))
             }
-            .sheet(item: $editableUserTask, content: { task in
-                AddEditTaskView(
-                    viewModel: AddEditTaskViewModel(mode: .edit(task), repository: viewModel.repository)
-                )
-            })
             .task {
                 await viewModel.fetchTasks()
                 await viewModel.fetchTags()

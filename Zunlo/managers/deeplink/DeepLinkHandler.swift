@@ -22,19 +22,19 @@ class DeepLinkHandler: ObservableObject {
             navigationManager.path = [.taskDetail(id)]
 
         case .editTask(let id):
-            navigationManager.showSheet(.editTask(id))
+            navigationManager.showSheet(.editTask(id), for: UUID())
 
         case .addTask:
-            navigationManager.showSheet(.addTask)
+            navigationManager.showSheet(.addTask, for: UUID())
 
         case .onboarding:
-            navigationManager.showFullScreen(.onboarding)
+            navigationManager.showFullScreen(.onboarding, for: UUID())
 
         case .magicLink(let url):
             NotificationCenter.default.post(name: .authDeepLink, object: url)
 
         case .showSettings:
-            navigationManager.showSheet(.settings)
+            navigationManager.showSheet(.settings, for: UUID())
         }
     }
 }

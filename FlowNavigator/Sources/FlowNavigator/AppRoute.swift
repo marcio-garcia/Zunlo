@@ -13,7 +13,7 @@ public enum SheetRoute: Identifiable, Equatable {
     case editTask(_ id: UUID)
     case addEvent
     case editEvent(_ id: UUID)
-    
+    case taskInbox
     
     public var id: String {
         switch self {
@@ -22,6 +22,7 @@ public enum SheetRoute: Identifiable, Equatable {
         case .editTask(let id): return "editTask_\(id)"
         case .addEvent: return "addEvent"
         case .editEvent(let id): return "editEvent_\(id)"
+        case .taskInbox: return "taskInbox"
         }
     }
 }
@@ -58,4 +59,5 @@ public enum DialogRoute: Identifiable, Equatable {
 
 public enum StackRoute: Hashable {
     case taskDetail(_ id: UUID)
+    case taskInbox
 }
