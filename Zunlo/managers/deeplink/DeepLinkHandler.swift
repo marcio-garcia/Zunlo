@@ -19,7 +19,8 @@ class DeepLinkHandler: ObservableObject {
     func handleDeepLink(_ deepLink: DeepLink) {
         switch deepLink {
         case .taskDetail(let id):
-            navigationManager.path = [.taskDetail(id)]
+//            navigationManager.path = [.taskDetail(id)]
+            break
 
         case .editTask(let id):
             navigationManager.showSheet(.editTask(id), for: UUID())

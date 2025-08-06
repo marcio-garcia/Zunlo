@@ -9,21 +9,31 @@ import SwiftUI
 
 @MainActor
 final public class AppNavigationManager: ObservableObject {
-    @Published public var path: [StackRoute] = []
+    @Published private var stackPaths: [UUID: [StackRoute]] = [:]
     @Published private var sheetRoutes: [UUID: SheetRoute] = [:]
     @Published private var fullScreenRoutes: [UUID: FullScreenRoute] = [:]
     @Published private var dialogRoutes: [UUID: DialogRoute] = [:]
-
+    
     public init() {}
     
     // MARK: - NavigationStack
     
-    public func navigate(to route: StackRoute) {
-        path.append(route)
+    public func pathBinding(for viewID: UUID) -> Binding<[StackRoute]> {
+        Binding(
+            get: { self.stackPaths[viewID, default: []] },
+            set: { newValue in self.stackPaths[viewID] = newValue }
+        )
     }
 
-    public func popToRoot() {
-        path.removeAll()
+    public func navigate(to route: StackRoute, for viewID: UUID) {
+        print("🚀 Navigating to \(route) for view \(viewID)")
+        var path = stackPaths[viewID, default: []]
+        path.append(route)
+        stackPaths[viewID] = path
+    }
+
+    public func popToRoot(for viewID: UUID) {
+        stackPaths[viewID] = []
     }
     
     // MARK: - Sheet
@@ -37,7 +47,6 @@ final public class AppNavigationManager: ObservableObject {
     }
 
     public func sheetBinding(for viewID: UUID) -> Binding<SheetRoute?> {
-        print("sheetRoutes[\(viewID)]: \(sheetRoutes[viewID]?.id ?? "nil")")
         return Binding(
             get: { self.sheetRoutes[viewID] },
             set: { newValue in

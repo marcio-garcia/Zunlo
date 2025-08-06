@@ -28,7 +28,7 @@ public struct FallbackView: View {
                 nav.dismissSheet(for: viewID)
                 nav.dismissFullScreen(for: viewID)
                 nav.dismissDialog(for: viewID)
-                nav.popToRoot()
+                nav.popToRoot(for: viewID)
             }
             .buttonStyle(.borderedProminent)
         }
