@@ -237,14 +237,17 @@ extension CalendarScheduleViewController: UICollectionViewDelegate {
         targetContentOffset: UnsafeMutablePointer<CGPoint>
     ) {
         let offsetY = scrollView.contentOffset.y
-        let thresholdTop = UIScreen.main.bounds.height * 2
+//        let thresholdTop = UIScreen.main.bounds.height * 2
         let thresholdBottom = scrollView.contentSize.height - scrollView.bounds.height - 1000
 
-        if offsetY < thresholdTop {
-            targetContentOffset.pointee = scrollView.contentOffset
-            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
-            viewModel.checkTop(date: date)
-        } else if offsetY > thresholdBottom {
+        // Commented out to remove the date range expasion for older dates
+        // because it is buggy
+//        if offsetY < thresholdTop {
+//            targetContentOffset.pointee = scrollView.contentOffset
+//            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
+//            viewModel.checkTop(date: date)
+//        } else
+        if offsetY > thresholdBottom {
             targetContentOffset.pointee = scrollView.contentOffset
             guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
             viewModel.checkBottom(date: date)
@@ -253,13 +256,16 @@ extension CalendarScheduleViewController: UICollectionViewDelegate {
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         let offsetY = scrollView.contentOffset.y
-        let thresholdTop = UIScreen.main.bounds.height * 2
+//        let thresholdTop = UIScreen.main.bounds.height * 2
         let thresholdBottom = scrollView.contentSize.height - scrollView.bounds.height - 1000
 
-        if offsetY < thresholdTop {
-            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
-            viewModel.checkTop(date: date)
-        } else if offsetY > thresholdBottom {
+        // Commented out to remove the date range expasion for older dates
+        // because it is buggy
+//        if offsetY < thresholdTop {
+//            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
+//            viewModel.checkTop(date: date)
+//        } else
+        if offsetY > thresholdBottom {
             guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
             viewModel.checkBottom(date: date)
         }
