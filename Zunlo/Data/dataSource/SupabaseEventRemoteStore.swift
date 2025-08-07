@@ -80,4 +80,8 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
     func deleteAll(for userId: UUID) async throws -> [EventRemote] {
         try await database.delete(from: tableName, filter: ["user_id": "eq.\(userId.uuidString)"])
     }
+    
+    func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws -> SplitRecurringEventResponse {
+        try await database.splitRecurringEvent(occurrence)
+    }
 }

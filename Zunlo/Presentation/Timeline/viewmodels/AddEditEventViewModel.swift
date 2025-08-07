@@ -19,14 +19,25 @@ enum AddEditEventViewMode: Identifiable {
     case editAll(event: EventOccurrence, recurrenceRule: RecurrenceRule?)
     case editSingle(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
     case editOverride(override: EventOverride)
+    case editFuture(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, startingFrom: EventOccurrence)
+
     
     var id: String {
         switch self {
-        case .add: return "add"
-        case .editAll(let event, _): return "editAll-\(event.id)"
+        case .add: 
+            return "add"
+            
+        case .editAll(let event, _):
+            return "editAll-\(event.id)"
+            
         case .editSingle(let parent, _, let occurrence):
             return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
-        case .editOverride(let override): return "editOverride-\(override.id ?? UUID())"
+            
+        case .editOverride(let override):
+            return "editOverride-\(override.id ?? UUID())"
+            
+        case .editFuture(let parent, _, let from):
+            return "editFuture-\(parent.id)-\(from.startDate.timeIntervalSince1970)"
         }
     }
 }
@@ -69,6 +80,7 @@ final class AddEditEventViewModel: ObservableObject {
         case .editAll: return "Edit"
         case .editSingle: return "Edit"
         case .editOverride: return "Edit"
+        case .editFuture: return "Edit"
         }
     }
 
@@ -166,6 +178,19 @@ final class AddEditEventViewModel: ObservableObject {
             location = override.overriddenLocation ?? ""
             isCancelled = override.isCancelled
             color = override.color.rawValue
+        case .editFuture(let parent, recurrenceRule: let rule, let startingFromOccurrence ):
+            title = startingFromOccurrence.title
+            notes = startingFromOccurrence.description ?? ""
+            startDate = startingFromOccurrence.startDate
+            if let end = startingFromOccurrence.endDate {
+                endDate = end
+            } else {
+                updateEndDate()
+            }
+            location = startingFromOccurrence.location ?? ""
+            color = startingFromOccurrence.color.rawValue
+            isCancelled = startingFromOccurrence.isCancelled
+            isRecurring = startingFromOccurrence.isRecurring
         }
     }
     
@@ -200,6 +225,8 @@ final class AddEditEventViewModel: ObservableObject {
                     try await editSingle(parentEvent: parent, occurrence: occurrence)
                 case .editOverride(let override):
                     try await editOverride(override: override)
+                case .editFuture(let parent, let rule, let startingFromOccurrence):
+                    try await editFuture(parent: parent, startingFromOccurrence: startingFromOccurrence)
                 }
                 isProcessing = false
                 completion(.success(self.startDate))
@@ -331,6 +358,28 @@ final class AddEditEventViewModel: ObservableObject {
             color: EventColor(rawValue: color) ?? . yellow
         )
         try await repository.updateOverride(updatedOverride)
+    }
+    
+    private func editFuture(parent: EventOccurrence, startingFromOccurrence: EventOccurrence) async throws {
+        let data = SplitRecurringEventRemote.NewEventData(
+            userId: startingFromOccurrence.userId,
+            title: title,
+            description: notes.isEmpty ? nil : notes,
+            startDatetime: startDate,
+            endDatetime: endDate,
+            isRecurring: isRecurring,
+            location: location.isEmpty ? nil : location,
+            color: EventColor(rawValue: color) ?? . yellow,
+            reminderTriggers: reminderTriggers
+        )
+        
+        let split = SplitRecurringEventRemote(
+            originalEventId: parent.id,
+            splitFromDate: startingFromOccurrence.startDate,
+            newEventData: data
+        )
+        
+        try await repository.splitRecurringEvent(split)
     }
     
     func updateEndDate() {

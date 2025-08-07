@@ -35,16 +35,6 @@ public final class SupabaseDatabase: @unchecked Sendable {
             query: query
         )
     }
-
-    public func fetchOccurrences<T: Codable>(
-        as type: T.Type = T.self
-    ) async throws -> [T] {
-        try await httpService.performRequest(
-            baseURL: config.functionsBaseURL,
-            path: "/get_user_events",
-            method: .get
-        )
-    }
     
     public func insert<T: Codable>(
         _ object: T,
@@ -83,5 +73,26 @@ public final class SupabaseDatabase: @unchecked Sendable {
         )
     }
     
+    // MARK: Remote functions
     
+    public func fetchOccurrences<T: Codable>(
+        as type: T.Type = T.self
+    ) async throws -> [T] {
+        try await httpService.performRequest(
+            baseURL: config.functionsBaseURL,
+            path: "/get_user_events",
+            method: .get
+        )
+    }
+    
+    public func splitRecurringEvent<T: Codable, R: Codable>(
+        _ object: T
+    ) async throws -> R {
+        try await httpService.perform(
+            baseURL: config.functionsBaseURL,
+            path: "/split-recurring-event",
+            method: .post,
+            bodyObject: object
+        )
+    }
 }

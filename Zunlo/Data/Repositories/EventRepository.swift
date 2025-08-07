@@ -100,6 +100,11 @@ final class EventRepository {
         }
         occurrences.value = try await fetchRemote()
     }
+    
+    func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws {
+        let response = try await eventRemoteStore.splitRecurringEvent(occurrence)
+        try await synchronize()
+    }
 
     func delete(id: UUID, reminderTriggers: [ReminderTrigger]? = nil) async throws {
         let deleted = try await eventRemoteStore.delete(id: id)

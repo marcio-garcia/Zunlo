@@ -152,6 +152,10 @@ struct TodayView: View {
                                                 viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
                                                 nav.showSheet(.editEvent(UUID()), for: viewID)
                                             }
+                                            Button("Edit this and future occurrences") {
+                                                viewModel.eventEditHandler.selectEditFutureOccurrences()
+                                                nav.showSheet(.editEvent(UUID()), for: viewID)
+                                            }
                                             Button("Edit all occurrences") {
                                                 viewModel.eventEditHandler.selectEditAllOccurrences()
                                                 nav.showSheet(.editEvent(UUID()), for: viewID)

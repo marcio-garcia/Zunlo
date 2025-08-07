@@ -50,4 +50,11 @@ final class EventEditHandler: ObservableObject {
         showEditChoiceDialog = false
         editChoiceContext = nil
     }
+    
+    func selectEditFutureOccurrences() {
+        guard let ctx = editChoiceContext else { return }
+        editMode = .editFuture(parentEvent: ctx.parentEvent, recurrenceRule: ctx.rule, startingFrom: ctx.occurrence)
+        showEditChoiceDialog = false
+        editChoiceContext = nil
+    }
 }

@@ -327,6 +327,15 @@ extension CalendarScheduleViewController {
             }))
         
         sheet.addAction(UIAlertAction(
+            title: "Edit this and future occurrences",
+            style: .default,
+            handler: { action in
+                self.viewModel.eventEditHandler.selectEditFutureOccurrences()
+                guard let editMode = self.viewModel.eventEditHandler.editMode else { return }
+                self.showAddEventView(mode: editMode)
+            }))
+        
+        sheet.addAction(UIAlertAction(
             title: "Edit all occurrences",
             style: .default,
             handler: { action in
