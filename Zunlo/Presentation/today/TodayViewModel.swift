@@ -23,8 +23,8 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     
     @MainActor let errorHandler = ErrorHandler()
 
-    var todaysTasks: [UserTask] = []
-    var todaysEvents: [EventOccurrence] = []
+    var todayTasks: [UserTask] = []
+    var todayEvents: [EventOccurrence] = []
     var greeting: String = ""
 
     init(
@@ -55,7 +55,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
                 }
             }
             DispatchQueue.main.async {
-                self?.todaysTasks = filtered
+                self?.todayTasks = filtered
                 self?.state = filtered.isEmpty ? .empty : .loaded
             }
         }
@@ -79,12 +79,15 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
         do {
             let today = Calendar.current.startOfDay(for: Date())
-            let filtered = occurrences.filter {
+            
+            let eventsWithRecurringOcc = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
+            
+            let filtered = eventsWithRecurringOcc.filter {
                 Calendar.current.isDate($0.startDate, inSameDayAs: today)
             }
             
-            todaysEvents = try EventOccurrenceService.generate(rawOccurrences: filtered, in: range)
-            
+            todayEvents = filtered
+
             DispatchQueue.main.async {
                 self.eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
                 self.state = occurrences.isEmpty ? .empty : .loaded

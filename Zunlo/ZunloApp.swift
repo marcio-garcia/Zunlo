@@ -12,6 +12,8 @@ import Firebase
 import FlowNavigator
 import AdStack
 
+typealias AppNav = AppNavigationManager<SheetRoute, FullScreenRoute, DialogRoute, StackRoute>
+
 /// If you're tracking in-app purchases, you must initialize your transaction observer in application:didFinishLaunchingWithOptions: before initializing Firebase,
 /// or your observer may not receive all purchase notifications. See Apple's In-App Purchase Best Practices for more information.
 /// https://developer.apple.com/documentation/storekit/in-app-purchase
@@ -21,7 +23,7 @@ struct ZunloApp: App {
     @StateObject var upgradeFlowManager = UpgradeFlowManager()
     @StateObject var upgradeReminderManager = UpgradeReminderManager()
     @StateObject var appSettings = AppSettings()
-    @StateObject var appNavigationManager = AppNavigationManager()
+    @StateObject var appNavigationManager = AppNav()
     @State private var deepLinkHandler: DeepLinkHandler?
     
     private let appState: AppState

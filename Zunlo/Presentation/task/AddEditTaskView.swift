@@ -6,14 +6,28 @@
 //
 
 import SwiftUI
+import FlowNavigator
 
 struct AddEditTaskView: View {
+    @State var viewID = UUID()
+    
     @Environment(\.dismiss) private var dismiss
     @State private var error: String?
     @State private var tagEditorHeight: CGFloat = .zero
     @StateObject var viewModel: AddEditTaskViewModel
 
+    var nav: AppNav
+    
     var body: some View {
+        
+        let taskFactory = TaskViewFactory(
+            viewID: viewID,
+            nav: nav,
+            repository: viewModel.repository,
+            addEditTaskViewModel: viewModel
+        )
+        let factory = NavigationViewFactory(task: taskFactory)
+        
         NavigationStack {
             formContent
                 .navigationBarTitleDisplayMode(.inline)
@@ -42,6 +56,15 @@ struct AddEditTaskView: View {
                             .themedSecondaryButton()
                     }
                 }
+                .confirmationDialog(
+                    "Delete task",
+                    isPresented: nav.isDialogPresented(for: viewID),
+                    titleVisibility: .visible
+                ) {
+                    if let route = nav.dialogRoute(for: viewID) {
+                        ViewRouter.dialogView(for: route, navigationManager: nav, factory: factory)
+                    }
+                }
                 .alert("Error Saving Task", isPresented: isShowingError) {
                     Button("OK", role: .cancel) { error = nil }
                 } message: {
@@ -60,6 +83,7 @@ struct AddEditTaskView: View {
                 taskTimingSection
                 taskTagsSection
                 ReminderEditorView(triggers: $viewModel.reminderTriggers)
+                deleteSection
             }
             .padding()
         }
@@ -111,6 +135,29 @@ struct AddEditTaskView: View {
         }
     }
 
+    private var deleteSection: some View {
+        RoundedSection {
+            HStack {
+                Spacer()
+                Button {
+                    viewModel.onDelete = {
+                        Task {
+                            await MainActor.run {
+                                self.dismiss()
+                            }
+                        }
+                    }
+                    nav.showDialog(.deleteTask, for: viewID)
+//                    viewModel.showDeleteConfirmation = true
+                } label: {
+                    Text("Delete")
+                }
+                .themedSecondaryButton()
+                Spacer()
+            }
+        }
+    }
+    
     private var isShowingError: Binding<Bool> {
         Binding(
             get: { error != nil },
@@ -119,6 +166,6 @@ struct AddEditTaskView: View {
     }
     
     private var isEnabled: Bool {
-        return !(viewModel.title.trimmingCharacters(in: .whitespaces).isEmpty || viewModel.isSaving)
+        return !(viewModel.title.trimmingCharacters(in: .whitespaces).isEmpty || viewModel.isProcessing)
     }
 }

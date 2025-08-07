@@ -1,5 +1,5 @@
 //
-//  ViewBuilders.swift
+//  NavigationViewFactory.swift
 //  FlowNavigator
 //
 //  Created by Marcio Garcia on 8/4/25.
@@ -7,27 +7,35 @@
 
 import SwiftUI
 
-public struct ViewBuilders {
+struct NavigationViewFactory {
     
-    public var buildOnboardingView: (() -> AnyView)?
-    public var buildLoginView: (() -> AnyView)?
+    let task: TaskViews?
+    let event: EventViews?
+    let settings: SettingsViews?
     
-    public var buildSettingsView: (() -> AnyView)?
+    var buildOnboardingView: (() -> AnyView)?
+    var buildLoginView: (() -> AnyView)?
     
-    public var buildTaskInboxView: (() -> AnyView)?
-    public var buildAddTaskView: (() -> AnyView)?
-    public var buildEditTaskView: ((_ id: UUID) -> AnyView)?
-    public var buildTaskDetailView: ((_ id: UUID) -> AnyView)?
-    public var buildDeleteTaskConfirmationView: ((_ id: UUID) -> AnyView)?
+    var buildSettingsView: (() -> AnyView)?
     
-    public var buildEventCalendarView: (() -> AnyView)?
-    public var buildAddEventView: (() -> AnyView)?
-    public var buildEditEventView: ((_ id: UUID) -> AnyView)?
-    public var buildEventDetailView: ((_ id: UUID) -> AnyView)?
-    public var buildDeleteEventConfirmationView: ((_ id: UUID) -> AnyView)?
-    public var buildEditRecurringView: (() -> AnyView)?
+    var buildTaskInboxView: (() -> AnyView)?
+    var buildAddTaskView: (() -> AnyView)?
+    var buildEditTaskView: ((_ id: UUID) -> AnyView)?
+    var buildTaskDetailView: ((_ id: UUID) -> AnyView)?
+    var buildDeleteTaskConfirmationView: ((_ id: UUID) -> AnyView)?
     
-    public init(
+    var buildEventCalendarView: (() -> AnyView)?
+    var buildAddEventView: (() -> AnyView)?
+    var buildEditEventView: ((_ id: UUID) -> AnyView)?
+    var buildEventDetailView: ((_ id: UUID) -> AnyView)?
+    var buildDeleteEventConfirmationView: ((_ id: UUID) -> AnyView)?
+    var buildEditRecurringView: (() -> AnyView)?
+    
+    init(
+        task: TaskViews? = nil,
+        event: EventViews? = nil,
+        settings: SettingsViews? = nil,
+        
         buildOnboardingView: (() -> AnyView)? = nil,
         buildLoginView: (() -> AnyView)? = nil,
         buildSettingsView: (() -> AnyView)? = nil,
@@ -43,6 +51,10 @@ public struct ViewBuilders {
         buildDeleteEventConfirmationView: ((_ id: UUID) -> AnyView)? = nil,
         buildEditRecurringView: (() -> AnyView)? = nil
     ) {
+        self.task = task
+        self.event = event
+        self.settings = settings
+        
         self.buildOnboardingView = buildOnboardingView
         self.buildLoginView = buildLoginView
         self.buildSettingsView = buildSettingsView

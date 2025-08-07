@@ -66,7 +66,7 @@ class RecurrenceHelper {
         var weekStart = calendar.dateInterval(of: .weekOfYear, for: start)!.start
         var occurrences = 0
         while true {
-            for weekday in weekdays {
+            for weekday in weekdays.sorted() {
                 if let nextDate = calendar.nextDate(
                     after: weekStart.addingTimeInterval(-1),
                     matching: DateComponents(hour: calendar.component(.hour, from: start),
@@ -142,7 +142,7 @@ class RecurrenceHelper {
         var date = start
         var occurrences = 0
         while true {
-            for day in monthdays {
+            for day in monthdays.sorted() {
                 var comps = calendar.dateComponents([.year, .month], from: date)
                 comps.day = day
                 comps.hour = calendar.component(.hour, from: start)

@@ -7,12 +7,21 @@
 
 import SwiftUI
 
-public struct FallbackView: View {
+public struct FallbackView<
+    SheetRoute: AppSheetRoute,
+    FullScreenRoute: AppFullScreenRoute,
+    DialogRoute: AppDialogRoute,
+    StackRoute: AppStackRoute
+>: View {
     let message: String
-    let nav: AppNavigationManager
+    let nav: AppNavigationManager<SheetRoute, FullScreenRoute, DialogRoute, StackRoute>
     let viewID: UUID
 
-    public init(message: String, nav: AppNavigationManager, viewID: UUID) {
+    public init(
+        message: String,
+        nav: AppNavigationManager<SheetRoute, FullScreenRoute, DialogRoute, StackRoute>,
+        viewID: UUID
+    ) {
         self.message = message
         self.nav = nav
         self.viewID = viewID
@@ -33,5 +42,15 @@ public struct FallbackView: View {
             .buttonStyle(.borderedProminent)
         }
         .padding()
+    }
+}
+
+public extension FallbackView {
+    static func fallback(
+        _ message: String,
+        nav: AppNavigationManager<SheetRoute, FullScreenRoute, DialogRoute, StackRoute>,
+        viewID: UUID
+    ) -> FallbackView {
+        FallbackView(message: message, nav: nav, viewID: viewID)
     }
 }

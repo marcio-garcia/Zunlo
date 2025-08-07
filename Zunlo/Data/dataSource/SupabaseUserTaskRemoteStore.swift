@@ -62,11 +62,7 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
         return try await database.update(tk, in: tableName, filter: ["id": "eq.\(id)"])
     }
 
-    func delete(_ task: UserTaskRemote) async throws -> [UserTaskRemote] {
-        guard let id = task.id?.uuidString else {
-            assertionFailure("SupabaseEventRemoteStore - delete(_ rule:) - id == nil")
-            return []
-        }
+    func delete(_ id: UUID) async throws -> [UserTaskRemote] {
         return try await database.delete(from: tableName, filter: ["id": "eq.\(id)"])
     }
 

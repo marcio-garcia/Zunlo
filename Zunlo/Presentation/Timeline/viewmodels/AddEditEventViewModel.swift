@@ -14,35 +14,6 @@ enum EventError: Error {
     case errorOnEventDelete
 }
 
-enum AddEditEventViewMode: Identifiable {
-    case add
-    case editAll(event: EventOccurrence, recurrenceRule: RecurrenceRule?)
-    case editSingle(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
-    case editOverride(override: EventOverride)
-    case editFuture(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, startingFrom: EventOccurrence)
-
-    
-    var id: String {
-        switch self {
-        case .add: 
-            return "add"
-            
-        case .editAll(let event, _):
-            return "editAll-\(event.id)"
-            
-        case .editSingle(let parent, _, let occurrence):
-            return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
-            
-        case .editOverride(let override):
-            return "editOverride-\(override.id ?? UUID())"
-            
-        case .editFuture(let parent, _, let from):
-            return "editFuture-\(parent.id)-\(from.startDate.timeIntervalSince1970)"
-        }
-    }
-}
-
-@MainActor
 final class AddEditEventViewModel: ObservableObject {
     @Published var title: String = ""
     @Published var notes: String = ""
@@ -225,14 +196,18 @@ final class AddEditEventViewModel: ObservableObject {
                     try await editSingle(parentEvent: parent, occurrence: occurrence)
                 case .editOverride(let override):
                     try await editOverride(override: override)
-                case .editFuture(let parent, let rule, let startingFromOccurrence):
+                case .editFuture(let parent, _, let startingFromOccurrence):
                     try await editFuture(parent: parent, startingFromOccurrence: startingFromOccurrence)
                 }
-                isProcessing = false
-                completion(.success(self.startDate))
+                await MainActor.run {
+                    self.isProcessing = false
+                    completion(.success(self.startDate))
+                }
             } catch {
-                isProcessing = false
-                completion(.failure(error))
+                await MainActor.run {
+                    isProcessing = false
+                    completion(.failure(error))
+                }
             }
         }
     }

@@ -8,7 +8,12 @@
 import SwiftUI
 
 @MainActor
-final public class AppNavigationManager: ObservableObject {
+final public class AppNavigationManager<
+    SheetRoute: AppSheetRoute,
+    FullScreenRoute: AppFullScreenRoute,
+    DialogRoute: AppDialogRoute,
+    StackRoute: AppStackRoute
+>: ObservableObject {
     @Published private var stackPaths: [UUID: [StackRoute]] = [:]
     @Published private var sheetRoutes: [UUID: SheetRoute] = [:]
     @Published private var fullScreenRoutes: [UUID: FullScreenRoute] = [:]

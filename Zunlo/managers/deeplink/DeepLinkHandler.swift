@@ -9,9 +9,9 @@ import Foundation
 import FlowNavigator
 
 class DeepLinkHandler: ObservableObject {
-    let navigationManager: AppNavigationManager
+    let navigationManager: AppNav
     
-    init(navigationManager: AppNavigationManager) {
+    init(navigationManager: AppNav) {
         self.navigationManager = navigationManager
     }
     

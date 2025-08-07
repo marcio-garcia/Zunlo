@@ -43,7 +43,8 @@ final class UserTaskRepository {
     }
 
     func delete(_ task: UserTask) async throws {
-        let deleted = try await remoteStore.delete(UserTaskRemote(domain: task))
+        guard let id = task.id else { return }
+        let deleted = try await remoteStore.delete(id)
         for task in deleted {
             if let id = task.id {
                 try await localStore.delete(id: id)

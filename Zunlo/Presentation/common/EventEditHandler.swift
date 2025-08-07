@@ -7,6 +7,34 @@
 
 import SwiftUI
 
+enum AddEditEventViewMode: Identifiable, Equatable {
+    case add
+    case editAll(event: EventOccurrence, recurrenceRule: RecurrenceRule?)
+    case editSingle(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
+    case editOverride(override: EventOverride)
+    case editFuture(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, startingFrom: EventOccurrence)
+
+    
+    var id: String {
+        switch self {
+        case .add:
+            return "add"
+            
+        case .editAll(let event, _):
+            return "editAll-\(event.id)"
+            
+        case .editSingle(let parent, _, let occurrence):
+            return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
+            
+        case .editOverride(let override):
+            return "editOverride-\(override.id ?? UUID())"
+            
+        case .editFuture(let parent, _, let from):
+            return "editFuture-\(parent.id)-\(from.startDate.timeIntervalSince1970)"
+        }
+    }
+}
+
 final class EventEditHandler: ObservableObject {
     @Published var editMode: AddEditEventViewMode?
     @Published var showEditChoiceDialog = false
@@ -37,24 +65,27 @@ final class EventEditHandler: ObservableObject {
         completion(editMode, showEditChoiceDialog)
     }
     
-    func selectEditOnlyThisOccurrence() {
-        guard let ctx = editChoiceContext else { return }
+    func selectEditOnlyThisOccurrence() -> AddEditEventViewMode? {
+        guard let ctx = editChoiceContext else { return nil }
         editMode = .editSingle(parentEvent: ctx.parentEvent, recurrenceRule: ctx.rule, occurrence: ctx.occurrence)
         showEditChoiceDialog = false
         editChoiceContext = nil
+        return editMode
     }
     
-    func selectEditAllOccurrences() {
-        guard let ctx = editChoiceContext else { return }
+    func selectEditAllOccurrences() -> AddEditEventViewMode? {
+        guard let ctx = editChoiceContext else { return nil }
         editMode = .editAll(event: ctx.parentEvent, recurrenceRule: ctx.rule)
         showEditChoiceDialog = false
         editChoiceContext = nil
+        return editMode
     }
     
-    func selectEditFutureOccurrences() {
-        guard let ctx = editChoiceContext else { return }
+    func selectEditFutureOccurrences() -> AddEditEventViewMode? {
+        guard let ctx = editChoiceContext else { return nil }
         editMode = .editFuture(parentEvent: ctx.parentEvent, recurrenceRule: ctx.rule, startingFrom: ctx.occurrence)
         showEditChoiceDialog = false
         editChoiceContext = nil
+        return editMode
     }
 }

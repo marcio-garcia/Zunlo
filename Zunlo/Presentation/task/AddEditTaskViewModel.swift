@@ -19,7 +19,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     @Published var isCompleted: Bool = false
     @Published var priority: UserTaskPriority = .medium
     @Published var tags: [Tag] = []
-    @Published var isSaving = false
+    @Published var isProcessing = false
     @Published var reminderTriggers: [ReminderTrigger] = []
     
     @Published var selectedTags: [String] = []
@@ -37,6 +37,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     let mode: Mode
     let repository: UserTaskRepository
     var createdAt: Date?
+    
+    var onDelete: (() -> Void)?
     
     var id: String {
         switch mode {
@@ -60,8 +62,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     }
 
     func save(completion: @escaping (Result<Void, Error>) -> Void) {
-        guard !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        isSaving = true
+        guard !isProcessing, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        isProcessing = true
 
         let now = Date()
         var id: UUID? = nil
@@ -93,12 +95,12 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
                     try await repository.update(task)
                 }
                 await MainActor.run {
-                    self.isSaving = false
+                    self.isProcessing = false
                 }
                 completion(.success(()))
             } catch {
                 await MainActor.run {
-                    self.isSaving = false
+                    self.isProcessing = false
                 }
                 completion(.failure(error))
             }
@@ -128,5 +130,23 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     
     func fetchAllTags() async throws -> [String] {
         try await repository.fetchAllUniqueTags()
+    }
+    
+    func delete() {
+        guard !isProcessing else { return }
+        isProcessing = true
+        
+        if case .edit(let userTask) = mode {
+            Task {
+                do {
+                    try await repository.delete(userTask)
+                    await MainActor.run { self.isProcessing = false }
+                    onDelete?()
+                } catch {
+                    print("error: \(error.localizedDescription)")
+                    await MainActor.run { self.isProcessing = false }
+                }
+            }
+        }
     }
 }

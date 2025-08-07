@@ -16,7 +16,7 @@ struct TodayView: View {
     @Binding var showChat: Bool
     
     @EnvironmentObject var authManager: AuthManager
-    @EnvironmentObject var nav: AppNavigationManager
+    @EnvironmentObject var nav: AppNav
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     @EnvironmentObject var upgradeReminderManager: UpgradeReminderManager
     
@@ -50,6 +50,45 @@ struct TodayView: View {
     }
     
     var body: some View {
+        let taskFactory = TaskViewFactory(
+            viewID: viewID,
+            nav: nav,
+            repository: appState.userTaskRepository,
+            editableTaskProvider: { self.editableUserTask }
+        )
+        let eventFactory = EventViewFactory(
+            viewID: viewID,
+            nav: nav,
+            locationService: appState.locationService,
+            repository: appState.eventRepository,
+            onEditDialogSelection: { option in
+                switch option {
+                case .single:
+                    guard let editMode = viewModel.eventEditHandler.selectEditOnlyThisOccurrence() else { return }
+                    nav.showSheet(.editEvent(editMode), for: viewID)
+                case .all:
+                    guard let editMode = viewModel.eventEditHandler.selectEditAllOccurrences() else { return }
+                    nav.showSheet(.editEvent(editMode), for: viewID)
+                case .future:
+                    guard let editMode = viewModel.eventEditHandler.selectEditFutureOccurrences() else { return }
+                    nav.showSheet(.editEvent(editMode), for: viewID)
+                case .cancel:
+                    nav.dismissDialog(for: viewID)
+                }
+                if case .cancel = option {
+                    nav.dismissDialog(for: viewID)
+                } else {
+                    
+                }
+            }
+        )
+        let settingsFactory = SettingsViewFactory(authManager: appState.authManager)
+        let factory = NavigationViewFactory(
+            task: taskFactory,
+            event: eventFactory,
+            settings: settingsFactory
+        )
+        
         ZStack {
             Color.theme.background.ignoresSafeArea()
             
@@ -85,59 +124,7 @@ struct TodayView: View {
                             .ignoresSafeArea()
                         )
                         .sheet(item: nav.sheetBinding(for: viewID)) { route in
-                            ViewRouter.sheetView(for: route, navigationManager: nav, builders: ViewBuilders(
-                                buildSettingsView: {
-                                    AnyView(SettingsView(authManager: appState.authManager)
-                                        .environmentObject(upgradeFlowManager))
-                                },
-                                buildTaskInboxView: {
-                                    AnyView(TaskInboxView(repository: appState.userTaskRepository))
-                                },
-                                buildAddTaskView: {
-                                    AnyView(AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .add, repository: appState.userTaskRepository)))
-                                },
-                                buildEditTaskView: { id in
-                                    guard let editableUserTask, editableUserTask.id == id else {
-                                        return AnyView(FallbackView(message: "Could not display edit task screen", nav: nav, viewID: viewID))
-                                    }
-                                    return AnyView(AddEditTaskView(viewModel: AddEditTaskViewModel(mode: .edit(editableUserTask), repository: appState.userTaskRepository)))
-                                },
-                                buildAddEventView: {
-                                    AnyView(AddEditEventView(viewModel: AddEditEventViewModel(mode: .add, repository: appState.eventRepository)))
-                                },
-                                buildEditEventView: { id in
-                                    guard let editMode = viewModel.eventEditHandler.editMode else {
-                                        return AnyView(FallbackView(message: "Could not display edit event screen", nav: nav, viewID: viewID))
-                                    }
-                                    return AnyView(AddEditEventView(
-                                        viewModel: AddEditEventViewModel(
-                                            mode: editMode,
-                                            repository: appState.eventRepository
-                                        )
-                                    ))
-                                }
-                            ))
-                        }
-                        .fullScreenCover(item: nav.fullScreenBinding(for: viewID)) { route in
-                            ViewRouter.fullScreenView(for: route, navigationManager: nav, builders: ViewBuilders(
-                                buildTaskInboxView: {
-                                    AnyView(TaskInboxView(repository: appState.userTaskRepository))
-                                },
-                                buildEventCalendarView: {
-                                    AnyView(
-                                        CalendarScheduleContainer(
-                                            viewModel: CalendarScheduleViewModel(
-                                                repository: appState.eventRepository,
-                                                locationService: appState.locationService
-                                            ),
-                                            onTapClose: {
-                                                nav.pop()
-                                            }
-                                        )
-                                        .ignoresSafeArea()
-                                    )
-                                }
-                            ))
+                            ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
                         }
                         .confirmationDialog(
                             "Edit Recurring Event",
@@ -145,27 +132,7 @@ struct TodayView: View {
                             titleVisibility: .visible
                         ) {
                             if let route = nav.dialogRoute(for: viewID) {
-                                ViewRouter.dialogButtons(for: route, navigationManager: nav, builders: ViewBuilders(
-                                    buildEditRecurringView: {
-                                        AnyView(Group {
-                                            Button("Edit only this occurrence") {
-                                                viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
-                                                nav.showSheet(.editEvent(UUID()), for: viewID)
-                                            }
-                                            Button("Edit this and future occurrences") {
-                                                viewModel.eventEditHandler.selectEditFutureOccurrences()
-                                                nav.showSheet(.editEvent(UUID()), for: viewID)
-                                            }
-                                            Button("Edit all occurrences") {
-                                                viewModel.eventEditHandler.selectEditAllOccurrences()
-                                                nav.showSheet(.editEvent(UUID()), for: viewID)
-                                            }
-                                            Button("Cancel", role: .cancel) {
-                                                nav.dismissDialog(for: viewID)
-                                            }
-                                        })
-                                    }
-                                ))
+                                ViewRouter.dialogView(for: route, navigationManager: nav, factory: factory)
                             }
                         }
                         
@@ -222,29 +189,7 @@ struct TodayView: View {
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationTitle("")
                     .navigationDestination(for: StackRoute.self, destination: { route in
-                        ViewRouter.navigationDestination(for: route, navigationManager: nav, builders: ViewBuilders(
-                            buildTaskInboxView: {
-                                AnyView(
-                                    TaskInboxView(repository: appState.userTaskRepository)
-                                        .navigationBarBackButtonHidden()
-                                )
-                            },
-                            buildEventCalendarView: {
-                                AnyView(
-                                    CalendarScheduleContainer(
-                                        viewModel: CalendarScheduleViewModel(
-                                            repository: appState.eventRepository,
-                                            locationService: appState.locationService
-                                        ),
-                                        onTapClose: {
-                                            nav.pop()
-                                        }
-                                    )
-                                    .toolbar(.hidden, for: .navigationBar)
-                                    .ignoresSafeArea()
-                                )
-                            }
-                        ))
+                        ViewRouter.navigationDestination(for: route, navigationManager: nav, factory: factory)
                     })
                     .ignoresSafeArea()
                 }
@@ -302,9 +247,6 @@ struct TodayView: View {
                     Spacer()
                     Button(action: {
                         nav.navigate(to: .eventCalendar)
-//                        viewModel.showAd(type: .interstitial(.openCalendar)) {
-//                            nav.showFullScreen(.eventCalendar, for: viewID)
-//                        }
                     }) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 22, weight: .regular))
@@ -317,17 +259,17 @@ struct TodayView: View {
                     )
                 }
                 
-                if viewModel.todaysEvents.isEmpty {
+                if viewModel.todayEvents.isEmpty {
                     Text("No events for today.")
                         .themedBody()
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
-                        ForEach(viewModel.todaysEvents) { event in
+                        ForEach(viewModel.todayEvents) { event in
                             EventRow(occurrence: event, onTap: {
                                 if event.isRecurring {
                                     nav.showDialog(.editRecurringEvent, for: viewID)
                                 } else {
-                                    nav.showSheet(.editEvent(event.id), for: viewID)
+                                    nav.showSheet(.editEvent(.editAll(event: event, recurrenceRule: nil)), for: viewID)
                                 }
                                 viewModel.onEventEditTap(event)
                             })
@@ -367,21 +309,21 @@ struct TodayView: View {
                     )
                 }
                 
-                Text(hasEarnedReward ? "🎉 You earned 50 coins!" : "Watch an ad to earn coins")
-                Button("Watch Ad") {
-                    viewModel.showAd(type: .rewarded(.chat)) {
-                        
-                    } onRewardEarned: { amount, type in
-                        hasEarnedReward = true
-                    }
-                }
+//                Text(hasEarnedReward ? "🎉 You earned 50 coins!" : "Watch an ad to earn coins")
+//                Button("Watch Ad") {
+//                    viewModel.showAd(type: .rewarded(.chat)) {
+//                        
+//                    } onRewardEarned: { amount, type in
+//                        hasEarnedReward = true
+//                    }
+//                }
                 
-                if viewModel.todaysTasks.isEmpty {
+                if viewModel.todayTasks.isEmpty {
                     Text("No tasks for today.")
                         .themedBody()
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
-                        ForEach(viewModel.todaysTasks) { task in
+                        ForEach(viewModel.todayTasks) { task in
                             TaskRow(task: task) {
                                 viewModel.toggleTaskCompletion(for: task)
                             } onTap: {

@@ -12,7 +12,7 @@ struct TaskInboxView: View {
     @State private var viewID = UUID()
     
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var nav: AppNavigationManager
+    @EnvironmentObject var nav: AppNav
     @StateObject private var viewModel: UserTaskInboxViewModel
     @State private var editableUserTask: UserTask?
     @State private var tagEditorHeight: CGFloat = .zero
@@ -22,10 +22,22 @@ struct TaskInboxView: View {
     }
     
     var body: some View {
+        let taskViewFactory = TaskViewFactory(
+            viewID: viewID,
+            nav: nav,
+            repository: viewModel.repository,
+            editableTaskProvider: { self.editableUserTask }
+        )
+        let factory = NavigationViewFactory(task: taskViewFactory)
+        
         Group {
             switch viewModel.state {
             case .loading:
-                ProgressView("Loading your tasks...")
+                VStack {
+                    ProgressView("Loading...")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .defaultBackground()
                 
             case .empty:
                 EmptyInboxView {
@@ -77,6 +89,7 @@ struct TaskInboxView: View {
         }
         .defaultBackground()
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden()
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Task inbox")
@@ -102,21 +115,7 @@ struct TaskInboxView: View {
             }
         }
         .sheet(item: nav.sheetBinding(for: viewID)) { route in
-            ViewRouter.sheetView(for: route, navigationManager: nav, builders: ViewBuilders(
-                buildAddTaskView: {
-                    AnyView(AddEditTaskView(
-                        viewModel: AddEditTaskViewModel(mode: .add, repository: viewModel.repository)
-                    ))
-                },
-                buildEditTaskView: { id in
-                    guard let task = editableUserTask, task.id == id else {
-                        return AnyView(FallbackView(message: "Could not display edit task screen", nav: nav, viewID: viewID))
-                    }
-                    return AnyView(AddEditTaskView(
-                        viewModel: AddEditTaskViewModel(mode: .edit(task), repository: viewModel.repository)
-                    ))
-                }
-            ))
+            ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
         }
         .task {
             await viewModel.fetchTasks()

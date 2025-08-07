@@ -6,58 +6,53 @@
 //
 
 import Foundation
+import FlowNavigator
 
-public enum SheetRoute: Identifiable, Equatable {
+enum SheetRoute: AppSheetRoute {
     case settings
     case addTask
     case editTask(_ id: UUID)
     case addEvent
-    case editEvent(_ id: UUID)
-    case taskInbox
+    case editEvent(_ editMode: AddEditEventViewMode)
     
-    public var id: String {
+    var id: String {
         switch self {
         case .settings: return "settings"
         case .addTask: return "addTask"
         case .editTask(let id): return "editTask_\(id)"
         case .addEvent: return "addEvent"
         case .editEvent(let id): return "editEvent_\(id)"
-        case .taskInbox: return "taskInbox"
         }
     }
 }
 
-public enum FullScreenRoute: Identifiable, Equatable {
+enum FullScreenRoute: AppFullScreenRoute {
     case onboarding
     case login
-    case eventCalendar
-    case taskInbox
 
-    public var id: String {
+    var id: String {
         switch self {
         case .onboarding: return "onboarding"
         case .login: return "login"
-        case .eventCalendar: return "eventCalendar"
-        case .taskInbox: return "taskInbox"
         }
     }
 }
 
-public enum DialogRoute: Identifiable, Equatable {
-    case deleteTask(id: UUID)
+enum DialogRoute: AppDialogRoute {
+    case deleteTask
     case deleteEvent(id: UUID)
     case editRecurringEvent
 
-    public var id: String {
+    var id: String {
         switch self {
-        case .deleteTask(let id): return "deleteTask_\(id)"
+        case .deleteTask: return "deleteTask"
         case .deleteEvent(let id): return "deleteEvent_\(id)"
         case .editRecurringEvent: return "editRecurringEvent"
         }
     }
 }
 
-public enum StackRoute: Hashable {
+enum StackRoute: AppStackRoute {
     case eventCalendar
     case taskDetail(_ id: UUID)
     case taskInbox
