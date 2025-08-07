@@ -24,6 +24,7 @@ struct TagEditorView: UIViewControllerRepresentable {
             if self.height != newHeight {
                 DispatchQueue.main.async {
                     self.height = newHeight
+                    print("height \(newHeight)")
                 }
             }
         }

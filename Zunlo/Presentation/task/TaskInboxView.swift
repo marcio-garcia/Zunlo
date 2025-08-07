@@ -51,71 +51,76 @@ struct TaskInboxView: View {
                     .padding()
                 
             case .loaded:
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 16) {
-                        TagEditorView(tags: $viewModel.tags, height: $tagEditorHeight, readOnly: true) { tag in
-                            Task { await viewModel.filter() }
-                        }
-                        .frame(height: tagEditorHeight)
-                        .animation(.default, value: tagEditorHeight)
-                        
-                        Divider()
-                        
-                        ForEach(viewModel.incompleteTasks) { task in
-                            TaskRow(task: task) {
-                                viewModel.toggleCompletion(for: task)
-                            } onTap: {
-                                guard let id = task.id else { return }
-                                editableUserTask = task
-                                nav.showSheet(.editTask(id), for: viewID)
+                VStack {
+                    ScrollView(.horizontal) {
+                        HStack {
+                            ForEach(viewModel.tags) { tag in
+                                TagChipView(tag: tag, showDelete: false, tags: $viewModel.tags)
                             }
                         }
-                        
-                        Divider()
-                        
-                        ForEach(viewModel.completeTasks) { task in
-                            TaskRow(task: task) {
-                                viewModel.toggleCompletion(for: task)
-                            } onTap: {
-                                guard let id = task.id else { return }
-                                editableUserTask = task
-                                nav.showSheet(.editTask(id), for: viewID)
+                        .padding()
+                        .onChange(of: viewModel.tags) { oldValue, newValue in
+                            Task { await viewModel.filter() }
+                        }
+                    }
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 16) {
+                            ForEach(viewModel.incompleteTasks) { task in
+                                TaskRow(task: task) {
+                                    viewModel.toggleCompletion(for: task)
+                                } onTap: {
+                                    guard let id = task.id else { return }
+                                    editableUserTask = task
+                                    nav.showSheet(.editTask(id), for: viewID)
+                                }
+                            }
+                            
+                            Divider()
+                            
+                            ForEach(viewModel.completeTasks) { task in
+                                TaskRow(task: task) {
+                                    viewModel.toggleCompletion(for: task)
+                                } onTap: {
+                                    guard let id = task.id else { return }
+                                    editableUserTask = task
+                                    nav.showSheet(.editTask(id), for: viewID)
+                                }
+                            }
+                        }
+                        .padding()
+                    }
+                    .navigationBarTitleDisplayMode(.inline)
+                    .navigationBarBackButtonHidden()
+                    .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            Text("Task inbox")
+                                .themedSubtitle()
+                        }
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(action: {
+                                dismiss()
+                                nav.pop()
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 18, weight: .regular))
+                            }
+                            .themedSecondaryButton()
+                        }
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                nav.showSheet(.addTask, for: viewID)
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 20, weight: .regular))
                             }
                         }
                     }
-                    .padding()
+                    .sheet(item: nav.sheetBinding(for: viewID)) { route in
+                        ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
+                    }
                 }
+                .defaultBackground()
             }
-        }
-        .defaultBackground()
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden()
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Task inbox")
-                    .themedSubtitle()
-            }
-            ToolbarItem(placement: .cancellationAction) {
-                Button(action: {
-                    dismiss()
-                    nav.pop()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .regular))
-                }
-                .themedSecondaryButton()
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    nav.showSheet(.addTask, for: viewID)
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .regular))
-                }
-            }
-        }
-        .sheet(item: nav.sheetBinding(for: viewID)) { route in
-            ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
         }
         .task {
             await viewModel.fetchTasks()

@@ -40,8 +40,8 @@ class TagCell: UICollectionViewCell {
             stack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
-            contentView.heightAnchor.constraint(equalToConstant: 30)
+            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
+//            contentView.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
@@ -49,6 +49,13 @@ class TagCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func preferredLayoutAttributesFitting(_ layoutAttributes: UICollectionViewLayoutAttributes) -> UICollectionViewLayoutAttributes {
+        let attributes = super.preferredLayoutAttributesFitting(layoutAttributes)
+        let size = contentView.systemLayoutSizeFitting(layoutAttributes.size)
+        attributes.frame.size = CGSize(width: size.width, height: 32) // fixed height
+        return attributes
+    }
+    
     func configure(
         with tag: Tag,
         showDelete: Bool,

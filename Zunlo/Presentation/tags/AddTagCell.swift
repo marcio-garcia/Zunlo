@@ -35,6 +35,17 @@ class AddTagCell: UICollectionViewCell, UITextFieldDelegate {
         ])
     }
 
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func preferredLayoutAttributesFitting(_ layoutAttributes: UICollectionViewLayoutAttributes) -> UICollectionViewLayoutAttributes {
+        let attributes = super.preferredLayoutAttributesFitting(layoutAttributes)
+        let size = contentView.systemLayoutSizeFitting(layoutAttributes.size)
+        attributes.frame.size = CGSize(width: size.width, height: 32) // fixed height
+        return attributes
+    }
+    
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if let text = textField.text, !text.isEmpty {
             onAdd?(text)
@@ -43,7 +54,11 @@ class AddTagCell: UICollectionViewCell, UITextFieldDelegate {
         return true
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+        return true
+    }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        print("text: \(textField.text)")
     }
 }

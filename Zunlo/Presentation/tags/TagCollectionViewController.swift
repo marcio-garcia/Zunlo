@@ -13,8 +13,8 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
             if isViewLoaded {
                 collectionView.reloadData()
                 collectionView.layoutIfNeeded()
-                let contentHeight = collectionView.collectionViewLayout.collectionViewContentSize.height
-                onHeightChanged?(contentHeight)
+//                let contentHeight = collectionView.collectionViewLayout.collectionViewContentSize.height
+//                onHeightChanged?(contentHeight)
             }
         }
     }
@@ -32,9 +32,11 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
         super.viewDidLoad()
 
         let layout = LeftAlignedCollectionViewFlowLayout()
-        layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
+        layout.sectionInset = UIEdgeInsets(top: 2, left: 4, bottom: 2, right: 4)
         layout.minimumInteritemSpacing = 8
         layout.minimumLineSpacing = 8
+        layout.itemSize = .zero
+        layout.estimatedItemSize = CGSize(width: 100, height: 32) // arbitrary width
 
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.register(TagCell.self, forCellWithReuseIdentifier: TagCell.reuseIdentifier)
@@ -43,7 +45,8 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
         collectionView.dataSource = self
         collectionView.isScrollEnabled = true
         collectionView.backgroundColor = .clear
-
+        collectionView.allowsSelection = false
+        
         view.addSubview(collectionView)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -57,7 +60,9 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let contentHeight = collectionView.collectionViewLayout.collectionViewContentSize.height
-        onHeightChanged?(contentHeight)
+        if view.bounds.height != contentHeight {
+            onHeightChanged?(contentHeight)
+        }
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
