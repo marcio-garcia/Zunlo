@@ -28,7 +28,7 @@ final class UserTaskRepository {
             let domain = UserTask(remote: remote)
             reminderScheduler.scheduleReminders(for: domain)
         }
-        self.tasks.value = try await localStore.fetchAll()
+        self.tasks.value = try await localStore.fetchTasks(filteredBy: TaskFilter(userId: task.userId))
     }
 
     func update(_ task: UserTask) async throws {
@@ -39,7 +39,7 @@ final class UserTaskRepository {
             reminderScheduler.cancelReminders(for: domain)
             reminderScheduler.scheduleReminders(for: domain)
         }
-        self.tasks.value = try await localStore.fetchAll()
+        self.tasks.value = try await localStore.fetchTasks(filteredBy: TaskFilter(userId: task.userId))
     }
 
     func delete(_ task: UserTask) async throws {
@@ -51,7 +51,7 @@ final class UserTaskRepository {
             }
         }
         reminderScheduler.cancelReminders(for: task)
-        self.tasks.value = try await localStore.fetchAll()
+        self.tasks.value = try await localStore.fetchTasks(filteredBy: TaskFilter(userId: task.userId))
     }
     
     func fetchAll() async throws {

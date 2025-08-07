@@ -81,17 +81,46 @@ final class RealmUserTaskLocalStore: UserTaskLocalStore {
         }.value
     }
     
-    func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
+    func fetchTasks(filteredBy filter: TaskFilter? = nil) async throws -> [UserTask] {
         try await Task.detached(priority: .background) {
             let realm = try Realm(configuration: self.configuration)
-            var query = realm.objects(UserTaskLocal.self)
+            var predicates: [NSPredicate] = []
+
             if let tags = filter?.tags, !tags.isEmpty {
-                let predicate = NSPredicate(format: "ANY tags IN %@", tags)
-                query = query.filter(predicate)
+                predicates.append(NSPredicate(format: "ANY tags IN %@", tags))
             }
-            return query.map { $0.toDomain() }
+
+            if let userId = filter?.userId {
+                predicates.append(NSPredicate(format: "userId == %@", userId as CVarArg))
+            }
+
+            if let priority = filter?.priority {
+                predicates.append(NSPredicate(format: "priority == %@", priority.rawValue))
+            }
+
+            if let isCompleted = filter?.isCompleted {
+                predicates.append(NSPredicate(format: "isCompleted == %@", NSNumber(value: isCompleted)))
+            }
+
+            if let range = filter?.dueDateRange {
+                predicates.append(NSPredicate(format: "dueDate >= %@ AND dueDate <= %@", range.lowerBound as NSDate, range.upperBound as NSDate))
+            }
+
+            var query = realm.objects(UserTaskLocal.self)
+            if !predicates.isEmpty {
+                let compound = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+                query = query.filter(compound)
+            }
+
+            let sorted = query.sorted(by: [
+                SortDescriptor(keyPath: "priority", ascending: false),
+                SortDescriptor(keyPath: "dueDate", ascending: true)
+            ])
+
+            return sorted.map { $0.toDomain() }
         }.value
     }
+
     
     func fetchAllUniqueTags() async throws -> [String] {
         try await Task.detached(priority: .background) {
