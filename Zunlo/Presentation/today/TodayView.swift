@@ -75,11 +75,6 @@ struct TodayView: View {
                 case .cancel:
                     nav.dismissDialog(for: viewID)
                 }
-                if case .cancel = option {
-                    nav.dismissDialog(for: viewID)
-                } else {
-                    
-                }
             }
         )
         let settingsFactory = SettingsViewFactory(authManager: appState.authManager)
@@ -259,21 +254,17 @@ struct TodayView: View {
                     )
                 }
                 
-                if viewModel.todayEvents.isEmpty {
-                    Text("No events for today.")
-                        .themedBody()
-                } else {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(viewModel.todayEvents) { event in
-                            EventRow(occurrence: event, onTap: {
-                                if event.isRecurring {
-                                    nav.showDialog(.editRecurringEvent, for: viewID)
-                                } else {
-                                    nav.showSheet(.editEvent(.editAll(event: event, recurrenceRule: nil)), for: viewID)
-                                }
-                                viewModel.onEventEditTap(event)
-                            })
-                        }
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(viewModel.todayEvents) { event in
+                        EventRow(occurrence: event, onTap: {
+                            if event.isFakeOccForEmptyToday {
+                                nav.showSheet(.addTask, for: viewID)
+                            } else if event.isRecurring {
+                                nav.showDialog(.editRecurringEvent, for: viewID)
+                            } else {
+                                nav.showSheet(.editEvent(.editAll(event: event, recurrenceRule: nil)), for: viewID)
+                            }
+                        })
                     }
                 }
             }

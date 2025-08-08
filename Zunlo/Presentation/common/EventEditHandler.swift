@@ -43,7 +43,9 @@ final class EventEditHandler: ObservableObject {
     var allRecurringParentOccurrences: [EventOccurrence] = []
 
     func handleEdit(occurrence: EventOccurrence) {
-        if occurrence.isOverride {
+        if occurrence.isFakeOccForEmptyToday {
+            editMode = .add
+        } else if occurrence.isOverride {
             if let override = occurrence.overrides.first(where: { $0.id == occurrence.id }) {
                 editMode = .editOverride(override: override)
             }
