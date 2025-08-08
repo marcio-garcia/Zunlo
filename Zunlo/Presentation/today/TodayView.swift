@@ -131,19 +131,6 @@ struct TodayView: View {
                             }
                         }
                         
-                        Button(action: { showChat = true }) {
-                            Image(systemName: "bubble.left.and.bubble.right.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(
-                                    Circle()
-                                        .fill(Color.accentColor)
-                                        .matchedGeometryEffect(id: "chatMorph", in: namespace)
-                                )
-                        }
-                        .padding()
-                        
                         VStack(spacing: 0) {
                             ToolbarView(blurStyle: Theme.isDarkMode ? .dark : .light) {
                                 Button(action: { nav.showSheet(.settings, for: viewID) }) {
@@ -180,6 +167,19 @@ struct TodayView: View {
                         }
                         .padding(.top, 44)
                         
+                        Button(action: { showChat = true }) {
+                            Image(systemName: "bubble.left.and.bubble.right.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(
+                                    Circle()
+                                        .fill(Color.accentColor)
+                                        .matchedGeometryEffect(id: "chatMorph", in: namespace, isSource: !showChat)
+                                )
+                        }
+                        .padding()
+                        
                     }
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationTitle("")
@@ -187,6 +187,7 @@ struct TodayView: View {
                         ViewRouter.navigationDestination(for: route, navigationManager: nav, factory: factory)
                     })
                     .ignoresSafeArea()
+                    .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: !showChat)
                 }
             case .loading:
                 VStack {

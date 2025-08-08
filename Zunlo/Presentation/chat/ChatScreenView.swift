@@ -67,7 +67,7 @@ struct ChatScreenView: View {
                         .foregroundColor(.primary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 42, maxHeight: 42)
-                .matchedGeometryEffect(id: "chatMorph", in: namespace)
+                .matchedGeometryEffect(id: "chatMorph", in: namespace, isSource: showChat)
                 
                 Button(action: {
                     Task { await viewModel.sendMessage() }
@@ -80,7 +80,10 @@ struct ChatScreenView: View {
         }
         .defaultBackground()
         .task { await viewModel.loadHistory() }
-        .swipeToDismiss(isPresented: $showChat)
-        .matchedGeometryEffect(id: "chatScreen", in: namespace)
+        .swipeToDismiss(isPresented: $showChat,
+                        threshold: 300,
+                        predictedThreshold: 300,
+                        minOpacity: 0.7)
+        .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: showChat)
     }
 }

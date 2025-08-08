@@ -33,6 +33,9 @@ struct EventViewFactory: EventViews {
                 }
             )
             .toolbar(.hidden, for: .navigationBar)
+            .swipeToPop {
+                Task { await MainActor.run { nav.pop() } }
+            }
             .ignoresSafeArea()
         )
     }

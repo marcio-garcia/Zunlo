@@ -39,12 +39,17 @@ struct MainView: View {
                     .environmentObject(upgradeFlowManager)
                     
                     if isShowingChat {
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                            .blur(radius: 10)
+                        
                         ChatScreenView(namespace: animationNamespace,
                                        showChat: $isShowingChat,
                                        factory: factory)
                     }
                 }
-                .animation(.spring(response: 0.4, dampingFraction: 0.90), value: isShowingChat)
+                .animation(.spring(response: 0.6, dampingFraction: 0.90), value: isShowingChat)
                 
                 VStack(spacing: 0) {
                     Spacer()

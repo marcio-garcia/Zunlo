@@ -1,5 +1,5 @@
 //
-//  SwipeToDismissModifier.swift
+//  SwipeToPopModifier.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 8/8/25.
@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-struct SwipeToDismissModifier: ViewModifier {
-    @Binding var isPresented: Bool
+struct SwipeToPopModifier: ViewModifier {
     let direction: SwipeDirection
     let threshold: CGFloat
     let predictedThreshold: CGFloat
     let enableFade: Bool
     let minOpacity: CGFloat
+    let onDismiss: () -> Void
 
     func body(content: Content) -> some View {
         content.modifier(
@@ -23,9 +23,7 @@ struct SwipeToDismissModifier: ViewModifier {
                 predictedThreshold: predictedThreshold,
                 enableFade: enableFade,
                 minOpacity: minOpacity,
-                onDismiss: {
-                    isPresented = false
-                }
+                onDismiss: onDismiss
             )
         )
     }
