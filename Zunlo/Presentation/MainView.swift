@@ -32,16 +32,16 @@ struct MainView: View {
                         .transition(.opacity)
                         .blur(radius: 10)
                     
+                    TodayView(namespace: animationNamespace,
+                              showChat: $isShowingChat,
+                              appState: viewModel.appState)
+                    .environmentObject(viewModel.appState.authManager)
+                    .environmentObject(upgradeFlowManager)
+                    
                     if isShowingChat {
                         ChatScreenView(namespace: animationNamespace,
                                        showChat: $isShowingChat,
                                        factory: factory)
-                    } else {
-                        TodayView(namespace: animationNamespace,
-                                  showChat: $isShowingChat,
-                                  appState: viewModel.appState)
-                        .environmentObject(viewModel.appState.authManager)
-                        .environmentObject(upgradeFlowManager)
                     }
                 }
                 .animation(.spring(response: 0.4, dampingFraction: 0.90), value: isShowingChat)

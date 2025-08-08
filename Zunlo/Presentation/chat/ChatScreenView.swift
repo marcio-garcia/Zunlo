@@ -12,6 +12,8 @@ struct ChatScreenView: View {
     @Binding var showChat: Bool
     @StateObject private var viewModel: ChatScreenViewModel
 
+    @GestureState private var dragOffset = CGSize.zero
+    
     init(namespace: Namespace.ID, showChat: Binding<Bool>, factory: ViewFactory) {
         self.namespace = namespace
         self._showChat = showChat
@@ -76,7 +78,9 @@ struct ChatScreenView: View {
             }
             .padding()
         }
-        .background(Color.white.ignoresSafeArea())
+        .defaultBackground()
         .task { await viewModel.loadHistory() }
+        .swipeToDismiss(isPresented: $showChat)
+        .matchedGeometryEffect(id: "chatScreen", in: namespace)
     }
 }
