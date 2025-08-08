@@ -23,6 +23,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     @Published var reminderTriggers: [ReminderTrigger] = []
     
     @Published var selectedTags: [String] = []
+    @Published var allUniqueTags: [String] = []
 
     @Published var hasDueDate: Bool = false {
         didSet {
@@ -121,6 +122,9 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             })
             reminderTriggers = task.reminderTriggers ?? []
         }
+        Task {
+            await fetchAllUniqueTags()
+        }
     }
     
     func loadFilteredTasks() async {
@@ -128,8 +132,13 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
 //        tasks = try await repository.fetchTasks(filteredBy: filter)
     }
     
-    func fetchAllTags() async throws -> [String] {
-        try await repository.fetchAllUniqueTags()
+    func fetchAllUniqueTags() async {
+        do {
+            let tags = try await repository.fetchAllUniqueTags()
+            await MainActor.run { allUniqueTags = tags }
+        } catch {
+            await MainActor.run { allUniqueTags = [] }
+        }
     }
     
     func delete() {

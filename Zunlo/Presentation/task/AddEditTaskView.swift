@@ -128,13 +128,12 @@ struct AddEditTaskView: View {
     }
 
     private var taskTagsSection: some View {
-        // ***************** Add TagChipView here to add tags
         RoundedSection(title: "Tags") {
-            TagEditorView(tags: $viewModel.tags, height: $tagEditorHeight, onTagTapped: { tag in
-                print("tag: \(tag.text)")
-            })
-                .frame(height: tagEditorHeight)
-                .animation(.default, value: tagEditorHeight)
+            TagChipListView(
+                tags: $viewModel.tags,
+                mode: .editable,
+                allPossibleTags: viewModel.allUniqueTags
+            )
         }
     }
 

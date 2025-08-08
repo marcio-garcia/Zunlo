@@ -15,7 +15,6 @@ struct TaskInboxView: View {
     @EnvironmentObject var nav: AppNav
     @StateObject private var viewModel: UserTaskInboxViewModel
     @State private var editableUserTask: UserTask?
-    @State private var tagEditorHeight: CGFloat = .zero
     
     init(repository: UserTaskRepository) {
         _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(repository: repository))
@@ -52,17 +51,12 @@ struct TaskInboxView: View {
                 
             case .loaded:
                 VStack {
-                    ScrollView(.horizontal) {
-                        HStack {
-                            ForEach(viewModel.tags) { tag in
-                                TagChipView(tag: tag, showDelete: false, tags: $viewModel.tags)
-                            }
-                        }
-                        .padding()
-                        .onChange(of: viewModel.tags) { oldValue, newValue in
-                            Task { await viewModel.filter() }
-                        }
-                    }
+                    TagChipListView(
+                        tags: $viewModel.tags,
+                        mode: .readonly,
+                        onTagsChanged: { _ in await viewModel.filter() }
+                    )
+                    
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 16) {
                             ForEach(viewModel.incompleteTasks) { task in

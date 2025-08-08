@@ -8,21 +8,22 @@
 import SwiftUI
 
 struct TagChipView: View {
-    var tag: Tag
+    let tag: Tag
     let showDelete: Bool
+    let selectable: Bool
     @Binding var tags: [Tag]
 
     var body: some View {
         HStack(spacing: 6) {
             Text(tag.text)
-                .themedFootnote()
-                .padding(.leading, 10)
-                .padding(.trailing, showDelete ? 0 : 10)
+                .font(AppFontStyle.strongCaption.font())
+                .foregroundColor(tag.selected ? .white : Color.theme.text)
                 .padding(.vertical, 6)
 
-
             if showDelete {
-                Button(action: { deleteTag() }) {
+                Button {
+                    deleteTag()
+                } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(tag.selected ? .white : Color.theme.text)
                         .font(.system(size: 14))
@@ -30,14 +31,14 @@ struct TagChipView: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 8)
         .padding(.vertical, 4)
+        .padding(.horizontal, 10)
         .background(
             Capsule()
                 .fill(tag.selected ? Color.theme.accent : tag.color)
         )
         .onTapGesture {
-            toggleSelection()
+            if selectable { toggleSelection() }
         }
     }
 
@@ -46,7 +47,7 @@ struct TagChipView: View {
             tags.remove(at: index)
         }
     }
-    
+
     private func toggleSelection() {
         if let index = tags.firstIndex(of: tag) {
             tags[index].selected.toggle()
