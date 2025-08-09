@@ -188,19 +188,16 @@ extension CalendarScheduleViewModel {
             return
         }
 
-        guard Calendar.current.isDateInToday(date),
-              let coordinate = locationService.coordinate else {
+        guard Calendar.current.isDateInToday(date) else {
             completion(nil)
             return
         }
-
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
         Task { [weak self] in
             guard let self = self else { return }
 
             do {
-                if let info = try await WeatherService.shared.fetchWeather(for: date, location: location) {
+                if let info = try await WeatherService.shared.fetchWeather(for: date) {
                     weatherCache.set(info, for: normalizedDate)
                     DispatchQueue.main.async {
                         completion(info)

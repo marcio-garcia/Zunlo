@@ -29,12 +29,17 @@ struct ViewRouter {
     }
 
     // MARK: - Confirmation Dialog Buttons
-    static func dialogView(for route: DialogRoute, navigationManager: AppNav, factory: NavigationViewFactory) -> some View {
+    static func dialogView(
+        for route: DialogRoute,
+        navigationManager: AppNav,
+        factory: NavigationViewFactory,
+        onOptionSelected: @escaping (String) -> Void
+    ) -> some View {
         switch route {
         case .deleteTask:
-            return AnyView(TaskViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.task!))
+            return AnyView(TaskViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.task!, onOptionSelected: onOptionSelected))
         case .deleteEvent, .editRecurringEvent:
-            return AnyView(EventViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.event!))
+            return AnyView(EventViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.event!, onOptionSelected: onOptionSelected))
         }
     }
 

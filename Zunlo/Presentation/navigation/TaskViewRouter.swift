@@ -31,11 +31,12 @@ enum TaskViewRouter {
     static func dialogView(
         for route: DialogRoute,
         navigationManager nav: AppNav,
-        factory: TaskViews
+        factory: TaskViews,
+        onOptionSelected: @escaping (String) -> Void
     ) -> some View {
         switch route {
         case .deleteTask:
-            return factory.buildDeleteTaskConfirmationView()
+            return factory.buildDeleteTaskConfirmationView(onOptionSelected: onOptionSelected)
 
         default:
             return AnyView(FallbackView(message: "No dialog found for this task route.", nav: nav, viewID: UUID()))

@@ -123,13 +123,12 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
     
     func fetchWeather() async {
-        guard let coordinate = locationService.coordinate else { return }
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-
         do {
-            if let info = try await WeatherService.shared.fetchWeather(for: Date(), location: location) {
+            WeatherService.shared.location = locationService.location()
+            if let info = try await WeatherService.shared.fetchWeather(for: Date()) {
                 DispatchQueue.main.async {
                     self.weather = info
+                    self.locationService.stop()
                 }
             }
         } catch {

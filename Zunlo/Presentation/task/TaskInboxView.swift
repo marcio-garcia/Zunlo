@@ -24,7 +24,6 @@ struct TaskInboxView: View {
         let taskViewFactory = TaskViewFactory(
             viewID: viewID,
             nav: nav,
-            repository: viewModel.repository,
             editableTaskProvider: { self.editableUserTask }
         )
         let factory = NavigationViewFactory(task: taskViewFactory)

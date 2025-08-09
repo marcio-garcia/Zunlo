@@ -24,9 +24,9 @@ struct OnboardingView: View {
         case .welcome:
             WelcomeView { step = .location }
         case .location:
-            LocationPermissionView(locationService: appState.locationService) { step = .notifications }
+            LocationPermissionView(locationService: appState.locationService!) { step = .notifications }
         case .notifications:
-            NotificationPermissionView(pushService: appState.pushNotificationService) { step = .done }
+            NotificationPermissionView(pushService: appState.pushNotificationService!) { step = .done }
         case .done:
             ProgressView("Finishing setup…")
                 .onAppear {

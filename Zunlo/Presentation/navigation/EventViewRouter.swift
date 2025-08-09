@@ -20,7 +20,12 @@ enum EventViewRouter {
         }
     }
 
-    static func dialogView(for route: DialogRoute, navigationManager nav: AppNav, factory: EventViews) -> some View {
+    static func dialogView(
+        for route: DialogRoute,
+        navigationManager nav: AppNav,
+        factory: EventViews,
+        onOptionSelected: @escaping (String) -> Void
+    ) -> some View {
         switch route {
         case .deleteEvent(let id):
             return factory.buildDeleteEventConfirmationView(id: id)

@@ -12,5 +12,5 @@ public protocol TaskViews {
     func buildAddTaskView() -> AnyView
     func buildEditTaskView(id: UUID) -> AnyView
     func buildTaskDetailView(id: UUID) -> AnyView
-    func buildDeleteTaskConfirmationView() -> AnyView
+    func buildDeleteTaskConfirmationView(onOptionSelected: @escaping (String) -> Void) -> AnyView
 }

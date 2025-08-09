@@ -296,7 +296,7 @@ extension CalendarScheduleViewController: UICollectionViewDelegate {
 
 extension CalendarScheduleViewController {
     private func showAddEventView(mode: AddEditEventViewMode) {
-        let vm = AddEditEventViewModel(mode: mode, repository: viewModel.repository)
+        let vm = AddEditEventViewModel(mode: mode, editor: EventEditor(repo: viewModel.repository))
         let addView = AddEditEventView(viewModel: vm) { [weak self] updatedEventStartDate in
             guard let self else { return }
             self.collectionView.reloadData()

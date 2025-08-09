@@ -12,6 +12,7 @@ enum EventError: Error {
     case errorOnEventInsert
     case errorOnEventUpdate
     case errorOnEventDelete
+    case validation(String)
 }
 
 final class AddEditEventViewModel: ObservableObject {
@@ -37,11 +38,11 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var byWeekday: Set<Int> = []
     
     let mode: AddEditEventViewMode
-    let repository: EventRepository
-
-    init(mode: AddEditEventViewMode, repository: EventRepository) {
+    private let editor: EventEditorService
+    
+    init(mode: AddEditEventViewMode, editor: EventEditorService) {
         self.mode = mode
-        self.repository = repository
+        self.editor = editor
         loadFields()
     }
 
@@ -165,12 +166,84 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
     
+//    func delete(completion: @escaping (Result<Void, Error>) -> Void) {
+//        isProcessing = true
+//        if case .editAll(let event, _) = mode {
+//            Task {
+//                do {
+//                    try await repository.delete(id: event.eventId, reminderTriggers: event.reminderTriggers)
+//                    isProcessing = true
+//                    completion(.success(()))
+//                } catch {
+//                    isProcessing = true
+//                    completion(.failure(error))
+//                }
+//            }
+//        }
+//    }
+    
+//    func save(completion: @escaping (Result<Date, Error>) -> Void) {
+//        guard !title.isEmpty else { return }
+//        isProcessing = true
+//
+//        Task {
+//            do {
+//                switch mode {
+//                case .add:
+//                    try await addEvent()
+//                case .editAll(let event, let oldRule):
+//                    try await editAll(event: event, oldRule: oldRule)
+//                case .editSingle(let parent, _, let occurrence):
+//                    try await editSingle(parentEvent: parent, occurrence: occurrence)
+//                case .editOverride(let override):
+//                    try await editOverride(override: override)
+//                case .editFuture(let parent, _, let startingFromOccurrence):
+//                    try await editFuture(parent: parent, startingFromOccurrence: startingFromOccurrence)
+//                }
+//                await MainActor.run {
+//                    self.isProcessing = false
+//                    completion(.success(self.startDate))
+//                }
+//            } catch {
+//                await MainActor.run {
+//                    isProcessing = false
+//                    completion(.failure(error))
+//                }
+//            }
+//        }
+//    }
+    
+    func save(completion: @escaping (Result<Date, Error>) -> Void) {
+        guard !title.isEmpty else { return }
+        isProcessing = true
+
+        Task {
+            do {
+                switch mode {
+                case .add:
+                    _ = try await editor.add(makeInput())
+                case .editAll(let event, let oldRule):
+                    try await editor.editAll(event: event, with: makeInput(), oldRule: oldRule)
+                case .editSingle(let parent, _, let occ):
+                    try await editor.editSingle(parent: parent, occurrence: occ, with: makeInput())
+                case .editOverride(let ov):
+                    try await editor.editOverride(ov, with: makeInput())
+                case .editFuture(let parent, _, let occ):
+                    try await editor.editFuture(parent: parent, startingFrom: occ, with: makeInput())
+                }
+                await MainActor.run { self.isProcessing = false; completion(.success(self.startDate)) }
+            } catch {
+                await MainActor.run { self.isProcessing = false; completion(.failure(error)) }
+            }
+        }
+    }
+    
     func delete(completion: @escaping (Result<Void, Error>) -> Void) {
         isProcessing = true
         if case .editAll(let event, _) = mode {
             Task {
                 do {
-                    try await repository.delete(id: event.eventId, reminderTriggers: event.reminderTriggers)
+                    try await editor.delete(event: event)
                     isProcessing = true
                     completion(.success(()))
                 } catch {
@@ -181,181 +254,169 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
     
-    func save(completion: @escaping (Result<Date, Error>) -> Void) {
-        guard !title.isEmpty else { return }
-        isProcessing = true
-
-        Task {
-            do {
-                switch mode {
-                case .add:
-                    try await addEvent()
-                case .editAll(let event, let oldRule):
-                    try await editAll(event: event, oldRule: oldRule)
-                case .editSingle(let parent, _, let occurrence):
-                    try await editSingle(parentEvent: parent, occurrence: occurrence)
-                case .editOverride(let override):
-                    try await editOverride(override: override)
-                case .editFuture(let parent, _, let startingFromOccurrence):
-                    try await editFuture(parent: parent, startingFromOccurrence: startingFromOccurrence)
-                }
-                await MainActor.run {
-                    self.isProcessing = false
-                    completion(.success(self.startDate))
-                }
-            } catch {
-                await MainActor.run {
-                    isProcessing = false
-                    completion(.failure(error))
-                }
-            }
-        }
-    }
-    
-    private func addEvent() async throws {
-        let now = Date()
-        let newEvent = Event(
-            id: nil,
-            userId: nil,
+    private func makeInput() -> AddEventInput {
+        AddEventInput(
             title: title,
-            description: notes.isEmpty ? nil : notes,
+            notes: notes,
             startDate: startDate,
             endDate: endDate,
             isRecurring: isRecurring,
-            location: location.isEmpty ? nil : location,
-            createdAt: now,
-            updatedAt: now,
-            color: EventColor(rawValue: color) ?? . yellow,
-            reminderTriggers: reminderTriggers
+            location: location,
+            color: EventColor(rawValue: color) ?? .yellow,
+            reminderTriggers: reminderTriggers,
+            recurrenceType: recurrenceType,
+            recurrenceInterval: recurrenceInterval,
+            byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
+            byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
+            until: until,
+            count: Int(count)
         )
-        
-        // TODO: find a way to perform both saves in a single transaction
-        
-        let addedEvents = try await repository.save(newEvent)
-        guard let event = addedEvents.first, let newEventId = event.id else {
-            throw EventError.errorOnEventInsert
-        }
-        
-        if isRecurring {
-            let newRule = RecurrenceRule(
-                id: UUID(),
-                eventId: newEventId,
-                freq: recurrenceType.rawValue,
-                interval: recurrenceInterval,
-                byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
-                byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
-                byMonth: nil,
-                until: until,
-                count: Int(count),
-                createdAt: now,
-                updatedAt: now
-            )
-            try await repository.saveRecurrenceRule(newRule)
-        }
     }
     
-    private func editAll(event: EventOccurrence, oldRule: RecurrenceRule?) async throws {
-        let now = Date()
-        let updatedEvent = Event(
-            id: event.id,
-            userId: event.userId,
-            title: title,
-            description: notes.isEmpty ? nil : notes,
-            startDate: startDate,
-            endDate: endDate,
-            isRecurring: isRecurring,
-            location: location.isEmpty ? nil : location,
-            createdAt: event.createdAt,
-            updatedAt: now,
-            color: EventColor(rawValue: color) ?? . yellow,
-            reminderTriggers: reminderTriggers
-        )
-        
-        try await repository.update(updatedEvent)
-        
-        if isRecurring {
-            let newRule = RecurrenceRule(
-                id: oldRule?.id,
-                eventId: event.id,
-                freq: recurrenceType.rawValue,
-                interval: recurrenceInterval,
-                byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
-                byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
-                byMonth: nil,
-                until: until,
-                count: Int(count),
-                createdAt: oldRule?.createdAt ?? now,
-                updatedAt: now
-            )
-            if oldRule != nil {
-                try await repository.updateRecurrenceRule(newRule)
-            } else {
-                try await repository.saveRecurrenceRule(newRule)
-            }
-        } else if let oldRule = oldRule {
-            try await repository.deleteRecurrenceRule(oldRule)
-        }
-    }
-
-    private func editSingle(parentEvent: EventOccurrence, occurrence: EventOccurrence) async throws {
-        let now = Date()
-        let override = EventOverride(
-            id: nil,
-            eventId: parentEvent.id,
-            occurrenceDate: occurrence.startDate,
-            overriddenTitle: title,
-            overriddenStartDate: startDate,
-            overriddenEndDate: endDate,
-            overriddenLocation: location.isEmpty ? nil : location,
-            isCancelled: isCancelled,
-            notes: notes.isEmpty ? nil : notes,
-            createdAt: now,
-            updatedAt: now,
-            color: EventColor(rawValue: color) ?? . yellow
-        )
-        try await repository.saveOverride(override)
-    }
-    
-    private func editOverride(override: EventOverride) async throws {
-        let now = Date()
-        let updatedOverride = EventOverride(
-            id: override.id,
-            eventId: override.eventId,
-            occurrenceDate: override.occurrenceDate,
-            overriddenTitle: title,
-            overriddenStartDate: startDate,
-            overriddenEndDate: endDate,
-            overriddenLocation: location.isEmpty ? nil : location,
-            isCancelled: isCancelled,
-            notes: notes.isEmpty ? nil : notes,
-            createdAt: override.createdAt,
-            updatedAt: now,
-            color: EventColor(rawValue: color) ?? . yellow
-        )
-        try await repository.updateOverride(updatedOverride)
-    }
-    
-    private func editFuture(parent: EventOccurrence, startingFromOccurrence: EventOccurrence) async throws {
-        let data = SplitRecurringEventRemote.NewEventData(
-            userId: startingFromOccurrence.userId,
-            title: title,
-            description: notes.isEmpty ? nil : notes,
-            startDatetime: startDate,
-            endDatetime: endDate,
-            isRecurring: isRecurring,
-            location: location.isEmpty ? nil : location,
-            color: EventColor(rawValue: color) ?? . yellow,
-            reminderTriggers: reminderTriggers
-        )
-        
-        let split = SplitRecurringEventRemote(
-            originalEventId: parent.id,
-            splitFromDate: startingFromOccurrence.startDate,
-            newEventData: data
-        )
-        
-        try await repository.splitRecurringEvent(split)
-    }
+//    private func addEvent() async throws {
+//        let now = Date()
+//        let newEvent = Event(
+//            id: nil,
+//            userId: nil,
+//            title: title,
+//            description: notes.isEmpty ? nil : notes,
+//            startDate: startDate,
+//            endDate: endDate,
+//            isRecurring: isRecurring,
+//            location: location.isEmpty ? nil : location,
+//            createdAt: now,
+//            updatedAt: now,
+//            color: EventColor(rawValue: color) ?? . yellow,
+//            reminderTriggers: reminderTriggers
+//        )
+//        
+//        // TODO: find a way to perform both saves in a single transaction
+//        
+//        let addedEvents = try await repository.save(newEvent)
+//        guard let event = addedEvents.first, let newEventId = event.id else {
+//            throw EventError.errorOnEventInsert
+//        }
+//        
+//        if isRecurring {
+//            let newRule = RecurrenceRule(
+//                id: UUID(),
+//                eventId: newEventId,
+//                freq: recurrenceType.rawValue,
+//                interval: recurrenceInterval,
+//                byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
+//                byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
+//                byMonth: nil,
+//                until: until,
+//                count: Int(count),
+//                createdAt: now,
+//                updatedAt: now
+//            )
+//            try await repository.saveRecurrenceRule(newRule)
+//        }
+//    }
+//    
+//    private func editAll(event: EventOccurrence, oldRule: RecurrenceRule?) async throws {
+//        let now = Date()
+//        let updatedEvent = Event(
+//            id: event.id,
+//            userId: event.userId,
+//            title: title,
+//            description: notes.isEmpty ? nil : notes,
+//            startDate: startDate,
+//            endDate: endDate,
+//            isRecurring: isRecurring,
+//            location: location.isEmpty ? nil : location,
+//            createdAt: event.createdAt,
+//            updatedAt: now,
+//            color: EventColor(rawValue: color) ?? . yellow,
+//            reminderTriggers: reminderTriggers
+//        )
+//        
+//        try await repository.update(updatedEvent)
+//        
+//        if isRecurring {
+//            let newRule = RecurrenceRule(
+//                id: oldRule?.id,
+//                eventId: event.id,
+//                freq: recurrenceType.rawValue,
+//                interval: recurrenceInterval,
+//                byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
+//                byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
+//                byMonth: nil,
+//                until: until,
+//                count: Int(count),
+//                createdAt: oldRule?.createdAt ?? now,
+//                updatedAt: now
+//            )
+//            if oldRule != nil {
+//                try await repository.updateRecurrenceRule(newRule)
+//            } else {
+//                try await repository.saveRecurrenceRule(newRule)
+//            }
+//        } else if let oldRule = oldRule {
+//            try await repository.deleteRecurrenceRule(oldRule)
+//        }
+//    }
+//
+//    private func editSingle(parentEvent: EventOccurrence, occurrence: EventOccurrence) async throws {
+//        let now = Date()
+//        let override = EventOverride(
+//            id: nil,
+//            eventId: parentEvent.id,
+//            occurrenceDate: occurrence.startDate,
+//            overriddenTitle: title,
+//            overriddenStartDate: startDate,
+//            overriddenEndDate: endDate,
+//            overriddenLocation: location.isEmpty ? nil : location,
+//            isCancelled: isCancelled,
+//            notes: notes.isEmpty ? nil : notes,
+//            createdAt: now,
+//            updatedAt: now,
+//            color: EventColor(rawValue: color) ?? . yellow
+//        )
+//        try await repository.saveOverride(override)
+//    }
+//    
+//    private func editOverride(override: EventOverride) async throws {
+//        let now = Date()
+//        let updatedOverride = EventOverride(
+//            id: override.id,
+//            eventId: override.eventId,
+//            occurrenceDate: override.occurrenceDate,
+//            overriddenTitle: title,
+//            overriddenStartDate: startDate,
+//            overriddenEndDate: endDate,
+//            overriddenLocation: location.isEmpty ? nil : location,
+//            isCancelled: isCancelled,
+//            notes: notes.isEmpty ? nil : notes,
+//            createdAt: override.createdAt,
+//            updatedAt: now,
+//            color: EventColor(rawValue: color) ?? . yellow
+//        )
+//        try await repository.updateOverride(updatedOverride)
+//    }
+//    
+//    private func editFuture(parent: EventOccurrence, startingFromOccurrence: EventOccurrence) async throws {
+//        let data = SplitRecurringEventRemote.NewEventData(
+//            userId: startingFromOccurrence.userId,
+//            title: title,
+//            description: notes.isEmpty ? nil : notes,
+//            startDatetime: startDate,
+//            endDatetime: endDate,
+//            isRecurring: isRecurring,
+//            location: location.isEmpty ? nil : location,
+//            color: EventColor(rawValue: color) ?? . yellow,
+//            reminderTriggers: reminderTriggers
+//        )
+//        
+//        let split = SplitRecurringEventRemote(
+//            originalEventId: parent.id,
+//            splitFromDate: startingFromOccurrence.startDate,
+//            newEventData: data
+//        )
+//        
+//        try await repository.splitRecurringEvent(split)
+//    }
     
     func updateEndDate() {
         endDate = Calendar.current.date(byAdding: .hour, value: 1, to: startDate) ?? startDate

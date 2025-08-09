@@ -20,13 +20,13 @@ final class DefaultViewFactory: ViewFactory {
     }
 
     func makeMainViewModel() -> MainViewModel {
-        let userId = appState.authManager.user?.id
+        let userId = appState.authManager?.user?.id
         let chatVM = ChatScreenViewModel(repository: DefaultChatRepository(store: RealmChatLocalStore(),
                                                                            userId: userId))
         return MainViewModel(appState: appState)
     }
     
     func makeChatScreenViewModel() -> ChatScreenViewModel {
-        return ChatScreenViewModel(repository: appState.chatRepository)
+        return ChatScreenViewModel(repository: appState.chatRepository!)
     }
 }

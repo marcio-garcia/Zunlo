@@ -42,10 +42,10 @@ struct TodayView: View {
         self._showChat = showChat
         self.appState = appState
         _viewModel = StateObject(wrappedValue: TodayViewModel(
-            taskRepository: appState.userTaskRepository,
-            eventRepository: appState.eventRepository,
-            locationService: appState.locationService,
-            adManager: appState.adManager)
+            taskRepository: appState.userTaskRepository!,
+            eventRepository: appState.eventRepository!,
+            locationService: appState.locationService!,
+            adManager: appState.adManager!)
         )
     }
     
@@ -53,14 +53,13 @@ struct TodayView: View {
         let taskFactory = TaskViewFactory(
             viewID: viewID,
             nav: nav,
-            repository: appState.userTaskRepository,
             editableTaskProvider: { self.editableUserTask }
         )
         let eventFactory = EventViewFactory(
             viewID: viewID,
             nav: nav,
-            locationService: appState.locationService,
-            repository: appState.eventRepository,
+            locationService: appState.locationService!,
+            repository: appState.eventRepository!,
             onEditDialogSelection: { option in
                 switch option {
                 case .single:
@@ -77,7 +76,7 @@ struct TodayView: View {
                 }
             }
         )
-        let settingsFactory = SettingsViewFactory(authManager: appState.authManager)
+        let settingsFactory = SettingsViewFactory(authManager: appState.authManager!)
         let factory = NavigationViewFactory(
             task: taskFactory,
             event: eventFactory,
@@ -95,6 +94,14 @@ struct TodayView: View {
                         ScrollView(.vertical) {
                             VStack(alignment: .leading, spacing: 24) {
                                 if let weather = viewModel.weather {
+                                    AIWelcomeCard(
+                                        vm: AIWelcomeCardViewModel(
+                                            time: SystemTimeProvider(),
+                                            tasks: appState.userTaskRepository!,
+                                            events: appState.eventRepository!,
+                                            weather: WeatherService.shared
+                                        )
+                                    )
                                     TodayWeatherView(weather: weather, greeting: viewModel.greeting)
                                 }
                                 if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
@@ -127,7 +134,13 @@ struct TodayView: View {
                             titleVisibility: .visible
                         ) {
                             if let route = nav.dialogRoute(for: viewID) {
-                                ViewRouter.dialogView(for: route, navigationManager: nav, factory: factory)
+                                ViewRouter.dialogView(
+                                    for: route,
+                                    navigationManager: nav,
+                                    factory: factory,
+                                    onOptionSelected: { option in
+                                        
+                                    })
                             }
                         }
                         
@@ -212,8 +225,8 @@ struct TodayView: View {
         }
         .task {
             await fetchInfo()
-            await appState.adManager.loadInterstitial(for: .openCalendar)
-            await appState.adManager.loadRewarded(for: .chat)
+            await appState.adManager?.loadInterstitial(for: .openCalendar)
+            await appState.adManager?.loadRewarded(for: .chat)
         }
         .errorAlert(viewModel.errorHandler)
     }

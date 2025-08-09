@@ -35,7 +35,7 @@ struct MainView: View {
                     TodayView(namespace: animationNamespace,
                               showChat: $isShowingChat,
                               appState: viewModel.appState)
-                    .environmentObject(viewModel.appState.authManager)
+                    .environmentObject(viewModel.appState.authManager!)
                     .environmentObject(upgradeFlowManager)
                     
                     if isShowingChat {

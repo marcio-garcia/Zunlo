@@ -34,6 +34,12 @@ class LocationService: NSObject, ObservableObject {
     func stop() {
         manager.stopUpdatingLocation()
     }
+    
+    func location() -> CLLocation? {
+        guard let coordinate else { return nil }
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        return location
+    }
 }
 
 extension LocationService: CLLocationManagerDelegate {

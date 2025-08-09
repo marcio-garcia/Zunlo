@@ -22,9 +22,7 @@ struct AddEditTaskView: View {
         
         let taskFactory = TaskViewFactory(
             viewID: viewID,
-            nav: nav,
-            repository: viewModel.repository,
-            addEditTaskViewModel: viewModel
+            nav: nav
         )
         let factory = NavigationViewFactory(task: taskFactory)
         
@@ -61,7 +59,21 @@ struct AddEditTaskView: View {
                 titleVisibility: .visible
             ) {
                 if let route = nav.dialogRoute(for: viewID) {
-                    ViewRouter.dialogView(for: route, navigationManager: nav, factory: factory)
+                    ViewRouter.dialogView(
+                        for: route,
+                        navigationManager: nav,
+                        factory: factory) { option in
+                            switch option {
+                            case "delete":
+                                Task {
+                                    await viewModel.delete()
+                                    await MainActor.run { dismiss() }
+                                }
+                            case "cancel":
+                                nav.dismissDialog(for: viewID)
+                            default: break
+                            }
+                        }
                 }
             }
             .alert("Error Saving Task", isPresented: isShowingError) {
@@ -144,13 +156,13 @@ struct AddEditTaskView: View {
             HStack {
                 Spacer()
                 Button {
-                    viewModel.onDelete = {
-                        Task {
-                            await MainActor.run {
-                                self.dismiss()
-                            }
-                        }
-                    }
+//                    viewModel.onDelete = {
+//                        Task {
+//                            await MainActor.run {
+//                                self.dismiss()
+//                            }
+//                        }
+//                    }
                     nav.showDialog(.deleteTask, for: viewID)
                 } label: {
                     Text("Delete")

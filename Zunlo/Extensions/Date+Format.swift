@@ -68,7 +68,7 @@ extension Date {
     
     var startOfDay: Date {
         return Calendar.current.startOfDay(for: self)
-    }    
+    }
 }
 
 extension Date {
@@ -83,7 +83,7 @@ extension Date {
         ) ?? self
     }
     
-    func stripTime(calendar: Calendar = .event) -> Date {
+    func stripTime(calendar: Calendar = .current) -> Date {
         let comps = calendar.dateComponents([.year, .month, .day], from: self)
         return calendar.date(from: comps)!
     }

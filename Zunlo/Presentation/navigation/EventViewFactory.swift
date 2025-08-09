@@ -43,7 +43,7 @@ struct EventViewFactory: EventViews {
     func buildAddEventView() -> AnyView {
         AnyView(
             AddEditEventView(
-                viewModel: AddEditEventViewModel(mode: .add, repository: repository)
+                viewModel: AddEditEventViewModel(mode: .add, editor: EventEditor(repo: repository))
             )
         )
     }
@@ -51,7 +51,7 @@ struct EventViewFactory: EventViews {
     func buildEditEventView(editMode: AddEditEventViewMode) -> AnyView {
         AnyView(
             AddEditEventView(
-                viewModel: AddEditEventViewModel(mode: editMode, repository: repository)
+                viewModel: AddEditEventViewModel(mode: editMode, editor: EventEditor(repo: repository))
             )
         )
     }

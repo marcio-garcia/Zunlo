@@ -64,18 +64,27 @@ struct ZunloApp: App {
         
         let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(), userId: nil)
         
-        let state = AppState(
-            authManager: authManager,
-            supabase: supabase,
-            locationService: locationService,
-            pushNotificationService: pushService,
-            adManager: adManager,
-            eventRepository: eventRepo,
-            userTaskRepository: taskRepo,
-            chatRepository: chatRepo
-        )
+//        let state = AppState(
+//            authManager: authManager,
+//            supabase: supabase,
+//            locationService: locationService,
+//            pushNotificationService: pushService,
+//            adManager: adManager,
+//            eventRepository: eventRepo,
+//            userTaskRepository: taskRepo,
+//            chatRepository: chatRepo
+//        )
         
-        self.appState = state
+        self.appState = AppState.shared
+        
+        self.appState.authManager = authManager
+        self.appState.supabase = supabase
+        self.appState.locationService = locationService
+        self.appState.pushNotificationService = pushService
+        self.appState.adManager = adManager
+        self.appState.eventRepository = eventRepo
+        self.appState.userTaskRepository = taskRepo
+        self.appState.chatRepository = chatRepo
         
         firebase.configure()
         pushService.start()
@@ -87,8 +96,8 @@ struct ZunloApp: App {
             RootView(appState: appState)
                 .environmentObject(appNavigationManager)
                 .environmentObject(appSettings)
-                .environmentObject(appState.authManager)
-                .environmentObject(appState.locationService)
+                .environmentObject(appState.authManager!)
+                .environmentObject(appState.locationService!)
                 .environmentObject(upgradeFlowManager)
                 .environmentObject(upgradeReminderManager)
                 .onAppear(perform: {

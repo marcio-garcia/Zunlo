@@ -36,22 +36,19 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     }
     
     let mode: Mode
-    let repository: UserTaskRepository
+    private let editor: TaskEditorService
     var createdAt: Date?
-    
-    var onDelete: (() -> Void)?
     
     var id: String {
         switch mode {
         case .add: return "add"
-        case .edit(let task):
-            return task.id == nil ? "edit-nil" : "edit-\(task.id!)"
+        case .edit(let task): return task.id == nil ? "edit-nil" : "edit-\(task.id!)"
         }
     }
 
-    init(mode: Mode, repository: UserTaskRepository) {
+    init(mode: Mode, editor: TaskEditorService) {
         self.mode = mode
-        self.repository = repository
+        self.editor = editor
         loadFields()
     }
 
@@ -71,29 +68,14 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         if case .edit(let userTask) = mode {
             id = userTask.id
         }
-        
-        let task = UserTask(
-            id: id,
-            userId: nil, // Backend fills this
-            title: title,
-            notes: notes.isEmpty ? nil : notes,
-            isCompleted: isCompleted,
-            createdAt: createdAt ?? now,
-            updatedAt: now,
-            dueDate: dueDate,
-            priority: priority,
-            parentEventId: nil,
-            tags: tags,
-            reminderTriggers: reminderTriggers
-        )
 
         Task {
             do {
                 switch mode {
                 case .add:
-                    try await repository.save(task)
+                    try await editor.add(makeInput())
                 case .edit:
-                    try await repository.update(task)
+                    try await editor.update(makeInput(), id: id!)
                 }
                 await MainActor.run {
                     self.isProcessing = false
@@ -132,28 +114,38 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     
     func fetchAllUniqueTags() async {
         do {
-            let tags = try await repository.fetchAllUniqueTags()
+            let tags = try await editor.fetchAllUniqueTags()
             await MainActor.run { allUniqueTags = tags }
         } catch {
             await MainActor.run { allUniqueTags = [] }
         }
     }
     
-    func delete() {
+    @MainActor
+    func delete() async {
         guard !isProcessing else { return }
         isProcessing = true
         
         if case .edit(let userTask) = mode {
-            Task {
-                do {
-                    try await repository.delete(userTask)
-                    await MainActor.run { self.isProcessing = false }
-                    onDelete?()
-                } catch {
-                    print("error: \(error.localizedDescription)")
-                    await MainActor.run { self.isProcessing = false }
-                }
+            do {
+                try await editor.delete(makeInput(), id: userTask.id!)
+                isProcessing = false
+            } catch {
+                print("error: \(error.localizedDescription)")
+                self.isProcessing = false
             }
         }
+    }
+    
+    private func makeInput() -> AddTaskInput {
+        AddTaskInput(
+            title: title,
+            notes: notes,
+            dueDate: dueDate,
+            isCompleted: isCompleted,
+            priority: priority,
+            tags: tags,
+            reminderTriggers: reminderTriggers
+        )
     }
 }

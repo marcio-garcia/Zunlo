@@ -15,7 +15,7 @@ class RecurrenceHelper {
         start: Date,
         rule: RecurrenceRule,
         within range: ClosedRange<Date>,
-        calendar: Calendar = .event
+        calendar: Calendar = .current
     ) -> [Date] {
         switch rule.freq {
         case "daily":

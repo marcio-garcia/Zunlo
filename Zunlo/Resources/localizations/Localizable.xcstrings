@@ -99,6 +99,16 @@
         }
       }
     },
+    "All set for now ✨" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada pendente ✨"
+          }
+        }
+      }
+    },
     "Allow Location Access" : {
       "localizations" : {
         "pt-BR" : {
@@ -289,6 +299,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Excluir esse evento"
+          }
+        }
+      }
+    },
+    "Delete this task" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir"
           }
         }
       }
@@ -589,6 +609,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quero manter minhas tarefas"
+          }
+        }
+      }
+    },
+    "I’ll surface smart suggestions as your day evolves." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vou apresentar sugestões inteligentes à medida que o seu dia evolui."
           }
         }
       }
@@ -1070,6 +1100,16 @@
         }
       }
     },
+    "Title is required." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título não pode ser vazio"
+          }
+        }
+      }
+    },
     "Type a message..." : {
       "localizations" : {
         "pt-BR" : {
@@ -1137,6 +1177,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bem vindo ao Zunlo!"
+          }
+        }
+      }
+    },
+    "Why this suggestion" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por que essa sugestão?"
+          }
+        }
+      }
+    },
+    "Why this?" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por quê?"
           }
         }
       }

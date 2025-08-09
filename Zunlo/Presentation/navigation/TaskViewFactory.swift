@@ -11,32 +11,26 @@ import FlowNavigator
 struct TaskViewFactory: TaskViews {
     let viewID: UUID
     let nav: AppNav
-    let repository: UserTaskRepository
     let editableTaskProvider: (() -> UserTask?)?
-    let addEditTaskViewModel: AddEditTaskViewModel?
-
+    
     internal init(
         viewID: UUID,
         nav: AppNav,
-        repository: UserTaskRepository,
-        editableTaskProvider: (() -> UserTask?)? = nil,
-        addEditTaskViewModel: AddEditTaskViewModel? = nil
+        editableTaskProvider: (() -> UserTask?)? = nil
     ) {
         self.viewID = viewID
         self.nav = nav
-        self.repository = repository
         self.editableTaskProvider = editableTaskProvider
-        self.addEditTaskViewModel = addEditTaskViewModel
     }
 
     func buildTaskInboxView() -> AnyView {
-        AnyView(TaskInboxView(repository: repository))
+        AnyView(TaskInboxView(repository: AppState.shared.userTaskRepository!))
     }
 
     func buildAddTaskView() -> AnyView {
         AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .add, repository: repository),
+                viewModel: AddEditTaskViewModel(mode: .add, editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
                 nav: nav
         ))
     }
@@ -47,7 +41,7 @@ struct TaskViewFactory: TaskViews {
         }
         return AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .edit(task), repository: repository),
+                viewModel: AddEditTaskViewModel(mode: .edit(task), editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
                 nav: nav
         ))
     }
@@ -57,17 +51,19 @@ struct TaskViewFactory: TaskViews {
         return AnyView(Text("Task Detail for \(id)"))
     }
 
-    func buildDeleteTaskConfirmationView() -> AnyView {
-        guard let viewModel = addEditTaskViewModel else {
-            return AnyView(FallbackView(message: "Could not edit task.", nav: nav, viewID: viewID))
-        }
+    func buildDeleteTaskConfirmationView(onOptionSelected: @escaping (String) -> Void) -> AnyView {
+//        guard let viewModel = addEditTaskViewModel else {
+//            return AnyView(FallbackView(message: "Could not edit task.", nav: nav, viewID: viewID))
+//        }
         return AnyView(
             Group {
-                Button("Delete this event") {
-                    viewModel.delete()
+                Button("Delete this task") {
+                    onOptionSelected("delete")
+//                    viewModel.delete()
                 }
                 Button("Cancel", role: .cancel) {
-                    nav.dismissDialog(for: viewID)
+//                    nav.dismissDialog(for: viewID)
+                    onOptionSelected("cancel")
                 }
             }
         )
