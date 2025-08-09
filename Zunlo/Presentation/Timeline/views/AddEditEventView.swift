@@ -30,7 +30,7 @@ struct AddEditEventView: View {
                         recurrenceSection
                     }
                     
-                    ReminderEditorView(triggers: $viewModel.reminderTriggers.replacingNil(with: []))
+                    reminderSection
                     
                     if viewModel.showsCancelSection && viewModel.isEditingSingleOrOverride {
                         cancelSection
@@ -94,13 +94,15 @@ struct AddEditEventView: View {
                 get: { error != nil },
                 set: { if !$0 { error = nil } }
             )) {
-                Button("OK", role: .cancel) { error = nil }
+                Button("Ok", role: .cancel) { error = nil }
             } message: {
                 Text(error ?? "Unknown error.")
             }
         }
     }
 
+    // MARK: Event details section
+    
     private var eventDetailsSection: some View {
         RoundedSection(title: String(localized: "Event Details")) {
             Group {
@@ -112,6 +114,8 @@ struct AddEditEventView: View {
         }
     }
 
+    // MARK: Date and time section
+    
     private var dateTimeSection: some View {
         RoundedSection(title: String(localized: "Date & Time")) {
             DatePicker(selection: $viewModel.startDate, displayedComponents: [.date, .hourAndMinute]) {
@@ -132,12 +136,16 @@ struct AddEditEventView: View {
         }
     }
 
+    // MARK: Color picker section
+    
     private var colorSection: some View {
         RoundedSection {
             ColorPickerView(selectedColor: $viewModel.color)
         }
     }
 
+    // MARK: Recurrence section
+    
     private var recurrenceSection: some View {
         RoundedSection(title: String(localized: "Recurrence")) {
             Toggle(isOn: $viewModel.isRecurring) { Text("Recurring") .themedBody() }
@@ -192,6 +200,16 @@ struct AddEditEventView: View {
         }
     }
 
+    // MARK: Reminder section
+    
+    private var reminderSection: some View {
+        ReminderEditorView(
+            triggers: $viewModel.reminderTriggers.replacingNil(with: [])
+        )
+    }
+    
+    // MARK: Cancel section
+    
     private var cancelSection: some View {
         RoundedSection {
             Toggle("Cancelled", isOn: $viewModel.isCancelled)
@@ -200,6 +218,8 @@ struct AddEditEventView: View {
         }
     }
 
+    // MARK: Delete section
+    
     private var deleteSection: some View {
         RoundedSection {
             HStack {

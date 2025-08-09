@@ -28,7 +28,7 @@ struct ErrorAlertModifier: ViewModifier {
                     }
                 }
             )) {
-                Button("OK", role: .cancel) {}
+                Button("Ok", role: .cancel) {}
             } message: {
                 Text(handler.message ?? "Unknown error")
             }

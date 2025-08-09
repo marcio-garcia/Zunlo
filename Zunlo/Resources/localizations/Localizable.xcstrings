@@ -64,7 +64,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alerta"
+            "value" : "Lembrete"
           }
         }
       }
@@ -653,16 +653,6 @@
         }
       }
     },
-    "Log Out" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Log out"
-          }
-        }
-      }
-    },
     "low" : {
       "localizations" : {
         "pt-BR" : {
@@ -744,16 +734,6 @@
         }
       }
     },
-    "Note for the reminder" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Obs do alerta"
-          }
-        }
-      }
-    },
     "Notes" : {
       "localizations" : {
         "pt-BR" : {
@@ -774,7 +754,7 @@
         }
       }
     },
-    "OK" : {
+    "Ok" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -869,7 +849,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alertas"
+            "value" : "Lembretes"
           }
         }
       }
@@ -940,6 +920,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Data fim"
+          }
+        }
+      }
+    },
+    "Set event reminders by choosing how long before the start time you want to be notified." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Defina lembretes de evento escolhendo quanto tempo antes do horário de início você deseja ser notificado."
           }
         }
       }

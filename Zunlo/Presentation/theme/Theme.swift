@@ -15,6 +15,7 @@ struct Theme {
     let surface: Color
     let text: Color
     let secondaryText: Color
+    let tertiaryText: Color
     let success: Color
     let border: Color
     let lightBorder: Color
@@ -33,6 +34,7 @@ struct Theme {
         surface: Color(hex: "#FDF1E7")!, // Light Sand
         text: Color(hex: "#44403C")!, // Warm Graphite
         secondaryText: Color(hex: "#6B4C46")!, // Slightly lighter warm gray
+        tertiaryText: Color(hex: "#B7A59F")!, // softer warm beige
         success: Color(hex: "#C9E4CA")!, // Mint Cream
         border: Color(hex: "#DAB7AB")!, // Dusty Blush
         lightBorder: Color(hex: "#ECD6CD")!,
@@ -50,6 +52,7 @@ struct Theme {
         surface: Color(hex: "#3B3532")!,
         text: Color(hex: "#EAE2DF")!,
         secondaryText: Color(hex: "#C9BBB5")!,
+        tertiaryText: Color(hex: "#9C8F89")!, // muted warm beige
         success: Color(hex: "#98C9A3")!,
         border: Color(hex: "#5A4944")!,
         lightBorder: Color(hex: "#6E5A54")!,

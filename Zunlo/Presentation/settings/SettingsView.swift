@@ -51,7 +51,7 @@ struct SettingsView: View {
                     
                     HStack {
                         Spacer()
-                        Button("Log Out") {
+                        Button("Log out") {
                             viewModel.confirmLogout()
                         }
                         Spacer()

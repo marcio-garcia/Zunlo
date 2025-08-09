@@ -65,7 +65,7 @@ struct AddEditTaskView: View {
                 }
             }
             .alert("Error Saving Task", isPresented: isShowingError) {
-                Button("OK", role: .cancel) { error = nil }
+                Button("Ok", role: .cancel) { error = nil }
             } message: {
                 Text(error ?? "Unknown error.")
             }

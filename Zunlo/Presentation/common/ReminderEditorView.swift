@@ -12,13 +12,17 @@ struct ReminderEditorView: View {
 
     var body: some View {
         RoundedSection(title: String(localized: "Reminders")) {
+            Text("Set event reminders by choosing how long before the start time you want to be notified.")
+                .font(AppFontStyle.caption.font())
+                .foregroundStyle(Color.theme.tertiaryText)
+            
             ForEach(triggers.indices, id: \.self) { index in
                 VStack {
-                    TextField("Note for the reminder", text: Binding(
-                        get: { triggers[index].message ?? "" },
-                        set: { triggers[index].message = $0 }
-                    ))
-                    .themedCaption()
+//                    TextField("Note for the reminder", text: Binding(
+//                        get: { triggers[index].message ?? "" },
+//                        set: { triggers[index].message = $0 }
+//                    ))
+//                    .themedCaption()
                     
                     VStack(alignment: .leading) {
                         Slider(
