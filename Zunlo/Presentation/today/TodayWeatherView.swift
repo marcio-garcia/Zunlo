@@ -34,12 +34,15 @@ struct TodayWeatherView: View {
     
     private var description: String {
         switch weather.condition {
-        case .clear: return "Clear skies"
-        case .cloudy: return "Cloudy"
-        case .partlyCloudy: return "Partly cloudy"
-        case .rain: return "Rainy"
-        case .snow: return "Snowy"
-        default: return "Weather update"
+        case .clear: return String(localized: "Clear skies")
+        case .drizzle: return String(localized: "Drizzle")
+        case .mostlyClear: return String(localized: "Mostly clear")
+        case .cloudy: return String(localized: "Cloudy")
+        case .partlyCloudy: return String(localized: "Partly cloudy")
+        case .mostlyCloudy: return String(localized: "Mostly cloudy")
+        case .rain: return String(localized: "Rainy")
+        case .snow: return String(localized: "Snowy")
+        default: return String(localized: "Weather update")
         }
     }
     

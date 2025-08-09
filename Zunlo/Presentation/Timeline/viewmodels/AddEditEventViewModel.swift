@@ -47,11 +47,11 @@ final class AddEditEventViewModel: ObservableObject {
 
     func navigationTitle() -> String {
         switch mode {
-        case .add: return "Add event"
-        case .editAll: return "Edit"
-        case .editSingle: return "Edit"
-        case .editOverride: return "Edit"
-        case .editFuture: return "Edit"
+        case .add: return String(localized: "Add event")
+        case .editAll: return String(localized: "Edit")
+        case .editSingle: return String(localized: "Edit")
+        case .editOverride: return String(localized: "Edit")
+        case .editFuture: return String(localized: "Edit")
         }
     }
 
@@ -149,7 +149,7 @@ final class AddEditEventViewModel: ObservableObject {
             location = override.overriddenLocation ?? ""
             isCancelled = override.isCancelled
             color = override.color.rawValue
-        case .editFuture(let parent, recurrenceRule: let rule, let startingFromOccurrence ):
+        case .editFuture(_, _, let startingFromOccurrence ):
             title = startingFromOccurrence.title
             notes = startingFromOccurrence.description ?? ""
             startDate = startingFromOccurrence.startDate
@@ -240,7 +240,7 @@ final class AddEditEventViewModel: ObservableObject {
             let newRule = RecurrenceRule(
                 id: UUID(),
                 eventId: newEventId,
-                freq: recurrenceType,
+                freq: recurrenceType.rawValue,
                 interval: recurrenceInterval,
                 byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
                 byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
@@ -277,7 +277,7 @@ final class AddEditEventViewModel: ObservableObject {
             let newRule = RecurrenceRule(
                 id: oldRule?.id,
                 eventId: event.id,
-                freq: recurrenceType,
+                freq: recurrenceType.rawValue,
                 interval: recurrenceInterval,
                 byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
                 byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),

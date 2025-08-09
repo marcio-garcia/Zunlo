@@ -64,7 +64,8 @@ class TagCell: UICollectionViewCell {
         label.text = tag.text
         self.onDelete = onDelete
         deleteButton.isHidden = !showDelete
-        contentView.backgroundColor = tag.selected ? UIColor(Color.theme.accent) : UIColor(tag.color)
+        let tagColor = Color(hex: tag.color) ?? Color.theme.disabled
+        contentView.backgroundColor = tag.selected ? UIColor(Color.theme.accent) : UIColor(tagColor)
         label.textColor = tag.selected ? .white : UIColor(Color.theme.text)
     }
     

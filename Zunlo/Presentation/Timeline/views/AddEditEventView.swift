@@ -102,7 +102,7 @@ struct AddEditEventView: View {
     }
 
     private var eventDetailsSection: some View {
-        RoundedSection(title: "Event Details") {
+        RoundedSection(title: String(localized: "Event Details")) {
             Group {
                 TextField("Title", text: $viewModel.title)
                 TextField("Location", text: $viewModel.location)
@@ -113,7 +113,7 @@ struct AddEditEventView: View {
     }
 
     private var dateTimeSection: some View {
-        RoundedSection(title: "Date & Time") {
+        RoundedSection(title: String(localized: "Date & Time")) {
             DatePicker(selection: $viewModel.startDate, displayedComponents: [.date, .hourAndMinute]) {
                 Text("Start")
                     .themedBody()
@@ -139,7 +139,7 @@ struct AddEditEventView: View {
     }
 
     private var recurrenceSection: some View {
-        RoundedSection(title: "Recurrence") {
+        RoundedSection(title: String(localized: "Recurrence")) {
             Toggle(isOn: $viewModel.isRecurring) { Text("Recurring") .themedBody() }
 
             if viewModel.isRecurring {
@@ -149,7 +149,7 @@ struct AddEditEventView: View {
                     Spacer()
                     Picker("", selection: $viewModel.recurrenceType) {
                         ForEach(recurrenceOptions, id: \.self) { option in
-                            Text(option.capitalized).tag(option)
+                            Text(localizedString(option)).tag(option)
                                 .themedBody()
                         }
                     }
@@ -213,5 +213,13 @@ struct AddEditEventView: View {
                 Spacer()
             }
         }
+    }
+    
+    private func localizedString(_ text: String) -> String {
+        let localized = NSLocalizedString(
+            text,
+            comment: "Recurring event frequency options"
+        )
+        return localized.capitalized
     }
 }

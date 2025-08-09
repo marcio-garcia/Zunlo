@@ -82,7 +82,7 @@ class TagCollectionViewController: UIViewController, UICollectionViewDelegateFlo
         } else {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AddTagCell.reuseIdentifier, for: indexPath) as! AddTagCell
             cell.onAdd = { text in
-                let newTag = Tag(text: text, color: .secondary)
+                let newTag = Tag(id: UUID(), text: text, color: "#55FF66", selected: false)
                 self.tags.append(newTag)
                 self.onTagsChanged?(self.tags)
                 self.collectionView.reloadData()

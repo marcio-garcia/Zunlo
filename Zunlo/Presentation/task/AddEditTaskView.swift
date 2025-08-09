@@ -15,7 +15,7 @@ struct AddEditTaskView: View {
     @State private var error: String?
     @State private var tagEditorHeight: CGFloat = .zero
     @StateObject var viewModel: AddEditTaskViewModel
-
+    
     var nav: AppNav
     
     var body: some View {
@@ -28,74 +28,76 @@ struct AddEditTaskView: View {
         )
         let factory = NavigationViewFactory(task: taskFactory)
         
-        NavigationStack {
-            formContent
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .principal) {
-                        Text(viewModel.navigationTitle())
-                            .themedSubtitle()
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            viewModel.save { result in
-                                switch result {
-                                case .success:
-                                    dismiss()
-                                case .failure(let err):
-                                    error = err.localizedDescription
-                                }
+        formContent
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(viewModel.navigationTitle())
+                        .themedSubtitle()
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        viewModel.save { result in
+                            switch result {
+                            case .success:
+                                dismiss()
+                            case .failure(let err):
+                                error = err.localizedDescription
                             }
                         }
-                        .themedSecondaryButton(isEnabled: isEnabled)
-                        .disabled(!isEnabled)
                     }
-
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                            .themedSecondaryButton()
-                    }
+                    .themedSecondaryButton(isEnabled: isEnabled)
+                    .disabled(!isEnabled)
                 }
-                .confirmationDialog(
-                    "Delete task",
-                    isPresented: nav.isDialogPresented(for: viewID),
-                    titleVisibility: .visible
-                ) {
-                    if let route = nav.dialogRoute(for: viewID) {
-                        ViewRouter.dialogView(for: route, navigationManager: nav, factory: factory)
-                    }
+                
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .themedSecondaryButton()
                 }
-                .alert("Error Saving Task", isPresented: isShowingError) {
-                    Button("OK", role: .cancel) { error = nil }
-                } message: {
-                    Text(error ?? "Unknown error.")
+            }
+            .confirmationDialog(
+                "Delete task",
+                isPresented: nav.isDialogPresented(for: viewID),
+                titleVisibility: .visible
+            ) {
+                if let route = nav.dialogRoute(for: viewID) {
+                    ViewRouter.dialogView(for: route, navigationManager: nav, factory: factory)
                 }
-                .themedBody()
-        }
+            }
+            .alert("Error Saving Task", isPresented: isShowingError) {
+                Button("OK", role: .cancel) { error = nil }
+            } message: {
+                Text(error ?? "Unknown error.")
+            }
+            .themedBody()
+        
     }
-
+    
     // MARK: - View Sections
-
+    
     private var formContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 taskDetailsSection
                 taskTimingSection
                 taskTagsSection
-                ReminderEditorView(triggers: $viewModel.reminderTriggers)
-                deleteSection
+                // commented out reminders for tasks
+                //                ReminderEditorView(triggers: $viewModel.reminderTriggers)
+                if case AddEditTaskViewModel.Mode.edit = viewModel.mode {
+                    deleteSection
+                }
             }
             .padding()
         }
         .defaultBackground()
     }
-
+    
     private var taskDetailsSection: some View {
-        RoundedSection(title: "Task Details") {
+        RoundedSection(title: String(localized: "Task Details")) {
             TextField("Title", text: $viewModel.title)
-
+            
             TextField("Notes", text: $viewModel.notes, axis: .vertical)
-
+            
             HStack {
                 Text("Priority")
                     .themedBody()
@@ -112,7 +114,7 @@ struct AddEditTaskView: View {
             Toggle("Completed", isOn: $viewModel.isCompleted)
         }
     }
-
+    
     private var taskTimingSection: some View {
         RoundedSection {
             Toggle(isOn: $viewModel.hasDueDate) { Text("Set due date").themedBody() }
@@ -122,11 +124,11 @@ struct AddEditTaskView: View {
                            selection: $viewModel.dueDate.replacingNil(with: Date()),
                            displayedComponents: [.date])
                 .themedBody()
-                    .environment(\.locale, .autoupdatingCurrent)
+                .environment(\.locale, .autoupdatingCurrent)
             }
         }
     }
-
+    
     private var taskTagsSection: some View {
         RoundedSection(title: "Tags") {
             TagChipListView(
@@ -136,7 +138,7 @@ struct AddEditTaskView: View {
             )
         }
     }
-
+    
     private var deleteSection: some View {
         RoundedSection {
             HStack {
@@ -150,7 +152,6 @@ struct AddEditTaskView: View {
                         }
                     }
                     nav.showDialog(.deleteTask, for: viewID)
-//                    viewModel.showDeleteConfirmation = true
                 } label: {
                     Text("Delete")
                 }

@@ -7,8 +7,47 @@
     "%lld" : {
 
     },
+    "%lld day%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld day%2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld dia%2$@"
+          }
+        }
+      }
+    },
+    "%lld min" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min"
+          }
+        }
+      }
+    },
     "%lld°" : {
 
+    },
+    "%lldh" : {
+
+    },
+    "Add event" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo evento"
+          }
+        }
+      }
     },
     "Add Event" : {
       "localizations" : {
@@ -36,6 +75,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova tag"
+          }
+        }
+      }
+    },
+    "Add Task" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova tarefa"
           }
         }
       }
@@ -70,12 +119,32 @@
         }
       }
     },
+    "At time of task" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na hora da tarefa"
+          }
+        }
+      }
+    },
     "Authenticating…" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entrando…"
+          }
+        }
+      }
+    },
+    "before" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "antes"
           }
         }
       }
@@ -110,6 +179,26 @@
         }
       }
     },
+    "Clear skies" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Céu claro"
+          }
+        }
+      }
+    },
+    "Cloudy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nublado"
+          }
+        }
+      }
+    },
     "Completed" : {
       "localizations" : {
         "pt-BR" : {
@@ -136,6 +225,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crie uma conta para salvar suas tarefas"
+          }
+        }
+      }
+    },
+    "daily" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "diário"
+          }
+        }
+      }
+    },
+    "Date & Time" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dia e hora"
           }
         }
       }
@@ -183,12 +293,32 @@
         }
       }
     },
+    "Drizzle" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuva fraca"
+          }
+        }
+      }
+    },
     "Due Date" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Data final"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
           }
         }
       }
@@ -239,6 +369,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar evento recorrente"
+          }
+        }
+      }
+    },
+    "Edit Task" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar tarefa"
           }
         }
       }
@@ -343,6 +483,26 @@
         }
       }
     },
+    "Event Details" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes do evento"
+          }
+        }
+      }
+    },
+    "Events" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eventos"
+          }
+        }
+      }
+    },
     "Events Today" : {
       "localizations" : {
         "pt-BR" : {
@@ -369,6 +529,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciar"
+          }
+        }
+      }
+    },
+    "Good afternoon!" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boa tarde!"
+          }
+        }
+      }
+    },
+    "Good evening!" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boa noite!"
+          }
+        }
+      }
+    },
+    "Good morning!" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bom dia!"
+          }
+        }
+      }
+    },
+    "Good night!" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boa noite!"
+          }
+        }
+      }
+    },
+    "high" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "alta"
           }
         }
       }
@@ -453,6 +663,57 @@
         }
       }
     },
+    "low" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "baixa"
+          }
+        }
+      }
+    },
+    "medium" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "média"
+          }
+        }
+      }
+    },
+    "monthly" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mensal"
+          }
+        }
+      }
+    },
+    "Mostly clear" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Céu limpo"
+          }
+        }
+      }
+    },
+    "Mostly cloudy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nublado"
+          }
+        }
+      }
+    },
     "No Events Yet" : {
       "localizations" : {
         "pt-BR" : {
@@ -503,6 +764,16 @@
         }
       }
     },
+    "Nothing for today" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada pra hoje"
+          }
+        }
+      }
+    },
     "OK" : {
       "localizations" : {
         "pt-BR" : {
@@ -519,6 +790,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir ajustes"
+          }
+        }
+      }
+    },
+    "Partly cloudy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parcialmente nublado"
           }
         }
       }
@@ -553,12 +834,42 @@
         }
       }
     },
+    "Rainy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuvoso"
+          }
+        }
+      }
+    },
+    "Recurrence" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recorrência"
+          }
+        }
+      }
+    },
     "Recurring" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recorrente"
+          }
+        }
+      }
+    },
+    "Reminders" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas"
           }
         }
       }
@@ -618,7 +929,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prazo"
+            "value" : "Definir prazo"
           }
         }
       }
@@ -676,12 +987,22 @@
     "Simulate Reminder Conditions" : {
 
     },
+    "Snowy" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neve"
+          }
+        }
+      }
+    },
     "Start" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Iniciar"
+            "value" : "Início"
           }
         }
       }
@@ -715,6 +1036,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detalhes da tarefa %@"
+          }
+        }
+      }
+    },
+    "Task Details" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes da tarefa"
           }
         }
       }
@@ -789,6 +1120,27 @@
         }
       }
     },
+    "Weather update" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clima"
+          }
+        }
+      }
+    },
+    "weekly" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "semanal"
+          }
+        }
+      }
+    },
     "Welcome to Zunlo!" : {
       "localizations" : {
         "pt-BR" : {
@@ -810,7 +1162,14 @@
       }
     },
     "You're signed in" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua conta está ok!"
+          }
+        }
+      }
     },
     "You're using a guest account. Logging out will delete your tasks unless you create an account" : {
       "localizations" : {

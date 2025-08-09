@@ -115,10 +115,10 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     private func updateGreeting(date: Date = Date()) {
         let hour = Calendar.current.component(.hour, from: date)
         greeting = switch hour {
-        case 5..<12: "Good morning!"
-        case 12..<17: "Good afternoon!"
-        case 17..<22: "Good evening!"
-        default: "Good night!"
+        case 5..<12: String(localized: "Good morning!")
+        case 12..<17: String(localized: "Good afternoon!")
+        case 17..<22: String(localized: "Good evening!")
+        default: String(localized: "Good night!")
         }
     }
     

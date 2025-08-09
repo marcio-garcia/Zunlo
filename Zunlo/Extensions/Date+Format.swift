@@ -32,19 +32,29 @@ extension Date {
         return Date.formatter
     }()
     
-    func formattedDate(dateFormat: DateFormat) -> String {
-        return formattedDate(format: dateFormat.rawValue)
+    func formattedDate(
+        dateFormat: DateFormat,
+        locale: Locale = Locale(identifier: "en_US_POSIX")
+    ) -> String {
+        return formattedDate(format: dateFormat.rawValue, locale: locale)
     }
     
-    func formattedDate(format: String) -> String {
+    func formattedDate(
+        format: String,
+        locale: Locale = Locale(identifier: "en_US_POSIX")
+    ) -> String {
         Date.formatter.dateFormat = format
-        Date.formatter.locale = Locale(identifier: "en_US_POSIX")
+        Date.formatter.locale = locale
         return Date.formatter.string(from: self)
     }
     
-    static func formattedDate(from string: String, format: String) -> Date? {
+    static func formattedDate(
+        from string: String,
+        format: String,
+        locale: Locale = Locale(identifier: "en_US_POSIX")
+    ) -> Date? {
         Date.formatter.dateFormat = format
-        Date.formatter.locale = Locale(identifier: "en_US_POSIX")
+        Date.formatter.locale = locale
         Date.formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return Date.formatter.date(from: string)
     }

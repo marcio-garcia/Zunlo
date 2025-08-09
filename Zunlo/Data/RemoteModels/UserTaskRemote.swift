@@ -76,7 +76,7 @@ struct UserTaskRemote: Codable, Identifiable {
         self.dueDate = domain.dueDate
         self.priority = domain.priority
         self.parentEventId = domain.parentEventId
-        self.tags = domain.tags
+        self.tags = domain.tags.map({ $0.text })
         self.reminderTriggers = domain.reminderTriggers
     }
 
@@ -133,7 +133,12 @@ struct UserTaskRemote: Codable, Identifiable {
             dueDate: dueDate,
             priority: priority,
             parentEventId: parentEventId,
-            tags: tags,
+            tags: tags.map({
+                Tag(id: UUID(),
+                    text: $0, color:
+                        Theme.highlightColor(for: $0),
+                    selected: false)
+            }),
             reminderTriggers: reminderTriggers
         )
     }

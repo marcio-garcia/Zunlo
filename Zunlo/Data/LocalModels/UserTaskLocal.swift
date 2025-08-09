@@ -71,7 +71,12 @@ class UserTaskLocal: Object {
             dueDate: dueDate,
             priority: priority.toDomain(),
             parentEventId: parentEventId,
-            tags: Array(tags),
+            tags: Array(tags).map({
+                Tag(id: UUID(),
+                    text: $0,
+                    color: Theme.highlightColor(for: $0),
+                    selected: false)
+            }),
             reminderTriggers: reminderTriggersArray
         )
     }

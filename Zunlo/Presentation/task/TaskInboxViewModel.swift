@@ -12,7 +12,6 @@ class UserTaskInboxViewModel: ObservableObject {
     @Published var state: ViewState = .loading
     @Published var completeTasks: [UserTask] = []
     @Published var incompleteTasks: [UserTask] = []
-//    @Published var showAddSheet: Bool = false
     @Published var tags: [Tag] = []
 
     let repository: UserTaskRepository
@@ -45,7 +44,9 @@ class UserTaskInboxViewModel: ObservableObject {
     func fetchTags() async {
         do {
             let tags = try await repository.fetchAllUniqueTags()
-            let tagObjects = tags.map { Tag(text: $0, color: Theme.highlightColor(for: $0)) }
+            let tagObjects = tags.map {
+                Tag(id: UUID(), text: $0, color: Theme.highlightColor(for: $0), selected: false)
+            }
             await MainActor.run {
                 self.tags = tagObjects
             }

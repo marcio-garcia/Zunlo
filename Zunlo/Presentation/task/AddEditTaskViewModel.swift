@@ -57,8 +57,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
 
     func navigationTitle() -> String {
         switch mode {
-        case .add: return "Add Task"
-        case .edit: return "Edit Task"
+        case .add: return String(localized: "Add Task")
+        case .edit: return String(localized: "Edit Task")
         }
     }
 
@@ -83,7 +83,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             dueDate: dueDate,
             priority: priority,
             parentEventId: nil,
-            tags: tags.map({ $0.text }),
+            tags: tags,
             reminderTriggers: reminderTriggers
         )
 
@@ -97,8 +97,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
                 }
                 await MainActor.run {
                     self.isProcessing = false
+                    completion(.success(()))
                 }
-                completion(.success(()))
             } catch {
                 await MainActor.run {
                     self.isProcessing = false
@@ -117,9 +117,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             hasDueDate = task.dueDate != nil
             priority = task.priority
             createdAt = task.createdAt
-            tags = task.tags.map({ text in
-                return Tag(id: UUID(), text: text, color: Theme.light.accent)
-            })
+            tags = task.tags
             reminderTriggers = task.reminderTriggers ?? []
         }
         Task {

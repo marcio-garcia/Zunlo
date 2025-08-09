@@ -125,7 +125,10 @@ class DayEventCell: UICollectionViewCell {
 
     func configure(with date: Date, events: [EventOccurrence], weather: WeatherInfo?) {
         let isToday = date.isSameDay(as: Date())
-        dayLabel.text = date.formattedDate(dateFormat: .weekAndDay)
+        dayLabel.text = date.formattedDate(
+            dateFormat: .weekAndDay,
+            locale: Locale(identifier: Locale.current.identifier)
+        )
         dayLabel.textColor = isToday ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
         
         eventsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }

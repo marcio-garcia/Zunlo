@@ -11,7 +11,7 @@ struct ReminderEditorView: View {
     @Binding var triggers: [ReminderTrigger]
 
     var body: some View {
-        RoundedSection(title: "Reminders") {
+        RoundedSection(title: String(localized: "Reminders")) {
             ForEach(triggers.indices, id: \.self) { index in
                 VStack {
                     TextField("Note for the reminder", text: Binding(
@@ -56,7 +56,7 @@ struct ReminderEditorView: View {
     
     func formatReminderTime(_ minutes: Int) -> String {
         if minutes == 0 {
-            return "At time of task"
+            return String(localized: "At time of task")
         }
 
         let days = minutes / 1440
@@ -66,17 +66,17 @@ struct ReminderEditorView: View {
         var components: [String] = []
 
         if days > 0 {
-            components.append("\(days) day\(days == 1 ? "" : "s")")
+            components.append(String(localized: "\(days) day\(days == 1 ? "" : "s")"))
         }
 
         if hours > 0 {
-            components.append("\(hours)h")
+            components.append(String(localized: "\(hours)h"))
         }
 
         if remainingMinutes > 0 {
-            components.append("\(remainingMinutes) min")
+            components.append(String(localized: "\(remainingMinutes) min"))
         }
 
-        return components.joined(separator: " ") + " before"
+        return components.joined(separator: " ") + " " + String(localized: "before")
     }
 }

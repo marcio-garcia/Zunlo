@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WeekdayPicker: View {
     @Binding var selection: Set<Int>
-    let days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    @State var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
     var body: some View {
         HStack {
@@ -30,5 +30,27 @@ struct WeekdayPicker: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
+        .onAppear {
+            days = getLocalizedWeekdayNames()
+        }
+    }
+    
+    private func getLocalizedWeekdayNames() -> [String] {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "EEE" // Use "EEE" for abbreviated weekday name
+        dateFormatter.locale = Locale.current // Use the current device locale
+        
+        var weekdayNames = [String]()
+        
+        // Iterate through each day of the week (1 to 7, corresponding to Sunday to Saturday)
+        for dayIndex in 1...7 {
+            let dateComponents = DateComponents(calendar: .current, weekday: dayIndex) // Weekday 1 = Sunday
+            if let date = Calendar.current.date(from: dateComponents) {
+                let weekdayName = dateFormatter.string(from: date)
+                weekdayNames.append(weekdayName)
+            }
+        }
+        
+        return weekdayNames
     }
 }

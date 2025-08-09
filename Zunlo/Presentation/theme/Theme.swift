@@ -65,7 +65,7 @@ struct Theme {
         UITraitCollection.current.userInterfaceStyle == .dark
     }
     
-    static func highlightColor(for text: String) -> Color {
+    static func highlightColor(for text: String) -> String {
         let options: [Color] = [
             Color.theme.highlightWarm1,
             Color.theme.highlightWarm2,
@@ -73,6 +73,6 @@ struct Theme {
             Color.theme.highlightCool1
         ]
         let index = abs(text.hashValue) % options.count
-        return options[index]
+        return options[index].hexString()
     }
 }

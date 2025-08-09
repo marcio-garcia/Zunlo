@@ -9,7 +9,7 @@ import SwiftUI
 
 struct TagChipListView: View {
     @Binding var tags: [Tag]
-    var mode: Mode = .readonly
+    var mode: Mode = .readonly(true)
     var onTagsChanged: (([Tag]) async -> Void)? = nil
     var allPossibleTags: [String] = [] // Autocomplete pool
 
@@ -24,7 +24,7 @@ struct TagChipListView: View {
                         TagChipView(
                             tag: tag,
                             showDelete: mode == .editable,
-                            selectable: mode == .readonly,
+                            selectable: isSelectable(mode),
                             tags: $tags
                         )
                     }
@@ -85,6 +85,13 @@ struct TagChipListView: View {
         }
     }
 
+    private func isSelectable(_ mode: Mode) -> Bool {
+        if case .readonly(let selectable) = mode {
+            return selectable
+        }
+        return false
+    }
+    
     private var filteredSuggestions: [String] {
         let lowercaseInput = newTagText.lowercased()
         guard !lowercaseInput.isEmpty else { return [] }
@@ -106,7 +113,9 @@ struct TagChipListView: View {
             return
         }
 
-        tags.append(Tag(text: trimmed, color: Color.theme.accent))
+        tags.append(
+            Tag(id: UUID(), text: trimmed, color: Color.theme.accent.hexString(), selected: false)
+        )
         tags.sort { $0.text.localizedCompare($1.text) == .orderedAscending }
 
         newTagText = ""
@@ -125,12 +134,11 @@ struct TagChipListView: View {
             shakeInput = false
         }
     }
-
 }
 
 extension TagChipListView {
-    enum Mode {
+    enum Mode: Equatable {
         case editable
-        case readonly
+        case readonly(_ selectable: Bool)
     }
 }

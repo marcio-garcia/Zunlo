@@ -53,7 +53,10 @@ class CalendarScheduleViewController: UIViewController {
     }
     
     private func setupViews() {
-        topBarView.configure(title: "Events", accentColor: UIColor(Color.theme.accent))
+        topBarView.configure(
+            title: String(localized: "Events"),
+            accentColor: UIColor(Color.theme.accent)
+        )
         topBarView.onTapClose = { [weak self] in
             self?.onTapClose?()
         }
@@ -167,12 +170,12 @@ extension CalendarScheduleViewController {
 extension CalendarScheduleViewController {
     func configureDataSource() {
         dataSource = UICollectionViewDiffableDataSource<Int, CalendarItem>(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
-            guard let self = self else { return nil }
+            guard let self = self else { return UICollectionViewCell() }
 
             switch item {
             case .monthHeader(let monthDate):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MonthHeaderCell", for: indexPath) as! MonthHeaderCell
-                let title = monthDate.formattedDate(dateFormat: .monthName)
+                let title = monthDate.formattedDate(dateFormat: .monthName, locale: Locale(identifier: Locale.current.identifier))
                 let subtitle = monthDate.formattedDate(dateFormat: .year)
                 let image = self.viewModel.monthHeaderImageName(for: monthDate)
                 cell.configure(title: title, subtitle: subtitle, imageName: image)

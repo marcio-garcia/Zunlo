@@ -53,7 +53,7 @@ struct TaskInboxView: View {
                 VStack {
                     TagChipListView(
                         tags: $viewModel.tags,
-                        mode: .readonly,
+                        mode: .readonly(true),
                         onTagsChanged: { _ in await viewModel.filter() }
                     )
                     

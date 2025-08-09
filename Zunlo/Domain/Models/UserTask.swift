@@ -21,9 +21,9 @@ enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
     
     var description: String {
         switch self {
-        case .high: return "high"
-        case .medium: return "medium"
-        case .low: return "low"
+        case .high: return String(localized: "high")
+        case .medium: return String(localized: "medium")
+        case .low: return String(localized: "low")
         }
     }
 }
@@ -39,7 +39,7 @@ struct UserTask: Identifiable, Codable, Hashable {
     var dueDate: Date?
     var priority: UserTaskPriority
     var parentEventId: UUID?
-    var tags: [String]
+    var tags: [Tag]
     var reminderTriggers: [ReminderTrigger]?
     
     internal init(id: UUID?,
@@ -52,7 +52,7 @@ struct UserTask: Identifiable, Codable, Hashable {
                   dueDate: Date? = nil,
                   priority: UserTaskPriority,
                   parentEventId: UUID? = nil,
-                  tags: [String],
+                  tags: [Tag],
                   reminderTriggers: [ReminderTrigger]?) {
         self.id = id
         self.userId = userId
@@ -85,7 +85,7 @@ extension UserTask {
         self.dueDate = local.dueDate
         self.priority = local.priority.toDomain()
         self.parentEventId = local.parentEventId
-        self.tags = local.tagsArray
+        self.tags = Tag.toTag(tags: local.tagsArray)
         self.reminderTriggers = local.reminderTriggersArray
     }
 }
@@ -102,7 +102,7 @@ extension UserTask {
         self.dueDate = remote.dueDate
         self.priority = remote.priority
         self.parentEventId = remote.parentEventId
-        self.tags = remote.tags
+        self.tags = Tag.toTag(tags: remote.tags)
         self.reminderTriggers = []
     }
 }

@@ -259,7 +259,7 @@ struct TodayView: View {
                     ForEach(viewModel.todayEvents) { event in
                         EventRow(occurrence: event, onTap: {
                             if event.isFakeOccForEmptyToday {
-                                nav.showSheet(.addTask, for: viewID)
+                                nav.showSheet(.addEvent, for: viewID)
                             } else if event.isRecurring {
                                 nav.showDialog(.editRecurringEvent, for: viewID)
                             } else {

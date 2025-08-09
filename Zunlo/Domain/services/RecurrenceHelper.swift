@@ -109,7 +109,7 @@ class RecurrenceHelper {
                 id: UUID(),
                 userId: UUID(),
                 eventId: UUID(),
-                title: "Nothing for today",
+                title: String(localized: "Nothing for today"),
                 description: nil,
                 startDate: today,
                 endDate: nil,
