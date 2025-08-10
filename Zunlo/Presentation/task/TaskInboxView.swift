@@ -17,9 +17,7 @@ struct TaskInboxView: View {
     @State private var editableUserTask: UserTask?
     
     init(repository: UserTaskRepository) {
-        _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(
-            taskFetcher: UserTaskFetcher(repo: repository),
-            taskEditor: TaskEditor(repo: repository)))
+        _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(taskRepo:repository))
     }
     
     var body: some View {

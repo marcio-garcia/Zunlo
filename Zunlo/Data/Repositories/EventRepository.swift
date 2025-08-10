@@ -19,6 +19,8 @@ final class EventRepository {
     private let reminderScheduler: ReminderScheduler<Event>
     private let calendar = Calendar.current
     
+    var lastEventAction = Observable<LastEventAction>(.none)
+    
     init(
         eventLocalStore: EventLocalStore,
         eventRemoteStore: EventRemoteStore,
@@ -55,8 +57,15 @@ final class EventRepository {
 //    }
     
     func fetchOccurrences() async throws -> [EventOccurrence] {
-        let occurrences = try await eventRemoteStore.fetchOccurrences()
-        return occurrences.map { EventOccurrence(remote: $0) }
+        do {
+            let occurrences = try await eventRemoteStore.fetchOccurrences()
+            let occ = occurrences.map { EventOccurrence(remote: $0) }
+            lastEventAction.value = .fetch(occ)
+            return occ
+        } catch {
+            lastEventAction.value = .error(error)
+            throw error
+        }
     }
     
     private func fetchLocalEvents() async throws -> [Event] {
@@ -79,6 +88,7 @@ final class EventRepository {
             try await eventLocalStore.save(remote)
             reminderScheduler.scheduleReminders(for: Event(remote: remote))
         }
+        lastEventAction.value = .insert
         return savedRemote.compactMap { Event(remote: $0) }
     }
 
@@ -89,11 +99,13 @@ final class EventRepository {
             reminderScheduler.cancelReminders(for: Event(remote: remote))
             reminderScheduler.scheduleReminders(for: Event(remote: remote))
         }
+        lastEventAction.value = .update
         return updatedRemote.compactMap { Event(remote: $0) }
     }
     
     func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws {
         let _ = try await eventRemoteStore.splitRecurringEvent(occurrence)
+        lastEventAction.value = .update
         try await synchronize()
     }
 
@@ -107,6 +119,7 @@ final class EventRepository {
         if let triggers = reminderTriggers {
             reminderScheduler.cancelReminders(itemId: id, reminderTriggers: triggers)
         }
+        lastEventAction.value = .delete
     }
 
     // MARK: - CRUD for RecurrenceRule

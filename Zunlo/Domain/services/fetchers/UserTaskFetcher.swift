@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MiniSignalEye
 
 protocol UserTaskFetcherService {
     func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask]
@@ -28,13 +29,18 @@ final class UserTaskFetcher: UserTaskFetcherService {
     }
     
     func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
-        guard let filter else {
-            return try await repo.fetchAll()
+        var tasks: [UserTask] = []
+        
+        if let filter {
+            tasks = try await repo.fetchTasks(filteredBy: filter)
+        } else {
+            tasks = try await repo.fetchAll()
         }
-        return try await repo.fetchTasks(filteredBy: filter)
+        
+        return tasks
     }
     
     func fetchAllUniqueTags() async throws -> [String] {
-        try await repo.fetchAllUniqueTags()
+        return try await repo.fetchAllUniqueTags()
     }
 }

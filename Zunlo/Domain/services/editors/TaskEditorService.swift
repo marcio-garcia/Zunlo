@@ -12,7 +12,6 @@ protocol TaskEditorService {
     func add(_ input: AddTaskInput) async throws -> UserTask
     func update(_ input: EditTaskInput, id: UUID) async throws
     func delete(_ input: EditTaskInput, id: UUID) async throws
-    func fetchAllUniqueTags() async throws -> [String]
 }
 
 // DTOs decouple UI from domain defaults/validation

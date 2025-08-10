@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MiniSignalEye
 
 final class UserTaskRepository {
     private let localStore: UserTaskLocalStore
@@ -13,6 +14,8 @@ final class UserTaskRepository {
     private let reminderScheduler: ReminderScheduler<UserTask>
     private let calendar = Calendar.current
 
+    var lastTaskAction = Observable<LastTaskAction>(.none)
+    
     init(localStore: UserTaskLocalStore, remoteStore: UserTaskRemoteStore) {
         self.localStore = localStore
         self.remoteStore = remoteStore
@@ -26,7 +29,7 @@ final class UserTaskRepository {
             let domain = UserTask(remote: remote)
             reminderScheduler.scheduleReminders(for: domain)
         }
-//        self.tasks.value = try await localStore.fetchTasks(filteredBy: TaskFilter(userId: task.userId))
+        lastTaskAction.value = .insert
         return task
     }
 
@@ -38,7 +41,7 @@ final class UserTaskRepository {
             reminderScheduler.cancelReminders(for: domain)
             reminderScheduler.scheduleReminders(for: domain)
         }
-//        self.tasks.value = try await localStore.fetchTasks(filteredBy: TaskFilter(userId: task.userId))
+        lastTaskAction.value = .update
     }
 
     func delete(_ task: UserTask) async throws {
@@ -50,28 +53,35 @@ final class UserTaskRepository {
             }
         }
         reminderScheduler.cancelReminders(for: task)
-//        self.tasks.value = try await localStore.fetchTasks(filteredBy: TaskFilter(userId: task.userId))
+        lastTaskAction.value = .delete
     }
     
+    @discardableResult
     func fetchAll() async throws -> [UserTask] {
         let remoteTasks = try await remoteStore.fetchAll()
         try await localStore.deleteAll(for: remoteTasks.first?.userId ?? UUID())
         for remote in remoteTasks {
             try await localStore.save(remote)
         }
-        return remoteTasks.map { $0.toDomain() }
-//        self.tasks.value = remoteTasks.map { $0.toDomain() }
-    }
-    
-    func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
-        // Prefer local first, or merge with remote if needed
-        let tasks = try await localStore.fetchTasks(filteredBy: filter)
-//        self.tasks.value = localTasks
+        
+        let tasks = remoteTasks.map { $0.toDomain() }
+        lastTaskAction.value = .fetch(tasks)
         return tasks
     }
     
+    @discardableResult
+    func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
+        // Prefer local first, or merge with remote if needed
+        let tasks = try await localStore.fetchTasks(filteredBy: filter)
+        lastTaskAction.value = .fetch(tasks)
+        return tasks
+    }
+    
+    @discardableResult
     func fetchAllUniqueTags() async throws -> [String] {
-        try await localStore.fetchAllUniqueTags()
+        let tags = try await localStore.fetchAllUniqueTags()
+        lastTaskAction.value = .fetchTags(tags)
+        return tags
     }
 }
 

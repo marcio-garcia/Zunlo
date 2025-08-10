@@ -7,6 +7,7 @@
 
 import SwiftUI
 import FlowNavigator
+import MiniSignalEye
 
 class UserTaskInboxViewModel: ObservableObject {
     @Published var state: ViewState = .loading
@@ -14,31 +15,30 @@ class UserTaskInboxViewModel: ObservableObject {
     @Published var incompleteTasks: [UserTask] = []
     @Published var tags: [Tag] = []
 
-    let taskFetcher: UserTaskFetcherService
-    let taskEditor: TaskEditorService
+    let taskRepo: UserTaskRepository
     var tasks: [UserTask] = []
     
-    init(taskFetcher: UserTaskFetcherService, taskEditor: TaskEditorService) {
-        self.taskFetcher = taskFetcher
-        self.taskEditor = taskEditor
-//        self.repository.tasks.observe(owner: self, fireNow: false) { [weak self] tasks in
-//            guard let self else { return }
-//            self.tasks = tasks
-//            self.completeTasks = tasks.filter { $0.isCompleted }
-//            self.incompleteTasks = tasks.filter { !$0.isCompleted }
-//            self.state = .loaded
-//        }
+    init(taskRepo: UserTaskRepository) {
+        self.taskRepo = taskRepo
+        observeTaskRepo()
     }
-
-    func fetchTasks() async {
-        do {
-            let tasks = try await taskFetcher.fetchTasks()
-            await MainActor.run {
+    
+    func observeTaskRepo() {
+        self.taskRepo.lastTaskAction.observe(owner: self, fireNow: false) { [weak self] action in
+            if case .fetch(let tasks) = action {
+                guard let self else { return }
                 self.tasks = tasks
                 self.completeTasks = tasks.filter { $0.isCompleted }
                 self.incompleteTasks = tasks.filter { !$0.isCompleted }
                 self.state = .loaded
             }
+        }
+}
+
+    func fetchTasks() async {
+        do {
+            let taskFetcher = UserTaskFetcher(repo: taskRepo)
+            let _ = try await taskFetcher.fetchTasks()
         } catch {
             await MainActor.run {
                 state = .error(error.localizedDescription)
@@ -48,6 +48,7 @@ class UserTaskInboxViewModel: ObservableObject {
 
     func fetchTags() async {
         do {
+            let taskFetcher = UserTaskFetcher(repo: taskRepo)
             let tags = try await taskFetcher.fetchAllUniqueTags()
             let tagObjects = tags.map {
                 Tag(id: UUID(), text: $0, color: Theme.highlightColor(for: $0), selected: false)
@@ -64,16 +65,11 @@ class UserTaskInboxViewModel: ObservableObject {
     
     func filter() async  {
         do {
+            let taskFetcher = UserTaskFetcher(repo: taskRepo)
             let selectedTags = tags.filter({ $0.selected })
             let filter = selectedTags.isEmpty ? nil : selectedTags.map({ $0.text })
             let taskFilter = TaskFilter(tags: filter)
-            let tasks = try await taskFetcher.fetchTasks(filteredBy: taskFilter)
-            await MainActor.run {
-                self.tasks = tasks
-                self.completeTasks = tasks.filter { $0.isCompleted }
-                self.incompleteTasks = tasks.filter { !$0.isCompleted }
-                self.state = .loaded
-            }
+            let _ = try await taskFetcher.fetchTasks(filteredBy: taskFilter)
         } catch {
             await MainActor.run {
                 state = .error(error.localizedDescription)
@@ -87,6 +83,7 @@ class UserTaskInboxViewModel: ObservableObject {
         updated.isCompleted.toggle()
         
         Task {
+            let taskEditor = TaskEditor(repo: taskRepo)
             try? await taskEditor.update(makeInput(task: updated), id: id)
             await fetchTasks()
         }

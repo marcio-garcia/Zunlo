@@ -42,9 +42,8 @@ struct TodayView: View {
         self._showChat = showChat
         self.appState = appState
         _viewModel = StateObject(wrappedValue: TodayViewModel(
-            taskFetcher: UserTaskFetcher(repo: appState.userTaskRepository!),
-            taskEditor: TaskEditor(repo: appState.userTaskRepository!),
-            eventFetcher: EventFetcher(repo: appState.eventRepository!),
+            taskRepo: appState.userTaskRepository!,
+            eventRepo: appState.eventRepository!,
             locationService: appState.locationService!,
             adManager: appState.adManager!)
         )

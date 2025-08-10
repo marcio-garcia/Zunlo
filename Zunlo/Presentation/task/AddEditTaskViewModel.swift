@@ -36,7 +36,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     }
     
     let mode: Mode
-    private let editor: TaskEditorService
+    private let taskFetcher: UserTaskFetcherService
+    private let taskEditor: TaskEditorService
     var createdAt: Date?
     
     var id: String {
@@ -46,9 +47,10 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         }
     }
 
-    init(mode: Mode, editor: TaskEditorService) {
+    init(mode: Mode, taskFetcher: UserTaskFetcherService, taskEditor: TaskEditorService) {
         self.mode = mode
-        self.editor = editor
+        self.taskFetcher = taskFetcher
+        self.taskEditor = taskEditor
         loadFields()
     }
 
@@ -73,9 +75,9 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             do {
                 switch mode {
                 case .add:
-                    try await editor.add(makeInput())
+                    try await taskEditor.add(makeInput())
                 case .edit:
-                    try await editor.update(makeInput(), id: id!)
+                    try await taskEditor.update(makeInput(), id: id!)
                 }
                 await MainActor.run {
                     self.isProcessing = false
@@ -114,7 +116,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     
     func fetchAllUniqueTags() async {
         do {
-            let tags = try await editor.fetchAllUniqueTags()
+            let tags = try await taskFetcher.fetchAllUniqueTags()
             await MainActor.run { allUniqueTags = tags }
         } catch {
             await MainActor.run { allUniqueTags = [] }
@@ -128,7 +130,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         
         if case .edit(let userTask) = mode {
             do {
-                try await editor.delete(makeInput(), id: userTask.id!)
+                try await taskEditor.delete(makeInput(), id: userTask.id!)
                 isProcessing = false
             } catch {
                 print("error: \(error.localizedDescription)")

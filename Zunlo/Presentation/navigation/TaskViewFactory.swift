@@ -36,7 +36,11 @@ struct TaskViewFactory: TaskViews {
     func buildAddTaskView() -> AnyView {
         AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .add, editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
+                viewModel: AddEditTaskViewModel(
+                    mode: .add,
+                    taskFetcher: UserTaskFetcher(repo: AppState.shared.userTaskRepository!),
+                    taskEditor: TaskEditor(repo: AppState.shared.userTaskRepository!)
+                ),
                 onDismiss: {
                     onAddEditTaskViewDismiss?()
                 }
@@ -51,7 +55,11 @@ struct TaskViewFactory: TaskViews {
         }
         return AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .edit(task), editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
+                viewModel: AddEditTaskViewModel(
+                    mode: .edit(task),
+                    taskFetcher: UserTaskFetcher(repo: AppState.shared.userTaskRepository!),
+                    taskEditor: TaskEditor(repo: AppState.shared.userTaskRepository!)
+                ),
                 onDismiss: {
                     onAddEditTaskViewDismiss?()
                 }

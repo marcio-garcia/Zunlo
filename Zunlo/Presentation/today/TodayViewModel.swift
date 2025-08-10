@@ -16,9 +16,8 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var weather: WeatherInfo?
     @Published var eventEditHandler = EventEditHandler()
 
-    private let taskFetcher: UserTaskFetcherService
-    private let taskEditor: TaskEditorService
-    private let eventFetcher: EventFetcherService
+    private let taskRepo: UserTaskRepository
+    private let eventRepo: EventRepository
     private let locationService: LocationService
     private let adManager: AdMobManager
     
@@ -29,15 +28,13 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     var greeting: String = ""
 
     init(
-        taskFetcher: UserTaskFetcherService,
-        taskEditor: TaskEditorService,
-        eventFetcher: EventFetcherService,
+        taskRepo: UserTaskRepository,
+        eventRepo: EventRepository,
         locationService: LocationService,
         adManager: AdMobManager
     ) {
-        self.taskFetcher = taskFetcher
-        self.taskEditor = taskEditor
-        self.eventFetcher = eventFetcher
+        self.taskRepo = taskRepo
+        self.eventRepo = eventRepo
         self.locationService = locationService
         self.adManager = adManager
         
@@ -48,42 +45,44 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
 
     private func observeRepositories() {
-//        taskRepository.tasks.observe(owner: self, fireNow: false) { [weak self] tasks in
-//            let today = Calendar.current.startOfDay(for: Date())
-//            let filtered = tasks.filter {
-//                if let due = $0.dueDate {
-//                    return due <= today && !$0.isCompleted
-//                } else {
-//                    return !$0.isCompleted
-//                }
-//            }
-//            DispatchQueue.main.async {
-//                self?.todayTasks = filtered
-//                self?.state = filtered.isEmpty ? .empty : .loaded
-//            }
-//        }
+        taskRepo.lastTaskAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
+            if case .fetch(let tasks) = action {
+                
+                let today = Date().startOfDay
+                
+                let filtered = tasks.filter {
+                    if let due = $0.dueDate {
+                        return due <= today && !$0.isCompleted
+                    } else {
+                        return !$0.isCompleted
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self?.todayTasks = filtered
+                    self?.state = filtered.isEmpty ? .empty : .loaded
+                }
+
+            }
+        }
+        
+        eventRepo.lastEventAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
+            if case .fetch(let occ) = action {
+                let today = Date().startOfDay
+                guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else { return }
+                self?.handleOccurrences(occ, in: today...tomorrow)
+            }
+        }
     }
     
     func fetchData() async {
         do {
-            let tasks = try await taskFetcher.fetchTasks()
-            let today = Date().startOfDay
+            let taskFetcher = UserTaskFetcher(repo: taskRepo)
+            let _ = try await taskFetcher.fetchTasks()
             
-            let filtered = tasks.filter {
-                if let due = $0.dueDate {
-                    return due <= today && !$0.isCompleted
-                } else {
-                    return !$0.isCompleted
-                }
-            }
-            DispatchQueue.main.async {
-                self.todayTasks = filtered
-                self.state = filtered.isEmpty ? .empty : .loaded
-            }
-            
+            let eventFetcher = EventFetcher(repo: eventRepo)
             let occurrences = try await eventFetcher.fetchOccurrences()
-            guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else { return }
-            handleOccurrences(occurrences, in: today...tomorrow)
+            
         } catch {
             await errorHandler.handle(error)
         }
@@ -121,6 +120,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         var updated = task
         updated.isCompleted.toggle()
         Task {
+            let taskEditor = TaskEditor(repo: taskRepo)
             try? await taskEditor.update(makeInput(task: updated), id: id)
             await fetchData()
         }
