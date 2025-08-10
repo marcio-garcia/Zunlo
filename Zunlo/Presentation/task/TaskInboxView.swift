@@ -17,14 +17,19 @@ struct TaskInboxView: View {
     @State private var editableUserTask: UserTask?
     
     init(repository: UserTaskRepository) {
-        _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(repository: repository))
+        _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(
+            taskFetcher: UserTaskFetcher(repo: repository),
+            taskEditor: TaskEditor(repo: repository)))
     }
     
     var body: some View {
         let taskViewFactory = TaskViewFactory(
             viewID: viewID,
             nav: nav,
-            editableTaskProvider: { self.editableUserTask }
+            editableTaskProvider: { self.editableUserTask },
+            onAddEditTaskViewDismiss: {
+                Task { await viewModel.fetchTasks() }
+            }
         )
         let factory = NavigationViewFactory(task: taskViewFactory)
         

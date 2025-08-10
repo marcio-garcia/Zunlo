@@ -42,7 +42,8 @@ struct TodayView: View {
         self._showChat = showChat
         self.appState = appState
         _viewModel = StateObject(wrappedValue: TodayViewModel(
-            taskRepository: appState.userTaskRepository!,
+            taskFetcher: UserTaskFetcher(repo: appState.userTaskRepository!),
+            taskEditor: TaskEditor(repo: appState.userTaskRepository!),
             eventFetcher: EventFetcher(repo: appState.eventRepository!),
             locationService: appState.locationService!,
             adManager: appState.adManager!)
@@ -53,7 +54,10 @@ struct TodayView: View {
         let taskFactory = TaskViewFactory(
             viewID: viewID,
             nav: nav,
-            editableTaskProvider: { self.editableUserTask }
+            editableTaskProvider: { self.editableUserTask },
+            onAddEditTaskViewDismiss: {
+                Task { await viewModel.fetchData() }
+            }
         )
         let eventFactory = EventViewFactory(
             viewID: viewID,

@@ -16,8 +16,9 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var weather: WeatherInfo?
     @Published var eventEditHandler = EventEditHandler()
 
-    private let taskRepository: UserTaskRepository
-    private let eventFetcher: EventFetcher
+    private let taskFetcher: UserTaskFetcherService
+    private let taskEditor: TaskEditorService
+    private let eventFetcher: EventFetcherService
     private let locationService: LocationService
     private let adManager: AdMobManager
     
@@ -28,12 +29,14 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     var greeting: String = ""
 
     init(
-        taskRepository: UserTaskRepository,
-        eventFetcher: EventFetcher,
+        taskFetcher: UserTaskFetcherService,
+        taskEditor: TaskEditorService,
+        eventFetcher: EventFetcherService,
         locationService: LocationService,
         adManager: AdMobManager
     ) {
-        self.taskRepository = taskRepository
+        self.taskFetcher = taskFetcher
+        self.taskEditor = taskEditor
         self.eventFetcher = eventFetcher
         self.locationService = locationService
         self.adManager = adManager
@@ -45,8 +48,27 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
 
     private func observeRepositories() {
-        taskRepository.tasks.observe(owner: self, fireNow: false) { [weak self] tasks in
-            let today = Calendar.current.startOfDay(for: Date())
+//        taskRepository.tasks.observe(owner: self, fireNow: false) { [weak self] tasks in
+//            let today = Calendar.current.startOfDay(for: Date())
+//            let filtered = tasks.filter {
+//                if let due = $0.dueDate {
+//                    return due <= today && !$0.isCompleted
+//                } else {
+//                    return !$0.isCompleted
+//                }
+//            }
+//            DispatchQueue.main.async {
+//                self?.todayTasks = filtered
+//                self?.state = filtered.isEmpty ? .empty : .loaded
+//            }
+//        }
+    }
+    
+    func fetchData() async {
+        do {
+            let tasks = try await taskFetcher.fetchTasks()
+            let today = Date().startOfDay
+            
             let filtered = tasks.filter {
                 if let due = $0.dueDate {
                     return due <= today && !$0.isCompleted
@@ -55,17 +77,11 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
                 }
             }
             DispatchQueue.main.async {
-                self?.todayTasks = filtered
-                self?.state = filtered.isEmpty ? .empty : .loaded
+                self.todayTasks = filtered
+                self.state = filtered.isEmpty ? .empty : .loaded
             }
-        }
-    }
-    
-    func fetchData() async {
-        do {
-            try await taskRepository.fetchAll()
+            
             let occurrences = try await eventFetcher.fetchOccurrences()
-            let today = Date().startOfDay
             guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else { return }
             handleOccurrences(occurrences, in: today...tomorrow)
         } catch {
@@ -101,10 +117,11 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
 
     func toggleTaskCompletion(for task: UserTask) {
+        guard let id = task.id else { return }
         var updated = task
         updated.isCompleted.toggle()
         Task {
-            try? await taskRepository.update(updated)
+            try? await taskEditor.update(makeInput(task: updated), id: id)
             await fetchData()
         }
     }
@@ -131,6 +148,18 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         } catch {
             print("Failed to fetch weather:", error)
         }
+    }
+    
+    private func makeInput(task: UserTask) -> AddTaskInput {
+        AddTaskInput(
+            title: task.title,
+            notes: task.notes,
+            dueDate: task.dueDate,
+            isCompleted: task.isCompleted,
+            priority: task.priority,
+            tags: task.tags,
+            reminderTriggers: task.reminderTriggers
+        )
     }
 }
 

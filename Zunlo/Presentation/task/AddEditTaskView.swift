@@ -17,6 +17,8 @@ struct AddEditTaskView: View {
     @State private var tagEditorHeight: CGFloat = .zero
     @StateObject var viewModel: AddEditTaskViewModel
     
+    var onDismiss: (() -> Void)?
+    
     var body: some View {
         
         let taskFactory = TaskViewFactory(
@@ -25,63 +27,68 @@ struct AddEditTaskView: View {
         )
         let factory = NavigationViewFactory(task: taskFactory)
         
-        formContent
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text(viewModel.navigationTitle())
-                        .themedSubtitle()
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        viewModel.save { result in
-                            switch result {
-                            case .success:
-                                dismiss()
-                            case .failure(let err):
-                                error = err.localizedDescription
-                            }
-                        }
+        NavigationStack {
+            formContent
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text(viewModel.navigationTitle())
+                            .themedSubtitle()
                     }
-                    .themedSecondaryButton(isEnabled: isEnabled)
-                    .disabled(!isEnabled)
-                }
-                
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .themedSecondaryButton()
-                }
-            }
-            .confirmationDialog(
-                "Delete task",
-                isPresented: nav.isDialogPresented(for: viewID),
-                titleVisibility: .visible
-            ) {
-                if let route = nav.dialogRoute(for: viewID) {
-                    ViewRouter.dialogView(
-                        for: route,
-                        navigationManager: nav,
-                        factory: factory) { option in
-                            switch option {
-                            case "delete":
-                                Task {
-                                    await viewModel.delete()
-                                    await MainActor.run { dismiss() }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            viewModel.save { result in
+                                switch result {
+                                case .success:
+                                    dismiss()
+                                    onDismiss?()
+                                case .failure(let err):
+                                    error = err.localizedDescription
                                 }
-                            case "cancel":
-                                nav.dismissDialog(for: viewID)
-                            default: break
                             }
                         }
+                        .themedSecondaryButton(isEnabled: isEnabled)
+                        .disabled(!isEnabled)
+                    }
+                    
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                            .themedSecondaryButton()
+                    }
                 }
-            }
-            .alert("Error Saving Task", isPresented: isShowingError) {
-                Button("Ok", role: .cancel) { error = nil }
-            } message: {
-                Text(error ?? "Unknown error.")
-            }
-            .themedBody()
-        
+                .confirmationDialog(
+                    "Delete task",
+                    isPresented: nav.isDialogPresented(for: viewID),
+                    titleVisibility: .visible
+                ) {
+                    if let route = nav.dialogRoute(for: viewID) {
+                        ViewRouter.dialogView(
+                            for: route,
+                            navigationManager: nav,
+                            factory: factory) { option in
+                                switch option {
+                                case "delete":
+                                    Task {
+                                        await viewModel.delete()
+                                        await MainActor.run {
+                                            dismiss()
+                                            onDismiss?()
+                                        }
+                                    }
+                                case "cancel":
+                                    nav.dismissDialog(for: viewID)
+                                default: break
+                                }
+                            }
+                    }
+                }
+                .alert("Error Saving Task", isPresented: isShowingError) {
+                    Button("Ok", role: .cancel) { error = nil }
+                } message: {
+                    Text(error ?? "Unknown error.")
+                }
+                .themedBody()
+        }
     }
     
     // MARK: - View Sections
@@ -155,13 +162,6 @@ struct AddEditTaskView: View {
             HStack {
                 Spacer()
                 Button {
-//                    viewModel.onDelete = {
-//                        Task {
-//                            await MainActor.run {
-//                                self.dismiss()
-//                            }
-//                        }
-//                    }
                     nav.showDialog(.deleteTask, for: viewID)
                 } label: {
                     Text("Delete")

@@ -12,15 +12,18 @@ struct TaskViewFactory: TaskViews {
     let viewID: UUID
     let nav: AppNav
     let editableTaskProvider: (() -> UserTask?)?
+    let onAddEditTaskViewDismiss: (() -> Void)?
     
     internal init(
         viewID: UUID,
         nav: AppNav,
-        editableTaskProvider: (() -> UserTask?)? = nil
+        editableTaskProvider: (() -> UserTask?)? = nil,
+        onAddEditTaskViewDismiss: (() -> Void)? = nil
     ) {
         self.viewID = viewID
         self.nav = nav
         self.editableTaskProvider = editableTaskProvider
+        self.onAddEditTaskViewDismiss = onAddEditTaskViewDismiss
     }
 
     func buildTaskInboxView() -> AnyView {
@@ -33,7 +36,10 @@ struct TaskViewFactory: TaskViews {
     func buildAddTaskView() -> AnyView {
         AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .add, editor: TaskEditor(repo: AppState.shared.userTaskRepository!))
+                viewModel: AddEditTaskViewModel(mode: .add, editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
+                onDismiss: {
+                    onAddEditTaskViewDismiss?()
+                }
             )
             .environmentObject(nav)
         )
@@ -45,7 +51,10 @@ struct TaskViewFactory: TaskViews {
         }
         return AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .edit(task), editor: TaskEditor(repo: AppState.shared.userTaskRepository!))
+                viewModel: AddEditTaskViewModel(mode: .edit(task), editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
+                onDismiss: {
+                    onAddEditTaskViewDismiss?()
+                }
             )
             .environmentObject(nav)
         )
