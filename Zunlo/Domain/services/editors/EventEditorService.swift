@@ -35,6 +35,7 @@ struct AddEventInput {
     var byMonthday: [Int]?
     var until: Date?
     var count: Int?
+    var isCancelled: Bool
 }
 
 typealias EditEventInput = AddEventInput

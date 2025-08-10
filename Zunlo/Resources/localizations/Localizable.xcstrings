@@ -344,6 +344,7 @@
       }
     },
     "Edit all events" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

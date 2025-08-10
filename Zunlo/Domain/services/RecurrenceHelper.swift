@@ -46,9 +46,9 @@ class RecurrenceHelper {
                 dates.append(date)
             }
             if let count = rule.count, occurrences >= count { break }
-            if let until = rule.until, date >= until { break }
             guard let next = calendar.date(byAdding: .day, value: interval, to: date) else { break }
             date = next
+            if let until = rule.until, date >= until { break }
             if rule.count == nil, date > range.upperBound { break }
         }
         return dates.sorted()
@@ -87,9 +87,9 @@ class RecurrenceHelper {
                 }
             }
             if let count = rule.count, occurrences >= count { break }
-            if let until = rule.until, weekStart >= until { break }
             guard let next = calendar.date(byAdding: .weekOfYear, value: interval, to: weekStart) else { break }
             weekStart = next
+            if let until = rule.until, weekStart >= until { break }
             if rule.count == nil, weekStart > range.upperBound { break }
         }
         return dates.sorted()
@@ -161,9 +161,9 @@ class RecurrenceHelper {
                 }
             }
             if let count = rule.count, occurrences >= count { break }
-            if let until = rule.until, date >= until { break }
             guard let next = calendar.date(byAdding: .month, value: interval, to: date) else { break }
             date = next
+            if let until = rule.until, date >= until { break }
             if rule.count == nil, date > range.upperBound { break }
         }
         return dates.sorted()

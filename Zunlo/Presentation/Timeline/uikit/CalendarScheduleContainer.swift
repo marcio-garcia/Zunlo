@@ -9,7 +9,8 @@ import SwiftUI
 
 struct CalendarScheduleContainer: UIViewControllerRepresentable {
     @ObservedObject var viewModel: CalendarScheduleViewModel
-
+    @EnvironmentObject var nav: AppNav
+    
     var onTapClose: (() -> Void)?
     
     init(viewModel: CalendarScheduleViewModel, onTapClose: (() -> Void)?) {
@@ -18,8 +19,11 @@ struct CalendarScheduleContainer: UIViewControllerRepresentable {
     }
     
     func makeUIViewController(context: Context) -> CalendarScheduleViewController {
-        let vc = CalendarScheduleViewController(viewModel: viewModel)
-        vc.onTapClose = onTapClose
+        let vc = CalendarScheduleViewController(
+            viewModel: viewModel,
+            nav: nav,
+            onTapClose: onTapClose
+        )
         return vc
     }
 

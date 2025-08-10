@@ -24,15 +24,19 @@ struct TaskViewFactory: TaskViews {
     }
 
     func buildTaskInboxView() -> AnyView {
-        AnyView(TaskInboxView(repository: AppState.shared.userTaskRepository!))
+        AnyView(
+            TaskInboxView(repository: AppState.shared.userTaskRepository!)
+                .environmentObject(nav)
+        )
     }
 
     func buildAddTaskView() -> AnyView {
         AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .add, editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
-                nav: nav
-        ))
+                viewModel: AddEditTaskViewModel(mode: .add, editor: TaskEditor(repo: AppState.shared.userTaskRepository!))
+            )
+            .environmentObject(nav)
+        )
     }
 
     func buildEditTaskView(id: UUID) -> AnyView {
@@ -41,9 +45,10 @@ struct TaskViewFactory: TaskViews {
         }
         return AnyView(
             AddEditTaskView(
-                viewModel: AddEditTaskViewModel(mode: .edit(task), editor: TaskEditor(repo: AppState.shared.userTaskRepository!)),
-                nav: nav
-        ))
+                viewModel: AddEditTaskViewModel(mode: .edit(task), editor: TaskEditor(repo: AppState.shared.userTaskRepository!))
+            )
+            .environmentObject(nav)
+        )
     }
 
     func buildTaskDetailView(id: UUID) -> AnyView {

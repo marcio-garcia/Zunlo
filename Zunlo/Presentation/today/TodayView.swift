@@ -43,7 +43,7 @@ struct TodayView: View {
         self.appState = appState
         _viewModel = StateObject(wrappedValue: TodayViewModel(
             taskRepository: appState.userTaskRepository!,
-            eventRepository: appState.eventRepository!,
+            eventFetcher: EventFetcher(repo: appState.eventRepository!),
             locationService: appState.locationService!,
             adManager: appState.adManager!)
         )
@@ -58,24 +58,9 @@ struct TodayView: View {
         let eventFactory = EventViewFactory(
             viewID: viewID,
             nav: nav,
-            locationService: appState.locationService!,
-            repository: appState.eventRepository!,
-            onEditDialogSelection: { option in
-                switch option {
-                case .single:
-                    guard let editMode = viewModel.eventEditHandler.selectEditOnlyThisOccurrence() else { return }
-                    nav.showSheet(.editEvent(editMode), for: viewID)
-                case .all:
-                    guard let editMode = viewModel.eventEditHandler.selectEditAllOccurrences() else { return }
-                    nav.showSheet(.editEvent(editMode), for: viewID)
-                case .future:
-                    guard let editMode = viewModel.eventEditHandler.selectEditFutureOccurrences() else { return }
-                    nav.showSheet(.editEvent(editMode), for: viewID)
-                case .cancel:
-                    nav.dismissDialog(for: viewID)
-                }
-            }
-        )
+            onAddEditEventDismiss: {
+                Task { await viewModel.fetchData() }
+            })
         let settingsFactory = SettingsViewFactory(authManager: appState.authManager!)
         let factory = NavigationViewFactory(
             task: taskFactory,
@@ -139,7 +124,23 @@ struct TodayView: View {
                                     navigationManager: nav,
                                     factory: factory,
                                     onOptionSelected: { option in
-                                        
+                                        guard let editOption = EditEventDialogOption(rawValue: option) else {
+                                            nav.dismissDialog(for: viewID)
+                                            return
+                                        }
+                                        switch editOption {
+                                        case .single:
+                                            guard let editMode = viewModel.eventEditHandler.selectEditOnlyThisOccurrence() else { return }
+                                            nav.showSheet(.editEvent(editMode), for: viewID)
+                                        case .all:
+                                            guard let editMode = viewModel.eventEditHandler.selectEditAllOccurrences() else { return }
+                                            nav.showSheet(.editEvent(editMode), for: viewID)
+                                        case .future:
+                                            guard let editMode = viewModel.eventEditHandler.selectEditFutureOccurrences() else { return }
+                                            nav.showSheet(.editEvent(editMode), for: viewID)
+                                        case .cancel:
+                                            nav.dismissDialog(for: viewID)
+                                        }
                                     })
                             }
                         }

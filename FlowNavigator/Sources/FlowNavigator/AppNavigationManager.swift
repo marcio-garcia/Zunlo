@@ -65,14 +65,14 @@ final public class AppNavigationManager<
 
     public func pop(to target: StackRoute) {
         guard let rootID = currentRootViewID else { return }
-        var path = stackPaths[rootID, default: []]
+        let path = stackPaths[rootID, default: []]
         guard let index = path.firstIndex(of: target) else { return }
         stackPaths[rootID] = Array(path.prefix(through: index))
     }
 
     public func popUntil(_ condition: (StackRoute) -> Bool) {
         guard let rootID = currentRootViewID else { return }
-        var path = stackPaths[rootID, default: []]
+        let path = stackPaths[rootID, default: []]
         guard let index = path.lastIndex(where: condition) else { return }
         stackPaths[rootID] = Array(path.prefix(through: index))
     }

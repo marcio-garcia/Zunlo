@@ -12,11 +12,10 @@ struct AddEditTaskView: View {
     @State var viewID = UUID()
     
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var nav: AppNav
     @State private var error: String?
     @State private var tagEditorHeight: CGFloat = .zero
     @StateObject var viewModel: AddEditTaskViewModel
-    
-    var nav: AppNav
     
     var body: some View {
         

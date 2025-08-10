@@ -8,17 +8,22 @@
 import SwiftUI
 
 struct AddEditEventView: View {
+    @State var viewID = UUID()
+    
     @Environment(\.dismiss) private var dismiss
     @StateObject var viewModel: AddEditEventViewModel
+    @EnvironmentObject var nav: AppNav
     @State private var showUntil: Bool = false
     @State private var error: String?
-    @State private var updatedEventStartDate: Date?
     
-    var onDismiss: ((Date) -> Void)?
-
+    var onDismiss: ((Date?) -> Void)?
+    
     private let recurrenceOptions: [String] = ["daily", "weekly", "monthly"]
-
+    
     var body: some View {
+        let eventFactory = EventViewFactory(viewID: viewID, nav: nav)
+        let factory = NavigationViewFactory(event: eventFactory)
+        
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -44,22 +49,43 @@ struct AddEditEventView: View {
             .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog(
                 "Delete Event",
-                isPresented: $viewModel.showDeleteConfirmation,
+                isPresented: nav.isDialogPresented(for: viewID), // $viewModel.showDeleteConfirmation,
                 titleVisibility: .visible
             ) {
-                Button("Delete this event") {
-                    viewModel.showDeleteConfirmation = false
-                    viewModel.delete { result in
-                        switch result {
-                        case .success:
-                            dismiss()
-                        case .failure(let err):
-                            error = err.localizedDescription
+                if let route = nav.dialogRoute(for: viewID) {
+                    ViewRouter.dialogView(
+                        for: route,
+                        navigationManager: nav,
+                        factory: factory) { option in
+                            switch option {
+                            case "delete":
+                                Task {
+                                    await viewModel.delete()
+                                    await MainActor.run {
+                                        nav.dismissDialog(for: viewID)
+                                        dismiss()
+                                        onDismiss?(nil)
+                                    }
+                                }
+                            case "cancel":
+                                nav.dismissDialog(for: viewID)
+                            default: break
+                            }
                         }
-                    }
-                }
-                Button("Cancel", role: .cancel) {
-                    viewModel.showDeleteConfirmation = false
+                    //                Button("Delete this event") {
+                    //                    viewModel.showDeleteConfirmation = false
+                    //                    viewModel.delete { result in
+                    //                        switch result {
+                    //                        case .success:
+                    //                            dismiss()
+                    //                        case .failure(let err):
+                    //                            error = err.localizedDescription
+                    //                        }
+                    //                    }
+                    //                }
+                    //                Button("Cancel", role: .cancel) {
+                    //                    viewModel.showDeleteConfirmation = false
+                    //                }
                 }
             }
             .toolbar {
@@ -69,22 +95,17 @@ struct AddEditEventView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        updatedEventStartDate = nil
                         viewModel.save { result in
                             switch result {
                             case .success(let startDate):
-                                updatedEventStartDate = startDate
                                 dismiss()
+                                onDismiss?(startDate)
                             case .failure(let err):
                                 error = err.localizedDescription
                             }
                         }
                     }
                     .disabled(viewModel.title.isEmpty || viewModel.isProcessing)
-                    .onDisappear {
-                        guard let updatedEventStartDate else { return }
-                        onDismiss?(updatedEventStartDate)
-                    }
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -225,7 +246,8 @@ struct AddEditEventView: View {
             HStack {
                 Spacer()
                 Button {
-                    viewModel.showDeleteConfirmation = true
+                    nav.showDialog(.deleteEvent(id: UUID()), for: viewID)
+//                    viewModel.showDeleteConfirmation = true
                 } label: {
                     Text("Delete")
                 }

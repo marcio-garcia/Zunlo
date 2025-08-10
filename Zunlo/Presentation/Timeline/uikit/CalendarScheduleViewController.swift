@@ -23,33 +23,44 @@ class CalendarScheduleViewController: UIViewController {
     private let topBarView = CalendarTopBarView()
     private var collectionView: UICollectionView!
     
-    private let viewModel: CalendarScheduleViewModel
     private var dataSource: UICollectionViewDiffableDataSource<Int, CalendarItem>!
     private var didScrollToToday = false
     
+    var viewModel: CalendarScheduleViewModel
+    var nav: AppNav
+    
     var onTapClose: (() -> Void)?
     
-    init(viewModel: CalendarScheduleViewModel) {
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-        viewModel.$occurrencesByMonthAndDay
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.applySnapshot() }
-            .store(in: &cancellables)
-    }
+    private var cancellables = Set<AnyCancellable>()
 
+    init(viewModel: CalendarScheduleViewModel, nav: AppNav, onTapClose: (() -> Void)?) {
+        self.viewModel = viewModel
+        self.nav = nav
+        self.onTapClose = onTapClose
+        super.init(nibName: nil, bundle: nil)
+    }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-    private var cancellables = Set<AnyCancellable>()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupViews()
         setupConstraints()
         setupTheme()
+        
+        viewModel.$occurrencesByMonthAndDay
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.applySnapshot()
+            }
+            .store(in: &cancellables)
+        
+        Task {
+            await viewModel.fetchEvents()
+        }
     }
     
     private func setupViews() {
@@ -70,10 +81,6 @@ class CalendarScheduleViewController: UIViewController {
         setupCollectionView()
         
         view.addSubview(topBarView)
-        
-        Task {
-            await viewModel.fetchEvents()
-        }
     }
     
     private func setupConstraints() {
@@ -210,22 +217,37 @@ extension CalendarScheduleViewController {
         for monthDate in keys {
             snapshot.appendItems([.monthHeader(monthDate)])
             let days = viewModel.occurrencesByMonthAndDay[monthDate]?.keys.sorted() ?? []
-            snapshot.appendItems(days.map { .day($0) })
+            for day in days {
+                if day.isSameDay(as: Date()) {
+                    if let occs = viewModel.occurrencesByMonthAndDay[monthDate]?[day] {
+                        for event in occs {
+                            print("***** title: \(event.title)")
+                        }
+                    }
+                }
+            }
+            snapshot.appendItems(days.map { CalendarItem.day($0) })
         }
-
-        dataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
-            guard let self else { return }
-            if !keys.isEmpty {
-                if self.didScrollToToday {
-                    self.collectionView.delegate = nil
-                    self.scrollTo(date: viewModel.itemDateToScrollTo)
-                    self.collectionView.delegate = self
-                    self.didScrollToToday = true
-                } else {
-                    self.collectionView.delegate = nil
-                    self.scrollTo(date: Date())
-                    self.collectionView.delegate = self
-                    self.didScrollToToday = true
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.dataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
+                guard let self else { return }
+                
+                self.collectionView.reloadData()
+                
+                if !keys.isEmpty {
+                    if self.didScrollToToday {
+                        self.collectionView.delegate = nil
+                        self.scrollTo(date: viewModel.itemDateToScrollTo)
+                        self.collectionView.delegate = self
+                        self.didScrollToToday = true
+                    } else {
+                        self.collectionView.delegate = nil
+                        self.scrollTo(date: Date())
+                        self.collectionView.delegate = self
+                        self.didScrollToToday = true
+                    }
                 }
             }
         }
@@ -296,18 +318,15 @@ extension CalendarScheduleViewController: UICollectionViewDelegate {
 
 extension CalendarScheduleViewController {
     private func showAddEventView(mode: AddEditEventViewMode) {
-        let vm = AddEditEventViewModel(mode: mode, editor: EventEditor(repo: viewModel.repository))
-        let addView = AddEditEventView(viewModel: vm) { [weak self] updatedEventStartDate in
-            guard let self else { return }
-            self.collectionView.reloadData()
-            // TODO: Make the callback return the updatd event then update the model and apply to the dataSource
-//            let occ = self.findOccurrence(startDate: updatedEventStartDate)
-//           currentEvents[index] = updatedEvent
-//           var snapshot = NSDiffableDataSourceSnapshot<Section, Event>()
-//           snapshot.appendSections([.main]) // Adjust if using multiple sections
-//           snapshot.appendItems(currentEvents, toSection: .main)
-//           dataSource.apply(snapshot, animatingDifferences: true)
-        }
+        let vm = AddEditEventViewModel(mode: mode, editor: EventEditor(repo: AppState.shared.eventRepository!))
+        let addView = AddEditEventView(
+            viewModel: vm,
+            onDismiss: { [weak self] startDate in
+                guard let self else { return }
+                Task { await self.viewModel.fetchEvents() }
+            })
+            .environmentObject(nav)
+    
         let host = UIHostingController(rootView: addView)
         host.modalPresentationStyle = .formSheet
         present(host, animated: true)
@@ -315,40 +334,37 @@ extension CalendarScheduleViewController {
     
     private func showActionSheet() {
         let sheet = UIAlertController(
-            title: "Edit Recurring Event",
+            title: String(localized: "Edit Recurring Event"),
             message: nil,
             preferredStyle: .actionSheet
         )
         
         sheet.addAction(UIAlertAction(
-            title: "Edit only this occurrence",
+            title: String(localized: "Edit only this occurrence"),
             style: .default,
             handler: { action in
-                self.viewModel.eventEditHandler.selectEditOnlyThisOccurrence()
-                guard let editMode = self.viewModel.eventEditHandler.editMode else { return }
+                guard let editMode = self.viewModel.eventEditHandler.selectEditOnlyThisOccurrence() else { return }
                 self.showAddEventView(mode: editMode)
             }))
         
         sheet.addAction(UIAlertAction(
-            title: "Edit this and future occurrences",
+            title: String(localized: "Edit this and future occurrences"),
             style: .default,
             handler: { action in
-                self.viewModel.eventEditHandler.selectEditFutureOccurrences()
-                guard let editMode = self.viewModel.eventEditHandler.editMode else { return }
+                guard let editMode = self.viewModel.eventEditHandler.selectEditFutureOccurrences() else { return }
                 self.showAddEventView(mode: editMode)
             }))
         
         sheet.addAction(UIAlertAction(
-            title: "Edit all occurrences",
+            title: String(localized: "Edit all occurrences"),
             style: .default,
             handler: { action in
-                self.viewModel.eventEditHandler.selectEditAllOccurrences()
-                guard let editMode = self.viewModel.eventEditHandler.editMode else { return }
+                guard let editMode = self.viewModel.eventEditHandler.selectEditAllOccurrences() else { return }
                 self.showAddEventView(mode: editMode)
             }))
         
         sheet.addAction(UIAlertAction(
-            title: "Cancel",
+            title: String(localized: "Cancel"),
             style: .cancel,
             handler: { action in
                 self.viewModel.eventEditHandler.showEditChoiceDialog = false

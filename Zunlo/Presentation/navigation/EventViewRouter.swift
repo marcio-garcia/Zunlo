@@ -28,9 +28,9 @@ enum EventViewRouter {
     ) -> some View {
         switch route {
         case .deleteEvent(let id):
-            return factory.buildDeleteEventConfirmationView(id: id)
+            return factory.buildDeleteEventConfirmationView(onOptionSelected: onOptionSelected)
         case .editRecurringEvent:
-            return factory.buildEditRecurringEventView()
+            return factory.buildEditRecurringEventView(onOptionSelected: onOptionSelected)
         default:
             return AnyView(FallbackView(message: "Unknown event dialog", nav: nav, viewID: UUID()))
         }

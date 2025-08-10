@@ -9,13 +9,6 @@ import Foundation
 import MiniSignalEye
 
 final class EventRepository {
-    // Raw domain entities (may be useful for some advanced features)
-    private(set) var events = Observable<[Event]>([])
-    private(set) var recurrenceRules = Observable<[RecurrenceRule]>([])
-    private(set) var eventOverrides = Observable<[EventOverride]>([])
-    private(set) var occurrences = Observable<[EventOccurrence]>([])
-    
-    // Stores
     private let eventLocalStore: EventLocalStore
     private let eventRemoteStore: EventRemoteStore
     private let recurrenceRuleLocalStore: RecurrenceRuleLocalStore
@@ -45,8 +38,7 @@ final class EventRepository {
 
     // MARK: - Fetch & Compose All (from local, for UI)
 
-    func fetchAll(in range: ClosedRange<Date>? = nil) async throws {
-        occurrences.value = try await fetchRemote()
+//    func fetchAll(in range: ClosedRange<Date>? = nil) async throws -> [EventOccurrence] {
 //        do {
 //            let eventsLocal = try await eventLocalStore.fetchAll()
 //            if eventsLocal.isEmpty {
@@ -60,24 +52,23 @@ final class EventRepository {
 //            self.eventOverrides.value = []
 //            print("Failed to fetch data: \(error)")
 //        }
-    }
+//    }
     
-    private func fetchLocal(in range: ClosedRange<Date>? = nil) async throws {
-        do {
-            self.events.value = try await eventLocalStore.fetchAll()
-            self.recurrenceRules.value = try await recurrenceRuleLocalStore.fetchAll()
-            self.eventOverrides.value = try await eventOverrideLocalStore.fetchAll()
-        } catch {
-            self.events.value = []
-            self.recurrenceRules.value = []
-            self.eventOverrides.value = []
-            print("Failed to fetch all local data: \(error)")
-        }
-    }
-    
-    private func fetchRemote() async throws -> [EventOccurrence] {
+    func fetchOccurrences() async throws -> [EventOccurrence] {
         let occurrences = try await eventRemoteStore.fetchOccurrences()
         return occurrences.map { EventOccurrence(remote: $0) }
+    }
+    
+    private func fetchLocalEvents() async throws -> [Event] {
+        try await eventLocalStore.fetchAll()
+    }
+    
+    private func fetchLocalRules() async throws -> [RecurrenceRule] {
+        try await recurrenceRuleLocalStore.fetchAll()
+    }
+    
+    private func fetchLocalOverrides() async throws -> [EventOverride] {
+        try await eventOverrideLocalStore.fetchAll()
     }
 
     // MARK: - CRUD for Events
@@ -88,18 +79,17 @@ final class EventRepository {
             try await eventLocalStore.save(remote)
             reminderScheduler.scheduleReminders(for: Event(remote: remote))
         }
-        occurrences.value = try await fetchRemote()
         return savedRemote.compactMap { Event(remote: $0) }
     }
 
-    func update(_ event: Event) async throws {
+    func update(_ event: Event) async throws -> [Event] {
         let updatedRemote = try await eventRemoteStore.update(EventRemote(domain: event))
         for remote in updatedRemote {
             try await eventLocalStore.update(remote)
             reminderScheduler.cancelReminders(for: Event(remote: remote))
             reminderScheduler.scheduleReminders(for: Event(remote: remote))
         }
-        occurrences.value = try await fetchRemote()
+        return updatedRemote.compactMap { Event(remote: $0) }
     }
     
     func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws {
@@ -117,7 +107,6 @@ final class EventRepository {
         if let triggers = reminderTriggers {
             reminderScheduler.cancelReminders(itemId: id, reminderTriggers: triggers)
         }
-        occurrences.value = try await fetchRemote()
     }
 
     // MARK: - CRUD for RecurrenceRule
@@ -127,7 +116,6 @@ final class EventRepository {
         for rule in inserted {
             try await recurrenceRuleLocalStore.save(rule)
         }
-        occurrences.value = try await fetchRemote()
     }
 
     func updateRecurrenceRule(_ rule: RecurrenceRule) async throws {
@@ -135,7 +123,6 @@ final class EventRepository {
         for rule in updated {
             try await recurrenceRuleLocalStore.update(rule)
         }
-        occurrences.value = try await fetchRemote()
     }
 
     func deleteRecurrenceRule(_ rule: RecurrenceRule) async throws {
@@ -145,7 +132,6 @@ final class EventRepository {
                 try await recurrenceRuleLocalStore.delete(id: id)
             }
         }
-        occurrences.value = try await fetchRemote()
     }
 
     // MARK: - CRUD for EventOverride
@@ -155,7 +141,6 @@ final class EventRepository {
         for ov in inserted {
             try await eventOverrideLocalStore.save(ov)
         }
-        occurrences.value = try await fetchRemote()
     }
 
     func updateOverride(_ override: EventOverride) async throws {
@@ -163,7 +148,6 @@ final class EventRepository {
         for ov in updated {
             try await eventOverrideLocalStore.update(ov)
         }
-        occurrences.value = try await fetchRemote()
     }
 
     func deleteOverride(_ override: EventOverride) async throws {
@@ -173,7 +157,6 @@ final class EventRepository {
                 try await eventOverrideLocalStore.delete(id: id)
             }
         }
-        occurrences.value = try await fetchRemote()
     }
 
     // MARK: - Batch Delete & Sync
@@ -182,7 +165,6 @@ final class EventRepository {
         _ = try await eventRemoteStore.deleteAll(for: userId)
         try await eventLocalStore.deleteAll(for: userId)
         // Optionally delete recurrence rules and overrides for this user as well
-        occurrences.value = try await fetchRemote()
     }
 
     /// Fetch everything from remote and overwrite local cache
@@ -198,8 +180,6 @@ final class EventRepository {
         for e in remoteEvents { try await eventLocalStore.save(e) }
         for r in remoteRules { try await recurrenceRuleLocalStore.save(r) }
         for o in remoteOverrides { try await eventOverrideLocalStore.save(o) }
-
-        try await fetchAll()
     }
 }
 

@@ -37,7 +37,7 @@ class CalendarScheduleViewModel: ObservableObject {
     
     private var currentTopVisibleDay: Date = Date()
     
-    var repository: EventRepository
+    var eventFetcher: EventFetcher
     var visibleRange: ClosedRange<Date> = Date()...Date()
     var locationService: LocationService
     
@@ -46,27 +46,23 @@ class CalendarScheduleViewModel: ObservableObject {
     var overridesObservID: UUID?
     var rulesObservID: UUID?
     
-    init(repository: EventRepository,
+    init(eventFetcher: EventFetcher,
          locationService: LocationService) {
         
-        self.repository = repository
+        self.eventFetcher = eventFetcher
         self.locationService = locationService
         self.visibleRange = defaultDateRange()
-        
-        // Bind to repository data observers
-        occurObservID = repository.occurrences.observe(owner: self, fireNow: false, onChange: { [weak self] occurrences in
-            guard let self else { return }
-            self.allOccurrences = occurrences
-            self.eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
-            self.handleOccurrences(occurrences, in: self.visibleRange)
-        })
     }
     
     @MainActor
     func fetchEvents() async {
         do {
             locationService.startUpdatingLocation()
-            try await repository.fetchAll(in: visibleRange)
+            // TODO: change to fetch occurrences filtered by date range
+            let occurrences = try await eventFetcher.fetchOccurrences()
+            allOccurrences = occurrences
+            eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
+            handleOccurrences(occurrences, in: self.visibleRange)
         } catch {
             state = .error(error.localizedDescription)
             print(error)
@@ -79,6 +75,7 @@ class CalendarScheduleViewModel: ObservableObject {
         do {
             eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
             occurrencesByMonthAndDay = groupOccurrencesByMonthAndDay()
+            print("****** new occurrencesByMonthAndDay")
             self.state = occurrences.isEmpty ? .empty : .loaded
         } catch {
             state = .error(error.localizedDescription)

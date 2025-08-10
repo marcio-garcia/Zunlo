@@ -31,7 +31,7 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var isCancelled: Bool = false
     @Published var isProcessing: Bool = false
     @Published var reminderTriggers: [ReminderTrigger]?
-    @Published var showDeleteConfirmation = false
+//    @Published var showDeleteConfirmation = false
     
     /// UI uses 0=Sunday...6=Saturday.
     /// calendarByWeekday maps to Calendar's 1=Sunday...7=Saturday.
@@ -40,7 +40,10 @@ final class AddEditEventViewModel: ObservableObject {
     let mode: AddEditEventViewMode
     private let editor: EventEditorService
     
-    init(mode: AddEditEventViewMode, editor: EventEditorService) {
+    init(
+        mode: AddEditEventViewMode,
+        editor: EventEditorService
+    ) {
         self.mode = mode
         self.editor = editor
         loadFields()
@@ -238,17 +241,16 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
     
-    func delete(completion: @escaping (Result<Void, Error>) -> Void) {
+    @MainActor
+    func delete() async {
         isProcessing = true
         if case .editAll(let event, _) = mode {
             Task {
                 do {
                     try await editor.delete(event: event)
                     isProcessing = true
-                    completion(.success(()))
                 } catch {
                     isProcessing = true
-                    completion(.failure(error))
                 }
             }
         }
@@ -269,7 +271,8 @@ final class AddEditEventViewModel: ObservableObject {
             byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
             byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
             until: until,
-            count: Int(count)
+            count: Int(count),
+            isCancelled: isCancelled
         )
     }
     

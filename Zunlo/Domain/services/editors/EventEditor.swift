@@ -22,14 +22,16 @@ final class EventEditor: EventEditorService {
         }
         let now = clock()
         let newEvent = Event(
-            id: nil, userId: nil,
+            id: nil,
+            userId: nil,
             title: input.title,
             description: input.notes?.nilIfEmpty,
             startDate: input.startDate,
             endDate: input.endDate,
             isRecurring: input.isRecurring,
             location: input.location?.nilIfEmpty,
-            createdAt: now, updatedAt: now,
+            createdAt: now,
+            updatedAt: now,
             color: input.color,
             reminderTriggers: input.reminderTriggers
         )
@@ -40,13 +42,13 @@ final class EventEditor: EventEditorService {
 
         if input.isRecurring {
             let rule = RecurrenceRule(
-                id: UUID(),
+                id: UUID(), // overriden by database
                 eventId: eventID,
                 freq: input.recurrenceType!.rawValue,
                 interval: input.recurrenceInterval ?? 1,
                 byWeekday: input.byWeekday,
                 byMonthday: input.byMonthday,
-                byMonth: nil,
+                byMonth: nil, // TODO: check if it is still in use
                 until: input.until,
                 count: input.count,
                 createdAt: now,
@@ -60,13 +62,16 @@ final class EventEditor: EventEditorService {
     func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws {
         let now = clock()
         let updated = Event(
-            id: event.id, userId: event.userId,
+            id: event.id,
+            userId: event.userId,
             title: input.title,
             description: input.notes?.nilIfEmpty,
-            startDate: input.startDate, endDate: input.endDate,
+            startDate: input.startDate,
+            endDate: input.endDate,
             isRecurring: input.isRecurring,
             location: input.location?.nilIfEmpty,
-            createdAt: event.createdAt, updatedAt: now,
+            createdAt: event.createdAt,
+            updatedAt: now,
             color: input.color,
             reminderTriggers: input.reminderTriggers
         )
@@ -101,9 +106,10 @@ final class EventEditor: EventEditorService {
             overriddenStartDate: input.startDate,
             overriddenEndDate: input.endDate,
             overriddenLocation: input.location?.nilIfEmpty,
-            isCancelled: false, // or pass via input if needed
+            isCancelled: input.isCancelled,
             notes: input.notes?.nilIfEmpty,
-            createdAt: now, updatedAt: now,
+            createdAt: now,
+            updatedAt: now,
             color: input.color
         )
         try await repo.saveOverride(override)
@@ -119,9 +125,10 @@ final class EventEditor: EventEditorService {
             overriddenStartDate: input.startDate,
             overriddenEndDate: input.endDate,
             overriddenLocation: input.location?.nilIfEmpty,
-            isCancelled: override.isCancelled,
+            isCancelled: input.isCancelled,
             notes: input.notes?.nilIfEmpty,
-            createdAt: override.createdAt, updatedAt: now,
+            createdAt: override.createdAt,
+            updatedAt: now,
             color: input.color
         )
         try await repo.updateOverride(updated)

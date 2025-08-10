@@ -8,7 +8,7 @@
 import SwiftUI
 import FlowNavigator
 
-enum EditEventDialogOption {
+enum EditEventDialogOption: String {
     case single
     case all
     case future
@@ -18,16 +18,20 @@ enum EditEventDialogOption {
 struct EventViewFactory: EventViews {
     let viewID: UUID
     let nav: AppNav
-    let locationService: LocationService
-    let repository: EventRepository
-    var onEditDialogSelection: ((EditEventDialogOption) -> Void)?
-
+    let onAddEditEventDismiss: (() -> Void)?
+    
+    internal init(viewID: UUID, nav: AppNav, onAddEditEventDismiss: (() -> Void)? = nil) {
+        self.viewID = viewID
+        self.nav = nav
+        self.onAddEditEventDismiss = onAddEditEventDismiss
+    }
+    
     func buildEventCalendarView() -> AnyView {
         AnyView(
             CalendarScheduleContainer(
                 viewModel: CalendarScheduleViewModel(
-                    repository: repository,
-                    locationService: locationService
+                    eventFetcher: EventFetcher(repo: AppState.shared.eventRepository!),
+                    locationService: AppState.shared.locationService!
                 ), onTapClose: {
                     Task { await MainActor.run { nav.pop() } }
                 }
@@ -37,22 +41,31 @@ struct EventViewFactory: EventViews {
                 Task { await MainActor.run { nav.pop() } }
             }
             .ignoresSafeArea()
+            .environmentObject(nav)
         )
     }
 
     func buildAddEventView() -> AnyView {
         AnyView(
             AddEditEventView(
-                viewModel: AddEditEventViewModel(mode: .add, editor: EventEditor(repo: repository))
+                viewModel: AddEditEventViewModel(mode: .add, editor: EventEditor(repo: AppState.shared.eventRepository!)),
+                onDismiss: { date in
+                    onAddEditEventDismiss?()
+                }
             )
+            .environmentObject(nav)
         )
     }
 
     func buildEditEventView(editMode: AddEditEventViewMode) -> AnyView {
         AnyView(
             AddEditEventView(
-                viewModel: AddEditEventViewModel(mode: editMode, editor: EventEditor(repo: repository))
+                viewModel: AddEditEventViewModel(mode: editMode, editor: EventEditor(repo: AppState.shared.eventRepository!)),
+                onDismiss: { date in
+                    onAddEditEventDismiss?()
+                }
             )
+            .environmentObject(nav)
         )
     }
 
@@ -60,37 +73,42 @@ struct EventViewFactory: EventViews {
         AnyView(Text("Event detail view for \(id)")) // Replace with actual view
     }
 
-    func buildDeleteEventConfirmationView(id: UUID) -> AnyView {
+    func buildDeleteEventConfirmationView(onOptionSelected: @escaping (String) -> Void) -> AnyView {
         AnyView(
             Group {
                 Button("Delete this event", role: .destructive) {
-                    nav.dismissDialog(for: viewID)
-                    nav.dismissSheet(for: viewID)
+                    onOptionSelected("delete")
+//                    nav.dismissDialog(for: viewID)
+//                    nav.dismissSheet(for: viewID)
                 }
                 Button("Cancel", role: .cancel) {
-                    nav.dismissDialog(for: viewID)
+                    onOptionSelected("cancel")
+//                    nav.dismissDialog(for: viewID)
                 }
             }
         )
     }
 
-    func buildEditRecurringEventView() -> AnyView {
+    func buildEditRecurringEventView(onOptionSelected: @escaping (String) -> Void) -> AnyView {
         AnyView(
             Group {
                 Button("Edit only this occurrence") {
-                    onEditDialogSelection?(.single)
+                    onOptionSelected(EditEventDialogOption.single.rawValue)
+//                    onEditDialogSelection?(.single)
                 }
                 Button("Edit this and future occurrences") {
-                    onEditDialogSelection?(.future)
+                    onOptionSelected(EditEventDialogOption.future.rawValue)
+//                    onEditDialogSelection?(.future)
                 }
                 Button("Edit all occurrences") {
-                    onEditDialogSelection?(.all)
+                    onOptionSelected(EditEventDialogOption.all.rawValue)
+//                    onEditDialogSelection?(.all)
                 }
                 Button("Cancel", role: .cancel) {
-                    onEditDialogSelection?(.cancel)
+                    onOptionSelected(EditEventDialogOption.cancel.rawValue)
+//                    onEditDialogSelection?(.cancel)
                 }
             }
         )
     }
 }
-

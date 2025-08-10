@@ -17,7 +17,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var eventEditHandler = EventEditHandler()
 
     private let taskRepository: UserTaskRepository
-    private let eventRepository: EventRepository
+    private let eventFetcher: EventFetcher
     private let locationService: LocationService
     private let adManager: AdMobManager
     
@@ -29,12 +29,12 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
 
     init(
         taskRepository: UserTaskRepository,
-        eventRepository: EventRepository,
+        eventFetcher: EventFetcher,
         locationService: LocationService,
         adManager: AdMobManager
     ) {
         self.taskRepository = taskRepository
-        self.eventRepository = eventRepository
+        self.eventFetcher = eventFetcher
         self.locationService = locationService
         self.adManager = adManager
         
@@ -59,18 +59,15 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
                 self?.state = filtered.isEmpty ? .empty : .loaded
             }
         }
-
-        eventRepository.occurrences.observe(owner: self, fireNow: false) { [weak self] occurrences in
-            let today = Date().startOfDay
-            guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else { return }
-            self?.handleOccurrences(occurrences, in: today...tomorrow)
-        }
     }
     
     func fetchData() async {
         do {
             try await taskRepository.fetchAll()
-            try await eventRepository.fetchAll()
+            let occurrences = try await eventFetcher.fetchOccurrences()
+            let today = Date().startOfDay
+            guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else { return }
+            handleOccurrences(occurrences, in: today...tomorrow)
         } catch {
             await errorHandler.handle(error)
         }
