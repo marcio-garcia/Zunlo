@@ -81,22 +81,28 @@ struct TodayView: View {
                         
                         ScrollView(.vertical) {
                             VStack(alignment: .leading, spacing: 24) {
-                                if let weather = viewModel.weather {
-                                    AIWelcomeCard(
-                                        vm: AIWelcomeCardViewModel(
-                                            time: SystemTimeProvider(),
-                                            tasks: appState.userTaskRepository!,
-                                            events: appState.eventRepository!,
-                                            weather: WeatherService.shared
-                                        )
+                                AIWelcomeCard(
+                                    vm: AIWelcomeCardViewModel(
+                                        time: SystemTimeProvider(),
+                                        tasks: appState.userTaskRepository!,
+                                        events: appState.eventRepository!,
+                                        weather: WeatherService.shared
                                     )
-                                    TodayWeatherView(weather: weather, greeting: viewModel.greeting)
-                                }
+                                )
+                                TodayWeatherView(weather: viewModel.weather, greeting: viewModel.greeting)
+                                    .redacted(reason: viewModel.weather == nil ? .placeholder : [])
+                                    .shimmer(active: viewModel.weather == nil, speed: 1.0)
+                                
                                 if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
                                     showBannerSection
                                 }
                                 eventsTodaySection
+                                    .redacted(reason: viewModel.todayEvents.isEmpty ? .placeholder : [])
+                                    .shimmer(active: viewModel.todayEvents.isEmpty)
+                                
                                 tasksTodaySection
+                                    .redacted(reason: viewModel.todayTasks.isEmpty ? .placeholder : [])
+                                    .shimmer(active: viewModel.todayTasks.isEmpty)
                             }
                             .padding(.top, 88)
                             .padding()

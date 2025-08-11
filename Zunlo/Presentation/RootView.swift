@@ -25,7 +25,11 @@ struct RootView: View {
             } else {
                 switch authManager.state {
                 case .loading:
-                    ProgressView("Loading...")
+                    VStack {
+                        ProgressView("Loading...")
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .defaultBackground()
                 case .unauthenticated:
                     AuthView()
                 case .authenticated(_):
