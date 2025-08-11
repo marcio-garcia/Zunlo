@@ -22,28 +22,19 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var showAddSheet = false
     @Published var editChoiceContext: EditChoiceContext?
     @Published var eventEditHandler = EventEditHandler()
+    @Published var eventOccurrences: [EventOccurrence] = []
+    
+    var allOccurrences: [EventOccurrence] = []
     
     private let weatherCache = WeatherCache()
 
-    var scrollViewProxy: ScrollViewProxy?
     let edgeExecutor = DebouncedExecutor(delay: 0.2)
     private var isCheckingEdge = false
     var itemDateToScrollTo = Date()
     
-    // For grouping and access
-    var allOccurrences: [EventOccurrence] = []
-    @Published var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
-    
-    private var currentTopVisibleDay: Date = Date()
-    
     var eventFetcher: EventFetcher
     var visibleRange: ClosedRange<Date> = Date()...Date()
     var locationService: LocationService
-    
-    var occurObservID: UUID?
-    var eventsObservID: UUID?
-    var overridesObservID: UUID?
-    var rulesObservID: UUID?
     
     init(eventFetcher: EventFetcher,
          locationService: LocationService) {
@@ -68,8 +59,6 @@ class CalendarScheduleViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Compose occurrences for the UI
-
     func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
         do {
             eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
@@ -124,10 +113,6 @@ class CalendarScheduleViewModel: ObservableObject {
         eventEditHandler.handleEdit(occurrence: occurrence) { mode, showDialog in
             completion(mode, showDialog)
         }
-    }
-
-    func handleDelete(occurrence: EventOccurrence) {
-        // Implement actual delete logic here
     }
 }
 

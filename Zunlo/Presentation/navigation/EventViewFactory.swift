@@ -78,12 +78,9 @@ struct EventViewFactory: EventViews {
             Group {
                 Button("Delete this event", role: .destructive) {
                     onOptionSelected("delete")
-//                    nav.dismissDialog(for: viewID)
-//                    nav.dismissSheet(for: viewID)
                 }
                 Button("Cancel", role: .cancel) {
                     onOptionSelected("cancel")
-//                    nav.dismissDialog(for: viewID)
                 }
             }
         )
@@ -94,19 +91,15 @@ struct EventViewFactory: EventViews {
             Group {
                 Button("Edit only this occurrence") {
                     onOptionSelected(EditEventDialogOption.single.rawValue)
-//                    onEditDialogSelection?(.single)
                 }
                 Button("Edit this and future occurrences") {
                     onOptionSelected(EditEventDialogOption.future.rawValue)
-//                    onEditDialogSelection?(.future)
                 }
                 Button("Edit all occurrences") {
                     onOptionSelected(EditEventDialogOption.all.rawValue)
-//                    onEditDialogSelection?(.all)
                 }
                 Button("Cancel", role: .cancel) {
                     onOptionSelected(EditEventDialogOption.cancel.rawValue)
-//                    onEditDialogSelection?(.cancel)
                 }
             }
         )

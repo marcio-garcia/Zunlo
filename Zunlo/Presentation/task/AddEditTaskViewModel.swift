@@ -65,7 +65,6 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         guard !isProcessing, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isProcessing = true
 
-        let now = Date()
         var id: UUID? = nil
         if case .edit(let userTask) = mode {
             id = userTask.id

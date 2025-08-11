@@ -126,7 +126,7 @@ struct AddEditTaskView: View {
                             .themedBody()
                     }
                 }
-                .pickerStyle(.menu) // or .segmented, .wheel, etc.
+                .pickerStyle(.menu)
             }
             
             Toggle("Completed", isOn: $viewModel.isCompleted)

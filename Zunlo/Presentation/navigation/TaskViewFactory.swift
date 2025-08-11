@@ -74,17 +74,12 @@ struct TaskViewFactory: TaskViews {
     }
 
     func buildDeleteTaskConfirmationView(onOptionSelected: @escaping (String) -> Void) -> AnyView {
-//        guard let viewModel = addEditTaskViewModel else {
-//            return AnyView(FallbackView(message: "Could not edit task.", nav: nav, viewID: viewID))
-//        }
         return AnyView(
             Group {
-                Button("Delete this task") {
+                Button("Delete this task", role: .destructive) {
                     onOptionSelected("delete")
-//                    viewModel.delete()
                 }
                 Button("Cancel", role: .cancel) {
-//                    nav.dismissDialog(for: viewID)
                     onOptionSelected("cancel")
                 }
             }

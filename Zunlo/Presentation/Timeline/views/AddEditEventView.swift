@@ -49,7 +49,7 @@ struct AddEditEventView: View {
             .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog(
                 "Delete Event",
-                isPresented: nav.isDialogPresented(for: viewID), // $viewModel.showDeleteConfirmation,
+                isPresented: nav.isDialogPresented(for: viewID),
                 titleVisibility: .visible
             ) {
                 if let route = nav.dialogRoute(for: viewID) {
@@ -72,20 +72,6 @@ struct AddEditEventView: View {
                             default: break
                             }
                         }
-                    //                Button("Delete this event") {
-                    //                    viewModel.showDeleteConfirmation = false
-                    //                    viewModel.delete { result in
-                    //                        switch result {
-                    //                        case .success:
-                    //                            dismiss()
-                    //                        case .failure(let err):
-                    //                            error = err.localizedDescription
-                    //                        }
-                    //                    }
-                    //                }
-                    //                Button("Cancel", role: .cancel) {
-                    //                    viewModel.showDeleteConfirmation = false
-                    //                }
                 }
             }
             .toolbar {
@@ -182,7 +168,7 @@ struct AddEditEventView: View {
                                 .themedBody()
                         }
                     }
-                    .pickerStyle(.menu) // or .segmented, .wheel, etc.
+                    .pickerStyle(.menu)
                 }
 
                 Stepper("Interval: \(viewModel.recurrenceInterval)",
@@ -247,7 +233,6 @@ struct AddEditEventView: View {
                 Spacer()
                 Button {
                     nav.showDialog(.deleteEvent(id: UUID()), for: viewID)
-//                    viewModel.showDeleteConfirmation = true
                 } label: {
                     Text("Delete")
                 }
