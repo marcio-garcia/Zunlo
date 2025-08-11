@@ -131,7 +131,7 @@ class CalendarScheduleViewController: UIViewController {
         view.backgroundColor = UIColor(Color.theme.background)
     }
     
-    func scrollTo(date: Date, animated: Bool = false, extraOffset: CGFloat = 56) {
+//    func scrollTo(date: Date, animated: Bool = false, extraOffset: CGFloat = 56) {
 //        let targetDate = date.startOfDay
 //        let item = CalendarItem.day(targetDate)
 //
@@ -154,7 +154,7 @@ class CalendarScheduleViewController: UIViewController {
 //            offset.y = max(-self.collectionView.adjustedContentInset.top, offset.y) // don’t scroll above content
 //            self.collectionView.setContentOffset(offset, animated: false)
 //        }
-    }
+//    }
     
     private func findOccurrence(startDate targetDate: Date) -> EventOccurrence? {
         let calendar = Calendar.current
@@ -256,6 +256,17 @@ extension CalendarScheduleViewController {
             case .event(let event):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "EventCell", for: indexPath) as! EventCell
                 cell.configure(occ: event)
+                cell.onTap = { [weak self] occ in
+                    guard let self, let occ else { return }
+                    self.viewModel.onEventEditTapped(occ, completion: { mode, showDialog in
+                        if showDialog {
+                            self.showActionSheet()
+                        } else {
+                            guard let mode else { return }
+                            self.showAddEventView(mode: mode)
+                        }
+                    })
+                }
                 return cell
             }
         }
@@ -373,6 +384,35 @@ extension CalendarScheduleViewController {
 //        }
 //    }
 
+}
+
+// MARK: - Scroll to Date Implementation
+extension CalendarScheduleViewController {
+    
+    func scrollTo(date: Date, animated: Bool = false, extraOffset: CGFloat = 56) {
+        let targetDate = Calendar.current.startOfDay(for: date)
+        let item = CalendarItem.day(targetDate)
+        
+        let snapshot = dataSource.snapshot()
+        guard let itemIndex = snapshot.itemIdentifiers(inSection: .month).firstIndex(of: item) else {
+            print("Day cell for \(date) not found in snapshot")
+            return
+        }
+        
+        let indexPath = IndexPath(item: itemIndex, section: 0)
+        
+        collectionView.scrollToItem(at: indexPath, at: .top, animated: animated)
+        
+        // Adjust offset after animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + (animated ? 0.35 : 0)) { [weak self] in
+            guard let self = self else { return }
+            
+            var offset = self.collectionView.contentOffset
+            offset.y -= extraOffset
+            offset.y = max(-self.collectionView.adjustedContentInset.top, offset.y) // don't scroll above content
+            self.collectionView.setContentOffset(offset, animated: true)
+        }
+    }
 }
 
 extension CalendarScheduleViewController: UICollectionViewDelegate {

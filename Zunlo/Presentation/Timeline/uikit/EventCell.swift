@@ -10,7 +10,9 @@ import SwiftUI
 
 class EventCell: UICollectionViewCell {
     private let eventView = EventRowView()
-
+    var onTap: ((EventOccurrence?) -> Void)?
+    var occ: EventOccurrence?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
@@ -27,15 +29,18 @@ class EventCell: UICollectionViewCell {
     }
     
     private func setup() {
-        addSubview(eventView)
+        let tap = UITapGestureRecognizer(target: self, action: #selector(viewTapped))
+        eventView.addGestureRecognizer(tap)
+        
+        contentView.addSubview(eventView)
         
         eventView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            eventView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            eventView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            eventView.topAnchor.constraint(equalTo: topAnchor),
-            eventView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            eventView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            eventView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            eventView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            eventView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
     
@@ -45,6 +50,12 @@ class EventCell: UICollectionViewCell {
     }
 
     func configure(occ: EventOccurrence) {
+        self.occ = occ
         eventView.configure(with: occ)
+    }
+    
+    @objc func viewTapped(_ sender: UIControl) {
+        guard let occ else { return }
+        onTap?(occ)
     }
 }

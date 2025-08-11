@@ -8,16 +8,14 @@
 import UIKit
 import SwiftUI
 
-class EventRowView: UIControl {
+class EventRowView: UIView {
     private let colorIndicator = UIView()
     private let titleLabel = UILabel()
     private let timeLabel = UILabel()
     private let overrideIcon = UIImageView()
     private let contentStackView = UIStackView()
-    private let overlayButton = UIButton()
     
     private var occurrence: EventOccurrence?
-    var onTap: ((EventOccurrence?) -> Void)?
     
     init() {
         super.init(frame: .zero)
@@ -55,17 +53,13 @@ class EventRowView: UIControl {
         contentStackView.addArrangedSubview(UIView())
         contentStackView.addArrangedSubview(overrideIcon)
         
-        overlayButton.addTarget(self, action: #selector(viewTapped), for: .touchUpInside)
-        
         addSubview(contentStackView)
-        addSubview(overlayButton)
     }
 
     private func setupConstraints() {
         colorIndicator.translatesAutoresizingMaskIntoConstraints = false
         overrideIcon.translatesAutoresizingMaskIntoConstraints = false
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
-        overlayButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             contentStackView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
@@ -77,12 +71,7 @@ class EventRowView: UIControl {
             colorIndicator.heightAnchor.constraint(equalTo: contentStackView.heightAnchor),
             
             overrideIcon.widthAnchor.constraint(equalToConstant: 16),
-            overrideIcon.heightAnchor.constraint(equalToConstant: 16),
-            
-            overlayButton.topAnchor.constraint(equalTo: topAnchor),
-            overlayButton.bottomAnchor.constraint(equalTo: bottomAnchor),
-            overlayButton.leadingAnchor.constraint(equalTo: leadingAnchor),
-            overlayButton.trailingAnchor.constraint(equalTo: trailingAnchor)
+            overrideIcon.heightAnchor.constraint(equalToConstant: 16)
         ])
     }
     
@@ -114,9 +103,5 @@ class EventRowView: UIControl {
         colorIndicator.backgroundColor = UIColor(Color(hex: hex)!)
 
         overrideIcon.isHidden = !occurrence.isOverride
-    }
-    
-    @objc func viewTapped(gesture: UITapGestureRecognizer) {
-        onTap?(occurrence)
     }
 }
