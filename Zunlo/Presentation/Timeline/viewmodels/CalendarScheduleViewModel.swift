@@ -33,7 +33,7 @@ class CalendarScheduleViewModel: ObservableObject {
     
     // For grouping and access
     var allOccurrences: [EventOccurrence] = []
-    var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
+    @Published var eventOccurrences: [EventOccurrence] = [] // Flat list of all event instances, ready for UI
     
     private var currentTopVisibleDay: Date = Date()
     

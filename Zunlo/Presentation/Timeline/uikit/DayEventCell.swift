@@ -14,8 +14,6 @@ class DayEventCell: UICollectionViewCell {
     private let dayLabel = UILabel()
     private let weatherIconImageView = UIImageView()
     private let weatherLabel = UILabel()
-    private let eventsStack = UIStackView()
-    private let contentStackView = UIStackView()
 
     var onTap: ((EventOccurrence?) -> Void)?
     
@@ -38,13 +36,33 @@ class DayEventCell: UICollectionViewCell {
         weatherLabel.alpha = 0
     }
 
+    override func systemLayoutSizeFitting(_ targetSize: CGSize, withHorizontalFittingPriority horizontalFittingPriority: UILayoutPriority, verticalFittingPriority: UILayoutPriority) -> CGSize {
+        // Return desired height for day headers
+        return CGSize(width: targetSize.width, height: 40)
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        DispatchQueue.main.async {
+            let shapeLayer = CAShapeLayer.roundCorners(
+                for: [.topLeft, .topRight],
+                bounds: self.containerView.bounds,
+                radius: 8
+            )
+            
+            self.containerView.layer.mask = shapeLayer
+        }
+    }
+    
     private func setupViews() {
-        containerView.layer.cornerRadius = 8
+
+//        containerView.layer.cornerRadius = 8
         containerView.layer.borderWidth = 1
 
         titleStackView.axis = .horizontal
         titleStackView.spacing = 4
-        titleStackView.alignment = .leading
+        titleStackView.alignment = .center
         
         dayLabel.font = AppFontStyle.strongBody.uiFont()
 
@@ -58,42 +76,35 @@ class DayEventCell: UICollectionViewCell {
         weatherLabel.translatesAutoresizingMaskIntoConstraints = false
         weatherLabel.alpha = 0
         
-        eventsStack.axis = .vertical
-        eventsStack.spacing = 4
-        eventsStack.alignment = .fill
-
-        contentStackView.axis = .vertical
-        contentStackView.spacing = 8
-        contentStackView.alignment = .fill
-        contentStackView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
-        contentStackView.isLayoutMarginsRelativeArrangement = true
+//        contentStackView.axis = .vertical
+//        contentStackView.spacing = 8
+//        contentStackView.alignment = .fill
+//        contentStackView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
+//        contentStackView.isLayoutMarginsRelativeArrangement = true
 
         titleStackView.addArrangedSubview(dayLabel)
         titleStackView.addArrangedSubview(weatherIconImageView)
         titleStackView.addArrangedSubview(weatherLabel)
-        
-        contentStackView.addArrangedSubview(titleStackView)
-        contentStackView.addArrangedSubview(eventsStack)
 
         contentView.addSubview(containerView)
-        containerView.addSubview(contentStackView)
+        containerView.addSubview(titleStackView)
         
     }
     
     private func setupConstraints() {
         containerView.translatesAutoresizingMaskIntoConstraints = false
-        contentStackView.translatesAutoresizingMaskIntoConstraints = false
+        titleStackView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: 0),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
             
-            contentStackView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            contentStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
-            contentStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            contentStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            titleStackView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            titleStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            titleStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            titleStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
             weatherIconImageView.widthAnchor.constraint(equalToConstant: 16),
             weatherIconImageView.heightAnchor.constraint(equalToConstant: 16)
@@ -101,15 +112,16 @@ class DayEventCell: UICollectionViewCell {
     }
 
     private func setupTheme() {
+        backgroundColor = .clear
         contentView.backgroundColor = .clear
         containerView.backgroundColor = UIColor(Color.theme.eventCellBackground)
         containerView.layer.borderColor = UIColor(Color.theme.lightBorder).cgColor
         dayLabel.textColor = UIColor(Color.theme.text)
     }
     
-    func configure(with date: Date, events: [EventOccurrence], viewModel: CalendarScheduleViewModel) {
+    func configure(with date: Date, viewModel: CalendarScheduleViewModel) {
         // Basic event UI
-        self.configure(with: date, events: events, weather: nil)
+        self.configure(with: date, weather: nil)
 
         // Trigger weather fetch for today
         guard date.isSameDay(as: Date()) else { return }
@@ -123,32 +135,13 @@ class DayEventCell: UICollectionViewCell {
         }
     }
 
-    func configure(with date: Date, events: [EventOccurrence], weather: WeatherInfo?) {
+    func configure(with date: Date, weather: WeatherInfo?) {
         let isToday = date.isSameDay(as: Date())
         dayLabel.text = date.formattedDate(
             dateFormat: .weekAndDay,
             locale: Locale(identifier: Locale.current.identifier)
         )
         dayLabel.textColor = isToday ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
-        
-        eventsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-
-        if events.isEmpty {
-            let label = UILabel()
-            label.text = "No events"
-            label.font = AppFontStyle.footnote.uiFont()
-            label.textColor = UIColor(Color.theme.secondaryText)
-            eventsStack.addArrangedSubview(label)
-        } else {
-            for occ in events {
-                let row = EventRowView()
-                row.configure(with: occ)
-                row.onTap = { [weak self] occ in
-                    self?.onTap?(occ)
-                }
-                eventsStack.addArrangedSubview(row)
-            }
-        }
     }
     
     private func updateWeatherUI(with weather: WeatherInfo) {

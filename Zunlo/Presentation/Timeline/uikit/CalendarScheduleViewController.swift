@@ -9,21 +9,47 @@ import UIKit
 import Combine
 import SwiftUI
 
-struct EventSection {
-    let monthDate: Date
-    var dayGroups: [(date: Date, occurrences: [EventOccurrence])]
+enum CalendarSection: Int, CaseIterable {
+    case month
 }
 
 enum CalendarItem: Hashable {
-    case monthHeader(Date)
+    case month(Date)
     case day(Date)
+    case event(EventOccurrence)
+    
+    // Automatically derived Equatable conformance (because all associated types are Equatable)
+    static func ==(lhs: CalendarItem, rhs: CalendarItem) -> Bool {
+        switch (lhs, rhs) {
+        case (.month(let date1), .month(let date2)):
+            return date1 == date2
+        case (.day(let date1), .day(let date2)):
+            return date1 == date2
+        case (.event(let event1), .event(let event2)):
+            return event1 == event2
+        default:
+            return false
+        }
+    }
+    
+    // Hashable conformance
+    func hash(into hasher: inout Hasher) {
+        switch self {
+        case .month(let date):
+            hasher.combine(date)
+        case .day(let date):
+            hasher.combine(date)
+        case .event(let event):
+            hasher.combine(event.id)  // Using event ID to hash the event
+        }
+    }
 }
 
 class CalendarScheduleViewController: UIViewController {
     private let topBarView = CalendarTopBarView()
     private var collectionView: UICollectionView!
     
-    private var dataSource: UICollectionViewDiffableDataSource<Int, CalendarItem>!
+    private var dataSource: UICollectionViewDiffableDataSource<CalendarSection, CalendarItem>!
     private var didScrollToToday = false
     
     var viewModel: CalendarScheduleViewModel
@@ -50,6 +76,8 @@ class CalendarScheduleViewController: UIViewController {
         setupViews()
         setupConstraints()
         setupTheme()
+        
+        setupDataSource()
         
         viewModel.$occurrencesByMonthAndDay
             .receive(on: RunLoop.main)
@@ -104,28 +132,28 @@ class CalendarScheduleViewController: UIViewController {
     }
     
     func scrollTo(date: Date, animated: Bool = false, extraOffset: CGFloat = 56) {
-        let targetDate = date.startOfDay
-        let item = CalendarItem.day(targetDate)
-
-        let snapshot = dataSource.snapshot()
-        guard let itemIndex = snapshot.itemIdentifiers(inSection: 0).firstIndex(of: item) else {
-            print("cell for \(date) not found in snapshot")
-            return
-        }
-
-        let indexPath = IndexPath(item: itemIndex, section: 0)
-
-        collectionView.scrollToItem(at: indexPath, at: .top, animated: animated)
-
-        // Adjust offset after animation completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + (animated ? 0.35 : 0)) { [weak self] in
-            guard let self = self else { return }
-
-            var offset = self.collectionView.contentOffset
-            offset.y -= extraOffset
-            offset.y = max(-self.collectionView.adjustedContentInset.top, offset.y) // don’t scroll above content
-            self.collectionView.setContentOffset(offset, animated: false)
-        }
+//        let targetDate = date.startOfDay
+//        let item = CalendarItem.day(targetDate)
+//
+//        let snapshot = dataSource.snapshot()
+//        guard let itemIndex = snapshot.itemIdentifiers(inSection: 0).firstIndex(of: item) else {
+//            print("cell for \(date) not found in snapshot")
+//            return
+//        }
+//
+//        let indexPath = IndexPath(item: itemIndex, section: 0)
+//
+//        collectionView.scrollToItem(at: indexPath, at: .top, animated: animated)
+//
+//        // Adjust offset after animation completes
+//        DispatchQueue.main.asyncAfter(deadline: .now() + (animated ? 0.35 : 0)) { [weak self] in
+//            guard let self = self else { return }
+//
+//            var offset = self.collectionView.contentOffset
+//            offset.y -= extraOffset
+//            offset.y = max(-self.collectionView.adjustedContentInset.top, offset.y) // don’t scroll above content
+//            self.collectionView.setContentOffset(offset, animated: false)
+//        }
     }
     
     private func findOccurrence(startDate targetDate: Date) -> EventOccurrence? {
@@ -143,175 +171,268 @@ class CalendarScheduleViewController: UIViewController {
 
 extension CalendarScheduleViewController {
     func setupCollectionView() {
-        let layout = UICollectionViewCompositionalLayout { sectionIndex, _ in
-            self.layoutForSection()
-        }
-        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout)
+        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: createCompositionalLayout())
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.backgroundColor = .clear
         collectionView.delegate = self
         collectionView.register(DayEventCell.self, forCellWithReuseIdentifier: "DayEventCell")
         collectionView.register(MonthHeaderCell.self, forCellWithReuseIdentifier: "MonthHeaderCell")
+        collectionView.register(EventCell.self, forCellWithReuseIdentifier: "EventCell")
 
         view.addSubview(collectionView)
-
-        configureDataSource()
     }
 
-    func layoutForSection() -> NSCollectionLayoutSection {
-        let item = NSCollectionLayoutItem(layoutSize:
-            .init(widthDimension: .fractionalWidth(1.0),
-                  heightDimension: .estimated(60))
-        )
+    func createMonthSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                              heightDimension: .estimated(50))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                               heightDimension: .estimated(50))
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+        group.contentInsets = NSDirectionalEdgeInsets(top: 20, leading: 20, bottom: 10, trailing: 20)
+        
+        let section = NSCollectionLayoutSection(group: group)
+        
+        return section
+    }
 
-        let group = NSCollectionLayoutGroup.vertical(layoutSize:
-            .init(widthDimension: .fractionalWidth(1.0),
-                  heightDimension: .estimated(60)),
-            subitems: [item]
-        )
+    func createDaySection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .absolute(50))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .estimated(200))
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+        let section = NSCollectionLayoutSection(group: group)
+        
+        return section
+    }
 
-        return NSCollectionLayoutSection(group: group)
+    func createEventSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.8), heightDimension: .estimated(100))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .estimated(200))
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+        let section = NSCollectionLayoutSection(group: group)
+        
+        return section
+    }
+
+    func createCompositionalLayout() -> UICollectionViewCompositionalLayout {
+        let layout = UICollectionViewCompositionalLayout { sectionIndex, environment in
+            switch sectionIndex {
+            case 0:
+                return self.createMonthSection()
+            case 1:
+                return self.createDaySection()
+            case 2:
+                return self.createEventSection()
+            default:
+                return nil
+            }
+        }
+        
+        return layout
     }
 }
 
 extension CalendarScheduleViewController {
-    func configureDataSource() {
-        dataSource = UICollectionViewDiffableDataSource<Int, CalendarItem>(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
-            guard let self = self else { return UICollectionViewCell() }
-
+    // MARK: - Diffable Data Source
+    func setupDataSource() {
+        dataSource = UICollectionViewDiffableDataSource<CalendarSection, CalendarItem>(collectionView: collectionView) { (collectionView, indexPath, item) -> UICollectionViewCell? in
             switch item {
-            case .monthHeader(let monthDate):
+            case .month(let monthDate):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MonthHeaderCell", for: indexPath) as! MonthHeaderCell
                 let title = monthDate.formattedDate(dateFormat: .monthName, locale: Locale(identifier: Locale.current.identifier))
                 let subtitle = monthDate.formattedDate(dateFormat: .year)
                 let image = self.viewModel.monthHeaderImageName(for: monthDate)
                 cell.configure(title: title, subtitle: subtitle, imageName: image)
                 return cell
-
             case .day(let dayDate):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "DayEventCell", for: indexPath) as! DayEventCell
-                let monthDate = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: dayDate))!
-                let events = self.viewModel.occurrencesByMonthAndDay[monthDate]?[dayDate] ?? []
-                cell.configure(with: dayDate, events: events, viewModel: viewModel)
-                cell.onTap = { occurrence in
-                    guard let occurrence else { return }
-                    self.viewModel.onEventEditTapped(occurrence) { mode, showDialog in
-                        if showDialog {
-                            self.showActionSheet()
-                        } else {
-                            guard let mode else { return }
-                            self.showAddEventView(mode: mode)
-                        }
-                    }
-                }
+                cell.configure(with: dayDate, viewModel: self.viewModel)
+                return cell
+            case .event(let event):
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "EventCell", for: indexPath) as! EventCell
+                cell.configure(occ: event)
                 return cell
             }
         }
     }
-
+  
     func applySnapshot() {
-        var snapshot = NSDiffableDataSourceSnapshot<Int, CalendarItem>()
-        snapshot.appendSections([0])
-
-        let keys = viewModel.occurrencesByMonthAndDay.keys.sorted()
-        for monthDate in keys {
-            snapshot.appendItems([.monthHeader(monthDate)])
-            let days = viewModel.occurrencesByMonthAndDay[monthDate]?.keys.sorted() ?? []
-            for day in days {
-                if day.isSameDay(as: Date()) {
-                    if let occs = viewModel.occurrencesByMonthAndDay[monthDate]?[day] {
-                        for event in occs {
-                            print("***** title: \(event.title)")
-                        }
-                    }
-                }
+        var snapshot = NSDiffableDataSourceSnapshot<CalendarSection, CalendarItem>()
+        
+        snapshot.appendSections([.month])
+        
+        let groupedByMonth = groupEventsByMonth2(events: viewModel.eventOccurrences)
+        
+        let monthDates = groupedByMonth.keys.sorted()
+        for monthDate in monthDates {
+            // Add month header
+            snapshot.appendItems([.month(monthDate)], toSection: .month)
+            
+            let groupedByDay = groupEventsByDay(events: groupedByMonth[monthDate]!)
+            
+            let dayDates = groupedByDay.keys.sorted()
+            for day in dayDates {
+                // Add day header immediately after month (or previous day's events)
+                snapshot.appendItems([.day(day)], toSection: .month)
+                
+                let events = groupedByDay[day]!
+                let sortedEvents = events.sorted { $0.startDate < $1.startDate }
+                
+                // Add events immediately after their day header
+                let eventItems = sortedEvents.map { CalendarItem.event($0) }
+                snapshot.appendItems(eventItems, toSection: .month)
             }
-            snapshot.appendItems(days.map { CalendarItem.day($0) })
+        }
+
+        dataSource.apply(snapshot, animatingDifferences: true)
+    }
+    
+    func groupEventsByMonth2(events: [EventOccurrence]) -> [Date: [EventOccurrence]] {
+        let calendar = Calendar.current
+        
+        let groupedByMonth = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
+            // Get the start of the month (year and month)
+            calendar.date(from: calendar.dateComponents([.year, .month], from: event.startDate))!
+        }
+        return groupedByMonth
+    }
+        
+    func groupEventsByMonth(events: [EventOccurrence]) -> [CalendarItem] {
+        let calendar = Calendar.current
+        var months: [CalendarItem] = []
+        
+        // Group events by month
+        let groupedByMonth = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
+            // Get the start of the month (year and month)
+            calendar.date(from: calendar.dateComponents([.year, .month], from: event.startDate))!
         }
         
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.dataSource.apply(snapshot, animatingDifferences: false) { [weak self] in
-                guard let self else { return }
+        let monthDates = groupedByMonth.keys.sorted()
+        for monthDate in monthDates {
+            // Group events in this month by day
+            let groupedByDay = groupEventsByDay(events: groupedByMonth[monthDate]!)
+            
+            // Append month as CalendarItem.month
+            months.append(.month(monthDate))
+            
+            // For each day in this month, append the CalendarItem.day
+            let dayDates = groupedByDay.keys.sorted()
+            for dayDate in dayDates {
+                months.append(.day(dayDate))
                 
-                self.collectionView.reloadData()
-                
-                if !keys.isEmpty {
-                    if self.didScrollToToday {
-                        self.collectionView.delegate = nil
-                        self.scrollTo(date: viewModel.itemDateToScrollTo)
-                        self.collectionView.delegate = self
-                        self.didScrollToToday = true
-                    } else {
-                        self.collectionView.delegate = nil
-                        self.scrollTo(date: Date())
-                        self.collectionView.delegate = self
-                        self.didScrollToToday = true
-                    }
+                // For each event on this day, append the CalendarItem.event
+                for event in groupedByDay[dayDate]! {
+                    months.append(.event(event))
                 }
             }
         }
+//        for (monthDate, eventsInMonth) in groupedByMonth {
+//            // Group events in this month by day
+//            let days = groupEventsByDay(events: eventsInMonth)
+//            
+//            // Append month as CalendarItem.month
+//            months.append(.month(monthDate))
+//            
+//            // For each day in this month, append the CalendarItem.day
+//            for day in days {
+//                months.append(.day(day.key))
+//                
+//                // For each event on this day, append the CalendarItem.event
+//                for event in day.value {
+//                    months.append(.event(event))
+//                }
+//            }
+//        }
+        
+        return months
     }
+
+    func groupEventsByDay(events: [EventOccurrence]) -> [Date: [EventOccurrence]] {
+        let calendar = Calendar.current
+        let groupedByDay = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
+            // Get the start of the day (ignoring time for grouping purposes)
+            calendar.startOfDay(for: event.startDate)
+        }
+        return groupedByDay
+    }
+    
+//    func groupEventsByDay(events: [EventOccurrence]) -> [CalendarDay] {
+//        let calendar = Calendar.current
+//        let groupedByDay = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
+//            // Get the start of the day (ignoring time for grouping purposes)
+//            calendar.startOfDay(for: event.startDate)
+//        }
+//        
+//        return groupedByDay.map { (date, eventsInDay) in
+//            CalendarDay(date: date, events: eventsInDay.map { CalendarEvent(eventOccurrence: $0) })
+//        }
+//    }
+
 }
 
 extension CalendarScheduleViewController: UICollectionViewDelegate {
     
-    func scrollViewWillEndDragging(
-        _ scrollView: UIScrollView,
-        withVelocity velocity: CGPoint,
-        targetContentOffset: UnsafeMutablePointer<CGPoint>
-    ) {
-        let offsetY = scrollView.contentOffset.y
-//        let thresholdTop = UIScreen.main.bounds.height * 2
-        let thresholdBottom = scrollView.contentSize.height - scrollView.bounds.height - 1000
-
-        // Commented out to remove the date range expasion for older dates
-        // because it is buggy
-//        if offsetY < thresholdTop {
+//    func scrollViewWillEndDragging(
+//        _ scrollView: UIScrollView,
+//        withVelocity velocity: CGPoint,
+//        targetContentOffset: UnsafeMutablePointer<CGPoint>
+//    ) {
+//        let offsetY = scrollView.contentOffset.y
+////        let thresholdTop = UIScreen.main.bounds.height * 2
+//        let thresholdBottom = scrollView.contentSize.height - scrollView.bounds.height - 1000
+//
+//        // Commented out to remove the date range expasion for older dates
+//        // because it is buggy
+////        if offsetY < thresholdTop {
+////            targetContentOffset.pointee = scrollView.contentOffset
+////            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
+////            viewModel.checkTop(date: date)
+////        } else
+//        if offsetY > thresholdBottom {
 //            targetContentOffset.pointee = scrollView.contentOffset
 //            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
-//            viewModel.checkTop(date: date)
-//        } else
-        if offsetY > thresholdBottom {
-            targetContentOffset.pointee = scrollView.contentOffset
-            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
-            viewModel.checkBottom(date: date)
-        }
-    }
+//            viewModel.checkBottom(date: date)
+//        }
+//    }
     
-    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-//        let thresholdTop = UIScreen.main.bounds.height * 2
-        let thresholdBottom = scrollView.contentSize.height - scrollView.bounds.height - 1000
-
-        // Commented out to remove the date range expasion for older dates
-        // because it is buggy
-//        if offsetY < thresholdTop {
+//    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+//        let offsetY = scrollView.contentOffset.y
+////        let thresholdTop = UIScreen.main.bounds.height * 2
+//        let thresholdBottom = scrollView.contentSize.height - scrollView.bounds.height - 1000
+//
+//        // Commented out to remove the date range expasion for older dates
+//        // because it is buggy
+////        if offsetY < thresholdTop {
+////            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
+////            viewModel.checkTop(date: date)
+////        } else
+//        if offsetY > thresholdBottom {
 //            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
-//            viewModel.checkTop(date: date)
-//        } else
-        if offsetY > thresholdBottom {
-            guard let date = dateOfExpansionTrigger(scrollView: scrollView) else { return }
-            viewModel.checkBottom(date: date)
-        }
-    }
+//            viewModel.checkBottom(date: date)
+//        }
+//    }
     
-    private func dateOfExpansionTrigger(scrollView: UIScrollView) -> Date? {
-        guard
-            let collectionView = scrollView as? UICollectionView,
-            let indexPath = collectionView.indexPathForItem(at: collectionView.contentOffset),
-            let item = dataSource.itemIdentifier(for: indexPath)
-        else { return nil }
-        
-        var date: Date
-        
-        switch item {
-        case .monthHeader(let monthDate): date = monthDate
-        case .day(let dayDate): date = dayDate
-        }
-        
-        return date
-    }
+//    private func dateOfExpansionTrigger(scrollView: UIScrollView) -> Date? {
+//        guard
+//            let collectionView = scrollView as? UICollectionView,
+//            let indexPath = collectionView.indexPathForItem(at: collectionView.contentOffset),
+//            let item = dataSource.itemIdentifier(for: indexPath)
+//        else { return nil }
+//        
+//        var date: Date
+//        
+//        switch item {
+//        case .monthHeader(let monthDate): date = monthDate
+//        case .day(let dayDate): date = dayDate
+//        }
+//        
+//        return date
+//    }
 }
 
 // MARK: Navigation

@@ -68,9 +68,9 @@ class EventRowView: UIControl {
         overlayButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            contentStackView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            contentStackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            contentStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            contentStackView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
+            contentStackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0),
+            contentStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             contentStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
             
             colorIndicator.widthAnchor.constraint(equalToConstant: 6),
@@ -87,6 +87,7 @@ class EventRowView: UIControl {
     }
     
     private func setupTheme() {
+        backgroundColor = .clear
         colorIndicator.backgroundColor = .gray
         titleLabel.textColor = UIColor(Color.theme.text)
         timeLabel.textColor = UIColor(Color.theme.secondaryText)
