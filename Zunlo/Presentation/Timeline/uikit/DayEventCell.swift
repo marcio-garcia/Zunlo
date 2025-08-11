@@ -11,6 +11,7 @@ import SwiftUI
 class DayEventCell: UICollectionViewCell {
     private let containerView = UIView()
     private let titleStackView = UIStackView()
+    private let weekLabel = UILabel()
     private let dayLabel = UILabel()
     private let weatherIconImageView = UIImageView()
     private let weatherLabel = UILabel()
@@ -35,35 +36,14 @@ class DayEventCell: UICollectionViewCell {
         weatherIconImageView.alpha = 0
         weatherLabel.alpha = 0
     }
-
-    override func systemLayoutSizeFitting(_ targetSize: CGSize, withHorizontalFittingPriority horizontalFittingPriority: UILayoutPriority, verticalFittingPriority: UILayoutPriority) -> CGSize {
-        // Return desired height for day headers
-        return CGSize(width: targetSize.width, height: 40)
-    }
-    
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        
-        DispatchQueue.main.async {
-            let shapeLayer = CAShapeLayer.roundCorners(
-                for: [.topLeft, .topRight],
-                bounds: self.containerView.bounds,
-                radius: 8
-            )
-            
-            self.containerView.layer.mask = shapeLayer
-        }
-    }
     
     private func setupViews() {
-
-//        containerView.layer.cornerRadius = 8
-        containerView.layer.borderWidth = 1
 
         titleStackView.axis = .horizontal
         titleStackView.spacing = 4
         titleStackView.alignment = .center
         
+        weekLabel.font = AppFontStyle.body.uiFont()
         dayLabel.font = AppFontStyle.strongBody.uiFont()
 
         weatherIconImageView.contentMode = .scaleAspectFit
@@ -76,13 +56,9 @@ class DayEventCell: UICollectionViewCell {
         weatherLabel.translatesAutoresizingMaskIntoConstraints = false
         weatherLabel.alpha = 0
         
-//        contentStackView.axis = .vertical
-//        contentStackView.spacing = 8
-//        contentStackView.alignment = .fill
-//        contentStackView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
-//        contentStackView.isLayoutMarginsRelativeArrangement = true
-
+        titleStackView.addArrangedSubview(weekLabel)
         titleStackView.addArrangedSubview(dayLabel)
+        titleStackView.addArrangedSubview(UIView())
         titleStackView.addArrangedSubview(weatherIconImageView)
         titleStackView.addArrangedSubview(weatherLabel)
 
@@ -96,8 +72,8 @@ class DayEventCell: UICollectionViewCell {
         titleStackView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: 0),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
             
@@ -114,13 +90,11 @@ class DayEventCell: UICollectionViewCell {
     private func setupTheme() {
         backgroundColor = .clear
         contentView.backgroundColor = .clear
-        containerView.backgroundColor = UIColor(Color.theme.eventCellBackground)
-        containerView.layer.borderColor = UIColor(Color.theme.lightBorder).cgColor
+        weekLabel.textColor = UIColor(Color.theme.text)
         dayLabel.textColor = UIColor(Color.theme.text)
     }
     
     func configure(with date: Date, viewModel: CalendarScheduleViewModel) {
-        // Basic event UI
         self.configure(with: date, weather: nil)
 
         // Trigger weather fetch for today
@@ -137,10 +111,14 @@ class DayEventCell: UICollectionViewCell {
 
     func configure(with date: Date, weather: WeatherInfo?) {
         let isToday = date.isSameDay(as: Date())
+        weekLabel.text = date.formattedDate(
+            dateFormat: .week, locale: Locale(identifier: Locale.current.identifier)
+        )
         dayLabel.text = date.formattedDate(
-            dateFormat: .weekAndDay,
+            dateFormat: .day,
             locale: Locale(identifier: Locale.current.identifier)
         )
+        weekLabel.textColor = isToday ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
         dayLabel.textColor = isToday ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
     }
     

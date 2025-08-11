@@ -9,13 +9,14 @@ import Foundation
 
 extension Date {
     enum DateFormat: String {
+        case time = "HH:mm"
+        case day = "d"
+        case week = "EEE"
+        case year = "YYYY"
         case regular = "dd MMM YYYY"
         case dayMonth = "dd MMM"
         case monthName = "LLLL"
-        case time = "HH:mm"
         case weekAndDay = "E d"
-        case day = "d"
-        case year = "YYYY"
     }
     
     static var format = DateFormat.regular

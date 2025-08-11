@@ -16,7 +16,7 @@ enum CalendarSection: Int, CaseIterable {
 enum CalendarItem: Hashable {
     case month(Date)
     case day(Date)
-    case event(EventOccurrence)
+    case event(_ event: EventOccurrence, _ position: Int, _ total: Int)
     
     // Automatically derived Equatable conformance (because all associated types are Equatable)
     static func ==(lhs: CalendarItem, rhs: CalendarItem) -> Bool {
@@ -25,7 +25,7 @@ enum CalendarItem: Hashable {
             return date1 == date2
         case (.day(let date1), .day(let date2)):
             return date1 == date2
-        case (.event(let event1), .event(let event2)):
+        case (.event(let event1, _, _), .event(let event2, _, _)):
             return event1 == event2
         default:
             return false
@@ -39,7 +39,7 @@ enum CalendarItem: Hashable {
             hasher.combine(date)
         case .day(let date):
             hasher.combine(date)
-        case .event(let event):
+        case .event(let event, _, _):
             hasher.combine(event.id)  // Using event ID to hash the event
         }
     }
@@ -156,6 +156,7 @@ extension CalendarScheduleViewController {
         let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                heightDimension: .estimated(50))
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+        
         group.contentInsets = NSDirectionalEdgeInsets(top: 20, leading: 20, bottom: 10, trailing: 20)
         
         let section = NSCollectionLayoutSection(group: group)
@@ -190,10 +191,10 @@ extension CalendarScheduleViewController {
             switch sectionIndex {
             case 0:
                 return self.createMonthSection()
-            case 1:
-                return self.createDaySection()
-            case 2:
-                return self.createEventSection()
+//            case 1:
+//                return self.createDaySection()
+//            case 2:
+//                return self.createEventSection()
             default:
                 return nil
             }
@@ -219,9 +220,9 @@ extension CalendarScheduleViewController {
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "DayEventCell", for: indexPath) as! DayEventCell
                 cell.configure(with: dayDate, viewModel: self.viewModel)
                 return cell
-            case .event(let event):
+            case .event(let event, let position, let total):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "EventCell", for: indexPath) as! EventCell
-                cell.configure(occ: event)
+                cell.configure(occ: event, position: position, total: total)
                 cell.onTap = { [weak self] occ in
                     guard let self, let occ else { return }
                     self.viewModel.onEventEditTapped(occ, completion: { mode, showDialog in
@@ -254,14 +255,19 @@ extension CalendarScheduleViewController {
             
             let dayDates = groupedByDay.keys.sorted()
             for day in dayDates {
-                // Add day header immediately after month (or previous day's events)
                 snapshot.appendItems([.day(day)], toSection: .month)
                 
                 let events = groupedByDay[day]!
                 let sortedEvents = events.sorted { $0.startDate < $1.startDate }
                 
                 // Add events immediately after their day header
-                let eventItems = sortedEvents.map { CalendarItem.event($0) }
+                var eventItems: [CalendarItem] = []
+                for index in 0..<sortedEvents.count {
+                    eventItems.append(
+                        CalendarItem.event(sortedEvents[index], index, sortedEvents.count)
+                    )
+                }
+                
                 snapshot.appendItems(eventItems, toSection: .month)
             }
         }
@@ -279,55 +285,38 @@ extension CalendarScheduleViewController {
         return groupedByMonth
     }
         
-    func groupEventsByMonth(events: [EventOccurrence]) -> [CalendarItem] {
-        let calendar = Calendar.current
-        var months: [CalendarItem] = []
-        
-        // Group events by month
-        let groupedByMonth = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
-            // Get the start of the month (year and month)
-            calendar.date(from: calendar.dateComponents([.year, .month], from: event.startDate))!
-        }
-        
-        let monthDates = groupedByMonth.keys.sorted()
-        for monthDate in monthDates {
-            // Group events in this month by day
-            let groupedByDay = groupEventsByDay(events: groupedByMonth[monthDate]!)
-            
-            // Append month as CalendarItem.month
-            months.append(.month(monthDate))
-            
-            // For each day in this month, append the CalendarItem.day
-            let dayDates = groupedByDay.keys.sorted()
-            for dayDate in dayDates {
-                months.append(.day(dayDate))
-                
-                // For each event on this day, append the CalendarItem.event
-                for event in groupedByDay[dayDate]! {
-                    months.append(.event(event))
-                }
-            }
-        }
-//        for (monthDate, eventsInMonth) in groupedByMonth {
+//    func groupEventsByMonth(events: [EventOccurrence]) -> [CalendarItem] {
+//        let calendar = Calendar.current
+//        var months: [CalendarItem] = []
+//        
+//        // Group events by month
+//        let groupedByMonth = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
+//            // Get the start of the month (year and month)
+//            calendar.date(from: calendar.dateComponents([.year, .month], from: event.startDate))!
+//        }
+//        
+//        let monthDates = groupedByMonth.keys.sorted()
+//        for monthDate in monthDates {
 //            // Group events in this month by day
-//            let days = groupEventsByDay(events: eventsInMonth)
+//            let groupedByDay = groupEventsByDay(events: groupedByMonth[monthDate]!)
 //            
 //            // Append month as CalendarItem.month
 //            months.append(.month(monthDate))
 //            
 //            // For each day in this month, append the CalendarItem.day
-//            for day in days {
-//                months.append(.day(day.key))
+//            let dayDates = groupedByDay.keys.sorted()
+//            for dayDate in dayDates {
+//                months.append(.day(dayDate))
 //                
 //                // For each event on this day, append the CalendarItem.event
-//                for event in day.value {
+//                for event in groupedByDay[dayDate]! {
 //                    months.append(.event(event))
 //                }
 //            }
 //        }
-        
-        return months
-    }
+//        
+//        return months
+//    }
 
     func groupEventsByDay(events: [EventOccurrence]) -> [Date: [EventOccurrence]] {
         let calendar = Calendar.current
@@ -337,19 +326,6 @@ extension CalendarScheduleViewController {
         }
         return groupedByDay
     }
-    
-//    func groupEventsByDay(events: [EventOccurrence]) -> [CalendarDay] {
-//        let calendar = Calendar.current
-//        let groupedByDay = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
-//            // Get the start of the day (ignoring time for grouping purposes)
-//            calendar.startOfDay(for: event.startDate)
-//        }
-//        
-//        return groupedByDay.map { (date, eventsInDay) in
-//            CalendarDay(date: date, events: eventsInDay.map { CalendarEvent(eventOccurrence: $0) })
-//        }
-//    }
-
 }
 
 // MARK: - Scroll to Date Implementation

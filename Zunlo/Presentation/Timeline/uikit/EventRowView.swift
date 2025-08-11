@@ -9,6 +9,7 @@ import UIKit
 import SwiftUI
 
 class EventRowView: UIView {
+    private let card = RoundedStrokeView()
     private let colorIndicator = UIView()
     private let titleLabel = UILabel()
     private let timeLabel = UILabel()
@@ -16,6 +17,16 @@ class EventRowView: UIView {
     private let contentStackView = UIStackView()
     
     private var occurrence: EventOccurrence?
+    
+    var roundedCorners: UIRectCorner {
+        get { return card.corners }
+        set { card.corners = newValue }
+    }
+    
+    var strokeEdges: UIRectEdge {
+        get { return card.strokedEdges }
+        set { card.strokedEdges = newValue }
+    }
     
     init() {
         super.init(frame: .zero)
@@ -29,6 +40,11 @@ class EventRowView: UIView {
     }
 
     private func setup() {
+        roundedCorners = [.topLeft, .topRight, .bottomLeft, .bottomRight]
+        card.cornerRadius = 8
+        card.borderWidth = 2
+        card.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        
         colorIndicator.layer.cornerRadius = 3
         
         titleLabel.font = AppFontStyle.heading.uiFont()
@@ -46,24 +62,31 @@ class EventRowView: UIView {
 
         contentStackView.axis = .horizontal
         contentStackView.alignment = .center
-        contentStackView.spacing = 10
+        contentStackView.spacing = 12
         
         contentStackView.addArrangedSubview(colorIndicator)
         contentStackView.addArrangedSubview(textStack)
         contentStackView.addArrangedSubview(UIView())
         contentStackView.addArrangedSubview(overrideIcon)
         
+        addSubview(card)
         addSubview(contentStackView)
     }
 
     private func setupConstraints() {
+        card.translatesAutoresizingMaskIntoConstraints = false
         colorIndicator.translatesAutoresizingMaskIntoConstraints = false
         overrideIcon.translatesAutoresizingMaskIntoConstraints = false
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            contentStackView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
-            contentStackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0),
+            card.topAnchor.constraint(equalTo: topAnchor),
+            card.bottomAnchor.constraint(equalTo: bottomAnchor),
+            card.leadingAnchor.constraint(equalTo: leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: trailingAnchor),
+            
+            contentStackView.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            contentStackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10),
             contentStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             contentStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
             
@@ -100,8 +123,11 @@ class EventRowView: UIView {
         }
 
         let hex = occurrence.isFakeOccForEmptyToday ? "#E0E0E0" : occurrence.color.rawValue
-        colorIndicator.backgroundColor = UIColor(Color(hex: hex)!)
-
+        let color = UIColor(Color(hex: hex)!)
+        colorIndicator.backgroundColor = color
         overrideIcon.isHidden = !occurrence.isOverride
+        
+        card.borderColor = UIColor(Color.theme.disabled)
+        card.fillColor = color.withAlphaComponent(0.3)
     }
 }
