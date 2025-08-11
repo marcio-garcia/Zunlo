@@ -79,7 +79,7 @@ class CalendarScheduleViewController: UIViewController {
         
         setupDataSource()
         
-        viewModel.$occurrencesByMonthAndDay
+        viewModel.$eventOccurrences
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.applySnapshot()
@@ -88,6 +88,9 @@ class CalendarScheduleViewController: UIViewController {
         
         Task {
             await viewModel.fetchEvents()
+            await MainActor.run {
+                self.scrollTo(date: Date(), animated: true)
+            }
         }
     }
     
@@ -129,43 +132,6 @@ class CalendarScheduleViewController: UIViewController {
     
     private func setupTheme() {
         view.backgroundColor = UIColor(Color.theme.background)
-    }
-    
-//    func scrollTo(date: Date, animated: Bool = false, extraOffset: CGFloat = 56) {
-//        let targetDate = date.startOfDay
-//        let item = CalendarItem.day(targetDate)
-//
-//        let snapshot = dataSource.snapshot()
-//        guard let itemIndex = snapshot.itemIdentifiers(inSection: 0).firstIndex(of: item) else {
-//            print("cell for \(date) not found in snapshot")
-//            return
-//        }
-//
-//        let indexPath = IndexPath(item: itemIndex, section: 0)
-//
-//        collectionView.scrollToItem(at: indexPath, at: .top, animated: animated)
-//
-//        // Adjust offset after animation completes
-//        DispatchQueue.main.asyncAfter(deadline: .now() + (animated ? 0.35 : 0)) { [weak self] in
-//            guard let self = self else { return }
-//
-//            var offset = self.collectionView.contentOffset
-//            offset.y -= extraOffset
-//            offset.y = max(-self.collectionView.adjustedContentInset.top, offset.y) // don’t scroll above content
-//            self.collectionView.setContentOffset(offset, animated: false)
-//        }
-//    }
-    
-    private func findOccurrence(startDate targetDate: Date) -> EventOccurrence? {
-        let calendar = Calendar.current
-        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: targetDate))!
-        let startOfDay = calendar.startOfDay(for: targetDate)
-
-        if let dayDict = viewModel.occurrencesByMonthAndDay[startOfMonth],
-           let occurrences = dayDict[startOfDay] {
-            return occurrences.first(where: { $0.startDate == targetDate })
-        }
-        return nil
     }
 }
 

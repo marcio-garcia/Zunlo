@@ -21,7 +21,6 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var state = ViewState.loading
     @Published var showAddSheet = false
     @Published var editChoiceContext: EditChoiceContext?
-    @Published var occurrencesByMonthAndDay: [Date: [Date: [EventOccurrence]]] = [:]
     @Published var eventEditHandler = EventEditHandler()
     
     private let weatherCache = WeatherCache()
@@ -74,8 +73,6 @@ class CalendarScheduleViewModel: ObservableObject {
     func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
         do {
             eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
-            occurrencesByMonthAndDay = groupOccurrencesByMonthAndDay()
-            print("****** new occurrencesByMonthAndDay")
             self.state = occurrences.isEmpty ? .empty : .loaded
         } catch {
             state = .error(error.localizedDescription)
