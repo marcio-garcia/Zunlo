@@ -15,6 +15,7 @@ struct RemoteBackgroundImage: View {
 
     var body: some View {
         ZStack {
+            Color.theme.background.ignoresSafeArea()
             Image(lowResName)
                 .resizable()
                 .scaledToFill()
@@ -27,9 +28,9 @@ struct RemoteBackgroundImage: View {
                     .transition(.opacity.animation(.easeInOut(duration: 0.5)))
             }
         }
-//        .task(id: remoteName) {
-//            await loadRemoteImage()
-//        }
+        .task(id: remoteName) {
+            await loadRemoteImage()
+        }
     }
 
     private func loadRemoteImage() async {

@@ -375,6 +375,12 @@ struct TodayView: View {
     
     func lowResName(for weather: WeatherInfo?) -> String {
         let name = backgroundImageName
+        if name == "bg_default" {
+            if Theme.isDarkMode {
+                return "\(name)_low_dark"
+            }
+            return "\(name)_low_light"
+        }
         return "\(name)_low"
     }
     
