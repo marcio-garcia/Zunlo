@@ -49,7 +49,7 @@ struct SupabaseStorageErrorResponse: SupabaseErrorType {
 
 struct SupabaseAuthErrorResponse: SupabaseErrorType {
     public let code: String
-    public let errorCode: String
+    public let errorCode: String?
     public let message: String
     public let details: String?
     public let hint: String?
@@ -65,7 +65,7 @@ struct SupabaseAuthErrorResponse: SupabaseErrorType {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        self.errorCode = try container.decode(String.self, forKey: .errorCode)
+        self.errorCode = try? container.decode(String.self, forKey: .errorCode)
         self.message = try container.decode(String.self, forKey: .message)
         
         let code = try container.decode(Int.self, forKey: .code)
