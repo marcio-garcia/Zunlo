@@ -22,6 +22,8 @@ final class RoundedStrokeView: UIView {
     // MARK: Layers
     private let fillLayer = CAShapeLayer()
     private let borderLayer = CAShapeLayer()
+    
+    private let effect = UIBlurEffect(style: UIBlurEffect.Style.light)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -33,6 +35,13 @@ final class RoundedStrokeView: UIView {
         borderLayer.lineJoin = .round
         borderLayer.lineCap  = .square
         layer.addSublayer(borderLayer)
+        
+        let blur = UIBlurEffect(style: .systemUltraThinMaterial)
+        let blurView = UIVisualEffectView(effect: blur)
+        blurView.frame = bounds
+        blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        blurView.isUserInteractionEnabled = false
+        insertSubview(blurView, at: 0)
     }
     
     required init?(coder: NSCoder) { fatalError("Not implemented!") }

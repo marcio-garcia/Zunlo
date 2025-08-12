@@ -16,14 +16,15 @@ public struct AIWelcomeCard: View {
 
     public var body: some View {
         Group {
-            if vm.isLoading {
-                ShimmerCard()
-            } else if let s = vm.suggestions.first {
+            if let s = vm.suggestions.first {
                 CardContent(suggestion: s)
             } else {
                 EmptyStateCard()
             }
         }
+        .themedCard(blurBackground: true)
+        .redacted(reason: vm.isLoading ? .placeholder : [])
+        .shimmer(active: vm.isLoading, speed: 1.0)
         .task { vm.load() }
         .animation(.snappy, value: vm.suggestions)
     }
@@ -34,26 +35,26 @@ private struct CardContent: View {
     @State private var showWhy = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(suggestion.title).font(.title3.bold())
-            Text(suggestion.detail).font(.subheadline).foregroundStyle(.secondary)
-
-            // 1–3 CTAs
-            HStack(spacing: 8) {
-                ForEach(suggestion.ctas) { cta in
-                    Button(cta.title) { cta.perform() }
-                        .buttonStyle(.borderedProminent)
-                        .clipShape(Capsule())
+        HStack {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(suggestion.title).font(.title3.bold())
+                Text(suggestion.detail).font(.subheadline).foregroundStyle(.secondary)
+                
+                // 1–3 CTAs
+                HStack(spacing: 8) {
+                    ForEach(suggestion.ctas) { cta in
+                        Button(cta.title) { cta.perform() }
+                            .buttonStyle(.borderedProminent)
+                            .clipShape(Capsule())
+                    }
                 }
+                
+                Button("Why this?") { showWhy = true }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-
-            Button("Why this?") { showWhy = true }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Spacer()
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
         .sheet(isPresented: $showWhy) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Why this suggestion").font(.headline)
@@ -65,16 +66,6 @@ private struct CardContent: View {
     }
 }
 
-private struct ShimmerCard: View {
-    var body: some View {
-        RoundedRectangle(cornerRadius: 20)
-            .fill(.ultraThinMaterial)
-            .frame(height: 140)
-            .overlay(ProgressView().controlSize(.large))
-            .padding(.vertical, 4)
-    }
-}
-
 private struct EmptyStateCard: View {
     var body: some View {
         VStack(spacing: 8) {
@@ -83,8 +74,5 @@ private struct EmptyStateCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding()
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
