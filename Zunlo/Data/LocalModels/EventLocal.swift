@@ -10,7 +10,7 @@ import RealmSwift
 
 class EventLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
-    @Persisted var userId: UUID?
+    @Persisted(indexed: true) var userId: UUID?
     @Persisted var title: String = ""
     @Persisted var descriptionText: String?
     @Persisted var startDate: Date = Date()

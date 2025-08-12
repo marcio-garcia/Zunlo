@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EventOccurrenceRemote: Codable, Identifiable {
+struct EventOccurrenceResponse: Codable, Identifiable {
     let id: UUID
     let user_id: UUID
     let title: String
@@ -46,5 +46,33 @@ struct EventOccurrenceRemote: Codable, Identifiable {
         self.end_datetime = DateFormatter.iso8601WithoutFractionalSeconds.date(from: date)
         
         self.created_at = DateFormatter.iso8601WithFractionalSeconds.date(from: created_at) ?? Date()
+    }
+}
+
+extension EventOccurrenceResponse {
+    init(local e: EventLocal,
+         overrides ovs: [EventOverrideLocal],
+         rules rrs: [RecurrenceRuleLocal]) {
+
+        self.id = e.id
+        self.user_id = e.userId ?? UUID()
+        self.title = e.title
+        self.description = e.description
+        self.start_datetime = e.startDate
+        self.end_datetime = e.endDate
+        self.is_recurring = e.isRecurring
+        self.location = e.location
+        self.created_at = e.createdAt
+        self.updated_at = e.updatedAt
+        self.color = e.color?.rawValue
+
+        // Map children → Remote DTOs; keep deterministic order by id to match SQL
+        self.overrides = ovs
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+            .map { EventOverrideRemote(local: $0) }
+
+        self.recurrence_rules = rrs
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+            .map { RecurrenceRuleRemote(local: $0) }
     }
 }

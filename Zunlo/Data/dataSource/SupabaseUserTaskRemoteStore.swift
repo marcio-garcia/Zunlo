@@ -37,8 +37,8 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
         )
     }
     
-    func fecthOccurrences() async throws -> [EventOccurrenceRemote] {
-        try await database.fetchOccurrences(as: EventOccurrenceRemote.self)
+    func fecthOccurrences() async throws -> [EventOccurrenceResponse] {
+        try await database.fetchOccurrences(as: EventOccurrenceResponse.self)
     }
 
     func save(_ task: UserTaskRemote) async throws -> [UserTaskRemote] {

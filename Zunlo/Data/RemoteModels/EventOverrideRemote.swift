@@ -53,3 +53,20 @@ struct EventOverrideRemote: Codable, Identifiable {
         self.updated_at = DateFormatter.iso8601WithoutFractionalSeconds.date(from: updated_at) ?? Date()
     }
 }
+
+extension EventOverrideRemote {
+    init(local: EventOverrideLocal) {
+        self.id = local.id
+        self.event_id = local.eventId
+        self.occurrence_date = local.occurrenceDate
+        self.overridden_title = local.overriddenTitle
+        self.overridden_start_datetime = local.overriddenStartDate
+        self.overridden_end_datetime = local.overriddenEndDate
+        self.overridden_location = local.overriddenLocation
+        self.is_cancelled = local.isCancelled
+        self.notes = local.notes
+        self.created_at = local.createdAt
+        self.updated_at = local.updatedAt
+        self.color = local.color
+    }
+}

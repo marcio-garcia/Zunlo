@@ -68,6 +68,18 @@ final class EventRepository {
         }
     }
     
+    func fetchLocalOcc(for userId: UUID) async throws -> [EventOccurrence] {
+        do {
+            let occurrences = try await eventLocalStore.fetchOccurrences(for: userId)
+            let occ = occurrences.map { EventOccurrence(remote: $0) }
+            lastEventAction.value = .fetch(occ)
+            return occ
+        } catch {
+            lastEventAction.value = .error(error)
+            throw error
+        }
+    }
+    
     private func fetchLocalEvents() async throws -> [Event] {
         try await eventLocalStore.fetchAll()
     }
@@ -245,7 +257,7 @@ extension EventRepository: EventRepo {
         return conflicts
     }
 
-    // MARK: - Busy intervals (events + scheduled tasks)
+    // MARK: - Busy intervals (events)
 
     private func busyIntervals(on date: Date) async -> [BusyInterval] {
         let day = calendar.dayRange(containing: date)

@@ -8,7 +8,7 @@
 import Foundation
 
 extension EventOccurrence {
-    init(remote: EventOccurrenceRemote) {
+    init(remote: EventOccurrenceResponse) {
         self.id = remote.id
         self.userId = remote.user_id
         self.eventId = remote.id

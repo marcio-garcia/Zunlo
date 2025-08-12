@@ -10,7 +10,7 @@ import RealmSwift
 
 class EventOverrideLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
-    @Persisted var eventId: UUID
+    @Persisted(indexed: true) var eventId: UUID
     @Persisted var occurrenceDate: Date
     @Persisted var overriddenTitle: String?
     @Persisted var overriddenStartDate: Date?

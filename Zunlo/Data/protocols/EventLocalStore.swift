@@ -9,6 +9,7 @@ import Foundation
 
 protocol EventLocalStore {
     func fetchAll() async throws -> [Event]
+    func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrenceResponse]
     func save(_ remoteEvent: EventRemote) async throws
     func update(_ event: EventRemote) async throws
     func delete(id: UUID) async throws

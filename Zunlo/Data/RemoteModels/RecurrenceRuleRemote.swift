@@ -44,3 +44,19 @@ struct RecurrenceRuleRemote: Codable, Identifiable {
         self.updated_at = DateFormatter.iso8601WithoutFractionalSeconds.date(from: updated_at) ?? Date()
     }
 }
+
+extension RecurrenceRuleRemote {
+    internal init(local: RecurrenceRuleLocal) {
+        self.id = local.id
+        self.event_id = local.eventId
+        self.freq = local.freq
+        self.interval = local.interval
+        self.byweekday = local.byWeekdayArray
+        self.bymonthday = local.byMonthdayArray
+        self.bymonth = local.byMonthArray
+        self.until = local.until
+        self.count = local.count
+        self.created_at = local.createdAt
+        self.updated_at = local.updatedAt
+    }
+}
