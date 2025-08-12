@@ -12,11 +12,23 @@ public struct TimeWindow: Equatable, Sendable {
     public let start: Date
     public let end: Date
     public var duration: TimeInterval { end.timeIntervalSince(start) }
+    
+    /// Pick the best duration from allowed options that fits in this window.
+    func bestFit(minutes options: [Int]) -> Int {
+        let avail = Int(duration / 60)
+        return options.filter { $0 <= avail }.max() ?? options.min() ?? 15
+    }
 }
 
 /// High-level day period used for copy & heuristics.
 public enum DayPeriod: String, Sendable {
     case earlyMorning, morning, afternoon, evening, lateNight
+}
+
+public struct AITuning: Sendable, Equatable {
+    public var typicalFocusDurations: [Int] = [15, 25, 45]
+    public var minWindowMinutes: Int = 10
+    public init() {}
 }
 
 /// Snapshot of “what matters right now” for AI suggestions.
@@ -35,7 +47,7 @@ public struct AIContext: Sendable {
     public let overdueCount: Int
     public let dueTodayCount: Int
     public let highPriorityCount: Int
-    let topUnscheduledTasks: [UserTask]    // 0–5 tasks
+    public let topUnscheduledTasks: [UserTask]    // 0–5 tasks
     
     // Heuristics
     public let typicalStartTime: DateComponents?  // e.g., 9:00 for “start day” habits
@@ -47,4 +59,31 @@ public struct AIContext: Sendable {
 
     // Conflicts detected today (simple count for v1)
     public let conflictingItemsCount: Int
+}
+
+public extension AIContext {
+    /// First free window strictly after `now`.
+    var nextWindow: TimeWindow? {
+        freeWindows.first { $0.start > now }
+    }
+
+    /// Choose a reasonable focus duration for the next window from allowed options.
+    func bestFocusDuration(tuning: AITuning = .init()) -> Int {
+        guard let w = nextWindow else { return tuning.typicalFocusDurations.first ?? 15 }
+        return w.bestFit(minutes: tuning.typicalFocusDurations)
+    }
+}
+
+// Convenience over context to pick candidate tasks
+public extension AIContext {
+    /// Top ranked candidates from your snapshot's `topUnscheduledTasks`.
+    /// If you keep `topUnscheduledTasks` internal, expose a public getter or mirror it into this extension.
+    var rankedCandidates: [UserTask] {
+        TaskScorer.rank(topUnscheduledTasks, now: now)
+    }
+
+    /// Best candidate for the next window (simple version; you can refine with estimates later).
+    var bestCandidateForNextWindow: UserTask? {
+        rankedCandidates.first
+    }
 }

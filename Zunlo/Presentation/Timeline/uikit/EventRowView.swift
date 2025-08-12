@@ -100,6 +100,7 @@ class EventRowView: UIView {
     
     private func setupTheme() {
         backgroundColor = .clear
+        card.borderColor = UIColor(Color.theme.border)
         colorIndicator.backgroundColor = .gray
         titleLabel.textColor = UIColor(Color.theme.text)
         timeLabel.textColor = UIColor(Color.theme.secondaryText)
@@ -127,7 +128,6 @@ class EventRowView: UIView {
         colorIndicator.backgroundColor = color
         overrideIcon.isHidden = !occurrence.isOverride
         
-        card.borderColor = UIColor(Color.theme.disabled)
         card.fillColor = color.withAlphaComponent(0.3)
     }
 }

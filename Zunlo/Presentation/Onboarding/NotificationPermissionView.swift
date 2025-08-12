@@ -24,6 +24,7 @@ struct NotificationPermissionView: View {
             }
             .themedSecondaryButton()
         }
+        .defaultBackground()
         .padding()
     }
 }

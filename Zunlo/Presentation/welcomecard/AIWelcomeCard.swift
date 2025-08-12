@@ -37,28 +37,33 @@ private struct CardContent: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 12) {
-                Text(suggestion.title).font(.title3.bold())
-                Text(suggestion.detail).font(.subheadline).foregroundStyle(.secondary)
+                Text(suggestion.title)
+                    .themedBody()
+                Text(suggestion.detail)
+                    .themedCallout()
                 
                 // 1–3 CTAs
                 HStack(spacing: 8) {
                     ForEach(suggestion.ctas) { cta in
                         Button(cta.title) { cta.perform() }
-                            .buttonStyle(.borderedProminent)
-                            .clipShape(Capsule())
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 10)
+                            .background(Color.theme.accent)
+                            .foregroundColor(.white)
+                            .font(AppFontStyle.caption.font())
+                            .cornerRadius(8)
                     }
                 }
                 
                 Button("Why this?") { showWhy = true }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .themedFootnote()
             }
             Spacer()
         }
         .sheet(isPresented: $showWhy) {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Why this suggestion").font(.headline)
-                Text(suggestion.reason).font(.body)
+                Text("Why this suggestion").themedHeadline()
+                Text(suggestion.reason).themedBody()
                 Spacer()
             }
             .padding()
@@ -69,10 +74,10 @@ private struct CardContent: View {
 private struct EmptyStateCard: View {
     var body: some View {
         VStack(spacing: 8) {
-            Text("All set for now ✨").font(.headline)
+            Text("All set for now ✨")
+                .themedHeadline()
             Text("I’ll surface smart suggestions as your day evolves.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .themedBody()
         }
     }
 }

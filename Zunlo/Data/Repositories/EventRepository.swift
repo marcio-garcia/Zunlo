@@ -68,7 +68,7 @@ final class EventRepository {
         }
     }
     
-    func fetchLocalOcc(for userId: UUID) async throws -> [EventOccurrence] {
+    func fetchLocalOcc(for userId: UUID?) async throws -> [EventOccurrence] {
         do {
             let occurrences = try await eventLocalStore.fetchOccurrences(for: userId)
             let occ = occurrences.map { EventOccurrence(remote: $0) }

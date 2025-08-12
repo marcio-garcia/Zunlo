@@ -38,6 +38,7 @@ struct RootView: View {
                 }
             }
         }
+        .defaultBackground()
         .animation(.easeInOut, value: authManager.state)
         .transition(.opacity)
         .task {

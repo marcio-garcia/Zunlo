@@ -19,6 +19,7 @@ struct WelcomeView: View {
             Button("Get Started", action: onContinue)
                 .themedSecondaryButton()
         }
+        .defaultBackground()
         .padding()
     }
 }

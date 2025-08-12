@@ -10,6 +10,12 @@ import RealmSwift
 
 final class RealmEventLocalStore: EventLocalStore {
 
+    var authManager: AuthManager
+    
+    init(authManager: AuthManager) {
+        self.authManager = authManager
+    }
+    
     func fetchAll() async throws -> [Event] {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
@@ -74,13 +80,25 @@ final class RealmEventLocalStore: EventLocalStore {
 extension RealmEventLocalStore {
     // MARK: - Aggregated local fetch that mirrors the remote payload
 
-    func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrenceResponse] {
+    func fetchOccurrences(for userId: UUID?) async throws -> [EventOccurrenceResponse] {
         try await Task.detached(priority: .background) {
+            
+            var id: UUID
+            if let userId {
+                id = userId
+            } else if let uid = self.authManager.user?.id {
+                id = uid
+            } else {
+                throw StoreError.invalidData(
+                    "User must be either authenticated or id passed as parameter!"
+                )
+            }
+            
             let realm = try Realm()
 
             // 1) Events (optionally filter by user), ordered like the server
             var eventsResults = realm.objects(EventLocal.self)
-            eventsResults = eventsResults.where { $0.userId == userId }
+            eventsResults = eventsResults.where { $0.userId == id }
 
             eventsResults = eventsResults
                 .sorted(byKeyPath: "startDate", ascending: true)

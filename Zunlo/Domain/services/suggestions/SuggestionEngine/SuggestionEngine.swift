@@ -130,15 +130,20 @@ final class SuggestionEngine: EventSuggestionEngine {
         guard !ranges.isEmpty else { return [] }
 
         // TODO: replace with a ranged fetch. For now, fetchAll + clamp.
-        let events = (try? await eventFetcher.fetchOccurrences()) ?? []
+        let events = (try? await eventFetcher.fetchLocalOcc(for: nil)) ?? []
+        
+        let today = Date().startOfDay
+        guard let tomorrow = Calendar.appDefault.date(byAdding: .day, value: 1, to: today) else { return [] }
+        
+        let occurrences = (try? EventOccurrenceService.generate(rawOccurrences: events, in: today...tomorrow)) ?? []
 
         // Bound for open-ended events just to avoid huge spans; UTC calendar recommended.
         let utcDayEnd = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date))!
 
         var raw: [BusyInterval] = []
-        raw.reserveCapacity(events.count)
+        raw.reserveCapacity(occurrences.count)
 
-        for e in events {
+        for e in occurrences {
             let s = e.startDate.addingTimeInterval(-policy.padBefore)
             let eEnd = (e.endDate ?? utcDayEnd).addingTimeInterval(policy.padAfter)
             let bi = BusyInterval(start: s, end: eEnd)

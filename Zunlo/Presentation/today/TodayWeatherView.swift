@@ -32,6 +32,8 @@ struct TodayWeatherView: View {
             }
             .themedCard(blurBackground: true)
         }
+        .redacted(reason: weather == nil ? .placeholder : [])
+        .shimmer(active: weather == nil, speed: 1.0)
     }
     
     private var description: String {

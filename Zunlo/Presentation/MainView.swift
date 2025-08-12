@@ -74,9 +74,9 @@ struct MainView: View {
                     .padding(.horizontal, 16)
                 }
                 .frame(height: 50)
-                .defaultBackground()
                 .onChange(of: geo.size.width) { _, newWidth in viewWidth = newWidth }
             }
+            .defaultBackground()
         }
     }
 }

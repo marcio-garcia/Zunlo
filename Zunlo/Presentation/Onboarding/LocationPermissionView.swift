@@ -37,6 +37,7 @@ struct LocationPermissionView: View {
             }
             .themedSecondaryButton()
         }
+        .defaultBackground()
         .padding()
     }
 }

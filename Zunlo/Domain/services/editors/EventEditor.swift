@@ -75,7 +75,7 @@ final class EventEditor: EventEditorService {
             color: input.color,
             reminderTriggers: input.reminderTriggers
         )
-        try await repo.update(updated)
+        let _ = try await repo.update(updated)
 
         if input.isRecurring {
             let rule = RecurrenceRule(

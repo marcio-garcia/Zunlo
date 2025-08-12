@@ -28,10 +28,14 @@ struct OnboardingView: View {
         case .notifications:
             NotificationPermissionView(pushService: appState.pushNotificationService!) { step = .done }
         case .done:
-            ProgressView("Finishing setup…")
-                .onAppear {
-                    onFinish()
-                }
+            VStack {
+                ProgressView("Finishing setup…")
+                    .onAppear {
+                        onFinish()
+                    }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .defaultBackground()
         }
     }
 }

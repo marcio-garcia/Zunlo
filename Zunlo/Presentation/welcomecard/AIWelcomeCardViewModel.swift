@@ -13,6 +13,7 @@ public final class AIWelcomeCardViewModel: ObservableObject {
     @Published public private(set) var isLoading = false
 
     private let time: TimeProvider
+    private let policyProvider: SuggestionPolicyProvider
     private let tasksEngine: TaskSuggestionEngine
     private let eventsEngine: EventSuggestionEngine
     private let weather: WeatherProvider?
@@ -21,12 +22,14 @@ public final class AIWelcomeCardViewModel: ObservableObject {
 
     init(
         time: TimeProvider,
+        policyProvider: SuggestionPolicyProvider,
         tasksEngine: TaskSuggestionEngine,
         eventsEngine: EventSuggestionEngine,
         weather: WeatherProvider?,
         suggesters: [AISuggester] = [GapPlanner(), OverdueTriage(), SmartRescheduler(), QuickAddSuggester()]
     ) {
         self.time = time
+        self.policyProvider = policyProvider
         self.tasksEngine = tasksEngine
         self.eventsEngine = eventsEngine
         self.weather = weather
@@ -36,7 +39,13 @@ public final class AIWelcomeCardViewModel: ObservableObject {
     public func load() {
         isLoading = true
         Task {
-            let ctx = await AIContextBuilder.build(time: time, tasks: tasksEngine, events: eventsEngine, weather: weather)
+            let ctx = await AIContextBuilder.build(
+                time: time,
+                policyProvider: policyProvider,
+                tasks: tasksEngine,
+                events: eventsEngine,
+                weather: weather
+            )
             let produced = suggesters.compactMap { $0.suggest(context: ctx) }
             // Simple rank: higher score first, tie-break by telemetry key for stability
             let ranked = produced.sorted { ($0.score, $0.telemetryKey) > ($1.score, $1.telemetryKey) }

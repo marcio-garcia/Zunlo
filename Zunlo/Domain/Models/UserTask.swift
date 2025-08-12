@@ -26,10 +26,18 @@ enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
         case .low: return String(localized: "low")
         }
     }
+    
+    var weight: Int {
+        switch self {
+        case .high: return 3
+        case .medium: return 2
+        case .low: return 1
+        }
+    }
 }
 
-struct UserTask: Identifiable, Codable, Hashable {
-    let id: UUID?
+public struct UserTask: Identifiable, Codable, Hashable, Sendable {
+    public let id: UUID?
     let userId: UUID?
     var title: String
     var notes: String?
@@ -41,6 +49,10 @@ struct UserTask: Identifiable, Codable, Hashable {
     var parentEventId: UUID?
     var tags: [Tag]
     var reminderTriggers: [ReminderTrigger]?
+    
+    var isActionable: Bool {
+        !isCompleted && parentEventId == nil
+    }
     
     internal init(id: UUID?,
                   userId: UUID? = nil,

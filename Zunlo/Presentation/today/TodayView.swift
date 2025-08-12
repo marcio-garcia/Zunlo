@@ -82,17 +82,17 @@ struct TodayView: View {
                         
                         ScrollView(.vertical) {
                             VStack(alignment: .leading, spacing: 24) {
+                                TodayWeatherView(weather: viewModel.weather, greeting: viewModel.greeting)
+
                                 AIWelcomeCard(
                                     vm: AIWelcomeCardViewModel(
                                         time: SystemTimeProvider(),
+                                        policyProvider: policyProvider,
                                         tasksEngine: appState.userTaskRepository!,
                                         eventsEngine: appState.suggestionEngine!,
                                         weather: WeatherService.shared
                                     )
                                 )
-                                TodayWeatherView(weather: viewModel.weather, greeting: viewModel.greeting)
-                                    .redacted(reason: viewModel.weather == nil ? .placeholder : [])
-                                    .shimmer(active: viewModel.weather == nil, speed: 1.0)
                                 
                                 if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
                                     showBannerSection
@@ -156,7 +156,7 @@ struct TodayView: View {
                         }
                         
                         VStack(spacing: 0) {
-                            ToolbarView(blurStyle: Theme.isDarkMode ? .dark : .light) {
+                            ToolbarView(blurStyle: .systemUltraThinMaterial /*Theme.isDarkMode ? .dark : .light*/) {
                                 Button(action: { nav.showSheet(.settings, for: viewID) }) {
                                     Image(systemName: "slider.horizontal.3")
                                         .font(.system(size: 22, weight: .regular))

@@ -22,7 +22,7 @@ final class CalendarTopBarView: UIView {
     private let todayButton = UIButton(type: .system)
     private let addButton = UIButton(type: .system)
     private let bottomSeparator = UIView()
-    private let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
+    private let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
 
     private var titleCenterXConstraint: NSLayoutConstraint!
     
@@ -57,7 +57,7 @@ final class CalendarTopBarView: UIView {
 
     // MARK: - Private setup
     private func setupView() {
-        blurView.effect = UIBlurEffect(style: traitCollection.userInterfaceStyle == .dark ? .dark : .light)
+//        blurView.effect = UIBlurEffect(style: traitCollection.userInterfaceStyle == .dark ? .dark : .light)
         
         var closeConfig = UIButton.Configuration.plain()
         closeConfig.image = UIImage(systemName: "chevron.left")
@@ -154,7 +154,7 @@ final class CalendarTopBarView: UIView {
     }
 
     private func setupTheme() {
-        backgroundColor = UIColor(Color.theme.background)
+        backgroundColor = .clear
         titleLabel.textColor = UIColor(Color.theme.text)
         bottomSeparator.backgroundColor = UIColor.separator.withAlphaComponent(0.1)
     }

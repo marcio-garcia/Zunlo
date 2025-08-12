@@ -10,6 +10,7 @@ import Foundation
 
 final class FakeEventFetcher: EventFetcherService {
     
+    
     var events: [EventOccurrence]
     
     init(_ events: [EventOccurrence]) {
@@ -20,7 +21,7 @@ final class FakeEventFetcher: EventFetcherService {
         return events
     }
     
-    func fetchLocalOcc(for userId: UUID) async throws -> [Zunlo.EventOccurrence] {
+    func fetchLocalOcc(for userId: UUID?) async throws -> [Zunlo.EventOccurrence] {
         return events
     }
 }

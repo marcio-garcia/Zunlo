@@ -81,7 +81,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
             let _ = try await taskFetcher.fetchTasks()
             
             let eventFetcher = EventFetcher(repo: eventRepo)
-            let occurrences = try await eventFetcher.fetchOccurrences()
+            let _ = try await eventFetcher.fetchOccurrences()
             
         } catch {
             await errorHandler.handle(error)
