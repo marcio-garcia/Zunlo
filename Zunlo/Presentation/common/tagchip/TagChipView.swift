@@ -11,14 +11,15 @@ struct TagChipView: View {
     let tag: Tag
     let showDelete: Bool
     let selectable: Bool
+    let type: ChipType
     @Binding var tags: [Tag]
-
+    
     var body: some View {
         HStack(spacing: 6) {
             Text(tag.text)
-                .font(AppFontStyle.strongCaption.font())
+                .font(type.font)
                 .foregroundColor(tag.selected ? .white : Color.theme.text)
-                .padding(.vertical, 6)
+                .padding(.vertical, type.verticalPadding)
 
             if showDelete {
                 Button {
@@ -51,6 +52,25 @@ struct TagChipView: View {
     private func toggleSelection() {
         if let index = tags.firstIndex(of: tag) {
             tags[index].selected.toggle()
+        }
+    }
+    
+    enum ChipType {
+        case large
+        case small
+        
+        var font: Font {
+            switch self {
+            case .large: AppFontStyle.strongCaption.font()
+            case .small: AppFontStyle.footnote.font()
+            }
+        }
+        
+        var verticalPadding: Double {
+            switch self {
+            case .large: 6
+            case .small: 4
+            }
         }
     }
 }

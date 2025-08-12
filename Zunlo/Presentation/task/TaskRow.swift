@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TaskRow: View {
     var task: UserTask
+    var chipType: TagChipView.ChipType = .large
     var onToggle: () -> Void
     var onTap: () -> Void
 
@@ -57,13 +58,9 @@ struct TaskRow: View {
             if !task.tags.isEmpty {
                 TagChipListView(
                     tags: Binding(get: { task.tags }, set: { newValue in }),
-                    mode: .readonly(false)
+                    mode: .readonly(false),
+                    chipType: chipType
                 )
-//                HStack(spacing: 2) {
-//                    ForEach(task.tags, id: \.self) { tag in
-//                        tagCapsuleView(for: tag)
-//                    }
-//                }
             }
         }
         .contentShape(Rectangle())
@@ -71,15 +68,5 @@ struct TaskRow: View {
             onTap()
         }
     }
-    
-//    func tagCapsuleView(for tag: String) -> some View {
-//        Text(tag)
-//            .padding(.horizontal, 8)
-//            .padding(.vertical, 4)
-//            .foregroundStyle(Color.theme.text)
-//            .background(Theme.highlightColor(for: tag))
-//            .clipShape(Capsule())
-//            .themedCaption()
-//    }
 }
 

@@ -10,12 +10,13 @@ import SwiftUI
 struct TagChipListView: View {
     @Binding var tags: [Tag]
     var mode: Mode = .readonly(true)
+    var chipType: TagChipView.ChipType = .large
     var onTagsChanged: (([Tag]) async -> Void)? = nil
     var allPossibleTags: [String] = [] // Autocomplete pool
 
     @State private var newTagText: String = ""
     @State private var shakeInput: Bool = false
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
@@ -25,6 +26,7 @@ struct TagChipListView: View {
                             tag: tag,
                             showDelete: mode == .editable,
                             selectable: isSelectable(mode),
+                            type: chipType,
                             tags: $tags
                         )
                     }

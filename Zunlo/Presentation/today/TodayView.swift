@@ -339,7 +339,7 @@ struct TodayView: View {
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(viewModel.todayTasks) { task in
-                            TaskRow(task: task) {
+                            TaskRow(task: task, chipType: .small) {
                                 viewModel.toggleTaskCompletion(for: task)
                             } onTap: {
                                 guard let id = task.id else { return }
