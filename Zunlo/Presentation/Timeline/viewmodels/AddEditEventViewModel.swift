@@ -229,6 +229,6 @@ final class AddEditEventViewModel: ObservableObject {
     }
     
     func updateEndDate() {
-        endDate = Calendar.current.date(byAdding: .hour, value: 1, to: startDate) ?? startDate
+        endDate = Calendar.appDefault.date(byAdding: .hour, value: 1, to: startDate) ?? startDate
     }
 }

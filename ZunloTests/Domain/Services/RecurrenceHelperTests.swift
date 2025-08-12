@@ -9,7 +9,7 @@ import XCTest
 @testable import Zunlo
 
 final class RecurrenceHelperTests: XCTestCase {
-    let calendar = Calendar.current
+    let calendar = Calendar.appDefault
 
     func date(_ y: Int, _ m: Int, _ d: Int, _ h: Int = 9, _ min: Int = 0) -> Date {
         var comps = DateComponents()

@@ -10,8 +10,8 @@ import Foundation
 public enum AIContextBuilder {
     static func build(
         time: TimeProvider,
-        tasks: TaskRepo,
-        events: EventRepo,
+        tasks: TaskSuggestionEngine,
+        events: EventSuggestionEngine,
         weather: WeatherProvider?
     ) async -> AIContext {
         let now = time.now
@@ -19,13 +19,15 @@ public enum AIContextBuilder {
         let dayStart = cal.startOfDay(for: now)
         let dayEnd = cal.date(bySettingHour: 23, minute: 59, second: 59, of: dayStart)!
 
+        let policy = SuggestionPolicy.defaultForApp()
+        
         async let overdue = tasks.overdueCount(on: now)
         async let dueToday = tasks.dueTodayCount(on: now)
         async let highPrio = tasks.highPriorityCount(on: now)
         async let topUnscheduled = tasks.topUnscheduled(limit: 5)
-        async let windows = events.freeWindows(on: now, minimumMinutes: 10)
+        async let windows = events.freeWindows(on: now, minimumMinutes: 30, policy: policy)
         async let nextStart = events.nextEventStart(after: now, on: now)
-        async let conflicts = events.conflictingItemsCount(on: now)
+        async let conflicts = events.conflictingItemsCount(on: now, policy: policy)
         async let typicalStart = tasks.typicalStartTimeComponents()
 
         var weatherSummary: String? = nil

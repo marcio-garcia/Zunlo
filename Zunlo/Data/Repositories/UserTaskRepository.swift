@@ -12,7 +12,7 @@ final class UserTaskRepository {
     private let localStore: UserTaskLocalStore
     private let remoteStore: UserTaskRemoteStore
     private let reminderScheduler: ReminderScheduler<UserTask>
-    private let calendar = Calendar.current
+    private let calendar = Calendar.appDefault
 
     var lastTaskAction = Observable<LastTaskAction>(.none)
     
@@ -85,7 +85,7 @@ final class UserTaskRepository {
     }
 }
 
-extension UserTaskRepository: TaskRepo {
+extension UserTaskRepository: TaskSuggestionEngine {
 
     /// Count of open tasks where dueDate is strictly before "now".
     public func overdueCount(on date: Date) async -> Int {

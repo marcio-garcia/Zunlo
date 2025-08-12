@@ -34,6 +34,10 @@ struct SettingsView: View {
                         }
                     }
 #endif
+                    RoundedSection(title: "Availability") {
+                        AvailabilitySettingsSection()
+                    }
+                    
                     RoundedSection(title: "Account") {
                         HStack {
                             if authManager.isAnonymous {

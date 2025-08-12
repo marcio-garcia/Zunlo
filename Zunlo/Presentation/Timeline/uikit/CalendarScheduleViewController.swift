@@ -276,7 +276,7 @@ extension CalendarScheduleViewController {
     }
     
     func groupEventsByMonth2(events: [EventOccurrence]) -> [Date: [EventOccurrence]] {
-        let calendar = Calendar.current
+        let calendar = Calendar.appDefault
         
         let groupedByMonth = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
             // Get the start of the month (year and month)
@@ -286,7 +286,7 @@ extension CalendarScheduleViewController {
     }
         
 //    func groupEventsByMonth(events: [EventOccurrence]) -> [CalendarItem] {
-//        let calendar = Calendar.current
+//        let calendar = Calendar.appDefault
 //        var months: [CalendarItem] = []
 //        
 //        // Group events by month
@@ -319,7 +319,7 @@ extension CalendarScheduleViewController {
 //    }
 
     func groupEventsByDay(events: [EventOccurrence]) -> [Date: [EventOccurrence]] {
-        let calendar = Calendar.current
+        let calendar = Calendar.appDefault
         let groupedByDay = Dictionary(grouping: events) { (event: EventOccurrence) -> Date in
             // Get the start of the day (ignoring time for grouping purposes)
             calendar.startOfDay(for: event.startDate)
@@ -332,7 +332,7 @@ extension CalendarScheduleViewController {
 extension CalendarScheduleViewController {
     
     func scrollTo(date: Date, animated: Bool = false, extraOffset: CGFloat = 56) {
-        let targetDate = Calendar.current.startOfDay(for: date)
+        let targetDate = Calendar.appDefault.startOfDay(for: date)
         let item = CalendarItem.day(targetDate)
         
         let snapshot = dataSource.snapshot()

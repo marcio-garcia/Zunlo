@@ -69,14 +69,14 @@ class CalendarScheduleViewModel: ObservableObject {
     }
     
     private func defaultDateRange() -> ClosedRange<Date> {
-        let cal = Calendar.current
+        let cal = Calendar.appDefault
         let start = cal.date(byAdding: .month, value: -12, to: Date())!
         let end = cal.date(byAdding: .month, value: 12, to: Date())!
         return start...end
     }
     
     func groupOccurrencesByMonthAndDay() -> [Date: [Date: [EventOccurrence]]] {
-        let calendar = Calendar.current
+        let calendar = Calendar.appDefault
 
 //        let allDays = Self.allDays(in: visibleRange, calendar: calendar)
         let grouped = Dictionary(grouping: eventOccurrences) { occurrence in
@@ -142,7 +142,7 @@ extension CalendarScheduleViewModel {
     }
     
     func expandVisibleRange(toEarlier: Bool) {
-        let cal = Calendar.current
+        let cal = Calendar.appDefault
         if toEarlier {
             let newStart = cal.date(byAdding: .month, value: -6, to: visibleRange.lowerBound)!
             itemDateToScrollTo = visibleRange.lowerBound
@@ -160,14 +160,14 @@ extension CalendarScheduleViewModel {
 extension CalendarScheduleViewModel {
     @MainActor
     func fetchWeather(for date: Date, completion: @escaping (WeatherInfo?) -> Void) {
-        let normalizedDate = Calendar.current.startOfDay(for: date)
+        let normalizedDate = Calendar.appDefault.startOfDay(for: date)
 
         if let cached = weatherCache.get(for: normalizedDate) {
             completion(cached)
             return
         }
 
-        guard Calendar.current.isDateInToday(date) else {
+        guard Calendar.appDefault.isDateInToday(date) else {
             completion(nil)
             return
         }
@@ -197,7 +197,7 @@ extension CalendarScheduleViewModel {
 
 extension CalendarScheduleViewModel {
     private func season(by date: Date) -> Season {
-        let month = Calendar.current.component(.month, from: date)
+        let month = Calendar.appDefault.component(.month, from: date)
         return season(for: month,
                       hemisphere: hemisphere(for: locationService.coordinate?.latitude ?? 40))
     }

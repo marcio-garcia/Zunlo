@@ -32,7 +32,7 @@ final class WeatherCache {
     }
 
     private func cacheKey(for date: Date) -> String {
-        let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        let components = Calendar.appDefault.dateComponents([.year, .month, .day], from: date)
         return "weather-\(components.year!)-\(components.month!)-\(components.day!)"
     }
 

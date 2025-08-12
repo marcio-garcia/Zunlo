@@ -45,7 +45,7 @@ struct WeekdayPicker: View {
         // Iterate through each day of the week (1 to 7, corresponding to Sunday to Saturday)
         for dayIndex in 1...7 {
             let dateComponents = DateComponents(calendar: .current, weekday: dayIndex) // Weekday 1 = Sunday
-            if let date = Calendar.current.date(from: dateComponents) {
+            if let date = Calendar.appDefault.date(from: dateComponents) {
                 let weekdayName = dateFormatter.string(from: date)
                 weekdayNames.append(weekdayName)
             }

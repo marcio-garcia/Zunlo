@@ -19,6 +19,7 @@ struct TodayView: View {
     @EnvironmentObject var nav: AppNav
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     @EnvironmentObject var upgradeReminderManager: UpgradeReminderManager
+    @EnvironmentObject var policyProvider: SuggestionPolicyProvider
     
     @AppStorage("firstLaunchTimestamp") private var firstLaunchTimestamp: Double = 0
     @AppStorage("sessionCount") private var sessionCount = 0
@@ -84,8 +85,8 @@ struct TodayView: View {
                                 AIWelcomeCard(
                                     vm: AIWelcomeCardViewModel(
                                         time: SystemTimeProvider(),
-                                        tasks: appState.userTaskRepository!,
-                                        events: appState.eventRepository!,
+                                        tasksEngine: appState.userTaskRepository!,
+                                        eventsEngine: appState.suggestionEngine!,
                                         weather: WeatherService.shared
                                     )
                                 )
@@ -383,7 +384,7 @@ struct TodayView: View {
     }
     
     private var backgroundImageName: String {
-        let hour = Calendar.current.component(.hour, from: Date())
+        let hour = Calendar.appDefault.component(.hour, from: Date())
         let isDay = (6...17).contains(hour)
         
         guard let weather = viewModel.weather else { return "bg_default"}

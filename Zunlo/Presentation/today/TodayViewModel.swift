@@ -69,7 +69,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         eventRepo.lastEventAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
             if case .fetch(let occ) = action {
                 let today = Date().startOfDay
-                guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else { return }
+                guard let tomorrow = Calendar.appDefault.date(byAdding: .day, value: 1, to: today) else { return }
                 self?.handleOccurrences(occ, in: today...tomorrow)
             }
         }
@@ -90,12 +90,12 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     
     func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
         do {
-            let today = Calendar.current.startOfDay(for: Date())
+            let today = Calendar.appDefault.startOfDay(for: Date())
             
             let eventsWithRecurringOcc = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
             
             let filtered = eventsWithRecurringOcc.filter {
-                Calendar.current.isDate($0.startDate, inSameDayAs: today)
+                Calendar.appDefault.isDate($0.startDate, inSameDayAs: today)
             }
             
             todayEvents = filtered
@@ -127,7 +127,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
     
     private func updateGreeting(date: Date = Date()) {
-        let hour = Calendar.current.component(.hour, from: date)
+        let hour = Calendar.appDefault.component(.hour, from: date)
         greeting = switch hour {
         case 5..<12: String(localized: "Good morning!")
         case 12..<17: String(localized: "Good afternoon!")

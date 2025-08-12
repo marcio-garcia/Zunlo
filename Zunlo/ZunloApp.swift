@@ -24,6 +24,7 @@ struct ZunloApp: App {
     @StateObject var upgradeReminderManager = UpgradeReminderManager()
     @StateObject var appSettings = AppSettings()
     @StateObject var appNavigationManager = AppNav()
+    @StateObject private var policyProvider = SuggestionPolicyProvider()
     @State private var deepLinkHandler: DeepLinkHandler?
     
     private let appState: AppState
@@ -64,6 +65,11 @@ struct ZunloApp: App {
         
         let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(), userId: nil)
         
+        let suggestionEngine = SuggestionEngine(
+            calendar: Calendar.appDefault,
+            eventFetcher: EventFetcher(repo: eventRepo)
+        )
+        
 //        let state = AppState(
 //            authManager: authManager,
 //            supabase: supabase,
@@ -85,6 +91,7 @@ struct ZunloApp: App {
         self.appState.eventRepository = eventRepo
         self.appState.userTaskRepository = taskRepo
         self.appState.chatRepository = chatRepo
+        self.appState.suggestionEngine = suggestionEngine
         
         firebase.configure()
         pushService.start()
@@ -100,6 +107,7 @@ struct ZunloApp: App {
                 .environmentObject(appState.locationService!)
                 .environmentObject(upgradeFlowManager)
                 .environmentObject(upgradeReminderManager)
+                .environmentObject(policyProvider)
                 .onAppear(perform: {
                     if deepLinkHandler == nil {
                         deepLinkHandler = DeepLinkHandler(navigationManager: appNavigationManager)

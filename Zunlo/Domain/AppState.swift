@@ -19,6 +19,7 @@ final class AppState {
     var locationService: LocationService?
     var pushNotificationService: PushNotificationService?
     var adManager: AdMobManager?
+    var suggestionEngine: SuggestionEngine?
     
     private init() {}
 }

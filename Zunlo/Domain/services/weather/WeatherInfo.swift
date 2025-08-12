@@ -48,7 +48,7 @@ extension UnitTemperature {
 
 extension WeatherCondition {
     func symbolName(for date: Date = Date()) -> String {
-        let hour = Calendar.current.component(.hour, from: date)
+        let hour = Calendar.appDefault.component(.hour, from: date)
         let isDaytime = (6...18).contains(hour)
 
         switch self {

@@ -43,7 +43,7 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
             content.userInfo = ["id": id.uuidString]
 
             let fireDate = dueDate.addingTimeInterval(-trigger.timeBeforeDue)
-            let components = Calendar.current.dateComponents(
+            let components = Calendar.appDefault.dateComponents(
                 [.year, .month, .day, .hour, .minute],
                 from: fireDate
             )

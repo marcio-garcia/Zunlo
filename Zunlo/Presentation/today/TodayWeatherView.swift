@@ -17,8 +17,10 @@ struct TodayWeatherView: View {
                 Text(greeting)
                     .themedSubtitle()
                 HStack {
-                    Image(systemName: weather?.condition.symbolName(for: Date()) ?? "")
-                        .themedSubtitle()
+                    if let symbolName = weather?.condition.symbolName(for: Date()) {
+                        Image(systemName: symbolName)
+                            .themedSubtitle()
+                    }
                     
                     Text("\(Int(weather?.measurement.value ?? 0))°")
                         .themedBody()
@@ -51,7 +53,7 @@ struct TodayWeatherView: View {
     
     private var backgroundImageName: String {
         if let weather = weather?.condition {
-            let hour = Calendar.current.component(.hour, from: Date())
+            let hour = Calendar.appDefault.component(.hour, from: Date())
             let isDay = (6...18).contains(hour)
             
             switch weather {
