@@ -39,6 +39,7 @@ class RecurrenceHelper {
         var dates: [Date] = []
         let interval = max(1, rule.interval)
         var date = start
+        let untilDate = rule.until?.startOfNextDay()
         var occurrences = 0
         while true {
             occurrences += 1
@@ -48,7 +49,7 @@ class RecurrenceHelper {
             if let count = rule.count, occurrences >= count { break }
             guard let next = calendar.date(byAdding: .day, value: interval, to: date) else { break }
             date = next
-            if let until = rule.until, date >= until { break }
+            if let until = untilDate, date >= until { break }
             if rule.count == nil, date > range.upperBound { break }
         }
         return dates.sorted()
@@ -64,6 +65,7 @@ class RecurrenceHelper {
         let interval = max(1, rule.interval)
         let weekdays = rule.byWeekday ?? [calendar.component(.weekday, from: start)]
         var weekStart = calendar.dateInterval(of: .weekOfYear, for: start)!.start
+        let untilDate = rule.until?.startOfNextDay()
         var occurrences = 0
         while true {
             for weekday in weekdays.sorted() {
@@ -83,14 +85,54 @@ class RecurrenceHelper {
                         }
                     }
                     if let count = rule.count, occurrences >= count { return dates.sorted() }
-                    if let until = rule.until, nextDate >= until { return dates.sorted() }
+                    if let until = untilDate, nextDate >= until { return dates.sorted() }
                 }
             }
             if let count = rule.count, occurrences >= count { break }
             guard let next = calendar.date(byAdding: .weekOfYear, value: interval, to: weekStart) else { break }
             weekStart = next
-            if let until = rule.until, weekStart >= until { break }
+            if let until = untilDate, weekStart >= until { break }
             if rule.count == nil, weekStart > range.upperBound { break }
+        }
+        return dates.sorted()
+    }
+
+    private static func generateMonthlyRecurrence(
+        start: Date,
+        rule: RecurrenceRule,
+        within range: ClosedRange<Date>,
+        calendar: Calendar
+    ) -> [Date] {
+        var dates: [Date] = [start]
+        let interval = max(1, rule.interval)
+        let monthdays = rule.byMonthday ?? [calendar.component(.day, from: start)]
+        var date = start
+        let untilDate = rule.until?.startOfNextDay()
+        var occurrences = 0
+        while true {
+            for day in monthdays.sorted() {
+                var comps = calendar.dateComponents([.year, .month], from: date)
+                comps.day = day
+                comps.hour = calendar.component(.hour, from: start)
+                comps.minute = calendar.component(.minute, from: start)
+                if let nextDate = calendar.date(from: comps),
+                   calendar.component(.month, from: nextDate) == comps.month,
+                   calendar.component(.year, from: nextDate) == comps.year,
+                   nextDate >= start
+                {
+                    occurrences += 1
+                    if nextDate >= range.lowerBound && nextDate <= range.upperBound {
+                        dates.append(nextDate)
+                    }
+                    if let count = rule.count, occurrences >= count { return dates.sorted() }
+                    if let until = untilDate, nextDate >= until { return dates.sorted() }
+                }
+            }
+            if let count = rule.count, occurrences >= count { break }
+            guard let next = calendar.date(byAdding: .month, value: interval, to: date) else { break }
+            date = next
+            if let until = untilDate, date >= until { break }
+            if rule.count == nil, date > range.upperBound { break }
         }
         return dates.sorted()
     }
@@ -128,44 +170,5 @@ class RecurrenceHelper {
         }
         
         return occurrences
-    }
-
-    private static func generateMonthlyRecurrence(
-        start: Date,
-        rule: RecurrenceRule,
-        within range: ClosedRange<Date>,
-        calendar: Calendar
-    ) -> [Date] {
-        var dates: [Date] = [start]
-        let interval = max(1, rule.interval)
-        let monthdays = rule.byMonthday ?? [calendar.component(.day, from: start)]
-        var date = start
-        var occurrences = 0
-        while true {
-            for day in monthdays.sorted() {
-                var comps = calendar.dateComponents([.year, .month], from: date)
-                comps.day = day
-                comps.hour = calendar.component(.hour, from: start)
-                comps.minute = calendar.component(.minute, from: start)
-                if let nextDate = calendar.date(from: comps),
-                   calendar.component(.month, from: nextDate) == comps.month,
-                   calendar.component(.year, from: nextDate) == comps.year,
-                   nextDate >= start
-                {
-                    occurrences += 1
-                    if nextDate >= range.lowerBound && nextDate <= range.upperBound {
-                        dates.append(nextDate)
-                    }
-                    if let count = rule.count, occurrences >= count { return dates.sorted() }
-                    if let until = rule.until, nextDate >= until { return dates.sorted() }
-                }
-            }
-            if let count = rule.count, occurrences >= count { break }
-            guard let next = calendar.date(byAdding: .month, value: interval, to: date) else { break }
-            date = next
-            if let until = rule.until, date >= until { break }
-            if rule.count == nil, date > range.upperBound { break }
-        }
-        return dates.sorted()
     }
 }
