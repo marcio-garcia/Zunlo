@@ -165,13 +165,12 @@ class NetworkService {
 
 
     private func encode<T: Encodable>(_ object: T) throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
+        let encoder = JSONEncoder.supabase()
         return try encoder.encode(object)
     }
 
     private func decode<T: Decodable>(_ data: Data) throws -> T {
-        let decoder = JSONDecoder()
+        let decoder = JSONDecoder.supabase()
         return try decoder.decode(T.self, from: data)
     }
 

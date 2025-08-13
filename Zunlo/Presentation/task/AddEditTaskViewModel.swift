@@ -43,7 +43,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     var id: String {
         switch mode {
         case .add: return "add"
-        case .edit(let task): return task.id == nil ? "edit-nil" : "edit-\(task.id!)"
+        case .edit(let task): return "edit-\(task.id)"
         }
     }
 
@@ -129,7 +129,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         
         if case .edit(let userTask) = mode {
             do {
-                try await taskEditor.delete(makeInput(), id: userTask.id!)
+                try await taskEditor.delete(makeInput(), id: userTask.id)
                 isProcessing = false
             } catch {
                 print("error: \(error.localizedDescription)")

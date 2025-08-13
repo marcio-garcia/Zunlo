@@ -32,7 +32,7 @@ final class TaskEditor: TaskEditorService {
     private func makeUserTask(_ input: AddTaskInput, id: UUID?) -> UserTask {
         let now = Date()
         let task = UserTask(
-            id: id,
+            id: id ?? UUID(),
             userId: nil, // Backend fills this
             title: input.title,
             notes: input.notes.nilIfEmpty,

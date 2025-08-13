@@ -28,6 +28,18 @@ final class RealmEventLocalStore: EventLocalStore {
         try await Task.detached(priority: .background) {
             let realm = try Realm()
             let event = EventLocal(remote: remoteEvent)
+            event.userId = self.authManager.user?.id
+            try realm.write {
+                realm.add(event, update: .all)
+            }
+        }.value
+    }
+
+    func save(_ event: Event) async throws {
+        try await Task.detached(priority: .background) {
+            let realm = try Realm()
+            var event = EventLocal(domain: event)
+            event.userId = self.authManager.user?.id
             try realm.write {
                 realm.add(event, update: .all)
             }
@@ -45,6 +57,18 @@ final class RealmEventLocalStore: EventLocalStore {
             }
         }.value
     }
+    
+    func update(_ event: Event) async throws {
+        // The safest: update by ID, copy fields over
+        let eventID = event.id
+        try await Task.detached(priority: .background) {
+            let realm = try Realm()
+            guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: eventID) else { return }
+            try realm.write {
+                existing.getUpdateFields(event)
+            }
+        }.value
+    }
 
     func delete(id: UUID) async throws {
         let eventID = id
@@ -52,19 +76,14 @@ final class RealmEventLocalStore: EventLocalStore {
             let realm = try Realm()
             guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: eventID) else { return }
             try realm.write {
-                realm.delete(existing)
+                existing.deletedAt = Date()
+                existing.needsSync = true
             }
         }.value
     }
 
     func deleteAll(for userId: UUID) async throws {
-        try await Task.detached(priority: .background) {
-            let realm = try Realm()
-            let events = realm.objects(EventLocal.self).filter("userId == %@", userId)
-            try realm.write {
-                realm.delete(events)
-            }
-        }.value
+
     }
     
     func deleteAll() async throws {

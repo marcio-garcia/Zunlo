@@ -9,7 +9,7 @@ import Foundation
 import UserNotifications
 
 protocol SchedulableReminderItem {
-    var id: UUID? { get }
+    var id: UUID { get }
     var title: String { get }
     var dueDateForReminder: Date? { get } // abstract due/reminder time
     var reminderTriggers: [ReminderTrigger]? { get }
@@ -29,8 +29,7 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
     init() {}
 
     func scheduleReminders(for item: T) {
-        guard let id = item.id,
-              let dueDate = item.dueDateForReminder,
+        guard let dueDate = item.dueDateForReminder,
               let triggers = item.reminderTriggers else { return }
 
         let center = UNUserNotificationCenter.current()
@@ -40,7 +39,7 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
             content.title = "Reminder"
             content.body = trigger.message ?? item.title
             content.sound = .default
-            content.userInfo = ["id": id.uuidString]
+            content.userInfo = ["id": item.id.uuidString]
 
             let fireDate = dueDate.addingTimeInterval(-trigger.timeBeforeDue)
             let components = Calendar.appDefault.dateComponents(
@@ -49,7 +48,7 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
             )
 
             let request = UNNotificationRequest(
-                identifier: makeNotificationId(id, index),
+                identifier: makeNotificationId(item.id, index),
                 content: content,
                 trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             )
@@ -65,10 +64,9 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
     }
 
     func cancelReminders(for item: T) {
-        guard let id = item.id,
-              let triggers = item.reminderTriggers else { return }
+        guard let triggers = item.reminderTriggers else { return }
 
-        cancelReminders(itemId: id, reminderTriggers: triggers)
+        cancelReminders(itemId: item.id, reminderTriggers: triggers)
     }
     
     func cancelReminders(itemId: UUID, reminderTriggers: [ReminderTrigger]) {

@@ -47,7 +47,7 @@ public struct AIContext: Sendable {
     public let overdueCount: Int
     public let dueTodayCount: Int
     public let highPriorityCount: Int
-    public let topUnscheduledTasks: [UserTask]    // 0–5 tasks
+    let topUnscheduledTasks: [UserTask]    // 0–5 tasks
     
     // Heuristics
     public let typicalStartTime: DateComponents?  // e.g., 9:00 for “start day” habits
@@ -75,7 +75,7 @@ public extension AIContext {
 }
 
 // Convenience over context to pick candidate tasks
-public extension AIContext {
+extension AIContext {
     /// Top ranked candidates from your snapshot's `topUnscheduledTasks`.
     /// If you keep `topUnscheduledTasks` internal, expose a public getter or mirror it into this extension.
     var rankedCandidates: [UserTask] {

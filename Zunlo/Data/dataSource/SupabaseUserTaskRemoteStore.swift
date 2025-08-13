@@ -44,22 +44,16 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
     func save(_ task: UserTaskRemote) async throws -> [UserTaskRemote] {
         // Only nil the ID if creating a new record and let Supabase/DB handle it
         var tk = task
-        tk.id = nil
         tk.userId = nil
         tk.createdAt = nil
         return try await database.insert(tk, into: tableName)
     }
 
     func update(_ task: UserTaskRemote) async throws -> [UserTaskRemote] {
-        guard let id = task.id?.uuidString else {
-            assertionFailure("SupabaseEventRemoteStore - update(_ rule:) - id == nil")
-            return []
-        }
         var tk = task
-        tk.id = nil
         tk.userId = nil
         tk.createdAt = nil
-        return try await database.update(tk, in: tableName, filter: ["id": "eq.\(id)"])
+        return try await database.update(tk, in: tableName, filter: ["id": "eq.\(task.id.uuidString)"])
     }
 
     func delete(_ id: UUID) async throws -> [UserTaskRemote] {

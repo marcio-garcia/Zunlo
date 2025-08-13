@@ -36,8 +36,8 @@ enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
     }
 }
 
-public struct UserTask: Identifiable, Codable, Hashable, Sendable {
-    public let id: UUID?
+struct UserTask: Identifiable, Codable, Hashable, Sendable {
+    let id: UUID
     let userId: UUID?
     var title: String
     var notes: String?
@@ -54,7 +54,7 @@ public struct UserTask: Identifiable, Codable, Hashable, Sendable {
         !isCompleted && parentEventId == nil
     }
     
-    internal init(id: UUID?,
+    internal init(id: UUID,
                   userId: UUID? = nil,
                   title: String,
                   notes: String? = nil,

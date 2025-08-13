@@ -65,9 +65,8 @@ struct TaskInboxView: View {
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
-                                    guard let id = task.id else { return }
                                     editableUserTask = task
-                                    nav.showSheet(.editTask(id), for: viewID)
+                                    nav.showSheet(.editTask(task.id), for: viewID)
                                 }
                             }
                             
@@ -77,9 +76,8 @@ struct TaskInboxView: View {
                                 TaskRow(task: task) {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
-                                    guard let id = task.id else { return }
                                     editableUserTask = task
-                                    nav.showSheet(.editTask(id), for: viewID)
+                                    nav.showSheet(.editTask(task.id), for: viewID)
                                 }
                             }
                         }

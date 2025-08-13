@@ -343,9 +343,8 @@ struct TodayView: View {
                             TaskRow(task: task, chipType: .small) {
                                 viewModel.toggleTaskCompletion(for: task)
                             } onTap: {
-                                guard let id = task.id else { return }
                                 editableUserTask = task
-                                nav.showSheet(.editTask(id), for: viewID)
+                                nav.showSheet(.editTask(task.id), for: viewID)
                             }
                         }
                     }

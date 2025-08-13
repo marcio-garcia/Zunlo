@@ -22,7 +22,7 @@ final class EventEditor: EventEditorService {
         }
         let now = clock()
         let newEvent = Event(
-            id: nil,
+            id: UUID(),
             userId: nil,
             title: input.title,
             description: input.notes?.nilIfEmpty,
@@ -33,17 +33,18 @@ final class EventEditor: EventEditorService {
             createdAt: now,
             updatedAt: now,
             color: input.color,
-            reminderTriggers: input.reminderTriggers
+            reminderTriggers: input.reminderTriggers,
+            needsSync: false
         )
 
         // Orchestrate
         let created = try await repo.save(newEvent)
-        guard let event = created.first, let eventID = event.id else { throw EventError.errorOnEventInsert }
+        guard let event = created.first else { throw EventError.errorOnEventInsert }
 
         if input.isRecurring {
             let rule = RecurrenceRule(
                 id: UUID(), // overriden by database
-                eventId: eventID,
+                eventId: event.id,
                 freq: input.recurrenceType!.rawValue,
                 interval: input.recurrenceInterval ?? 1,
                 byWeekday: input.byWeekday,
@@ -73,7 +74,8 @@ final class EventEditor: EventEditorService {
             createdAt: event.createdAt,
             updatedAt: now,
             color: input.color,
-            reminderTriggers: input.reminderTriggers
+            reminderTriggers: input.reminderTriggers,
+            needsSync: true
         )
         let _ = try await repo.update(updated)
 

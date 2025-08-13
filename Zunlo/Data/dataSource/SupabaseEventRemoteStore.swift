@@ -55,22 +55,16 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
     func save(_ event: EventRemote) async throws -> [EventRemote] {
         // Only nil the ID if creating a new record and let Supabase/DB handle it
         var ev = event
-        ev.id = nil
         ev.user_id = nil
         ev.created_at = nil
         return try await database.insert(ev, into: tableName)
     }
 
     func update(_ event: EventRemote) async throws -> [EventRemote] {
-        guard let id = event.id?.uuidString else {
-            assertionFailure("SupabaseEventRemoteStore - update(_ rule:) - id == nil")
-            return []
-        }
         var ev = event
-        ev.id = nil
         ev.user_id = nil
         ev.created_at = nil
-        return try await database.update(ev, in: tableName, filter: ["id": "eq.\(id)"])
+        return try await database.update(ev, in: tableName, filter: ["id": "eq.\(event.id.uuidString)"])
     }
 
     func delete(id: UUID) async throws -> [EventRemote] {

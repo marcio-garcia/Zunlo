@@ -45,12 +45,9 @@ final class UserTaskRepository {
     }
 
     func delete(_ task: UserTask) async throws {
-        guard let id = task.id else { return }
-        let deleted = try await remoteStore.delete(id)
+        let deleted = try await remoteStore.delete(task.id)
         for task in deleted {
-            if let id = task.id {
-                try await localStore.delete(id: id)
-            }
+            try await localStore.delete(id: task.id)
         }
         reminderScheduler.cancelReminders(for: task)
         lastTaskAction.value = .delete

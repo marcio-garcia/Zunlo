@@ -116,12 +116,11 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
 
     func toggleTaskCompletion(for task: UserTask) {
-        guard let id = task.id else { return }
         var updated = task
         updated.isCompleted.toggle()
         Task {
             let taskEditor = TaskEditor(repo: taskRepo)
-            try? await taskEditor.update(makeInput(task: updated), id: id)
+            try? await taskEditor.update(makeInput(task: updated), id: task.id)
             await fetchData()
         }
     }
