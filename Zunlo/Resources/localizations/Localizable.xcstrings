@@ -267,7 +267,14 @@
       }
     },
     "Day 8–20" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diurno 8-20"
+          }
+        }
+      }
     },
     "Debug Menu" : {
 
@@ -343,7 +350,14 @@
       }
     },
     "Early 7–15" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cedo 7-15"
+          }
+        }
+      }
     },
     "Edit" : {
       "localizations" : {
@@ -351,17 +365,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar"
-          }
-        }
-      }
-    },
-    "Edit all events" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editar todos os eventos"
           }
         }
       }
@@ -457,7 +460,14 @@
       }
     },
     "Ends next day (overnight window)." : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termina no próximo dia"
+          }
+        }
+      }
     },
     "Enter your email and we’ll send you a magic link to upgrade your account. No password needed." : {
       "localizations" : {
@@ -751,7 +761,14 @@
       }
     },
     "Night 22–6" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noturno 22-6"
+          }
+        }
+      }
     },
     "No Events Yet" : {
       "localizations" : {
@@ -1110,7 +1127,14 @@
       }
     },
     "Time Zone" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fuso horário"
+          }
+        }
+      }
     },
     "Title" : {
       "localizations" : {
@@ -1133,7 +1157,14 @@
       }
     },
     "Today in UTC" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoje em UTC"
+          }
+        }
+      }
     },
     "Type a message..." : {
       "localizations" : {
