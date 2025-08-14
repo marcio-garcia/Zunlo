@@ -483,3 +483,241 @@ actor DatabaseActor {
         try realm.write { realm.delete(realm.objects(ChatMessageLocal.self)) }
     }
 }
+
+extension DatabaseActor {
+
+    enum SplitSeriesError: Error, LocalizedError {
+        case eventNotFound
+        case unauthorized
+        case invalidSplitDate
+        var errorDescription: String? {
+            switch self {
+            case .eventNotFound:   return "Original event not found."
+            case .unauthorized:    return "Event not found or unauthorized."
+            case .invalidSplitDate:return "Could not compute cutoff date from splitDate."
+            }
+        }
+    }
+    
+    /// Split a recurring series at `splitDate`,
+    /// moving occurrences at/after `splitDate` to a brand-new event.
+    ///
+    /// Steps performed by the split:
+    /// - validates ownership,
+    /// - creates a new event (client-owned id),
+    /// - clones the recurrence rule (if any) to the new event,
+    /// - shortens the original rule’s until to (splitDate - 1 day) (only if NULL or greater),
+    /// - repoints overrides with occurrenceDate >= splitDate to the new event,
+    /// - stamps updatedAt = Date() and marks locals as needsSync = true so your next push sends all changes.
+    ///
+    /// - Parameters:
+    ///   - originalEventId: series to split
+    ///   - splitDate: first occurrence that should belong to the *new* series
+    ///   - newEvent: the new event prototype (title/desc/start/end/etc). If `id` is nil, a new UUID is generated.
+    ///   - userId: the current authenticated user (used for ownership check and to set `userId` on the new event)
+    /// - Returns: the new event's UUID
+    func splitRecurringEventFrom(
+        originalEventId: UUID,
+        splitDate: Date,
+        newEvent: Event,
+        userId: UUID
+    ) throws -> UUID {
+        let realm = try openRealm()
+
+        // Validate ownership (read-only)
+        guard let original = realm.object(ofType: EventLocal.self, forPrimaryKey: originalEventId) else {
+            throw SplitSeriesError.eventNotFound
+        }
+        guard original.userId == userId else {
+            throw SplitSeriesError.unauthorized
+        }
+
+        let newEventId = newEvent.id
+        
+        let now = Date()
+        guard let cutoff = Calendar(identifier: .gregorian).date(byAdding: .day, value: -1, to: splitDate) else {
+            throw SplitSeriesError.invalidSplitDate
+        }
+
+        realm.beginWrite()
+        do {
+            // 1) Insert new event, mark dirty
+            let newDomain = Event(
+                id: newEventId,
+                userId: userId,
+                title: newEvent.title,
+                notes: newEvent.notes,
+                startDate: newEvent.startDate,
+                endDate: newEvent.endDate,
+                isRecurring: newEvent.isRecurring,
+                location: newEvent.location,
+                createdAt: newEvent.createdAt,
+                updatedAt: now,
+                color: newEvent.color,
+                reminderTriggers: newEvent.reminderTriggers,
+                deletedAt: nil,
+                needsSync: true
+            )
+            let newLocal = EventLocal(domain: newDomain)
+            realm.add(newLocal, update: .modified)
+
+            // 2) Clone ONE recurrence rule (LIMIT 1), mark dirty
+            if let origRule = realm.objects(RecurrenceRuleLocal.self)
+                .where({ $0.eventId == originalEventId })
+                .first
+            {
+                let cloned = RecurrenceRuleLocal(
+                    id: UUID(),
+                    eventId: newEventId,
+                    freq: origRule.freq,
+                    interval: origRule.interval,
+                    byWeekday: origRule.byWeekdayArray,
+                    byMonthday: origRule.byMonthdayArray,
+                    byMonth: origRule.byMonthArray,
+                    until: origRule.until,
+                    count: origRule.count,
+                    createdAt: now,
+                    updatedAt: now,
+                    deletedAt: nil,
+                    needsSync: true
+                )
+                realm.add(cloned, update: .modified)
+            }
+
+            // 3) Shorten original rule(s) until → cutoff, mark dirty
+            let origRules = realm.objects(RecurrenceRuleLocal.self)
+                .where { $0.eventId == originalEventId }
+            for rule in origRules {
+                if rule.until == nil || rule.until! > cutoff {
+                    rule.until = cutoff
+                    rule.updatedAt = now
+                    rule.needsSync = true
+                }
+            }
+
+            // 4) Repoint overrides at/after splitDate to the new event, mark dirty
+            let toMove = realm.objects(EventOverrideLocal.self)
+                .where { $0.eventId == originalEventId && $0.occurrenceDate >= splitDate }
+            for ov in toMove {
+                ov.eventId = newEventId
+                ov.updatedAt = now
+                ov.needsSync = true
+                ov.deletedAt = nil
+            }
+
+            try realm.commitWrite()
+        } catch {
+            realm.cancelWrite()
+            throw error
+        }
+
+        return newEventId
+    }
+    
+    
+    enum UndoSplitError: Error, LocalizedError {
+        case originalNotFound
+        case newEventNotFound
+        case unauthorized
+        var errorDescription: String? {
+            switch self {
+            case .originalNotFound: return "Original event not found."
+            case .newEventNotFound: return "New event not found."
+            case .unauthorized:     return "Events not found or unauthorized."
+            }
+        }
+    }
+
+    /// Merge a previously split series back into the original.
+    ///
+    /// Steps performed by the merge:
+    /// - Validates both events belong to the same user.
+    /// - Moves all overrides from the new event back to the original (needsSync = true).
+    /// - Restores the original rule’s until from the new rule’s until (which was the pre-split value, since we cloned it).
+    /// - If the cloned until is nil, original becomes nil (open-ended).
+    /// - If both non-nil, original gets the max to avoid shrinking the window by mistake.
+    /// - Soft-deletes the new event’s recurrence rule(s) (sets deletedAt, needsSync).
+    /// - Soft-deletes the new event itself (sets deletedAt, needsSync).
+    ///
+    /// - Parameters:
+    ///   - originalEventId: ID of the original recurring event.
+    ///   - newEventId: ID of the event created by the split.
+    ///   - userId: Current user (ownership check).
+    func undoSplitRecurringEvent(
+        originalEventId: UUID,
+        newEventId: UUID,
+        userId: UUID
+    ) throws {
+        let realm = try openRealm()
+
+        // Validate ownership (read-only)
+        guard let original = realm.object(ofType: EventLocal.self, forPrimaryKey: originalEventId) else {
+            throw UndoSplitError.originalNotFound
+        }
+        guard let newEvent = realm.object(ofType: EventLocal.self, forPrimaryKey: newEventId) else {
+            throw UndoSplitError.newEventNotFound
+        }
+        guard original.userId == userId, newEvent.userId == userId else {
+            throw UndoSplitError.unauthorized
+        }
+
+        let now = Date()
+
+        // Find the cloned rule on the new event (the "pre-split" until)
+        let newRule = realm.objects(RecurrenceRuleLocal.self)
+            .where { $0.eventId == newEventId }
+            .first
+        let newUntil = newRule?.until
+
+        realm.beginWrite()
+        do {
+            // 1) Move overrides back to the original, mark dirty
+            let movedOverrides = realm.objects(EventOverrideLocal.self)
+                .where { $0.eventId == newEventId }
+            for ov in movedOverrides {
+                ov.eventId = originalEventId
+                ov.updatedAt = now
+                ov.needsSync = true
+                // keep deletedAt as-is (should be nil here)
+            }
+            
+            // 2) Restore original rule 'until' from new rule
+            let origRules = realm.objects(RecurrenceRuleLocal.self)
+                .where { $0.eventId == originalEventId }
+            for rule in origRules {
+                switch (rule.until, newUntil) {
+                case (nil, _):
+                    rule.until = newUntil
+                    rule.updatedAt = now
+                    rule.needsSync = true
+                case (let ru?, let nu):
+                    // Expand but never shrink
+                    if nu == nil || (nu! > ru) {
+                        rule.until = nu
+                        rule.updatedAt = now
+                        rule.needsSync = true
+                    }
+                }
+            }
+            
+            // 3) Soft-delete new event's recurrence rule(s)
+            let newRulesAll = realm.objects(RecurrenceRuleLocal.self)
+                .where { $0.eventId == newEventId }
+            for r in newRulesAll {
+                r.deletedAt = now
+                r.updatedAt = now
+                r.needsSync = true
+            }
+            
+            // 4) Soft-delete the new event row
+            newEvent.deletedAt = now
+            newEvent.updatedAt = now
+            newEvent.needsSync = true
+            
+            try realm.commitWrite()
+        } catch {
+            realm.cancelWrite()
+            throw error
+        }
+    }
+}

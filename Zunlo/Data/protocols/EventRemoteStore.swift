@@ -14,5 +14,11 @@ protocol EventRemoteStore {
     func update(_ event: EventRemote) async throws -> [EventRemote]
     func delete(id: UUID) async throws -> [EventRemote]
     func deleteAll(for userId: UUID) async throws -> [EventRemote]
-    func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws -> SplitRecurringEventResponse
+//    func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws -> SplitRecurringEventResponse
+    
+    func splitRecurringEvent(
+        originalEventId: UUID,
+        splitDate: Date,
+        newEvent: Event
+    ) async throws -> SplitRecurringEventResponse
 }

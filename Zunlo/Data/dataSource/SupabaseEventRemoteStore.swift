@@ -75,7 +75,33 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
         try await database.delete(from: tableName, filter: ["user_id": "eq.\(userId.uuidString)"])
     }
     
-    func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws -> SplitRecurringEventResponse {
-        try await database.splitRecurringEvent(occurrence)
+    func splitRecurringEvent(
+        originalEventId: UUID,
+        splitDate: Date,
+        newEvent: Event
+    ) async throws -> SplitRecurringEventResponse {
+        
+        guard let userId = newEvent.userId else {
+            throw StoreError.invalidData("userId")
+        }
+        
+        let data = SplitRecurringEventRemote.NewEventData(
+            userId: userId,
+            title: newEvent.title,
+            description: newEvent.notes,
+            startDatetime: newEvent.startDate,
+            endDatetime: newEvent.endDate,
+            isRecurring: newEvent.isRecurring,
+            location: newEvent.location,
+            color: newEvent.color,
+            reminderTriggers: newEvent.reminderTriggers
+        )
+        let split = SplitRecurringEventRemote(
+            originalEventId: originalEventId,
+            splitFromDate: splitDate,
+            newEventData: data
+        )
+
+        return try await database.splitRecurringEvent(split)
     }
 }

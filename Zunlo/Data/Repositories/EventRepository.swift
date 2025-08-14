@@ -82,12 +82,6 @@ final class EventRepository {
 
     // MARK: - CRUD for Events
 
-    func save(_ event: Event) async throws {
-        try await eventLocalStore.save(event)
-        reminderScheduler.scheduleReminders(for: event)
-        lastEventAction.value = .insert
-    }
-
     func upsert(_ event: Event) async throws {
         try await eventLocalStore.upsert(event)
         reminderScheduler.cancelReminders(for: event)
@@ -95,8 +89,16 @@ final class EventRepository {
         lastEventAction.value = .update
     }
     
-    func splitRecurringEvent(_ occurrence: SplitRecurringEventRemote) async throws {
-        let _ = try await eventRemoteStore.splitRecurringEvent(occurrence)
+    func splitRecurringEvent(
+        originalEventId: UUID,
+        splitDate: Date,
+        newEvent: Event
+    ) async throws {
+        let _ = try await eventLocalStore.splitRecurringEvent(
+            originalEventId: originalEventId,
+            splitDate: splitDate,
+            newEvent: newEvent
+        )
         lastEventAction.value = .update
     }
 

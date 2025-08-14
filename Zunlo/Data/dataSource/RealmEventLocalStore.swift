@@ -21,14 +21,6 @@ final class RealmEventLocalStore: EventLocalStore {
         try await db.fetchAllEventsSorted()
     }
 
-    func save(_ remoteEvent: EventRemote) async throws {
-        try await db.upsertEvent(from: remoteEvent, userId: auth.userId)
-    }
-
-    func save(_ event: Event) async throws {
-        try await db.upsertEvent(from: event, userId: auth.userId)
-    }
-
     func upsert(_ event: EventRemote) async throws {
         try await db.upsertEvent(from: event, userId: auth.userId)
     }
@@ -56,5 +48,22 @@ extension RealmEventLocalStore {
             throw StoreError.invalidData("User must be either authenticated or id passed as parameter!")
         }
         return try await db.fetchOccurrences(userId: uid)
+    }
+    
+    func splitRecurringEvent(
+        originalEventId: UUID,
+        splitDate: Date,
+        newEvent: Event
+    ) async throws -> UUID {
+        guard let userId = auth.userId else {
+            throw StoreError.invalidData("User must be either authenticated or id passed as parameter!")
+        }
+        
+        return try await db.splitRecurringEventFrom(
+            originalEventId: originalEventId,
+            splitDate: splitDate,
+            newEvent: newEvent,
+            userId: userId
+        )
     }
 }

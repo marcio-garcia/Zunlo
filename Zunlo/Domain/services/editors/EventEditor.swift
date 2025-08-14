@@ -136,23 +136,43 @@ final class EventEditor: EventEditorService {
     }
 
     func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws {
-        let data = SplitRecurringEventRemote.NewEventData(
+//        let data = SplitRecurringEventRemote.NewEventData(
+//            userId: occurrence.userId,
+//            title: input.title,
+//            description: input.notes?.nilIfEmpty,
+//            startDatetime: input.startDate,
+//            endDatetime: input.endDate,
+//            isRecurring: input.isRecurring,
+//            location: input.location?.nilIfEmpty,
+//            color: input.color,
+//            reminderTriggers: input.reminderTriggers
+//        )
+//        let split = SplitRecurringEventRemote(
+//            originalEventId: parent.id,
+//            splitFromDate: occurrence.startDate,
+//            newEventData: data
+//        )
+        let newEvent = Event(
+            id: UUID(),
             userId: occurrence.userId,
             title: input.title,
-            description: input.notes?.nilIfEmpty,
-            startDatetime: input.startDate,
-            endDatetime: input.endDate,
+            notes: input.notes?.nilIfEmpty,
+            startDate: input.startDate,
+            endDate: input.endDate,
             isRecurring: input.isRecurring,
-            location: input.location?.nilIfEmpty,
+            location: input.location,
+            createdAt: Date(),
+            updatedAt: Date(),
             color: input.color,
-            reminderTriggers: input.reminderTriggers
+            reminderTriggers: input.reminderTriggers,
+            deletedAt: nil,
+            needsSync: true
         )
-        let split = SplitRecurringEventRemote(
+        try await repo.splitRecurringEvent(
             originalEventId: parent.id,
-            splitFromDate: occurrence.startDate,
-            newEventData: data
+            splitDate: occurrence.startDate,
+            newEvent: newEvent
         )
-        try await repo.splitRecurringEvent(split)
     }
     
     func delete(event: EventOccurrence) async throws {
