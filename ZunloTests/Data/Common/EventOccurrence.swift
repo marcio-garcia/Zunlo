@@ -15,7 +15,7 @@ extension EventOccurrence {
             userId: UUID(),
             eventId: UUID(),
             title: "Test Event",
-            description: "Test description",
+            notes: "Test description",
             startDate: startDate,
             endDate: endDate,
             isRecurring: false,

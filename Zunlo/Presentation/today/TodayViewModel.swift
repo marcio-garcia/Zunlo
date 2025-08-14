@@ -120,7 +120,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         updated.isCompleted.toggle()
         Task {
             let taskEditor = TaskEditor(repo: taskRepo)
-            try? await taskEditor.update(makeInput(task: updated), id: task.id)
+            try? await taskEditor.upsert(makeInput(task: updated))
             await fetchData()
         }
     }
@@ -151,13 +151,17 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     
     private func makeInput(task: UserTask) -> AddTaskInput {
         AddTaskInput(
+            id: task.id,
+            userId: task.userId,
             title: task.title,
             notes: task.notes,
             dueDate: task.dueDate,
             isCompleted: task.isCompleted,
             priority: task.priority,
+            parentEventId: task.parentEventId,
             tags: task.tags,
-            reminderTriggers: task.reminderTriggers
+            reminderTriggers: task.reminderTriggers,
+            deleteAt: task.deletedAt
         )
     }
 }

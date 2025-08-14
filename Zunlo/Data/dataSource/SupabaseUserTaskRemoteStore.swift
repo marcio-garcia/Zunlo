@@ -12,14 +12,14 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
     
     private let tableName = "tasks"
     private var supabase: SupabaseSDK
-    private var authManager: AuthManager
+    private var auth: AuthProviding
 
-    private var authToken: String? { authManager.authToken?.accessToken }
+    private var authToken: String? { auth.accessToken }
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
-    init(supabase: SupabaseSDK, authManager: AuthManager) {
+    init(supabase: SupabaseSDK, auth: AuthProviding) {
         self.supabase = supabase
-        self.authManager = authManager
+        self.auth = auth
     }
 
     func propertyName<T, V>(_ keyPath: KeyPath<T, V>) -> String? {

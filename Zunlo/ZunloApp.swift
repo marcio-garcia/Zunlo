@@ -46,24 +46,27 @@ struct ZunloApp: App {
         
         let pushService = PushNotificationService(
             authManager: authManager,
-            pushTokenStore: SupabasePushTokensRemoteStore(supabase: supabase, authManager: authManager),
+            pushTokenStore: SupabasePushTokensRemoteStore(supabase: supabase, auth: authManager),
             firebaseService: firebase
         )
         
         AdEnvironment.configure(provider: EnvConfig.shared)
         let adManager = AdMobManager()
         
+        let localDB = DatabaseActor()
+        
         let eventRepo = EventRepositoryFactory.make(
             supabase: supabase,
-            authManager: authManager
+            authManager: authManager,
+            localDB: localDB
         )
         
         let taskRepo = UserTaskRepository(
-            localStore: RealmUserTaskLocalStore(),
-            remoteStore: SupabaseUserTaskRemoteStore(supabase: supabase, authManager: authManager)
+            localStore: RealmUserTaskLocalStore(db: localDB),
+            remoteStore: SupabaseUserTaskRemoteStore(supabase: supabase, auth: authManager)
         )
         
-        let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(), userId: nil)
+        let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(db: localDB), userId: nil)
         
         let suggestionEngine = SuggestionEngine(
             calendar: Calendar.appDefault,
@@ -84,6 +87,7 @@ struct ZunloApp: App {
         self.appState = AppState.shared
         
         self.appState.authManager = authManager
+        self.appState.localDB = localDB
         self.appState.supabase = supabase
         self.appState.locationService = locationService
         self.appState.pushNotificationService = pushService
@@ -124,7 +128,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 10, // <- increment this every time you change schema!
+        schemaVersion: 12, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,

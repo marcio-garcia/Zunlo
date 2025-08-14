@@ -130,7 +130,7 @@ final class SuggestionEngine: EventSuggestionEngine {
         guard !ranges.isEmpty else { return [] }
 
         // TODO: replace with a ranged fetch. For now, fetchAll + clamp.
-        let events = (try? await eventFetcher.fetchLocalOcc(for: nil)) ?? []
+        let events = (try? await eventFetcher.fetchOccurrences(for: nil)) ?? []
         
         let today = Date().startOfDay
         guard let tomorrow = Calendar.appDefault.date(byAdding: .day, value: 1, to: today) else { return [] }

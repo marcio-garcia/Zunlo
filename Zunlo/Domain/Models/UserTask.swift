@@ -50,22 +50,30 @@ struct UserTask: Identifiable, Codable, Hashable, Sendable {
     var tags: [Tag]
     var reminderTriggers: [ReminderTrigger]?
     
+    // NEW for sync v1
+    var deletedAt: Date? = nil
+    var needsSync: Bool = false
+
     var isActionable: Bool {
         !isCompleted && parentEventId == nil
     }
     
-    internal init(id: UUID,
-                  userId: UUID? = nil,
-                  title: String,
-                  notes: String? = nil,
-                  isCompleted: Bool,
-                  createdAt: Date,
-                  updatedAt: Date,
-                  dueDate: Date? = nil,
-                  priority: UserTaskPriority,
-                  parentEventId: UUID? = nil,
-                  tags: [Tag],
-                  reminderTriggers: [ReminderTrigger]?) {
+    init(
+        id: UUID,
+        userId: UUID? = nil,
+        title: String,
+        notes: String? = nil,
+        isCompleted: Bool,
+        createdAt: Date,
+        updatedAt: Date,
+        dueDate: Date? = nil,
+        priority: UserTaskPriority,
+        parentEventId: UUID? = nil,
+        tags: [Tag],
+        reminderTriggers: [ReminderTrigger]?,
+        deletedAt: Date? = nil,
+        needsSync: Bool = false
+    ) {
         self.id = id
         self.userId = userId
         self.title = title
@@ -78,6 +86,8 @@ struct UserTask: Identifiable, Codable, Hashable, Sendable {
         self.parentEventId = parentEventId
         self.tags = tags
         self.reminderTriggers = reminderTriggers
+        self.deletedAt = deletedAt
+        self.needsSync = needsSync
     }
 }
 
@@ -99,6 +109,8 @@ extension UserTask {
         self.parentEventId = local.parentEventId
         self.tags = Tag.toTag(tags: local.tagsArray)
         self.reminderTriggers = local.reminderTriggersArray
+        self.deletedAt = local.deletedAt
+        self.needsSync = local.needsSync
     }
 }
 
@@ -116,5 +128,7 @@ extension UserTask {
         self.parentEventId = remote.parentEventId
         self.tags = Tag.toTag(tags: remote.tags)
         self.reminderTriggers = []
+        self.deletedAt = remote.deletedAt
+        self.needsSync = false
     }
 }

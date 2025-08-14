@@ -39,13 +39,12 @@ struct EventOccurrenceService {
                     // Is there an override/cancellation?
                     if let ov = eventOverrides.first(where: { $0.occurrenceDate.isSameDay(as: date) }) {
                         if ov.isCancelled { continue }
-                        guard let overrideId = ov.id else { throw EventOccurrenceError.overrideIDIsNil }
                         let occu = EventOccurrence(
-                            id: overrideId,
+                            id: ov.id,
                             userId: rawOcc.userId,
                             eventId: ov.eventId,
                             title: ov.overriddenTitle ?? rawOcc.title,
-                            description: rawOcc.description,
+                            notes: rawOcc.notes,
                             startDate: ov.overriddenStartDate ?? date,
                             endDate: ov.overriddenEndDate ?? rawOcc.endDate,
                             isRecurring: rawOcc.isRecurring,
@@ -66,7 +65,7 @@ struct EventOccurrenceService {
                             userId: rawOcc.userId,
                             eventId: rawOcc.eventId,
                             title: rawOcc.title,
-                            description: rawOcc.description,
+                            notes: rawOcc.notes,
                             startDate: date,
                             endDate: eventDuration == nil ? nil : date.addingTimeInterval(eventDuration ?? 0),
                             isRecurring: rawOcc.isRecurring,
@@ -89,13 +88,12 @@ struct EventOccurrenceService {
                 if !isCancelled {
                     // If there's an override for this one-off event, apply it
                     if let ov = rawOcc.overrides.first(where: { $0.eventId == rawOcc.eventId && $0.occurrenceDate == rawOcc.startDate }) {
-                        guard let overrideId = ov.id else { throw EventOccurrenceError.overrideIDIsNil }
                         let occu = EventOccurrence(
-                            id: overrideId,
+                            id: ov.id,
                             userId: rawOcc.userId,
                             eventId: ov.eventId,
                             title: ov.overriddenTitle ?? rawOcc.title,
-                            description: rawOcc.description,
+                            notes: rawOcc.notes,
                             startDate: ov.overriddenStartDate ?? rawOcc.startDate,
                             endDate: ov.overriddenEndDate ?? rawOcc.endDate,
                             isRecurring: rawOcc.isRecurring,
@@ -115,7 +113,7 @@ struct EventOccurrenceService {
                             userId: rawOcc.userId,
                             eventId: rawOcc.eventId,
                             title: rawOcc.title,
-                            description: rawOcc.description,
+                            notes: rawOcc.notes,
                             startDate: rawOcc.startDate,
                             endDate: rawOcc.endDate,
                             isRecurring: rawOcc.isRecurring,

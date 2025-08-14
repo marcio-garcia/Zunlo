@@ -21,6 +21,10 @@ struct UserTaskRemote: Codable, Identifiable {
     var tags: [String]
     var reminderTriggers: [ReminderTrigger]?
     
+    // NEW
+    var deletedAt: Date? = nil       // maps to deleted_at
+    var version: Int? = nil
+    
     enum CodingKeys: String, CodingKey {
         case id
         case userId = "user_id"
@@ -34,35 +38,40 @@ struct UserTaskRemote: Codable, Identifiable {
         case parentEventId = "parent_event_id"
         case tags
         case reminderTriggers = "reminder_triggers"
+        case deletedAt = "deleted_at"
+        case version
     }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeSafely(UUID.self, forKey: .id)
-        self.userId = try container.decodeSafely(UUID.self, forKey: .userId)
-        self.title = try container.decodeSafely(String.self, forKey: .title)
-        self.notes = try? container.decodeSafely(String.self, forKey: .notes)
-        self.isCompleted = try container.decodeSafely(Bool.self, forKey: .isCompleted)
-        self.priority = try container.decodeSafely(UserTaskPriority.self, forKey: .priority)
-        self.parentEventId = try? container.decodeSafely(UUID.self, forKey: .parentEventId)
-        self.tags = try container.decodeSafely([String].self, forKey: .tags)
-        self.reminderTriggers = try? container.decodeSafely([ReminderTrigger].self, forKey: .reminderTriggers)
-        
-        let dueDate = try? container.decodeSafely(String.self, forKey: .dueDate)
-        let createdAt = try? container.decodeSafely(String.self, forKey: .createdAt)
-        let updatedAt = try container.decodeSafely(String.self, forKey: .updatedAt)
-        
-        self.updatedAt = DateFormatter.iso8601WithoutFractionalSeconds.date(from: updatedAt) ?? Date()
-        
-        self.dueDate = nil
-        if let date = dueDate {
-            self.dueDate = DateFormatter.iso8601WithoutFractionalSeconds.date(from: date)
-        }
-        
-        self.createdAt = nil
-        if let date = createdAt {
-            self.createdAt = DateFormatter.iso8601WithFractionalSeconds.date(from: date)
-        }
+    
+    init(
+        id: UUID,
+        userId: UUID? = nil,
+        title: String,
+        notes: String? = nil,
+        isCompleted: Bool,
+        createdAt: Date? = nil,
+        updatedAt: Date,
+        dueDate: Date? = nil,
+        priority: UserTaskPriority,
+        parentEventId: UUID? = nil,
+        tags: [String],
+        reminderTriggers: [ReminderTrigger]? = nil,
+        deletedAt: Date? = nil,
+        version: Int? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.title = title
+        self.notes = notes
+        self.isCompleted = isCompleted
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.dueDate = dueDate
+        self.priority = priority
+        self.parentEventId = parentEventId
+        self.tags = tags
+        self.reminderTriggers = reminderTriggers
+        self.deletedAt = deletedAt
+        self.version = version
     }
     
     init(domain: UserTask) {
@@ -78,48 +87,9 @@ struct UserTaskRemote: Codable, Identifiable {
         self.parentEventId = domain.parentEventId
         self.tags = domain.tags.map({ $0.text })
         self.reminderTriggers = domain.reminderTriggers
+        self.deletedAt = domain.deletedAt
+        self.version = nil
     }
-
-//    func encode(to encoder: Encoder) throws {
-//        var container = encoder.container(keyedBy: CodingKeys.self)
-//        
-//        try container.encode(title, forKey: .title)
-//        try container.encode(isCompleted, forKey: .isCompleted)
-//        try container.encode(updatedAt, forKey: .updatedAt)
-//        try container.encode(priority, forKey: .priority)
-//        try container.encode(tags, forKey: .tags)
-//
-//        if let id = self.id {
-//            try container.encode(id, forKey: .id)
-//        }
-//        if let userId = self.userId {
-//            try container.encode(userId, forKey: .userId)
-//        }
-//        if let createdAt = self.createdAt {
-//            try container.encode(createdAt, forKey: .createdAt)
-//        }
-//        if let reminderTriggers = self.reminderTriggers {
-//            try container.encode(reminderTriggers, forKey: .reminderTriggers)
-//        }
-//        
-//        if let notes = self.notes {
-//            try container.encode(notes, forKey: .notes)
-//        } else {
-//            try container.encodeNil(forKey: .notes)
-//        }
-//        
-//        if let dueDate = self.dueDate {
-//            try container.encode(dueDate, forKey: .dueDate)
-//        } else {
-//            try container.encodeNil(forKey: .dueDate)
-//        }
-//        
-//        if let parentEventId = self.parentEventId {
-//            try container.encode(parentEventId, forKey: .parentEventId)
-//        } else {
-//            try container.encodeNil(forKey: .parentEventId)
-//        }
-//    }
     
     func toDomain() -> UserTask {
         UserTask(
@@ -139,7 +109,9 @@ struct UserTaskRemote: Codable, Identifiable {
                         Theme.highlightColor(for: $0),
                     selected: false)
             }),
-            reminderTriggers: reminderTriggers
+            reminderTriggers: reminderTriggers,
+            deletedAt: deletedAt,
+            needsSync: false
         )
     }
 }

@@ -24,6 +24,7 @@ struct NotificationPermissionView: View {
             }
             .themedSecondaryButton()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .defaultBackground()
         .padding()
     }

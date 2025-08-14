@@ -11,14 +11,14 @@ import SupabaseSDK
 final class SupabaseEventOverrideRemoteStore: EventOverrideRemoteStore {
     private let tableName = "event_overrides"
     private var supabase: SupabaseSDK
-    private var authManager: AuthManager
+    private var auth: AuthProviding
 
-    private var authToken: String? { authManager.authToken?.accessToken }
+    private var authToken: String? { auth.accessToken }
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
-    init(supabase: SupabaseSDK, authManager: AuthManager) {
+    init(supabase: SupabaseSDK, auth: AuthProviding) {
         self.supabase = supabase
-        self.authManager = authManager
+        self.auth = auth
     }
     
     func fetchAll() async throws -> [EventOverrideRemote] {
@@ -30,27 +30,15 @@ final class SupabaseEventOverrideRemoteStore: EventOverrideRemoteStore {
     }
 
     func save(_ override: EventOverrideRemote) async throws -> [EventOverrideRemote] {
-        var ov = override
-        ov.id = nil
-        ov.created_at = nil
-        ov.updated_at = nil
-        return try await database.insert(ov, into: tableName)
+        return try await database.insert(override, into: tableName)
     }
 
     func update(_ override: EventOverrideRemote) async throws -> [EventOverrideRemote] {
-        guard let id = override.id?.uuidString else {
-            assertionFailure("SupabaseEventOverrideRemoteStore - update(_ override:) - id == nil")
-            return []
-        }
-        return try await database.update(override, in: tableName, filter: ["id": "eq.\(id)"])
+        return try await database.update(override, in: tableName, filter: ["id": "eq.\(override.id.uuidString)"])
     }
 
     func delete(_ override: EventOverrideRemote) async throws -> [EventOverrideRemote] {
-        guard let id = override.id?.uuidString else {
-            assertionFailure("SupabaseEventOverrideRemoteStore - delete(_ override:) - id == nil")
-            return []
-        }
-        return try await database.delete(from: tableName, filter: ["id": "eq.\(id)"])
+        return try await database.delete(from: tableName, filter: ["id": "eq.\(override.id.uuidString)"])
     }
 }
 

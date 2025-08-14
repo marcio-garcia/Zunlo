@@ -11,14 +11,14 @@ import SupabaseSDK
 final class SupabasePushTokensRemoteStore: PushTokensRemoteStore {
     private let tableName = "push_tokens"
     private var supabase: SupabaseSDK
-    private var authManager: AuthManager
+    private var auth: AuthProviding
 
-    private var authToken: String? { authManager.authToken?.accessToken }
+    private var authToken: String? { auth.accessToken }
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
-    init(supabase: SupabaseSDK, authManager: AuthManager) {
+    init(supabase: SupabaseSDK, auth: AuthProviding) {
         self.supabase = supabase
-        self.authManager = authManager
+        self.auth = auth
     }
 
     func fetchAll() async throws -> [PushTokenRemote] {

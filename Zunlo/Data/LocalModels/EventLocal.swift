@@ -12,7 +12,7 @@ class EventLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
     @Persisted(indexed: true) var userId: UUID?
     @Persisted var title: String = ""
-    @Persisted var descriptionText: String?
+    @Persisted var notes: String?
     @Persisted var startDate: Date = Date()
     @Persisted var endDate: Date?
     @Persisted var isRecurring: Bool = false
@@ -40,7 +40,7 @@ class EventLocal: Object {
         id: UUID,
         userId: UUID? = nil,
         title: String = "",
-        descriptionText: String? = nil,
+        notes: String? = nil,
         startDate: Date = Date(),
         endDate: Date? = nil,
         isRecurring: Bool = false,
@@ -56,7 +56,7 @@ class EventLocal: Object {
         self.id = id
         self.userId = userId
         self.title = title
-        self.descriptionText = descriptionText
+        self.notes = notes
         self.startDate = startDate
         self.endDate = endDate
         self.isRecurring = isRecurring
@@ -76,7 +76,7 @@ extension EventLocal {
             id: domain.id,
             userId: domain.userId,
             title: domain.title,
-            descriptionText: domain.description,
+            notes: domain.notes,
             startDate: domain.startDate,
             endDate: domain.endDate,
             isRecurring: domain.isRecurring,
@@ -96,7 +96,7 @@ extension EventLocal {
             id: remote.id,
             userId: remote.user_id,
             title: remote.title,
-            descriptionText: remote.description,
+            notes: remote.notes,
             startDate: remote.start_datetime,
             endDate: remote.end_datetime,
             isRecurring: remote.is_recurring,
@@ -109,12 +109,14 @@ extension EventLocal {
     }
     
     func getUpdateFields(_ event: EventRemote) {
+        self.userId = event.user_id
         self.title = event.title
-        self.descriptionText = event.description
+        self.notes = event.notes
         self.startDate = event.start_datetime
         self.endDate = event.end_datetime
         self.location = event.location
         self.isRecurring = event.is_recurring
+        self.createdAt = event.created_at ?? Date()
         self.updatedAt = event.updated_at
         self.color = event.color ?? .yellow
         self.reminderTriggersArray = event.reminder_triggers ?? []
@@ -123,12 +125,14 @@ extension EventLocal {
     }
     
     func getUpdateFields(_ event: Event) {
+        self.userId = event.userId
         self.title = event.title
-        self.descriptionText = event.description
+        self.notes = event.notes
         self.startDate = event.startDate
         self.endDate = event.endDate
         self.location = event.location
         self.isRecurring = event.isRecurring
+        self.createdAt = event.createdAt
         self.updatedAt = event.updatedAt
         self.color = event.color
         self.reminderTriggersArray = event.reminderTriggers ?? []

@@ -81,6 +81,7 @@
 		25132B842E08721600863247 /* Exceptions for "Zunlo" folder in "Zunlo" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Extensions/Untitled.swift,
 				Info.plist,
 			);
 			target = 25FA19FC2E0854F800E740A3 /* Zunlo */;

@@ -24,59 +24,80 @@ struct MainView: View {
     }
     
     var body: some View {
-        GeometryReader { geo in
-            VStack{
-                ZStack {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                        .transition(.opacity)
-                        .blur(radius: 10)
-                    
-                    TodayView(namespace: animationNamespace,
-                              showChat: $isShowingChat,
-                              appState: viewModel.appState)
-                    .environmentObject(viewModel.appState.authManager!)
-                    .environmentObject(upgradeFlowManager)
-                    
-                    if isShowingChat {
-                        Color.black.opacity(0.3)
-                            .ignoresSafeArea()
-                            .transition(.opacity)
-                            .blur(radius: 10)
-                        
-                        ChatScreenView(namespace: animationNamespace,
-                                       showChat: $isShowingChat,
-                                       factory: factory)
-                    }
+        ZStack {
+            switch viewModel.state {
+            case .loading:
+                VStack {
+                    ProgressView("Loading...")
                 }
-                .animation(.spring(response: 0.6, dampingFraction: 0.90), value: isShowingChat)
-                
-                VStack(spacing: 0) {
-                    Spacer()
-                    BannerAdView(
-                        adUnitID: BannerPlacement.home.adUnitID,
-                        size: .adaptive,
-                        containerWidth: geo.size.width - 32,
-                        onEvent: { event in
-                            switch event {
-                            case .didReceiveAd:
-                                print("✅ Ad received")
-                            case .didFailToReceiveAd(let error):
-                                print("❌ Failed to load ad: \(error)")
-                            case .didClick:
-                                print("👆 Ad clicked")
-                            default:
-                                break
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .defaultBackground()
+            case .empty, .loaded:
+                GeometryReader { geo in
+                    VStack{
+                        ZStack {
+                            Color.black.opacity(0.3)
+                                .ignoresSafeArea()
+                                .transition(.opacity)
+                                .blur(radius: 10)
+                            
+                            TodayView(namespace: animationNamespace,
+                                      showChat: $isShowingChat,
+                                      appState: viewModel.appState)
+                            .environmentObject(viewModel.appState.authManager!)
+                            .environmentObject(upgradeFlowManager)
+                            
+                            if isShowingChat {
+                                Color.black.opacity(0.3)
+                                    .ignoresSafeArea()
+                                    .transition(.opacity)
+                                    .blur(radius: 10)
+                                
+                                ChatScreenView(namespace: animationNamespace,
+                                               showChat: $isShowingChat,
+                                               factory: factory)
                             }
                         }
-                    )
-                    .frame(height: 50)
-                    .padding(.horizontal, 16)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.90), value: isShowingChat)
+                        
+                        VStack(spacing: 0) {
+                            Spacer()
+                            BannerAdView(
+                                adUnitID: BannerPlacement.home.adUnitID,
+                                size: .adaptive,
+                                containerWidth: geo.size.width - 32,
+                                onEvent: { event in
+                                    switch event {
+                                    case .didReceiveAd:
+                                        print("✅ Ad received")
+                                    case .didFailToReceiveAd(let error):
+                                        print("❌ Failed to load ad: \(error)")
+                                    case .didClick:
+                                        print("👆 Ad clicked")
+                                    default:
+                                        break
+                                    }
+                                }
+                            )
+                            .frame(height: 50)
+                            .padding(.horizontal, 16)
+                        }
+                        .frame(height: 50)
+                        .onChange(of: geo.size.width) { _, newWidth in viewWidth = newWidth }
+                    }
+                    .defaultBackground()
                 }
-                .frame(height: 50)
-                .onChange(of: geo.size.width) { _, newWidth in viewWidth = newWidth }
+                
+            case .error(let message):
+                VStack {
+                    Text(message)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .defaultBackground()
             }
-            .defaultBackground()
+        }
+        .task {
+            await viewModel.syncDB()
         }
     }
 }

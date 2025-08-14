@@ -22,6 +22,10 @@ class UserTaskLocal: Object {
     @Persisted var tags: List<String>
     @Persisted var reminderTriggers: List<ReminderTriggerLocal>
 
+    // NEW
+    @Persisted var deletedAt: Date?
+    @Persisted var needsSync: Bool = false
+    
     var tagsArray: [String] {
         get { Array(tags) }
         set {
@@ -42,9 +46,9 @@ class UserTaskLocal: Object {
         }
     }
     
-    convenience init(from remote: UserTaskRemote) {
+    convenience init(remote: UserTaskRemote) {
         self.init()
-        self.id = remote.id ?? UUID()
+        self.id = remote.id
         self.userId = remote.userId
         self.title = remote.title
         self.notes = remote.notes
@@ -57,8 +61,27 @@ class UserTaskLocal: Object {
         self.tags.removeAll()
         self.tags.append(objectsIn: remote.tags)
         self.reminderTriggersArray = remote.reminderTriggers ?? []
+        self.deletedAt = remote.deletedAt
+        self.needsSync = false
     }
 
+    convenience init(domain: UserTask) {
+        self.init()
+        self.id = domain.id
+        self.userId = domain.userId
+        self.title = domain.title
+        self.notes = domain.notes
+        self.isCompleted = domain.isCompleted
+        self.createdAt = domain.createdAt
+        self.updatedAt = domain.updatedAt
+        self.dueDate = domain.dueDate
+        self.priority = UserTaskPriorityLocal.fromDomain(domain: domain.priority)
+        self.parentEventId = domain.parentEventId
+        self.tags.removeAll()
+        self.tags.append(objectsIn: domain.tags.map({ $0.text }))
+        self.reminderTriggersArray = domain.reminderTriggers ?? []
+    }
+    
     func toDomain() -> UserTask {
         UserTask(
             id: id,
@@ -77,7 +100,9 @@ class UserTaskLocal: Object {
                     color: Theme.highlightColor(for: $0),
                     selected: false)
             }),
-            reminderTriggers: reminderTriggersArray
+            reminderTriggers: reminderTriggersArray,
+            deletedAt: deletedAt,
+            needsSync: needsSync
         )
     }
     
@@ -92,6 +117,23 @@ class UserTaskLocal: Object {
         self.tags.removeAll()
         self.tags.append(objectsIn: remote.tags)
         self.reminderTriggersArray = remote.reminderTriggers ?? []
+        self.deletedAt = remote.deletedAt
+        self.needsSync = false
+    }
+    
+    func getUpdateFields(domain: UserTask) {
+        self.title = domain.title
+        self.notes = domain.notes
+        self.isCompleted = domain.isCompleted
+        self.updatedAt = Date()
+        self.dueDate = domain.dueDate
+        self.priority = UserTaskPriorityLocal.fromDomain(domain: domain.priority)
+        self.parentEventId = domain.parentEventId
+        self.tags.removeAll()
+        self.tags.append(objectsIn: domain.tags.map({ $0.text }))
+        self.reminderTriggersArray = domain.reminderTriggers ?? []
+        self.deletedAt = domain.deletedAt
+        self.needsSync = true
     }
 }
 

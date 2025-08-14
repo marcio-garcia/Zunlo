@@ -12,6 +12,7 @@ final class AppState {
     static let shared = AppState()
     
     var authManager: AuthManager?
+    var localDB: DatabaseActor?
     var eventRepository: EventRepository?
     var userTaskRepository: UserTaskRepository?
     var chatRepository: ChatRepository?

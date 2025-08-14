@@ -11,7 +11,7 @@ struct EventOccurrenceResponse: Codable, Identifiable {
     let id: UUID
     let user_id: UUID
     let title: String
-    let description: String?
+    let notes: String?
     let start_datetime: Date
     let end_datetime: Date?
     let is_recurring: Bool
@@ -27,7 +27,7 @@ struct EventOccurrenceResponse: Codable, Identifiable {
         self.id = try container.decodeSafely(UUID.self, forKey: .id)
         self.user_id = try container.decodeSafely(UUID.self, forKey: .user_id)
         self.title = try container.decodeSafely(String.self, forKey: .title)
-        self.description = try? container.decodeSafely(String.self, forKey: .description)
+        self.notes = try? container.decodeSafely(String.self, forKey: .notes)
         self.is_recurring = try container.decodeSafely(Bool.self, forKey: .is_recurring)
         self.location = try? container.decodeSafely(String.self, forKey: .location)
         self.color = try? container.decodeSafely(String.self, forKey: .color)
@@ -57,7 +57,7 @@ extension EventOccurrenceResponse {
         self.id = e.id
         self.user_id = e.userId ?? UUID()
         self.title = e.title
-        self.description = e.description
+        self.notes = e.notes
         self.start_datetime = e.startDate
         self.end_datetime = e.endDate
         self.is_recurring = e.isRecurring

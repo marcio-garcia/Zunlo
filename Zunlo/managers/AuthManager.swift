@@ -27,7 +27,13 @@ protocol UserStorage {
     func clear() throws
 }
 
-final class AuthManager: ObservableObject {
+public protocol AuthProviding {
+    var userId: UUID? { get }
+    var accessToken: String? { get }
+    func refreshSession(refreshToken: String?) async throws -> AuthToken?
+}
+
+final class AuthManager: ObservableObject, AuthProviding {
     @Published private(set) var state: AuthState = .loading
     @Published var isAnonymous: Bool = false
     
@@ -41,6 +47,14 @@ final class AuthManager: ObservableObject {
     var authToken: AuthToken? {
         if case .authenticated(let token) = state { return token }
         return nil
+    }
+    
+    public var userId: UUID? {
+        return user?.id
+    }
+    
+    public var accessToken: String? {
+        return authToken?.accessToken
     }
     
     init(

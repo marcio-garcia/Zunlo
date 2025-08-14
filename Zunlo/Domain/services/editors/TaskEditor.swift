@@ -17,14 +17,10 @@ final class TaskEditor: TaskEditorService {
         self.clock = clock
     }
 
-    func add(_ input: AddTaskInput) async throws -> UserTask {
-        try await repo.save(makeUserTask(input, id: nil))
+    func upsert(_ input: AddTaskInput) async throws {
+        try await repo.upsert(makeUserTask(input, id: nil))
     }
-    
-    func update(_ input: EditTaskInput, id: UUID) async throws {
-        try await repo.update(makeUserTask(input, id: id))
-    }
-    
+
     func delete(_ input: EditTaskInput, id: UUID) async throws {
         try await repo.delete(makeUserTask(input, id: id))
     }

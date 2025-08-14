@@ -102,8 +102,8 @@ struct TodayView: View {
                                     .shimmer(active: viewModel.todayEvents.isEmpty)
                                 
                                 tasksTodaySection
-                                    .redacted(reason: viewModel.todayTasks.isEmpty ? .placeholder : [])
-                                    .shimmer(active: viewModel.todayTasks.isEmpty)
+//                                    .redacted(reason: viewModel.todayTasks.isEmpty ? .placeholder : [])
+//                                    .shimmer(active: viewModel.todayTasks.isEmpty)
                             }
                             .padding(.top, 88)
                             .padding()
@@ -289,6 +289,7 @@ struct TodayView: View {
                             } else {
                                 nav.showSheet(.editEvent(.editAll(event: event, recurrenceRule: nil)), for: viewID)
                             }
+                            viewModel.onEventEditTap(event)
                         })
                     }
                 }

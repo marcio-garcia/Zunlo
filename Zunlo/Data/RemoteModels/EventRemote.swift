@@ -11,7 +11,7 @@ struct EventRemote: Codable, Identifiable {
     var id: UUID
     var user_id: UUID?
     let title: String
-    let description: String?
+    let notes: String?
     let start_datetime: Date
     var end_datetime: Date?
     let is_recurring: Bool
@@ -61,7 +61,7 @@ extension EventRemote {
         self.id = domain.id
         self.user_id = nil // omit so DEFAULT auth.uid() applies on insert
         self.title = domain.title
-        self.description = domain.description
+        self.notes = domain.notes
         self.start_datetime = domain.startDate
         self.end_datetime = domain.endDate
         self.is_recurring = domain.isRecurring
@@ -79,7 +79,7 @@ extension EventRemote {
         self.id = local.id
         self.user_id = nil // omit so DEFAULT auth.uid() applies on insert
         self.title = local.title
-        self.description = local.descriptionText
+        self.notes = local.notes
         self.start_datetime = local.startDate
         self.end_datetime = local.endDate
         self.is_recurring = local.isRecurring

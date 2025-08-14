@@ -65,19 +65,9 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         guard !isProcessing, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isProcessing = true
 
-        var id: UUID? = nil
-        if case .edit(let userTask) = mode {
-            id = userTask.id
-        }
-
         Task {
             do {
-                switch mode {
-                case .add:
-                    try await taskEditor.add(makeInput())
-                case .edit:
-                    try await taskEditor.update(makeInput(), id: id!)
-                }
+                try await taskEditor.upsert(makeInput())
                 await MainActor.run {
                     self.isProcessing = false
                     completion(.success(()))
@@ -140,13 +130,17 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     
     private func makeInput() -> AddTaskInput {
         AddTaskInput(
+            id: UUID(),
+            userId: nil,
             title: title,
             notes: notes,
             dueDate: dueDate,
             isCompleted: isCompleted,
             priority: priority,
+            parentEventId: nil,
             tags: tags,
-            reminderTriggers: reminderTriggers
+            reminderTriggers: reminderTriggers,
+            deleteAt: nil
         )
     }
 }

@@ -11,43 +11,53 @@ import RealmSwift
 
 final class RealmUserTaskLocalStoreTests: XCTestCase {
 
-    private var realm: Realm!
+    private var db: DatabaseActor!
     private var store: RealmUserTaskLocalStore!
-    private var testConfig: Realm.Configuration!
+//    private var testConfig: Realm.Configuration!
     
     override func setUp() async throws {
+        try await super.setUp()
+        
         let inMemoryID = "UserTaskTestRealm-\(UUID().uuidString)"
-        testConfig = Realm.Configuration(
-            inMemoryIdentifier: inMemoryID,
-            schemaVersion: 1 // explicitly set a schema version
-        )
-        
-        try await MainActor.run {
-            realm = try Realm(configuration: testConfig)
-            try realm.write {
-                realm.deleteAll()
-            }
-        }
-        
-        store = RealmUserTaskLocalStore(configuration: testConfig)
+        db = TestDBFactory.makeActor(label: inMemoryID)
+        // Inject the actor into your store(s)
+        store = RealmUserTaskLocalStore(db: db)
     }
 
+    override func tearDown() {
+        // Let the actor deallocate; anchorRealm will be released -> in-memory wiped
+        db = nil
+        store = nil
+        super.tearDown()
+    }
+    
     // MARK: - Helpers
 
     private func createTask(title: String, tags: [String]) async throws {
-        try await MainActor.run {
-            print("createTask - Using in-memory ID:", testConfig.inMemoryIdentifier ?? "nil")
-            let task = UserTaskLocal()
-            task.id = UUID()
-            task.userId = UUID()
-            task.title = title
-            task.tags.append(objectsIn: tags)
-            try realm.write {
-                realm.add(task)
-            }
-            let count = realm.objects(UserTaskLocal.self).count
-            print("🧪 Realm contains:", count)
-        }
+//            print("createTask - Using in-memory ID:", testConfig.inMemoryIdentifier ?? "nil")
+        let task = UserTaskRemote(
+            id: UUID(),
+            userId: UUID(),
+            title: title,
+            isCompleted: false,
+            updatedAt: Date(),
+            priority: .low,
+            tags: tags
+        )
+//            task.id = UUID()
+//            task.userId = UUID()
+//            task.title = title
+//            task.tags.append(objectsIn: tags)
+        
+        
+//            try realm.write {
+//                realm.add(task)
+//            }
+//            let count = realm.objects(UserTaskLocal.self).count
+        
+        try await store.upsert(task)
+        let all = try await store.fetchAll()
+        print("🧪 Realm contains:", all.count)
     }
 
     // MARK: - Tests

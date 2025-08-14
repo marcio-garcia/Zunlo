@@ -9,8 +9,7 @@ import Foundation
 
 // Use cases your VM and Quick Add can both call.
 protocol EventEditorService {
-    @discardableResult
-    func add(_ input: AddEventInput) async throws -> Event
+    func add(_ input: AddEventInput) async throws
     func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws
     func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws
     func editOverride(_ override: EventOverride, with input: EditEventInput) async throws

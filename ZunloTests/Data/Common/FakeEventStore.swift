@@ -9,19 +9,13 @@ import Foundation
 @testable import Zunlo
 
 final class FakeEventFetcher: EventFetcherService {
-    
-    
     var events: [EventOccurrence]
     
     init(_ events: [EventOccurrence]) {
         self.events = events
     }
     
-    func fetchOccurrences() async throws -> [Zunlo.EventOccurrence] {
-        return events
-    }
-    
-    func fetchLocalOcc(for userId: UUID?) async throws -> [Zunlo.EventOccurrence] {
+    func fetchOccurrences(for userId: UUID?) async throws -> [Zunlo.EventOccurrence] {
         return events
     }
 }

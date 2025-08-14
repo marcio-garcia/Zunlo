@@ -21,14 +21,14 @@ enum StoreError: Error, LocalizedError {
 final class SupabaseEventRemoteStore: EventRemoteStore {
     private let tableName = "events"
     private var supabase: SupabaseSDK
-    private var authManager: AuthManager
+    private var auth: AuthProviding
 
-    private var authToken: String? { authManager.authToken?.accessToken }
+    private var authToken: String? { auth.accessToken }
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
-    init(supabase: SupabaseSDK, authManager: AuthManager) {
+    init(supabase: SupabaseSDK, auth: AuthProviding) {
         self.supabase = supabase
-        self.authManager = authManager
+        self.auth = auth
     }
 
     func fetchAll() async throws -> [EventRemote] {
@@ -40,7 +40,7 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
             return try await database.fetchOccurrences(as: EventOccurrenceResponse.self)
         } catch let error as SupabaseServiceError {
             if case let .serverError(statusCode, _, _) = error, statusCode == 401 {
-                guard let session = try await authManager.refreshSession() else {
+                guard let session = try await auth.refreshSession(refreshToken: nil) else {
                     throw error
                 }
                 database.authToken = session.accessToken

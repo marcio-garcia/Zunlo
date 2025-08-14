@@ -22,46 +22,22 @@ final class UserTaskRepository {
         self.reminderScheduler = ReminderScheduler()
     }
 
-    func save(_ task: UserTask) async throws -> UserTask {
-        let savedRemote = try await remoteStore.save(UserTaskRemote(domain: task))
-        for remote in savedRemote {
-            try await localStore.save(remote)
-            let domain = UserTask(remote: remote)
-            reminderScheduler.scheduleReminders(for: domain)
-        }
-        lastTaskAction.value = .insert
-        return task
-    }
-
-    func update(_ task: UserTask) async throws {
-        let updatedRemote = try await remoteStore.update(UserTaskRemote(domain: task))
-        for remote in updatedRemote {
-            try await localStore.update(remote)
-            let domain = UserTask(remote: remote)
-            reminderScheduler.cancelReminders(for: domain)
-            reminderScheduler.scheduleReminders(for: domain)
-        }
+    func upsert(_ task: UserTask) async throws {
+        try await localStore.upsert(task)
+        reminderScheduler.cancelReminders(for: task)
+        reminderScheduler.scheduleReminders(for: task)
         lastTaskAction.value = .update
     }
 
     func delete(_ task: UserTask) async throws {
-        let deleted = try await remoteStore.delete(task.id)
-        for task in deleted {
-            try await localStore.delete(id: task.id)
-        }
+        try await localStore.delete(id: task.id)
         reminderScheduler.cancelReminders(for: task)
         lastTaskAction.value = .delete
     }
     
     @discardableResult
     func fetchAll() async throws -> [UserTask] {
-        let remoteTasks = try await remoteStore.fetchAll()
-        try await localStore.deleteAll(for: remoteTasks.first?.userId ?? UUID())
-        for remote in remoteTasks {
-            try await localStore.save(remote)
-        }
-        
-        let tasks = remoteTasks.map { $0.toDomain() }
+        let tasks = try await localStore.fetchAll()
         lastTaskAction.value = .fetch(tasks)
         return tasks
     }

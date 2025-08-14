@@ -102,7 +102,7 @@ final class AddEditEventViewModel: ObservableObject {
             reminderTriggers = []
         case .editAll(let event, let rule):
             title = event.title
-            notes = event.description ?? ""
+            notes = event.notes ?? ""
             startDate = event.startDate
             if let end = event.endDate {
                 endDate = end
@@ -130,7 +130,7 @@ final class AddEditEventViewModel: ObservableObject {
             }
         case .editSingle(let parent, _, let occurrence):
             title = parent.title
-            notes = parent.description ?? ""
+            notes = parent.notes ?? ""
             startDate = occurrence.startDate
             if let end = occurrence.endDate {
                 endDate = end
@@ -154,7 +154,7 @@ final class AddEditEventViewModel: ObservableObject {
             color = override.color.rawValue
         case .editFuture(_, _, let startingFromOccurrence ):
             title = startingFromOccurrence.title
-            notes = startingFromOccurrence.description ?? ""
+            notes = startingFromOccurrence.notes ?? ""
             startDate = startingFromOccurrence.startDate
             if let end = startingFromOccurrence.endDate {
                 endDate = end

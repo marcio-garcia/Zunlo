@@ -12,7 +12,7 @@ struct EventOccurrence: Identifiable, Hashable {
     let userId: UUID
     let eventId: UUID
     let title: String
-    let description: String?
+    let notes: String?
     let startDate: Date
     let endDate: Date?
     let isRecurring: Bool
@@ -32,7 +32,7 @@ struct EventOccurrence: Identifiable, Hashable {
         userId: UUID,
         eventId: UUID,
         title: String,
-        description: String? = nil,
+        notes: String? = nil,
         startDate: Date,
         endDate: Date? = nil,
         isRecurring: Bool = false,
@@ -51,7 +51,7 @@ struct EventOccurrence: Identifiable, Hashable {
         self.userId = userId
         self.eventId = eventId
         self.title = title
-        self.description = description
+        self.notes = notes
         self.startDate = startDate
         self.endDate = endDate
         self.isRecurring = isRecurring
@@ -65,5 +65,28 @@ struct EventOccurrence: Identifiable, Hashable {
         self.overrides = overrides
         self.recurrence_rules = recurrence_rules
         self.isFakeOccForEmptyToday = isFakeOccForEmptyToday
+    }
+}
+
+extension EventOccurrence {
+    init(remote: EventOccurrenceResponse) {
+        self.id = remote.id
+        self.userId = remote.user_id
+        self.eventId = remote.id
+        self.title = remote.title
+        self.notes = remote.notes
+        self.startDate = remote.start_datetime
+        self.endDate = remote.end_datetime
+        self.isRecurring = remote.is_recurring
+        self.location = remote.location
+        self.color = EventColor(rawValue: remote.color ?? "") ?? .yellow
+        self.reminderTriggers = []
+        self.isOverride = false
+        self.isCancelled = false
+        self.updatedAt = remote.updated_at
+        self.createdAt = remote.created_at
+        self.overrides = remote.overrides.compactMap { EventOverride(remote: $0) }
+        self.recurrence_rules = remote.recurrence_rules.compactMap { RecurrenceRule(remote: $0) }
+        self.isFakeOccForEmptyToday = false
     }
 }

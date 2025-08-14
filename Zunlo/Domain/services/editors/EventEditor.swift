@@ -16,7 +16,7 @@ final class EventEditor: EventEditorService {
         self.clock = clock
     }
 
-    func add(_ input: AddEventInput) async throws -> Event {
+    func add(_ input: AddEventInput) async throws {
         guard !input.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw EventError.validation(String(localized: "Title is required."))
         }
@@ -25,7 +25,7 @@ final class EventEditor: EventEditorService {
             id: UUID(),
             userId: nil,
             title: input.title,
-            description: input.notes?.nilIfEmpty,
+            notes: input.notes?.nilIfEmpty,
             startDate: input.startDate,
             endDate: input.endDate,
             isRecurring: input.isRecurring,
@@ -38,13 +38,12 @@ final class EventEditor: EventEditorService {
         )
 
         // Orchestrate
-        let created = try await repo.save(newEvent)
-        guard let event = created.first else { throw EventError.errorOnEventInsert }
+        try await repo.upsert(newEvent)
 
         if input.isRecurring {
             let rule = RecurrenceRule(
                 id: UUID(), // overriden by database
-                eventId: event.id,
+                eventId: newEvent.id,
                 freq: input.recurrenceType!.rawValue,
                 interval: input.recurrenceInterval ?? 1,
                 byWeekday: input.byWeekday,
@@ -55,9 +54,8 @@ final class EventEditor: EventEditorService {
                 createdAt: now,
                 updatedAt: now
             )
-            try await repo.saveRecurrenceRule(rule)
+            try await repo.upsertRecurrenceRule(rule)
         }
-        return event
     }
 
     func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws {
@@ -66,7 +64,7 @@ final class EventEditor: EventEditorService {
             id: event.id,
             userId: event.userId,
             title: input.title,
-            description: input.notes?.nilIfEmpty,
+            notes: input.notes?.nilIfEmpty,
             startDate: input.startDate,
             endDate: input.endDate,
             isRecurring: input.isRecurring,
@@ -77,11 +75,11 @@ final class EventEditor: EventEditorService {
             reminderTriggers: input.reminderTriggers,
             needsSync: true
         )
-        let _ = try await repo.update(updated)
+        try await repo.upsert(updated)
 
         if input.isRecurring {
             let rule = RecurrenceRule(
-                id: oldRule?.id,
+                id: oldRule?.id ?? UUID(),
                 eventId: event.id,
                 freq: input.recurrenceType!.rawValue,
                 interval: input.recurrenceInterval ?? 1,
@@ -93,15 +91,16 @@ final class EventEditor: EventEditorService {
                 createdAt: oldRule?.createdAt ?? now,
                 updatedAt: now
             )
-            if oldRule != nil { try await repo.updateRecurrenceRule(rule) }
-            else { try await repo.saveRecurrenceRule(rule) }
-        } else if let oldRule { try await repo.deleteRecurrenceRule(oldRule) }
+            try await repo.upsertRecurrenceRule(rule)
+        } else if let oldRule {
+            try await repo.deleteRecurrenceRule(oldRule)
+        }
     }
 
     func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws {
         let now = clock()
         let override = EventOverride(
-            id: nil,
+            id: UUID(),
             eventId: parent.id,
             occurrenceDate: occurrence.startDate,
             overriddenTitle: input.title,
@@ -114,7 +113,7 @@ final class EventEditor: EventEditorService {
             updatedAt: now,
             color: input.color
         )
-        try await repo.saveOverride(override)
+        try await repo.upsertOverride(override)
     }
 
     func editOverride(_ override: EventOverride, with input: EditEventInput) async throws {
@@ -133,7 +132,7 @@ final class EventEditor: EventEditorService {
             updatedAt: now,
             color: input.color
         )
-        try await repo.updateOverride(updated)
+        try await repo.upsertOverride(updated)
     }
 
     func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws {

@@ -11,14 +11,14 @@ import SupabaseSDK
 final class SupabaseRecurrenceRuleRemoteStore: RecurrenceRuleRemoteStore {
     private let tableName = "recurrence_rules"
     private var supabase: SupabaseSDK
-    private var authManager: AuthManager
+    private var auth: AuthProviding
 
-    private var authToken: String? { authManager.authToken?.accessToken }
+    private var authToken: String? { auth.accessToken }
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
-    init(supabase: SupabaseSDK, authManager: AuthManager) {
+    init(supabase: SupabaseSDK, auth: AuthProviding) {
         self.supabase = supabase
-        self.authManager = authManager
+        self.auth = auth
     }
 
     func fetchAll() async throws -> [RecurrenceRuleRemote] {
@@ -30,24 +30,14 @@ final class SupabaseRecurrenceRuleRemoteStore: RecurrenceRuleRemoteStore {
     }
 
     func save(_ rule: RecurrenceRuleRemote) async throws -> [RecurrenceRuleRemote] {
-        var ruleToSave = rule
-        ruleToSave.id = nil
-        return try await database.insert(ruleToSave, into: tableName)
+        return try await database.insert(rule, into: tableName)
     }
 
     func update(_ rule: RecurrenceRuleRemote) async throws -> [RecurrenceRuleRemote] {
-        guard let id = rule.id?.uuidString else {
-            assertionFailure("SupabaseRecurrenceRuleRemoteStore - update(_ rule:) - id == nil")
-            return []
-        }
-        return try await database.update(rule, in: tableName, filter: ["id": "eq.\(id)"])
+        return try await database.update(rule, in: tableName, filter: ["id": "eq.\(rule.id.uuidString)"])
     }
 
     func delete(_ rule: RecurrenceRuleRemote) async throws -> [RecurrenceRuleRemote] {
-        guard let id = rule.id?.uuidString else {
-            assertionFailure("SupabaseRecurrenceRuleRemoteStore - delete(_ rule:) - id == nil")
-            return []
-        }
-        return try await database.delete(from: tableName, filter: ["id": "eq.\(id)"])
+        return try await database.delete(from: tableName, filter: ["id": "eq.\(rule.id.uuidString)"])
     }
 }

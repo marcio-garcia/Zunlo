@@ -28,7 +28,7 @@ extension AuthSession {
     }
 }
 
-struct AuthToken: Codable, Sendable, Equatable {
+public struct AuthToken: Codable, Sendable, Equatable {
     let accessToken: String
     let refreshToken: String?
     let expiresAt: Date

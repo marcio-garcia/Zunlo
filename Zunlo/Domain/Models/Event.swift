@@ -11,7 +11,7 @@ struct Event: Identifiable, Codable, Hashable {
     let id: UUID
     let userId: UUID?
     let title: String
-    let description: String?
+    let notes: String?
     let startDate: Date
     let endDate: Date?
     let isRecurring: Bool
@@ -37,7 +37,7 @@ extension Event {
         self.id = remote.id
         self.userId = remote.user_id
         self.title = remote.title
-        self.description = remote.description
+        self.notes = remote.notes
         self.startDate = remote.start_datetime
         self.endDate = remote.end_datetime
         self.isRecurring = remote.is_recurring
@@ -55,7 +55,7 @@ extension Event {
         self.id = local.id
         self.userId = local.userId
         self.title = local.title
-        self.description = local.descriptionText
+        self.notes = local.notes
         self.startDate = local.startDate
         self.endDate = local.endDate
         self.isRecurring = local.isRecurring

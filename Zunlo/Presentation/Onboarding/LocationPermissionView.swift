@@ -7,20 +7,6 @@
 
 import SwiftUI
 
-//struct OnboardingLocationView: View {
-//    let onRequest: () -> Void
-//    var body: some View {
-//        VStack(spacing: 16) {
-//            Text("We use your location to show nearby events and personalize your experience.")
-//                .multilineTextAlignment(.center)
-//            Button("Allow Location Access") {
-//                onRequest()
-//            }
-//        }
-//        .padding()
-//    }
-//}
-
 struct LocationPermissionView: View {
     var locationService: LocationService
     let onContinue: () -> Void
@@ -37,6 +23,7 @@ struct LocationPermissionView: View {
             }
             .themedSecondaryButton()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .defaultBackground()
         .padding()
     }
