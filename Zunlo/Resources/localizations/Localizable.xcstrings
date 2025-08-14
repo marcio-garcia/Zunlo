@@ -459,6 +459,16 @@
         }
       }
     },
+    "End date & time for each event occurrence. Doesn’t change the repeat schedule" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data e horário de término de cada evento. Não altera a data final de repetição."
+          }
+        }
+      }
+    },
     "Ends next day (overnight window)." : {
       "localizations" : {
         "pt-BR" : {
@@ -930,6 +940,16 @@
         }
       }
     },
+    "Repeat until" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetir até"
+          }
+        }
+      }
+    },
     "Reset Upgrade Reminder" : {
       "localizations" : {
         "pt-BR" : {
@@ -1172,16 +1192,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entre com uma mensagem..."
-          }
-        }
-      }
-    },
-    "Until" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Até"
           }
         }
       }

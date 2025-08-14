@@ -133,10 +133,17 @@ struct AddEditEventView: View {
                 viewModel.updateEndDate()
             }
             
-            DatePicker(selection: $viewModel.endDate, in: viewModel.startDate..., displayedComponents: [.date, .hourAndMinute]) {
-                Text("End")
-                    .themedBody()
+            VStack {
+                DatePicker(selection: $viewModel.endDate, in: viewModel.startDate..., displayedComponents: [.date, .hourAndMinute]) {
+                    Text("End")
+                        .themedBody()
+                }
+                if viewModel.isRecurring {
+                    Text("End date & time for each event occurrence. Doesn’t change the repeat schedule")
+                        .themedFootnote()
+                }
             }
+            
         }
         .onAppear() {
             UIDatePicker.appearance().minuteInterval = 5
@@ -190,7 +197,7 @@ struct AddEditEventView: View {
                 Toggle(isOn: $showUntil) { Text("Set End Date") .themedBody() }
 
                 if showUntil {
-                    DatePicker("Until", selection: Binding(
+                    DatePicker("Repeat until", selection: Binding(
                         get: { viewModel.until ?? Date() },
                         set: { viewModel.until = $0 }
                     ), displayedComponents: [.date])
