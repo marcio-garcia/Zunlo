@@ -80,7 +80,7 @@ extension EventOccurrence {
         self.isRecurring = remote.is_recurring
         self.location = remote.location
         self.color = EventColor(rawValue: remote.color ?? "") ?? .yellow
-        self.reminderTriggers = []
+        self.reminderTriggers = remote.reminderTriggers
         self.isOverride = false
         self.isCancelled = false
         self.updatedAt = remote.updated_at

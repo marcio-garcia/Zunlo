@@ -37,10 +37,6 @@ final class SupabaseUserTaskRemoteStore: UserTaskRemoteStore {
         )
     }
     
-    func fecthOccurrences() async throws -> [EventOccurrenceResponse] {
-        try await database.fetchOccurrences(as: EventOccurrenceResponse.self)
-    }
-
     func save(_ task: UserTaskRemote) async throws -> [UserTaskRemote] {
         // Only nil the ID if creating a new record and let Supabase/DB handle it
         var tk = task
