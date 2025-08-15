@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import RealmSwift
 
 final class RealmEventLocalStore: EventLocalStore {
     private let db: DatabaseActor
@@ -28,9 +27,13 @@ final class RealmEventLocalStore: EventLocalStore {
     func upsert(_ event: Event) async throws {
         try await db.upsertEvent(from: event, userId: auth.userId)
     }
+    
+    func upsert(event: Event, rule: RecurrenceRule) async throws {
+        try await db.upsertEvent(event: event, rule: rule, userId: auth.userId)
+    }
 
     func delete(id: UUID) async throws {
-        try await db.softDeleteEvent(id: id)
+        try await db.softDeleteEvent(id: id, userId: auth.userId)
     }
 
     func deleteAll(for userId: UUID) async throws {

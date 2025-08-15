@@ -244,7 +244,7 @@ struct AddEditEventView: View {
             HStack {
                 Spacer()
                 Button {
-                    nav.showDialog(.deleteEvent(id: UUID()), for: viewID)
+                    nav.showDialog(.deleteEvent(mode: viewModel.mode), for: viewID)
                 } label: {
                     Text("Delete")
                 }

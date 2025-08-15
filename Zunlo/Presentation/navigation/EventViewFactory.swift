@@ -73,10 +73,29 @@ struct EventViewFactory: EventViews {
         AnyView(Text("Event detail view for \(id)")) // Replace with actual view
     }
 
-    func buildDeleteEventConfirmationView(onOptionSelected: @escaping (String) -> Void) -> AnyView {
-        AnyView(
+    func buildDeleteEventConfirmationView(mode: AddEditEventViewMode, onOptionSelected: @escaping (String) -> Void) -> AnyView {
+        var title: String = ""
+        
+        switch mode {
+        case .add:
+            break
+        case let .editAll(event: _, recurrenceRule: rule):
+            if rule == nil {
+                title = String(localized: "Delete event")
+            } else {
+                title = String(localized: "Delete all series")
+            }
+            
+        case .editSingle:
+            title = String(localized: "Delete this event")
+        case .editOverride:
+            title = String(localized: "Delete this event")
+        case .editFuture:
+            title = String(localized: "Delete this and future events")
+        }
+        return AnyView(
             Group {
-                Button("Delete this event", role: .destructive) {
+                Button(title, role: .destructive) {
                     onOptionSelected("delete")
                 }
                 Button("Cancel", role: .cancel) {

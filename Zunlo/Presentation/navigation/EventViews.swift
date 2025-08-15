@@ -12,6 +12,6 @@ protocol EventViews {
     func buildAddEventView() -> AnyView
     func buildEditEventView(editMode: AddEditEventViewMode) -> AnyView
     func buildEventDetailView(id: UUID) -> AnyView
-    func buildDeleteEventConfirmationView(onOptionSelected: @escaping (String) -> Void) -> AnyView
+    func buildDeleteEventConfirmationView(mode: AddEditEventViewMode, onOptionSelected: @escaping (String) -> Void) -> AnyView
     func buildEditRecurringEventView(onOptionSelected: @escaping (String) -> Void) -> AnyView
 }

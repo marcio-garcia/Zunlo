@@ -40,13 +40,13 @@ enum FullScreenRoute: AppFullScreenRoute {
 
 enum DialogRoute: AppDialogRoute {
     case deleteTask
-    case deleteEvent(id: UUID)
+    case deleteEvent(mode: AddEditEventViewMode)
     case editRecurringEvent
 
     var id: String {
         switch self {
         case .deleteTask: return "deleteTask"
-        case .deleteEvent(let id): return "deleteEvent_\(id)"
+        case .deleteEvent(let mode): return "deleteEvent_\(mode.id)"
         case .editRecurringEvent: return "editRecurringEvent"
         }
     }

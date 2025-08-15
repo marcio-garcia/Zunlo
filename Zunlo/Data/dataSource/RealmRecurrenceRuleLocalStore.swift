@@ -36,6 +36,13 @@ final class RealmRecurrenceRuleLocalStore: RecurrenceRuleLocalStore {
         try await db.upsertRecurrenceRule(from: domain)
     }
 
+    func delete(eventId: UUID) async throws {
+        let rules = try await fetch(for: eventId)
+        for rule in rules {
+            try await delete(id: rule.id)
+        }
+    }
+    
     func delete(id: UUID) async throws {
         try await db.softDeleteRecurrenceRule(id: id)
     }

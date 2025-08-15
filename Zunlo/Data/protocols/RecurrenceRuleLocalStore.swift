@@ -14,6 +14,7 @@ protocol RecurrenceRuleLocalStore {
     func save(_ domain: RecurrenceRule) async throws
     func upsert(_ remote: RecurrenceRuleRemote) async throws
     func upsert(_ domain: RecurrenceRule) async throws
+    func delete(eventId: UUID) async throws
     func delete(id: UUID) async throws
     func deleteAll() async throws
 }

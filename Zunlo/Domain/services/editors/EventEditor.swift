@@ -37,8 +37,6 @@ final class EventEditor: EventEditorService {
             needsSync: false
         )
 
-        try await repo.upsert(newEvent)
-
         if input.isRecurring {
             let rule = RecurrenceRule(
                 id: UUID(), // overriden by database
@@ -53,7 +51,10 @@ final class EventEditor: EventEditorService {
                 createdAt: now,
                 updatedAt: now
             )
-            try await repo.upsertRecurrenceRule(rule)
+            try await repo.upsert(event: newEvent, rule: rule)
+            
+        } else {
+            try await repo.upsert(newEvent)
         }
     }
 
@@ -74,7 +75,6 @@ final class EventEditor: EventEditorService {
             reminderTriggers: input.reminderTriggers,
             needsSync: true
         )
-        try await repo.upsert(updated)
 
         if input.isRecurring {
             let rule = RecurrenceRule(
@@ -90,12 +90,17 @@ final class EventEditor: EventEditorService {
                 createdAt: oldRule?.createdAt ?? now,
                 updatedAt: now
             )
-            try await repo.upsertRecurrenceRule(rule)
+            try await repo.upsert(event: updated, rule: rule)
+            
         } else if let oldRule {
-            try await repo.deleteRecurrenceRule(oldRule)
+            try await repo.upsert(event: updated, rule: oldRule)
+            
+        } else {
+            try await repo.upsert(updated)
         }
     }
 
+    // Edit a single occurrence creating a new override
     func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws {
         let now = clock()
         let override = EventOverride(
@@ -115,6 +120,7 @@ final class EventEditor: EventEditorService {
         try await repo.upsertOverride(override)
     }
 
+    // Edit an existing override
     func editOverride(_ override: EventOverride, with input: EditEventInput) async throws {
         let now = clock()
         let updated = EventOverride(

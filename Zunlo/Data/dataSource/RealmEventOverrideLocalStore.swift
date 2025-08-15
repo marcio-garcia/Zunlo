@@ -39,6 +39,13 @@ final class RealmEventOverrideLocalStore: EventOverrideLocalStore {
     func delete(id: UUID) async throws {
         try await db.softDeleteOverride(id: id)
     }
+    
+    func delete(eventId: UUID) async throws {
+        let overrides = try await fetch(for: eventId)
+        for ov in overrides {
+            try await delete(id: ov.id)
+        }
+    }
 
     func deleteAll() async throws {
         try await db.deleteAllOverrides()

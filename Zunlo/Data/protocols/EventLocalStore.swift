@@ -10,6 +10,7 @@ import Foundation
 protocol EventLocalStore {
     func upsert(_ event: EventRemote) async throws
     func upsert(_ event: Event) async throws
+    func upsert(event: Event, rule: RecurrenceRule) async throws
     func delete(id: UUID) async throws
     func deleteAll(for userId: UUID) async throws
     func deleteAll() async throws

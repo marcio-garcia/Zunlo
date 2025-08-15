@@ -169,14 +169,28 @@ actor DatabaseActor {
             realm.add(obj, update: .modified)
         }
     }
-
-    func softDeleteEvent(id: UUID) throws {
+    
+    func upsertEvent(event: Event, rule: RecurrenceRule, userId: UUID?) throws {
         let realm = try openRealm()
-        try realm.write {
-            guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: id) else { return }
-            existing.deletedAt = Date()
-            existing.updatedAt = Date()
-            existing.needsSync = true
+        realm.beginWrite()
+        do {
+            let localEvent = realm.object(ofType: EventLocal.self, forPrimaryKey: event.id) ?? EventLocal(domain: event)
+            localEvent.getUpdateFields(event)
+            if localEvent.userId == nil { localEvent.userId = userId }
+            localEvent.updatedAt = Date()         // local stamp (server will overwrite)
+            localEvent.needsSync = true
+            realm.add(localEvent, update: .modified)
+            
+            let localRule = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: rule.id)
+                ?? RecurrenceRuleLocal(domain: rule)
+            localRule.getUpdateFields(rule)
+            localRule.updatedAt = Date()
+            localRule.needsSync = true
+            realm.add(localRule, update: .modified)
+            
+            try realm.commitWrite()
+        } catch {
+            realm.cancelWrite()
         }
     }
 
@@ -808,5 +822,72 @@ extension DatabaseActor {
         }
         if let id { UserDefaults.standard.set(id.uuidString, forKey: idKey) }
         else { UserDefaults.standard.removeObject(forKey: idKey) }
+    }
+}
+
+extension DatabaseActor {
+    enum EventDeleteError: Error {
+        case eventNotFound
+        case unauthorized
+    }
+
+    /// Soft-delete an event and all of its children (rules, overrides).
+    /// Marks every changed row `needsSync = true` so push will upsert tombstones.
+    func softDeleteEvent(id: UUID, userId: UUID?) throws {
+        let realm = try openRealm()
+
+        guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: id) else {
+            throw EventDeleteError.eventNotFound
+        }
+        guard existing.userId == userId else {
+            throw EventDeleteError.unauthorized
+        }
+
+        let now = Date()
+
+        realm.beginWrite()
+        do {
+            // Event
+            existing.deletedAt = now
+            existing.updatedAt = now
+            existing.needsSync = true
+
+            // Overrides for this event
+            let overrides = realm.objects(EventOverrideLocal.self)
+                .where { $0.eventId == id && $0.deletedAt == nil }
+            for ov in overrides {
+                ov.deletedAt = now
+                ov.updatedAt = now
+                ov.needsSync = true
+            }
+
+            // Recurrence rules for this event
+            let rules = realm.objects(RecurrenceRuleLocal.self)
+                .where { $0.eventId == id && $0.deletedAt == nil }
+            for rule in rules {
+                rule.deletedAt = now
+                rule.updatedAt = now
+                rule.needsSync = true
+            }
+
+            try realm.commitWrite()
+        } catch {
+            realm.cancelWrite()
+            throw error
+        }
+    }
+    
+    func undeleteEvent(id: UUID, userId: UUID) throws {
+        let realm = try openRealm()
+        guard let ev = realm.object(ofType: EventLocal.self, forPrimaryKey: id),
+              ev.userId == userId else { throw EventDeleteError.eventNotFound }
+        let now = Date()
+        try realm.write {
+            ev.deletedAt = nil; ev.updatedAt = now; ev.needsSync = true
+            let rules = realm.objects(RecurrenceRuleLocal.self).where { $0.eventId == id }
+            for r in rules { r.deletedAt = nil; r.updatedAt = now; r.needsSync = true }
+            let ovs = realm.objects(EventOverrideLocal.self).where { $0.eventId == id }
+            for o in ovs { o.deletedAt = nil; o.updatedAt = now; o.needsSync = true }
+        }
     }
 }

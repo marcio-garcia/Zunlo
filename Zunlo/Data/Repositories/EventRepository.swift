@@ -160,3 +160,9 @@ final class EventRepository {
 //        for o in remoteOverrides { try await eventOverrideLocalStore.save(o) }
 //    }
 }
+
+extension EventRepository {
+    func upsert(event: Event, rule: RecurrenceRule) async throws {
+        try await eventLocalStore.upsert(event: event, rule: rule)
+    }
+}

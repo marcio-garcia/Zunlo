@@ -27,8 +27,6 @@ final class EventSyncEngine {
 
     func syncNow() async -> (Int, Int) {
         do {
-//            try await db.markEventDirty(UUID(uuidString: "C74A7FDA-8EB0-4E18-B958-D7E9AF279C3B")!)
-//            try await db.markEventsClean(UUID(uuidString: "C74A7FDA-8EB0-4E18-B958-D7E9AF279C3B")!)
             let pushed = try await pushDirty()
             let pulled = try await pullSinceCursor()
             return (pushed, pulled)

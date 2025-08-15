@@ -27,8 +27,8 @@ enum EventViewRouter {
         onOptionSelected: @escaping (String) -> Void
     ) -> some View {
         switch route {
-        case .deleteEvent(let id):
-            return factory.buildDeleteEventConfirmationView(onOptionSelected: onOptionSelected)
+        case .deleteEvent(let mode):
+            return factory.buildDeleteEventConfirmationView(mode: mode, onOptionSelected: onOptionSelected)
         case .editRecurringEvent:
             return factory.buildEditRecurringEventView(onOptionSelected: onOptionSelected)
         default:

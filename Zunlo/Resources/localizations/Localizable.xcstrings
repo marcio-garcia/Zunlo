@@ -319,6 +319,12 @@
         }
       }
     },
+    "Delete all series" : {
+
+    },
+    "Delete event" : {
+
+    },
     "Delete Event" : {
       "localizations" : {
         "pt-BR" : {
@@ -338,6 +344,9 @@
           }
         }
       }
+    },
+    "Delete this and future events" : {
+
     },
     "Delete this event" : {
       "localizations" : {
