@@ -24,6 +24,7 @@ struct EventRow: View {
                 VStack(alignment: .leading) {
                     Text(occurrence.title)
                         .themedSubtitle()
+                        .strikethrough(occurrence.isCancelled, color: Color.theme.disabled)
                     if !occurrence.isFakeOccForEmptyToday {
                         Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
                             .themedFootnote()

@@ -37,14 +37,13 @@ final class EventEditor: EventEditorService {
             needsSync: false
         )
 
-        // Orchestrate
         try await repo.upsert(newEvent)
 
         if input.isRecurring {
             let rule = RecurrenceRule(
                 id: UUID(), // overriden by database
                 eventId: newEvent.id,
-                freq: input.recurrenceType!.rawValue,
+                freq: RecurrenceFrequesncy(rawValue: input.recurrenceType ?? "") ?? .daily,
                 interval: input.recurrenceInterval ?? 1,
                 byWeekday: input.byWeekday,
                 byMonthday: input.byMonthday,
@@ -81,7 +80,7 @@ final class EventEditor: EventEditorService {
             let rule = RecurrenceRule(
                 id: oldRule?.id ?? UUID(),
                 eventId: event.id,
-                freq: input.recurrenceType!.rawValue,
+                freq: RecurrenceFrequesncy(rawValue: input.recurrenceType ?? "") ?? .daily,
                 interval: input.recurrenceInterval ?? 1,
                 byWeekday: input.byWeekday,
                 byMonthday: input.byMonthday,
@@ -136,22 +135,6 @@ final class EventEditor: EventEditorService {
     }
 
     func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws {
-//        let data = SplitRecurringEventRemote.NewEventData(
-//            userId: occurrence.userId,
-//            title: input.title,
-//            description: input.notes?.nilIfEmpty,
-//            startDatetime: input.startDate,
-//            endDatetime: input.endDate,
-//            isRecurring: input.isRecurring,
-//            location: input.location?.nilIfEmpty,
-//            color: input.color,
-//            reminderTriggers: input.reminderTriggers
-//        )
-//        let split = SplitRecurringEventRemote(
-//            originalEventId: parent.id,
-//            splitFromDate: occurrence.startDate,
-//            newEventData: data
-//        )
         let newEvent = Event(
             id: UUID(),
             userId: occurrence.userId,

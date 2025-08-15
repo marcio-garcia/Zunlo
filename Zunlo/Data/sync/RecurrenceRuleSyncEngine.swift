@@ -20,26 +20,31 @@ final class RecurrenceRuleSyncEngine {
         self.supabase = supabase
     }
 
-    func syncNow() async {
-        do {
-            try await pushDirty()
-            try await pullSinceCursor()
+    func syncNow() async -> (Int, Int) {
+        do {            
+            let pushed = try await pushDirty()
+            let pulled = try await pullSinceCursor()
+            return (pushed, pulled)
         } catch {
             print("RecurrenceRule sync error:", error)
+            return (0, 0)
         }
     }
 
-    private func pushDirty() async throws {
+    private func pushDirty() async throws -> Int {
         let (batch, ids) = try await db.readDirtyRecurrenceRules()
-        guard !batch.isEmpty else { return }
+        guard !batch.isEmpty else { return 0 }
         _ = try await supabase.from("recurrence_rules").upsert(batch, onConflict: "id").execute()
         try await db.markRecurrenceRulesClean(ids)
+        return batch.count
     }
 
-    private func pullSinceCursor() async throws {
+    private func pullSinceCursor() async throws -> Int {
         var since = UserDefaults.standard.string(forKey: lastPullKey) ?? "1970-01-01T00:00:00Z"
         var lastServerUpdatedAt: Date?
 
+        var rowsAffected = 0
+        
         while true {
             let data = try await supabase
                 .from("recurrence_rules")
@@ -52,6 +57,8 @@ final class RecurrenceRuleSyncEngine {
 
             let rows: [RecurrenceRuleRemote] = try data.decodeSupabase()
             
+            rowsAffected += rows.count
+            
             guard !rows.isEmpty else { break }
             lastServerUpdatedAt = rows.last?.updated_at
             try await db.applyRemoteRecurrenceRules(rows)
@@ -61,5 +68,7 @@ final class RecurrenceRuleSyncEngine {
         if let last = lastServerUpdatedAt {
             UserDefaults.standard.set(last.nextMillisecondCursor(), forKey: lastPullKey)
         }
+        
+        return rowsAffected
     }
 }

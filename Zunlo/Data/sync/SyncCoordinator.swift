@@ -8,22 +8,63 @@
 import Supabase
 
 final class SyncCoordinator {
+    private let supabase: SupabaseClient
+    
     private let events: EventSyncEngine
     private let rules: RecurrenceRuleSyncEngine
     private let overrides: EventOverrideSyncEngine
     private let userTasks: UserTaskSyncEngine
-
+    
+    var eventsPushed: Int = 0
+    var eventsPulled: Int = 0
+    var rulesPushed: Int = 0
+    var rulesPulled: Int = 0
+    var overridesPushed: Int = 0
+    var overridesPulled: Int = 0
+    var taskPushed: Int = 0
+    var taskPulled: Int = 0
+    var totalRowsAffected: Int {
+        let total = eventsPushed + eventsPulled + rulesPushed + rulesPulled +
+        overridesPushed + overridesPulled + taskPushed + taskPulled
+        
+        return total
+    }
+    
     init(db: DatabaseActor, supabase: SupabaseClient) {
+        self.supabase = supabase
         self.events = EventSyncEngine(db: db, supabase: supabase)
         self.rules = RecurrenceRuleSyncEngine(db: db, supabase: supabase)
         self.overrides = EventOverrideSyncEngine(db: db, supabase: supabase)
         self.userTasks = UserTaskSyncEngine(db: db, supabase: supabase)
+        
+        Task {
+            await supabase.auth.onAuthStateChange { event, session in
+                print("Auth event:", event)
+                if let token = session?.accessToken {
+                    print("Now using USER JWT:", token.prefix(16), "…")
+                }
+            }
+        }
     }
 
-    func syncAllOnLaunch() async {
-        await events.syncNow()
-        await rules.syncNow()       // depends on events
-        await overrides.syncNow()   // depends on events, optional after rules
-        await userTasks.syncNow()
+    func syncAllOnLaunch() async -> Int {
+        do {
+            let session = try await supabase.auth.session
+            guard !session.isExpired else {
+                print("⚠️ Sync aborted: no user session (using anon key).")
+                return 0
+            }
+            print("Sync with user:", session.user.id)
+            print("✅ Using USER JWT:", session.accessToken.prefix(16), "…")
+        } catch {
+            print("Auth error before sync. \(error.localizedDescription)")
+            return 0
+        }
+        
+        (eventsPushed, eventsPulled) = await events.syncNow()
+        (rulesPushed, rulesPulled)  = await rules.syncNow()       // depends on events
+        (overridesPushed, overridesPulled) = await overrides.syncNow()   // depends on events, optional after rules
+        (taskPushed, taskPulled) = await userTasks.syncNow()
+        return totalRowsAffected
     }
 }

@@ -10,7 +10,8 @@ import SwiftUI
 struct RemoteBackgroundImage: View {
     let lowResName: String
     let remoteName: String?
-
+    let fileStorage: FileStorage
+    
     @State private var remoteImage: UIImage?
 
     var body: some View {
@@ -36,8 +37,7 @@ struct RemoteBackgroundImage: View {
     private func loadRemoteImage() async {
         guard remoteImage == nil, let name = remoteName else { return } // already fetched
         
-        let remote = RemoteStorageService(envConfig: EnvConfig.shared)
-        let data = await remote.downloadImage(fileName: name)
+        let data = await fileStorage.downloadImage(fileName: name)
         if let data, let image = UIImage(data: data) {
             remoteImage = image
         }

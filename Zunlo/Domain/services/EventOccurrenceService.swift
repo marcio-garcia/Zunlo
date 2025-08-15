@@ -20,6 +20,7 @@ struct EventOccurrenceService {
         var occurrences: [EventOccurrence] = []
 
         for rawOcc in rawOccurrences {
+            if rawOcc.deletedAt != nil { continue } // skip deleted events
             if rawOcc.isRecurring {
                 // Recurring event
                 let ruleDict = Dictionary(grouping: rawOcc.recurrence_rules, by: { $0.eventId })
@@ -38,7 +39,6 @@ struct EventOccurrenceService {
                 for date in dates {
                     // Is there an override/cancellation?
                     if let ov = eventOverrides.first(where: { $0.occurrenceDate.isSameDay(as: date) }) {
-                        if ov.isCancelled { continue }
                         let occu = EventOccurrence(
                             id: ov.id,
                             userId: rawOcc.userId,
@@ -50,12 +50,16 @@ struct EventOccurrenceService {
                             isRecurring: rawOcc.isRecurring,
                             location: ov.overriddenLocation ?? rawOcc.location,
                             color: ov.color,
+                            reminderTriggers: rawOcc.reminderTriggers,
                             isOverride: true,
-                            isCancelled: false,
+                            isCancelled: ov.isCancelled,
                             updatedAt: ov.updatedAt,
                             createdAt: ov.createdAt,
                             overrides: eventOverrides,
-                            recurrence_rules: [rule]
+                            recurrence_rules: [rule],
+                            deletedAt: ov.deletedAt,
+                            needsSync: ov.needsSync,
+                            isFakeOccForEmptyToday: false
                         )
                         occurrences.append(occu)
                     } else {
@@ -71,12 +75,16 @@ struct EventOccurrenceService {
                             isRecurring: rawOcc.isRecurring,
                             location: rawOcc.location,
                             color: rawOcc.color,
+                            reminderTriggers: rawOcc.reminderTriggers,
                             isOverride: false,
-                            isCancelled: false,
+                            isCancelled: rawOcc.isCancelled,
                             updatedAt: rawOcc.updatedAt,
                             createdAt: rawOcc.createdAt,
                             overrides: eventOverrides,
-                            recurrence_rules: [rule]
+                            recurrence_rules: [rule],
+                            deletedAt: rawOcc.deletedAt,
+                            needsSync: rawOcc.needsSync,
+                            isFakeOccForEmptyToday: false
                         )
                         occurrences.append(occu)
                     }
@@ -99,12 +107,16 @@ struct EventOccurrenceService {
                             isRecurring: rawOcc.isRecurring,
                             location: ov.overriddenLocation ?? rawOcc.location,
                             color: ov.color,
+                            reminderTriggers: rawOcc.reminderTriggers,
                             isOverride: true,
                             isCancelled: false,
                             updatedAt: ov.updatedAt,
                             createdAt: ov.createdAt,
                             overrides: [],
-                            recurrence_rules: []
+                            recurrence_rules: [],
+                            deletedAt: ov.deletedAt,
+                            needsSync: ov.needsSync,
+                            isFakeOccForEmptyToday: false
                         )
                         occurrences.append(occu)
                     } else {
@@ -119,12 +131,16 @@ struct EventOccurrenceService {
                             isRecurring: rawOcc.isRecurring,
                             location: rawOcc.location,
                             color: rawOcc.color,
+                            reminderTriggers: rawOcc.reminderTriggers,
                             isOverride: false,
                             isCancelled: false,
                             updatedAt: rawOcc.updatedAt,
                             createdAt: rawOcc.createdAt,
                             overrides: [],
-                            recurrence_rules: []
+                            recurrence_rules: [],
+                            deletedAt: rawOcc.deletedAt,
+                            needsSync: rawOcc.needsSync,
+                            isFakeOccForEmptyToday: false
                         )
                         occurrences.append(occu)
                     }

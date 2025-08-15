@@ -6,39 +6,40 @@
 //
 
 import SwiftUI
-import SupabaseSDK
 import MiniSignalEye
-import CoreLocation
 import AdStack
+import Supabase
 
 final class TodayViewModel: ObservableObject, @unchecked Sendable {
     @Published var state: ViewState = .loading
     @Published var weather: WeatherInfo?
     @Published var eventEditHandler = EventEditHandler()
-
-    private let taskRepo: UserTaskRepository
-    private let eventRepo: EventRepository
-    private let locationService: LocationService
-    private let adManager: AdMobManager
+    @Published var isSyncingDB = false
+    
+    private let appState: AppState
     
     @MainActor let errorHandler = ErrorHandler()
 
     var todayTasks: [UserTask] = []
     var todayEvents: [EventOccurrence] = []
     var greeting: String = ""
-
-    init(
-        taskRepo: UserTaskRepository,
-        eventRepo: EventRepository,
-        locationService: LocationService,
-        adManager: AdMobManager
-    ) {
-        self.taskRepo = taskRepo
-        self.eventRepo = eventRepo
-        self.locationService = locationService
-        self.adManager = adManager
-        
-        locationService.startUpdatingLocation()
+    
+    var taskRepo: UserTaskRepository {
+        appState.userTaskRepository!
+    }
+    var eventRepo: EventRepository {
+        appState.eventRepository!
+    }
+    var locationService: LocationService {
+        appState.locationService!
+    }
+    var adManager: AdMobManager {
+        appState.adManager!
+    }
+    
+    init(appState: AppState) {
+        self.appState = appState
+        appState.locationService?.startUpdatingLocation()
         
         observeRepositories()
         updateGreeting()
@@ -51,11 +52,9 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
                 let today = Date().startOfDay
                 
                 let filtered = tasks.filter {
-                    if let due = $0.dueDate {
-                        return due <= today && !$0.isCompleted
-                    } else {
-                        return !$0.isCompleted
-                    }
+                    guard $0.deletedAt == nil else { return false }
+                    guard let due = $0.dueDate else { return !$0.isCompleted }
+                    return due <= today && !$0.isCompleted
                 }
                 
                 DispatchQueue.main.async {
@@ -195,6 +194,28 @@ extension TodayViewModel {
                 } onRewardEarned: { amount, type in
                     onRewardEarned?(amount, type)
                 }
+        }
+    }
+}
+
+extension TodayViewModel {
+    func syncDB() async {
+        guard (appState.authManager?.userId) != nil else {
+            state = .error("Need authentication")
+            fatalError("DB sync needs authentication")
+        }
+        
+        guard let localDB = appState.localDB else { return }
+        
+        await MainActor.run { self.isSyncingDB = true }
+        
+        let sync = SyncCoordinator(db: localDB, supabase: appState.supabaseClient!)
+        
+        let rowsAffected = await sync.syncAllOnLaunch()
+        await MainActor.run { self.isSyncingDB = false }
+        
+        if rowsAffected > 0 {
+            await fetchData()
         }
     }
 }

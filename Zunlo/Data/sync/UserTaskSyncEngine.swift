@@ -20,25 +20,34 @@ final class UserTaskSyncEngine {
         self.supabase = supabase
     }
 
-    func syncNow() async {
-        do { try await pushDirty(); try await pullSinceCursor() }
-        catch { print("UserTask sync error:", error) }
+    func syncNow() async -> (Int, Int) {
+        do {
+            let pushed = try await pushDirty()
+            let pulled = try await pullSinceCursor()
+            return (pushed, pulled)
+        } catch {
+            print("UserTask sync error:", error)
+            return (0, 0)
+        }
     }
 
-    private func pushDirty() async throws {
+    private func pushDirty() async throws -> Int {
         let (batch, ids) = try await db.readDirtyUserTasks()
-        guard !batch.isEmpty else { return }
+        guard !batch.isEmpty else { return 0 }
         _ = try await supabase.from("tasks").upsert(batch, onConflict: "id").execute()
         try await db.markUserTasksClean(ids)
+        return batch.count
     }
 
-    private func pullSinceCursor() async throws {
+    private func pullSinceCursor() async throws -> Int {
         var sinceTs = UserDefaults.standard.string(forKey: lastTsKey) ?? "1970-01-01T00:00:00.000000Z"
         var sinceId  = UserDefaults.standard.string(forKey: lastIdKey).flatMap(UUID.init)
 
         var lastTsSeen: Date?
         var lastIdSeen: UUID?
 
+        var rowsAffected = 0
+        
         while true {
             let idStr = sinceId?.uuidString ?? "00000000-0000-0000-0000-000000000000"
             let data = try await supabase
@@ -53,10 +62,10 @@ final class UserTaskSyncEngine {
             
             let rows: [UserTaskRemote] = try data.decodeSupabase()
             
+            rowsAffected += rows.count
+            
             guard !rows.isEmpty else { break }
-            
             try await db.applyRemoteUserTasks(rows)
-            
             if let last = rows.last {
                 lastTsSeen = last.updatedAt
                 lastIdSeen = last.id
@@ -69,5 +78,7 @@ final class UserTaskSyncEngine {
             UserDefaults.standard.set(t.nextMillisecondCursor(), forKey: lastTsKey)
             UserDefaults.standard.set(id.uuidString, forKey: lastIdKey)
         }
+        
+        return rowsAffected
     }
 }

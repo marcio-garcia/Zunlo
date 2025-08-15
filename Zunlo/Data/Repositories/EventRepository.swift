@@ -59,7 +59,7 @@ final class EventRepository {
     func fetchOccurrences(for userId: UUID?) async throws -> [EventOccurrence] {
         do {
             let occurrences = try await eventLocalStore.fetchOccurrences(for: userId)
-            let occ = occurrences.map { EventOccurrence(remote: $0) }
+            let occ = occurrences.map { EventOccurrence(occ: $0) }
             lastEventAction.value = .fetch(occ)
             return occ
         } catch {

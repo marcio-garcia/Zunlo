@@ -10,7 +10,7 @@ import Foundation
 struct RecurrenceRule: Identifiable, Codable, Hashable {
     let id: UUID
     let eventId: UUID
-    let freq: String
+    let freq: RecurrenceFrequesncy
     let interval: Int
     let byWeekday: [Int]?
     let byMonthday: [Int]?
@@ -28,7 +28,7 @@ extension RecurrenceRule {
     init(remote: RecurrenceRuleRemote) {
         self.id = remote.id
         self.eventId = remote.event_id
-        self.freq = remote.freq
+        self.freq = RecurrenceFrequesncy(rawValue: remote.freq) ?? .daily
         self.interval = remote.interval
         self.byWeekday = remote.byweekday
         self.byMonthday = remote.bymonthday
@@ -44,7 +44,7 @@ extension RecurrenceRule {
     init(local: RecurrenceRuleLocal) {
         self.id = local.id
         self.eventId = local.eventId
-        self.freq = local.freq
+        self.freq = RecurrenceFrequesncy(rawValue: local.freq) ?? .daily
         self.interval = local.interval
         self.byWeekday = local.byWeekdayArray
         self.byMonthday = local.byMonthdayArray

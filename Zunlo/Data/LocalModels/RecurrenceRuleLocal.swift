@@ -87,7 +87,7 @@ extension RecurrenceRuleLocal {
         self.init(
             id: domain.id,
             eventId: domain.eventId,
-            freq: domain.freq,
+            freq: domain.freq.rawValue,
             interval: domain.interval,
             byWeekday: domain.byWeekday,
             byMonthday: domain.byMonthday,
@@ -133,7 +133,7 @@ extension RecurrenceRuleLocal {
     }
     
     func getUpdateFields(_ domain: RecurrenceRule) {
-        self.freq = domain.freq
+        self.freq = domain.freq.rawValue
         self.interval = domain.interval
         self.byWeekdayArray = domain.byWeekday ?? []
         self.byMonthdayArray = domain.byMonthday ?? []

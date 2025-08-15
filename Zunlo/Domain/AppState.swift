@@ -7,6 +7,7 @@
 
 import SupabaseSDK
 import AdStack
+import Supabase
 
 final class AppState {
     static let shared = AppState()
@@ -21,6 +22,7 @@ final class AppState {
     var pushNotificationService: PushNotificationService?
     var adManager: AdMobManager?
     var suggestionEngine: SuggestionEngine?
+    var supabaseClient: SupabaseClient?
     
     private init() {}
 }

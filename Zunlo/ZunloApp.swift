@@ -11,6 +11,7 @@ import RealmSwift
 import Firebase
 import FlowNavigator
 import AdStack
+import Supabase
 
 typealias AppNav = AppNavigationManager<SheetRoute, FullScreenRoute, DialogRoute, StackRoute>
 
@@ -32,7 +33,12 @@ struct ZunloApp: App {
     init() {
         setupRealm()
         
-        let authManager = AuthManager()
+        let supabaseClient = SupabaseClient(
+            supabaseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
+            supabaseKey: EnvConfig.shared.apiKey
+        )
+        
+        let authManager = AuthManager(authService: AuthService(supabase: supabaseClient))
         let locationService = LocationService()
         
         let supabaseConfig = SupabaseConfig(
@@ -96,6 +102,7 @@ struct ZunloApp: App {
         self.appState.userTaskRepository = taskRepo
         self.appState.chatRepository = chatRepo
         self.appState.suggestionEngine = suggestionEngine
+        self.appState.supabaseClient = supabaseClient
         
         firebase.configure()
         pushService.start()

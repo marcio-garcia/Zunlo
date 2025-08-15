@@ -25,6 +25,8 @@ struct EventOccurrence: Identifiable, Hashable {
     let createdAt: Date
     let overrides: [EventOverride]
     let recurrence_rules: [RecurrenceRule]
+    let deletedAt: Date?
+    let needsSync: Bool
     let isFakeOccForEmptyToday: Bool
     
     init(
@@ -32,20 +34,22 @@ struct EventOccurrence: Identifiable, Hashable {
         userId: UUID,
         eventId: UUID,
         title: String,
-        notes: String? = nil,
+        notes: String?,
         startDate: Date,
-        endDate: Date? = nil,
-        isRecurring: Bool = false,
-        location: String? = nil,
+        endDate: Date?,
+        isRecurring: Bool,
+        location: String?,
         color: EventColor,
-        reminderTriggers: [ReminderTrigger]? = nil,
-        isOverride: Bool = false,
-        isCancelled: Bool = false,
+        reminderTriggers: [ReminderTrigger]?,
+        isOverride: Bool,
+        isCancelled: Bool,
         updatedAt: Date,
         createdAt: Date,
-        overrides: [EventOverride] = [],
-        recurrence_rules: [RecurrenceRule] = [],
-        isFakeOccForEmptyToday: Bool = false
+        overrides: [EventOverride],
+        recurrence_rules: [RecurrenceRule],
+        deletedAt: Date?,
+        needsSync: Bool,
+        isFakeOccForEmptyToday: Bool
     ) {
         self.id = id
         self.userId = userId
@@ -64,29 +68,33 @@ struct EventOccurrence: Identifiable, Hashable {
         self.createdAt = createdAt
         self.overrides = overrides
         self.recurrence_rules = recurrence_rules
+        self.deletedAt = deletedAt
+        self.needsSync = needsSync
         self.isFakeOccForEmptyToday = isFakeOccForEmptyToday
     }
 }
 
 extension EventOccurrence {
-    init(remote: EventOccurrenceResponse) {
-        self.id = remote.id
-        self.userId = remote.user_id
-        self.eventId = remote.id
-        self.title = remote.title
-        self.notes = remote.notes
-        self.startDate = remote.start_datetime
-        self.endDate = remote.end_datetime
-        self.isRecurring = remote.is_recurring
-        self.location = remote.location
-        self.color = EventColor(rawValue: remote.color ?? "") ?? .yellow
-        self.reminderTriggers = remote.reminderTriggers
+    init(occ: EventOccurrenceResponse) {
+        self.id = occ.id
+        self.userId = occ.user_id
+        self.eventId = occ.id
+        self.title = occ.title
+        self.notes = occ.notes
+        self.startDate = occ.start_datetime
+        self.endDate = occ.end_datetime
+        self.isRecurring = occ.is_recurring
+        self.location = occ.location
+        self.color = EventColor(rawValue: occ.color ?? "") ?? .yellow
+        self.reminderTriggers = occ.reminderTriggers
         self.isOverride = false
         self.isCancelled = false
-        self.updatedAt = remote.updated_at
-        self.createdAt = remote.created_at
-        self.overrides = remote.overrides.compactMap { EventOverride(remote: $0) }
-        self.recurrence_rules = remote.recurrence_rules.compactMap { RecurrenceRule(remote: $0) }
+        self.updatedAt = occ.updated_at
+        self.createdAt = occ.created_at
+        self.overrides = occ.overrides.compactMap { EventOverride(remote: $0) }
+        self.recurrence_rules = occ.recurrence_rules.compactMap { RecurrenceRule(remote: $0) }
+        self.deletedAt = occ.deletedAt
+        self.needsSync = occ.needsSync
         self.isFakeOccForEmptyToday = false
     }
 }

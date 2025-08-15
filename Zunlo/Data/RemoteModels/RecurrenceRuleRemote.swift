@@ -68,7 +68,7 @@ extension RecurrenceRuleRemote {
     init(domain: RecurrenceRule) {
         self.id = domain.id
         self.event_id = domain.eventId
-        self.freq = domain.freq
+        self.freq = domain.freq.rawValue
         self.interval = domain.interval
         self.byweekday = domain.byWeekday
         self.bymonthday = domain.byMonthday

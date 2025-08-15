@@ -100,7 +100,7 @@ class EventRowView: UIView {
     
     private func setupTheme() {
         backgroundColor = .clear
-        card.borderColor = UIColor(Color.theme.border)
+        card.borderColor = UIColor(Color.theme.lightBorder)
         colorIndicator.backgroundColor = .gray
         titleLabel.textColor = UIColor(Color.theme.text)
         timeLabel.textColor = UIColor(Color.theme.secondaryText)
@@ -109,7 +109,28 @@ class EventRowView: UIView {
     
     func configure(with occurrence: EventOccurrence) {
         self.occurrence = occurrence
-        titleLabel.text = occurrence.title
+        
+        var color = UIColor(Color(hex: "#E0E0E0")!) // neutral
+        
+        if occurrence.isCancelled {
+            let attributedText = NSAttributedString(
+                string: occurrence.title,
+                attributes: [.strikethroughStyle: NSUnderlineStyle.single.rawValue]
+            )
+            titleLabel.text = nil
+            titleLabel.attributedText = attributedText
+            titleLabel.textColor = UIColor(Color.theme.tertiaryText)
+            timeLabel.textColor = UIColor(Color.theme.tertiaryText)
+        } else {
+            titleLabel.attributedText = nil
+            titleLabel.text = occurrence.title
+            titleLabel.textColor = UIColor(Color.theme.text)
+            timeLabel.textColor = UIColor(Color.theme.secondaryText)
+            if !occurrence.isFakeOccForEmptyToday {
+                color = UIColor(Color(hex: occurrence.color.rawValue)!)
+            }
+        }
+        
         
         if occurrence.isFakeOccForEmptyToday {
             timeLabel.text = nil
@@ -122,12 +143,10 @@ class EventRowView: UIView {
                 timeLabel.text = start
             }
         }
-
-        let hex = occurrence.isFakeOccForEmptyToday ? "#E0E0E0" : occurrence.color.rawValue
-        let color = UIColor(Color(hex: hex)!)
-        colorIndicator.backgroundColor = color
-        overrideIcon.isHidden = !occurrence.isOverride
         
+        overrideIcon.isHidden = !occurrence.isOverride
+        colorIndicator.backgroundColor = color
         card.fillColor = color.withAlphaComponent(0.3)
+
     }
 }

@@ -28,12 +28,10 @@ protocol AuthServicing {
 
 class AuthService: AuthServicing {
     
-    private var supabase: SupabaseClient!
+    private var supabase: SupabaseClient
     
-    init(envConfig: EnvConfig) {
-        guard let url = URL(string: envConfig.apiBaseUrl) else { return }
-        supabase = SupabaseClient(supabaseURL: url,
-                                  supabaseKey: envConfig.apiKey)
+    init(supabase: SupabaseClient) {
+        self.supabase = supabase
     }
     
     func signUp(email: String, password: String) async throws -> AuthSession {

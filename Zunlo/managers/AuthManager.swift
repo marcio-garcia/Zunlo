@@ -58,7 +58,7 @@ final class AuthManager: ObservableObject, AuthProviding {
     }
     
     init(
-        authService: AuthServicing = AuthService(envConfig: EnvConfig.shared),
+        authService: AuthServicing,
         tokenStorage: TokenStorage = AuthTokenStorage(),
         userStorage: UserStorage = AuthUserStorage()
     ) {

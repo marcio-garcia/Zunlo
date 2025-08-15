@@ -28,8 +28,8 @@ class UserTaskInboxViewModel: ObservableObject {
             if case .fetch(let tasks) = action {
                 guard let self else { return }
                 self.tasks = tasks
-                self.completeTasks = tasks.filter { $0.isCompleted }
-                self.incompleteTasks = tasks.filter { !$0.isCompleted }
+                self.completeTasks = tasks.filter { $0.deletedAt == nil && $0.isCompleted }
+                self.incompleteTasks = tasks.filter { $0.deletedAt == nil && !$0.isCompleted }
                 self.state = .loaded
             }
         }

@@ -42,12 +42,7 @@ struct TodayView: View {
         self.namespace = namespace
         self._showChat = showChat
         self.appState = appState
-        _viewModel = StateObject(wrappedValue: TodayViewModel(
-            taskRepo: appState.userTaskRepository!,
-            eventRepo: appState.eventRepository!,
-            locationService: appState.locationService!,
-            adManager: appState.adManager!)
-        )
+        _viewModel = StateObject(wrappedValue: TodayViewModel(appState: appState))
     }
     
     var body: some View {
@@ -116,7 +111,8 @@ struct TodayView: View {
                         .background(
                             RemoteBackgroundImage(
                                 lowResName: lowResName(for: viewModel.weather),
-                                remoteName: remoteName(for: viewModel.weather)
+                                remoteName: remoteName(for: viewModel.weather),
+                                fileStorage: RemoteStorageService(supabase: appState.supabaseClient!)
                             )
                             .ignoresSafeArea()
                         )
@@ -264,6 +260,9 @@ struct TodayView: View {
                             .font(.system(size: 20, weight: .regular))
                             .foregroundColor(Color.theme.text)
                     }
+                    if viewModel.isSyncingDB {
+                        ProgressView()
+                    }
                     Spacer()
                     Button(action: {
                         nav.navigate(to: .eventCalendar)
@@ -310,6 +309,9 @@ struct TodayView: View {
                         Image(systemName: "note.text")
                             .font(.system(size: 20, weight: .regular))
                             .foregroundColor(Color.theme.text)
+                    }
+                    if viewModel.isSyncingDB {
+                        ProgressView()
                     }
                     Spacer()
                     Button(action: {
@@ -409,5 +411,6 @@ struct TodayView: View {
     private func fetchInfo() async {
         await viewModel.fetchData()
         await viewModel.fetchWeather()
+        await viewModel.syncDB()
     }
 }

@@ -28,6 +28,8 @@ extension EventOccurrence {
             createdAt: Date(),
             overrides: [],
             recurrence_rules: [],
+            deletedAt: nil,
+            needsSync: false,
             isFakeOccForEmptyToday: false
         )
     }

@@ -225,6 +225,16 @@
         }
       }
     },
+    "Copy Realm file path" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar ‘path’ do Realm"
+          }
+        }
+      }
+    },
     "Create account" : {
       "localizations" : {
         "pt-BR" : {
@@ -252,6 +262,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "diário"
+          }
+        }
+      }
+    },
+    "Database" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Banco de dados"
           }
         }
       }
@@ -285,6 +305,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Excluir"
+          }
+        }
+      }
+    },
+    "Delete All %@" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir tudo %@"
           }
         }
       }
@@ -325,6 +355,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Excluir"
+          }
+        }
+      }
+    },
+    "Details" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes"
           }
         }
       }
@@ -900,6 +940,12 @@
         }
       }
     },
+    "Realm Browser" : {
+
+    },
+    "Realm debug browser" : {
+
+    },
     "Recurrence" : {
       "localizations" : {
         "pt-BR" : {
@@ -916,6 +962,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recorrente"
+          }
+        }
+      }
+    },
+    "Refresh" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar"
           }
         }
       }
@@ -976,6 +1032,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salve suas tarefas permanentemente"
+          }
+        }
+      }
+    },
+    "Search properties" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar propriedades"
           }
         }
       }
@@ -1061,7 +1127,14 @@
       }
     },
     "Simulate Reminder Conditions" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simular condições dos lembretes"
+          }
+        }
+      }
     },
     "Snowy" : {
       "localizations" : {

@@ -8,12 +8,16 @@
 import Foundation
 import Supabase
 
-final class RemoteStorageService {
+protocol FileStorage {
+    func uploadImage(_ imageData: Data, fileName: String) async
+    func downloadImage(fileName: String) async -> Data?
+}
+
+final class RemoteStorageService: FileStorage {
     private let supabase: SupabaseClient
     
-    init(envConfig: EnvConfig) {
-        supabase = SupabaseClient(supabaseURL: URL(string: envConfig.apiBaseUrl)!,
-                                  supabaseKey: envConfig.apiKey)
+    init(supabase: SupabaseClient) {
+        self.supabase = supabase
     }
     
     func uploadImage(_ imageData: Data, fileName: String) async {

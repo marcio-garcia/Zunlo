@@ -24,16 +24,10 @@ final class MainViewModel: ObservableObject {
         }
         
         guard let localDB = appState.localDB else { return }
+                
+        let sync = SyncCoordinator(db: localDB, supabase: appState.supabaseClient!)
         
-        let supabaseSwift = SupabaseClient(
-            supabaseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
-            supabaseKey: EnvConfig.shared.apiKey
-        )
-        
-        let sync = SyncCoordinator(db: localDB, supabase: supabaseSwift)
-        
-        await sync.syncAllOnLaunch()
+        let _ = await sync.syncAllOnLaunch()
         await MainActor.run { self.state = .loaded }
-        
     }
 }

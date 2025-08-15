@@ -20,7 +20,7 @@ final class RecurrenceHelperTests: XCTestCase {
     func testDailyRecurrence() {
         let start = date(2024, 7, 1)
         let rule = RecurrenceRule(id: UUID(), eventId: UUID(),
-                                  freq: "daily",
+                                  freq: RecurrenceFrequesncy.daily,
                                   interval: 1, byWeekday: nil, byMonthday: nil, byMonth: nil,
                                   until: nil, count: 3,
                                   createdAt: Date(), updatedAt: Date())
@@ -31,7 +31,7 @@ final class RecurrenceHelperTests: XCTestCase {
 
     func testWeeklyRecurrence_MondayWednesday() {
         let start = date(2024, 7, 1) // Monday
-        let rule = RecurrenceRule(id: UUID(), eventId: UUID(), freq: "weekly",
+        let rule = RecurrenceRule(id: UUID(), eventId: UUID(), freq: RecurrenceFrequesncy.weekly,
                                   interval: 1, byWeekday: [2,4],
                                   byMonthday: nil, byMonth: nil,
                                   until: nil, count: 4,
@@ -44,7 +44,7 @@ final class RecurrenceHelperTests: XCTestCase {
 
     func testMonthlyRecurrence_31st() {
         let start = date(2024, 1, 31)
-        let rule = RecurrenceRule(id: UUID(), eventId: UUID(), freq: "monthly",
+        let rule = RecurrenceRule(id: UUID(), eventId: UUID(), freq: RecurrenceFrequesncy.monthly,
                                   interval: 1,
                                   byWeekday: nil, byMonthday: [31], byMonth: nil,
                                   until: nil, count: 3,
@@ -58,7 +58,7 @@ final class RecurrenceHelperTests: XCTestCase {
     func testRecurrenceUntilDate() {
         let start = date(2024, 7, 1)
         let until = date(2024, 7, 3)
-        let rule = RecurrenceRule(id: UUID(), eventId: UUID(), freq: "daily",
+        let rule = RecurrenceRule(id: UUID(), eventId: UUID(), freq: RecurrenceFrequesncy.daily,
                                   interval: 1, byWeekday: nil, byMonthday: nil, byMonth: nil, until: until, count: nil, createdAt: Date(), updatedAt: Date())
         let range = date(2024, 7, 1)...date(2024, 7, 10)
         let result = RecurrenceHelper.generateRecurrenceDates(start: start, rule: rule, within: range)
@@ -68,7 +68,7 @@ final class RecurrenceHelperTests: XCTestCase {
     func testRecurrenceOutsideRange() {
         let start = date(2024, 7, 1)
         let rule = RecurrenceRule(id: UUID(), eventId: UUID(),
-                                  freq: "daily", interval: 1,
+                                  freq: RecurrenceFrequesncy.daily, interval: 1,
                                   byWeekday: nil, byMonthday: nil, byMonth: nil, until: nil, count: 3, createdAt: Date(), updatedAt: Date())
         let range = date(2024, 7, 5)...date(2024, 7, 10)
         let result = RecurrenceHelper.generateRecurrenceDates(start: start, rule: rule, within: range)

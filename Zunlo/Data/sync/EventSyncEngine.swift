@@ -25,28 +25,35 @@ final class EventSyncEngine {
         self.supabase = supabase
     }
 
-    func syncNow() async {
+    func syncNow() async -> (Int, Int) {
         do {
-            try await pushDirty()
-            try await pullSinceCursor()
+//            try await db.markEventDirty(UUID(uuidString: "C74A7FDA-8EB0-4E18-B958-D7E9AF279C3B")!)
+//            try await db.markEventsClean(UUID(uuidString: "C74A7FDA-8EB0-4E18-B958-D7E9AF279C3B")!)
+            let pushed = try await pushDirty()
+            let pulled = try await pullSinceCursor()
+            return (pushed, pulled)
         } catch {
             print("Event sync error:", error)
+            return (0, 0)
         }
     }
 
-    private func pushDirty() async throws {
+    private func pushDirty() async throws -> Int {
         let (batch, ids) = try await db.readDirtyEvents()
-        guard !batch.isEmpty else { return }
+        guard !batch.isEmpty else { return 0 }
         _ = try await supabase.from("events").upsert(batch, onConflict: "id").execute()
         try await db.markEventsClean(ids)
+        return batch.count
     }
 
-    private func pullSinceCursor() async throws {
+    private func pullSinceCursor() async throws -> Int {
         var sinceTs = UserDefaults.standard.string(forKey: lastTsKey) ?? CursorDefaults.zero
         var sinceId = UserDefaults.standard.string(forKey: lastIdKey).flatMap(UUID.init)
 
         var lastServerUpdatedAt: Date?
 
+        var rowsAffected = 0
+        
         while true {
             let data = try await supabase
                 .from("events")
@@ -60,6 +67,8 @@ final class EventSyncEngine {
             
             let rows: [EventRemote] = try data.decodeSupabase()
 
+            rowsAffected += rows.count
+            
             guard !rows.isEmpty else { break }
             try await db.applyRemoteEvents(rows)
             if let last = rows.last {
@@ -73,6 +82,8 @@ final class EventSyncEngine {
             UserDefaults.standard.set(last.nextMillisecondCursor(), forKey: lastTsKey)
             UserDefaults.standard.set(sinceId?.uuidString, forKey: lastIdKey)
         }
+        
+        return rowsAffected
     }
 }
 

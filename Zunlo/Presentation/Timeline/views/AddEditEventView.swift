@@ -18,7 +18,12 @@ struct AddEditEventView: View {
     
     var onDismiss: ((Date?) -> Void)?
     
-    private let recurrenceOptions: [String] = ["daily", "weekly", "monthly"]
+    private let recurrenceOptions: [String] = [
+        RecurrenceFrequesncy.daily.rawValue,
+        RecurrenceFrequesncy.weekly.rawValue,
+        RecurrenceFrequesncy.monthly.rawValue,
+        RecurrenceFrequesncy.yearly.rawValue
+    ]
     
     var body: some View {
         let eventFactory = EventViewFactory(viewID: viewID, nav: nav)
@@ -184,12 +189,12 @@ struct AddEditEventView: View {
                 )
                 .themedBody()
 
-                if viewModel.recurrenceType == "weekly" {
+                if viewModel.recurrenceType == RecurrenceFrequesncy.weekly.rawValue {
                     WeekdayPicker(selection: $viewModel.byWeekday)
                         .themedCaption()
                 }
 
-                if viewModel.recurrenceType == "monthly" {
+                if viewModel.recurrenceType == RecurrenceFrequesncy.monthly.rawValue {
                     MonthdayPicker(selection: $viewModel.byMonthday)
                         .themedCaption()
                 }

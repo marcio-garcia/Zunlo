@@ -721,3 +721,92 @@ extension DatabaseActor {
         }
     }
 }
+
+extension DatabaseActor {
+
+    // Mark ONE event dirty; optionally cascade to its rule(s) & overrides.
+    func markEventDirty(_ eventId: UUID, cascade: Bool = true, touch: Bool = true) throws {
+        let realm = try openRealm()
+        let now = Date()
+
+        try realm.write {
+            if let ev = realm.object(ofType: EventLocal.self, forPrimaryKey: eventId) {
+                ev.needsSync = true
+                if touch { ev.updatedAt = now }
+            }
+
+            guard cascade else { return }
+
+            // Recurrence rule(s) for this event
+            let rules = realm.objects(RecurrenceRuleLocal.self)
+                .where { $0.eventId == eventId }
+            for r in rules {
+                r.needsSync = true
+                if touch { r.updatedAt = now }
+            }
+
+            // Overrides for this event
+            let ovs = realm.objects(EventOverrideLocal.self)
+                .where { $0.eventId == eventId }
+            for o in ovs {
+                o.needsSync = true
+                if touch { o.updatedAt = now }
+            }
+        }
+    }
+
+    // Mark MANY events dirty in one transaction.
+    func markEventsDirty(_ ids: [UUID], cascade: Bool = true, touch: Bool = true) throws {
+        guard !ids.isEmpty else { return }
+        let realm = try openRealm()
+        let now = Date()
+
+        try realm.write {
+            // Events
+            let evs = realm.objects(EventLocal.self).where { $0.id.in(ids) }
+            for ev in evs {
+                ev.needsSync = true
+                if touch { ev.updatedAt = now }
+            }
+
+            guard cascade else { return }
+
+            // Rules
+            let rules = realm.objects(RecurrenceRuleLocal.self).where { $0.eventId.in(ids) }
+            for r in rules {
+                r.needsSync = true
+                if touch { r.updatedAt = now }
+            }
+
+            // Overrides
+            let ovs = realm.objects(EventOverrideLocal.self).where { $0.eventId.in(ids) }
+            for o in ovs {
+                o.needsSync = true
+                if touch { o.updatedAt = now }
+            }
+        }
+    }
+
+    // Convenience: mark ALL events (optionally for a specific user) dirty.
+    func markAllEventsDirty(for userId: UUID? = nil, cascade: Bool = true, touch: Bool = true) throws {
+        let realm = try openRealm()
+        var evs = realm.objects(EventLocal.self)
+        if let uid = userId {
+            evs = evs.where { $0.userId == uid }
+        }
+        try markEventsDirty(Array(evs.map(\.id)), cascade: cascade, touch: touch)
+    }
+
+    // Optional: if you want to force a re-PULL from server too, rewind the events cursor.
+    func rewindEventsCursor(to date: Date? = nil, id: UUID? = nil) {
+        let tsKey = "events.cursor.ts"
+        let idKey = "events.cursor.id"
+        if let d = date {
+            UserDefaults.standard.set(d.rfc3339MicroString(), forKey: tsKey)
+        } else {
+            UserDefaults.standard.set("1970-01-01T00:00:00.000000Z", forKey: tsKey)
+        }
+        if let id { UserDefaults.standard.set(id.uuidString, forKey: idKey) }
+        else { UserDefaults.standard.removeObject(forKey: idKey) }
+    }
+}

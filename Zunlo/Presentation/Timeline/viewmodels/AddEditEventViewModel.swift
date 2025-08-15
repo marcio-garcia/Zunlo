@@ -22,7 +22,7 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var endDate: Date = Date().addingTimeInterval(3600)
     @Published var location: String = ""
     @Published var isRecurring: Bool = false
-    @Published var recurrenceType: String = "daily"
+    @Published var recurrenceType: String = RecurrenceFrequesncy.daily.rawValue
     @Published var recurrenceInterval: Int = 1
     @Published var byMonthday: Set<Int> = []
     @Published var until: Date? = nil
@@ -92,7 +92,7 @@ final class AddEditEventViewModel: ObservableObject {
             startDate = Date()
             updateEndDate()
             isRecurring = false
-            recurrenceType = "daily"
+            recurrenceType = RecurrenceFrequesncy.daily.rawValue
             recurrenceInterval = 1
             byWeekday.removeAll()
             byMonthday.removeAll()
@@ -114,14 +114,14 @@ final class AddEditEventViewModel: ObservableObject {
             color = event.color.rawValue
             reminderTriggers = event.reminderTriggers ?? []
             if let rule = rule {
-                recurrenceType = rule.freq
+                recurrenceType = rule.freq.rawValue
                 recurrenceInterval = rule.interval
                 byWeekday = uiByWeekday(from: Set(rule.byWeekday ?? []))
                 rule.byMonthday?.forEach({ byMonthday.insert($0) })
                 until = rule.until
                 count = rule.count.map { String($0) } ?? ""
             } else {
-                recurrenceType = "daily"
+                recurrenceType = RecurrenceFrequesncy.daily.rawValue
                 recurrenceInterval = 1
                 byWeekday.removeAll()
                 byMonthday.removeAll()
@@ -218,7 +218,7 @@ final class AddEditEventViewModel: ObservableObject {
             location: location,
             color: EventColor(rawValue: color) ?? .yellow,
             reminderTriggers: reminderTriggers,
-            recurrenceType: recurrenceType,
+            recurrenceType: recurrenceType.rawValue,
             recurrenceInterval: recurrenceInterval,
             byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
             byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),

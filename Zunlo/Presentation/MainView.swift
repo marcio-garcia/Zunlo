@@ -97,7 +97,8 @@ struct MainView: View {
             }
         }
         .task {
-            await viewModel.syncDB()
+//            await viewModel.syncDB()
+            await MainActor.run { viewModel.state = .loaded }
         }
     }
 }

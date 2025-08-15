@@ -9,7 +9,8 @@ import SwiftUI
 
 struct DebugMenuView: View {
     @EnvironmentObject var upgradeReminderManager: UpgradeReminderManager
-
+    @State private var showRealmBrowser = false
+    
     var body: some View {
         Form {
             Section(header: Text("Upgrade Reminder")) {
@@ -22,9 +23,16 @@ struct DebugMenuView: View {
                     UserDefaults.standard.set(false, forKey: "hasDismissedUpgradeReminder")
                 }
             }
-
-            // Add other debug tools here if needed
+            
+            Section(header: Text("Database")) {
+                Button("Realm debug browser") {
+                    showRealmBrowser = true
+                }
+            }
         }
         .navigationTitle("Debug Menu")
+        .sheet(isPresented: $showRealmBrowser) {
+            RealmDebugBrowserView() // or pass a custom Realm.Configuration if needed
+        }
     }
 }
