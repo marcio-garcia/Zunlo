@@ -53,7 +53,7 @@ struct AddEditEventView: View {
             .defaultBackground()
             .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog(
-                "Delete Event",
+                "Delete event",
                 isPresented: nav.isDialogPresented(for: viewID),
                 titleVisibility: .visible
             ) {

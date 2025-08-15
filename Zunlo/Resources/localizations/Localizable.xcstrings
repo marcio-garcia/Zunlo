@@ -320,12 +320,16 @@
       }
     },
     "Delete all series" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir série de eventos"
+          }
+        }
+      }
     },
     "Delete event" : {
-
-    },
-    "Delete Event" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -346,7 +350,14 @@
       }
     },
     "Delete this and future events" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir esse e eventos futuros"
+          }
+        }
+      }
     },
     "Delete this event" : {
       "localizations" : {
