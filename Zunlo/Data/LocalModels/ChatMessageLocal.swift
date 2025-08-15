@@ -8,19 +8,20 @@
 import Foundation
 import RealmSwift
 
-class ChatMessageLocal: Object {
-    @Persisted(primaryKey: true) var id: UUID
-    @Persisted var userId: UUID?
-    @Persisted var message: String = ""
-    @Persisted var createdAt: Date = Date()
-    @Persisted var isFromUser: Bool = false
+final class ChatAttachmentEmbedded: EmbeddedObject {
+    @Persisted var kindRaw: String = "task"   // "task" | "event"
+    @Persisted var id: UUID = UUID()
+}
 
-    convenience init(id: UUID = UUID(), userId: UUID?, message: String, createdAt: Date = Date(), isFromUser: Bool) {
-        self.init()
-        self.id = id
-        self.userId = userId
-        self.message = message
-        self.createdAt = createdAt
-        self.isFromUser = isFromUser
-    }
+final class ChatMessageLocal: Object {
+    @Persisted(primaryKey: true) var id: UUID
+    @Persisted(indexed: true) var conversationId: UUID
+    @Persisted var roleRaw: String = "assistant"    // ChatRole.rawValue
+    @Persisted var text: String = ""
+    @Persisted(indexed: true) var createdAt: Date = Date()
+    @Persisted var statusRaw: String = "sent"       // MessageStatus.rawValue
+    @Persisted var userId: UUID?
+    @Persisted var attachments: List<ChatAttachmentEmbedded>
+    @Persisted var parentId: UUID?
+    @Persisted var errorDescription: String?
 }

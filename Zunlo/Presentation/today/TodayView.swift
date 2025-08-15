@@ -83,8 +83,8 @@ struct TodayView: View {
                                     vm: AIWelcomeCardViewModel(
                                         time: SystemTimeProvider(),
                                         policyProvider: policyProvider,
-                                        tasksEngine: appState.userTaskRepository!,
-                                        eventsEngine: appState.suggestionEngine!,
+                                        tasksEngine: appState.taskSuggestionEngine!,
+                                        eventsEngine: appState.eventSuggestionEngine!,
                                         weather: WeatherService.shared
                                     )
                                 )

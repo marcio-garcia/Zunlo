@@ -5,8 +5,12 @@
 //  Created by Marcio Garcia on 7/12/25.
 //
 
-protocol ChatLocalStore {
-    func fetchAll() async throws -> [ChatMessage]
-    func save(_ message: ChatMessage) async throws
-    func deleteAll() async throws
+import Foundation
+
+public protocol ChatLocalStore {
+    func fetch(conversationId: UUID, limit: Int?) async throws -> [ChatMessage]
+    func upsert(_ message: ChatMessage) async throws
+    func append(messageId: UUID, delta: String, status: MessageStatus) async throws
+    func updateStatus(messageId: UUID, status: MessageStatus, error: String?) async throws
+    func delete(messageId: UUID) async throws
 }

@@ -53,7 +53,7 @@ struct MainView: View {
                                     .transition(.opacity)
                                     .blur(radius: 10)
                                 
-                                ChatScreenView(namespace: animationNamespace,
+                                ChatView(namespace: animationNamespace,
                                                showChat: $isShowingChat,
                                                factory: factory)
                             }

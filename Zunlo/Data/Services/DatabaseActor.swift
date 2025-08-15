@@ -8,13 +8,13 @@
 import Foundation
 import RealmSwift
 
-actor DatabaseActor {
+public actor DatabaseActor {
     private let config: Realm.Configuration
     // Keeps the in-memory realm alive for the test's lifetime
     private var anchorRealm: Realm?
     
     /// Use `keepAliveAnchor: true` when using in-memory configs in tests.
-    init(
+    public init(
         config: Realm.Configuration = .defaultConfiguration,
         keepAliveAnchor: Bool = false
     ) {
@@ -466,36 +466,6 @@ actor DatabaseActor {
         let unique = Set(allTags.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) })
         return Array(unique).sorted()
     }
-
-    // --------------------------------------------------------
-    // MARK: Chat
-    // --------------------------------------------------------
-
-    func fetchAllChatMessages() throws -> [ChatMessage] {
-        let realm = try openRealm()
-        let results = realm.objects(ChatMessageLocal.self)
-            .sorted(byKeyPath: "createdAt", ascending: true)
-        return results.map { ChatMessage(local: $0) }
-    }
-
-    func saveChatMessage(_ message: ChatMessage) throws {
-        let realm = try openRealm()
-        try realm.write {
-            let local = ChatMessageLocal(
-                id: message.id,
-                userId: message.userId,
-                message: message.message,
-                createdAt: message.createdAt,
-                isFromUser: message.isFromUser
-            )
-            realm.add(local, update: .all)
-        }
-    }
-
-    func deleteAllChatMessages() throws {
-        let realm = try openRealm()
-        try realm.write { realm.delete(realm.objects(ChatMessageLocal.self)) }
-    }
 }
 
 extension DatabaseActor {
@@ -889,5 +859,222 @@ extension DatabaseActor {
             let ovs = realm.objects(EventOverrideLocal.self).where { $0.eventId == id }
             for o in ovs { o.deletedAt = nil; o.updatedAt = now; o.needsSync = true }
         }
+    }
+}
+
+extension DatabaseActor {
+    public enum ChatDBError: Error, LocalizedError {
+        case messageNotFound(UUID)
+        case conversationNotFound(UUID)
+        public var errorDescription: String? {
+            switch self {
+            case .messageNotFound(let id): return "Chat message not found: \(id.uuidString)"
+            case .conversationNotFound(let id): return "Conversation not found: \(id.uuidString)"
+            }
+        }
+    }
+}
+
+// MARK: - Conversation helpers (Option B)
+
+extension DatabaseActor {
+    /// Ensure the **single** default conversation exists and return its id.
+    /// If a non-archived "general" conversation exists, returns it; otherwise creates a new one.
+    public func ensureDefaultConversation() throws -> UUID {
+        let realm = try openRealm()
+        if let existing = realm.objects(ConversationObject.self)
+            .where({ $0.archived == false && $0.kindRaw == "general" })
+            .sorted(byKeyPath: "createdAt", ascending: true)
+            .first {
+            return existing.id
+        }
+        let convo = ConversationObject()
+        convo.id = UUID()
+        convo.title = "Chat"
+        convo.kindRaw = "general"
+        convo.createdAt = Date()
+        convo.updatedAt = Date()
+        try realm.write { realm.add(convo, update: .modified) }
+        return convo.id
+    }
+
+    /// Make sure a conversation with the given id exists (used when writing messages).
+    /// If it's missing (e.g., restored from sync), it will be created with a sane default.
+    public func ensureConversationExists(id: UUID, title: String? = "Chat", kindRaw: String = "general") throws {
+        let realm = try openRealm()
+        if realm.object(ofType: ConversationObject.self, forPrimaryKey: id) != nil { return }
+        let convo = ConversationObject()
+        convo.id = id
+        convo.title = title
+        convo.kindRaw = kindRaw
+        convo.createdAt = Date()
+        convo.updatedAt = Date()
+        try realm.write { realm.add(convo, update: .modified) }
+    }
+
+    /// Update title or archive flag for the single conversation.
+    public func updateDefaultConversation(title: String? = nil, archived: Bool? = nil, draftInput: String? = nil) throws {
+        let realm = try openRealm()
+        guard let convo = realm.objects(ConversationObject.self)
+            .where({ $0.kindRaw == "general" })
+            .first else { return }
+        try realm.write {
+            if let title { convo.title = title }
+            if let archived { convo.archived = archived }
+            if let draftInput { convo.draftInput = draftInput }
+            convo.updatedAt = Date()
+        }
+    }
+
+    /// Fetch the single conversation object (useful for tests/UI).
+    public func fetchDefaultConversation() throws -> ConversationObject? {
+        let realm = try openRealm()
+        return realm.objects(ConversationObject.self)
+            .where({ $0.kindRaw == "general" && $0.archived == false })
+            .first
+    }
+}
+
+// MARK: - Chat CRUD + conversation "touch" integration
+
+extension DatabaseActor {
+    /// Fetch messages for the (single) conversation, ascending by time. Optional limit.
+    public func fetchChatMessages(conversationId: UUID, limit: Int? = nil) throws -> [ChatMessage] {
+        let realm = try openRealm()
+        let results = realm.objects(ChatMessageLocal.self)
+            .where { $0.conversationId == conversationId }
+            .sorted(byKeyPath: "createdAt", ascending: true)
+        if let limit, limit > 0, results.count > limit {
+            let slice = results.suffix(limit)
+            return slice.map(Self.toDomain)
+        } else {
+            return results.map(Self.toDomain)
+        }
+    }
+
+    /// Create or update a message (idempotent). Also updates the conversation row.
+    public func upsertChatMessage(_ message: ChatMessage) throws {
+        let realm = try openRealm()
+        try ensureConversationExists(id: message.conversationId) // safety
+        try realm.write {
+            let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: message.id) ?? ChatMessageLocal()
+            if obj.realm == nil { obj.id = message.id; realm.add(obj, update: .modified) }
+            Self.apply(domain: message, to: obj, in: realm)
+            Self.touchConversation(for: message, withText: message.text, in: realm)
+        }
+    }
+
+    /// Append streaming delta and set status; also refresh conversation preview/updatedAt.
+    public func appendChatMessage(messageId: UUID, delta: String, status: MessageStatus) throws {
+        let realm = try openRealm()
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
+            throw ChatDBError.messageNotFound(messageId)
+        }
+        try realm.write {
+            obj.text += delta
+            obj.statusRaw = status.rawValue
+            // Update convo preview with the growing text
+            let stub = ChatMessage(
+                id: obj.id,
+                conversationId: obj.conversationId,
+                role: ChatRole(rawValue: obj.roleRaw) ?? .assistant,
+                text: obj.text,
+                createdAt: obj.createdAt,
+                status: MessageStatus(rawValue: obj.statusRaw) ?? .streaming,
+                userId: obj.userId
+            )
+            Self.touchConversation(for: stub, withText: obj.text, in: realm)
+        }
+    }
+
+    /// Update a message status and optional error; touch conversation timestamp.
+    public func updateChatMessageStatus(messageId: UUID, status: MessageStatus, error: String?) throws {
+        let realm = try openRealm()
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
+            throw ChatDBError.messageNotFound(messageId)
+        }
+        try realm.write {
+            obj.statusRaw = status.rawValue
+            obj.errorDescription = error
+            // Touch conversation updatedAt so lists resort if needed
+            if let convo = realm.object(ofType: ConversationObject.self, forPrimaryKey: obj.conversationId) {
+                convo.updatedAt = Date()
+            }
+        }
+    }
+
+    /// Delete a message (no change to conversation id).
+    public func deleteChatMessage(messageId: UUID) throws {
+        let realm = try openRealm()
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else { return }
+        try realm.write { realm.delete(obj) }
+        // You can choose to backfill preview by reading last message; omitted for simplicity.
+    }
+}
+
+// MARK: - Private helpers
+
+extension DatabaseActor {
+    private static func toDomain(_ obj: ChatMessageLocal) -> ChatMessage {
+        let role = ChatRole(rawValue: obj.roleRaw) ?? .assistant
+        let status = MessageStatus(rawValue: obj.statusRaw) ?? .sent
+        let attachments: [ChatAttachment] = obj.attachments.map {
+            let kind = ChatAttachment.Kind(rawValue: $0.kindRaw) ?? .task
+            return ChatAttachment(kind: kind, id: $0.id)
+        }
+        return ChatMessage(
+            id: obj.id,
+            conversationId: obj.conversationId,
+            role: role,
+            text: obj.text,
+            createdAt: obj.createdAt,
+            status: status,
+            userId: obj.userId,
+            attachments: attachments,
+            parentId: obj.parentId,
+            errorDescription: obj.errorDescription
+        )
+    }
+
+    private static func apply(domain: ChatMessage, to obj: ChatMessageLocal, in realm: Realm) {
+        obj.conversationId = domain.conversationId
+        obj.roleRaw = domain.role.rawValue
+        obj.text = domain.text
+        obj.createdAt = domain.createdAt
+        obj.statusRaw = domain.status.rawValue
+        obj.userId = domain.userId
+        obj.parentId = domain.parentId
+        obj.errorDescription = domain.errorDescription
+        obj.attachments.removeAll()
+        for a in domain.attachments {
+            let emb = ChatAttachmentEmbedded()
+            emb.kindRaw = a.kind.rawValue
+            emb.id = a.id
+            obj.attachments.append(emb)
+        }
+    }
+
+    /// Update conversation `updatedAt`, `lastMessageAt`, and `lastMessagePreview`.
+    private static func touchConversation(for message: ChatMessage, withText text: String, in realm: Realm) {
+        guard let convo = realm.object(ofType: ConversationObject.self, forPrimaryKey: message.conversationId) else { return }
+        convo.updatedAt = Date()
+        // lastMessageAt reflects the message creation time; keeps chronological sense even with streaming
+        convo.lastMessageAt = message.createdAt
+        // Update preview only for user/assistant (skip system/tool)
+        switch message.role {
+        case .user, .assistant:
+            convo.lastMessagePreview = makePreview(text)
+        default:
+            break
+        }
+    }
+
+    private static func makePreview(_ text: String, maxLen: Int = 140) -> String {
+        let trimmed = text
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count <= maxLen { return trimmed }
+        let idx = trimmed.index(trimmed.startIndex, offsetBy: maxLen)
+        return String(trimmed[..<idx]) + "…"
     }
 }

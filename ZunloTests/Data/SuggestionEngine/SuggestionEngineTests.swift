@@ -13,8 +13,8 @@ import XCTest
 final class SuggestionEngineTests: XCTestCase {
 
     // Replace with your engine type if named differently.
-    private func makeEngine(with events: [EventOccurrence]) -> SuggestionEngine {
-        SuggestionEngine(calendar: DT.cal, eventFetcher: FakeEventFetcher(events))
+    private func makeEngine(with events: [EventOccurrence]) -> DefaultEventSuggestionEngine {
+        DefaultEventSuggestionEngine(calendar: DT.cal, eventFetcher: FakeEventFetcher(events))
     }
 
     private var sampleDate: Date { DT.d("2025-08-12 12:00") } // any time that day (UTC)

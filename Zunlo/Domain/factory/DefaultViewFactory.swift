@@ -9,7 +9,7 @@ import Foundation
 
 protocol ViewFactory {
     func makeMainViewModel() -> MainViewModel
-    func makeChatScreenViewModel() -> ChatScreenViewModel
+    @MainActor func makeChatScreenViewModel() -> ChatViewModel
 }
 
 final class DefaultViewFactory: ViewFactory {
@@ -20,11 +20,27 @@ final class DefaultViewFactory: ViewFactory {
     }
 
     func makeMainViewModel() -> MainViewModel {
-        let userId = appState.authManager?.user?.id
         return MainViewModel(appState: appState)
     }
     
-    func makeChatScreenViewModel() -> ChatScreenViewModel {
-        return ChatScreenViewModel(repository: appState.chatRepository!)
+    @MainActor
+    func makeChatScreenViewModel() -> ChatViewModel {
+        var cid = UUID()
+        
+        // Resolve the single conversation id quickly from defaults (creating the row if needed)
+        do {
+            cid = try DefaultsConversationIDStore().getOrCreate()
+        } catch {
+            print("Error creating ChatViewModel - \(error.localizedDescription)")
+        }
+        
+        // Ensure the Conversation row exists without blocking init
+        Task { try? await appState.localDB!.ensureConversationExists(id: cid) }
+
+        let store = RealmChatLocalStore(db: appState.localDB!)
+        let repo = DefaultChatRepository(store: store)
+        let ai = NoopAIClient()
+
+        return ChatViewModel(conversationId: cid, repository: repo, ai: ai, userId: appState.authManager?.user?.id)
     }
 }

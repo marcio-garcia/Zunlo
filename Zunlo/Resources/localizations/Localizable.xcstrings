@@ -135,6 +135,9 @@
         }
       }
     },
+    "Assistant is typing" : {
+
+    },
     "At time of task" : {
       "localizations" : {
         "pt-BR" : {
@@ -224,6 +227,9 @@
           }
         }
       }
+    },
+    "Copy" : {
+
     },
     "Copy Realm file path" : {
       "localizations" : {
@@ -1036,6 +1042,9 @@
         }
       }
     },
+    "Retry" : {
+
+    },
     "Save" : {
       "localizations" : {
         "pt-BR" : {
@@ -1196,6 +1205,9 @@
         }
       }
     },
+    "Stop" : {
+
+    },
     "Supabase Auth Demo" : {
 
     },
@@ -1280,6 +1292,7 @@
       }
     },
     "Type a message..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -1404,6 +1417,9 @@
       }
     },
     "Zunlo" : {
+
+    },
+    "Zunlo Assistant" : {
 
     }
   },

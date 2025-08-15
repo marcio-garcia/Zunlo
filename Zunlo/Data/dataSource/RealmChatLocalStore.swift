@@ -6,21 +6,31 @@
 //
 
 import Foundation
-import RealmSwift
 
-final class RealmChatLocalStore: ChatLocalStore {
+// Realm-backed implementation using your DatabaseActor methods.
+public final class RealmChatLocalStore: ChatLocalStore {
+    
     private let db: DatabaseActor
-    init(db: DatabaseActor) { self.db = db }
+    
+    public init(db: DatabaseActor) { self.db = db }
 
-    func fetchAll() async throws -> [ChatMessage] {
-        try await db.fetchAllChatMessages()
+    public func fetch(conversationId: UUID, limit: Int?) async throws -> [ChatMessage] {
+        try await db.fetchChatMessages(conversationId: conversationId, limit: limit)
     }
 
-    func save(_ message: ChatMessage) async throws {
-        try await db.saveChatMessage(message)
+    public func upsert(_ message: ChatMessage) async throws {
+        try await db.upsertChatMessage(message)
     }
 
-    func deleteAll() async throws {
-        try await db.deleteAllChatMessages()
+    public func append(messageId: UUID, delta: String, status: MessageStatus) async throws {
+        try await db.appendChatMessage(messageId: messageId, delta: delta, status: status)
+    }
+
+    public func updateStatus(messageId: UUID, status: MessageStatus, error: String?) async throws {
+        try await db.updateChatMessageStatus(messageId: messageId, status: status, error: error)
+    }
+
+    public func delete(messageId: UUID) async throws {
+        try await db.deleteChatMessage(messageId: messageId)
     }
 }

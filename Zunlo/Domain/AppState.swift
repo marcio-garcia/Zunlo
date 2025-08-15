@@ -21,7 +21,8 @@ final class AppState {
     var locationService: LocationService?
     var pushNotificationService: PushNotificationService?
     var adManager: AdMobManager?
-    var suggestionEngine: SuggestionEngine?
+    var eventSuggestionEngine: EventSuggestionEngine?
+    var taskSuggestionEngine: TaskSuggestionEngine?
     var supabaseClient: SupabaseClient?
     
     private init() {}

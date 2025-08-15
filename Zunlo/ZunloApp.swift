@@ -72,11 +72,16 @@ struct ZunloApp: App {
             remoteStore: SupabaseUserTaskRemoteStore(supabase: supabase, auth: authManager)
         )
         
-        let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(db: localDB), userId: nil)
+        let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(db: localDB))
         
-        let suggestionEngine = SuggestionEngine(
+        let eventSuggestionEngine = DefaultEventSuggestionEngine(
             calendar: Calendar.appDefault,
             eventFetcher: EventFetcher(repo: eventRepo)
+        )
+        
+        let taskSuggestionEngine = DefaultTaskSuggestionEngine(
+            calendar: Calendar.appDefault,
+            taskFetcher: UserTaskFetcher(repo: taskRepo)
         )
         
 //        let state = AppState(
@@ -101,7 +106,8 @@ struct ZunloApp: App {
         self.appState.eventRepository = eventRepo
         self.appState.userTaskRepository = taskRepo
         self.appState.chatRepository = chatRepo
-        self.appState.suggestionEngine = suggestionEngine
+        self.appState.eventSuggestionEngine = eventSuggestionEngine
+        self.appState.taskSuggestionEngine = taskSuggestionEngine
         self.appState.supabaseClient = supabaseClient
         
         firebase.configure()
@@ -135,7 +141,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 12, // <- increment this every time you change schema!
+        schemaVersion: 13, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,

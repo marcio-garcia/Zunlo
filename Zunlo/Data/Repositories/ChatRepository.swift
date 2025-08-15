@@ -7,38 +7,36 @@
 
 import Foundation
 
-protocol ChatRepository {
-    func loadMessages() async throws -> [ChatMessage]
-    func sendMessage(_ message: String, fromUser: Bool) async throws
-    func clearChat() async throws
+public protocol ChatRepository {
+    func loadMessages(conversationId: UUID, limit: Int?) async throws -> [ChatMessage]
+    func upsert(_ message: ChatMessage) async throws
+    func appendDelta(messageId: UUID, delta: String, status: MessageStatus) async throws
+    func setStatus(messageId: UUID, status: MessageStatus, error: String?) async throws
+    func delete(messageId: UUID) async throws
 }
 
-final class DefaultChatRepository: ChatRepository {
+public final class DefaultChatRepository: ChatRepository {
     private let store: ChatLocalStore
-    private let userId: UUID?
 
-    init(store: ChatLocalStore, userId: UUID? = nil) {
-        self.store = store
-        self.userId = userId
+    public init(store: ChatLocalStore) { self.store = store }
+
+    public func loadMessages(conversationId: UUID, limit: Int? = 200) async throws -> [ChatMessage] {
+        try await store.fetch(conversationId: conversationId, limit: limit)
     }
 
-    func loadMessages() async throws -> [ChatMessage] {
-        try await store.fetchAll()
+    public func upsert(_ message: ChatMessage) async throws {
+        try await store.upsert(message)
     }
 
-    func sendMessage(_ message: String, fromUser: Bool) async throws {
-        let newMessage = ChatMessage(
-            id: UUID(),
-            userId: userId,
-            message: message,
-            createdAt: Date(),
-            isFromUser: fromUser
-        )
-        try await store.save(newMessage)
+    public func appendDelta(messageId: UUID, delta: String, status: MessageStatus) async throws {
+        try await store.append(messageId: messageId, delta: delta, status: status)
     }
 
-    func clearChat() async throws {
-        try await store.deleteAll()
+    public func setStatus(messageId: UUID, status: MessageStatus, error: String?) async throws {
+        try await store.updateStatus(messageId: messageId, status: status, error: error)
+    }
+
+    public func delete(messageId: UUID) async throws {
+        try await store.delete(messageId: messageId)
     }
 }
-
