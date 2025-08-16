@@ -12,9 +12,11 @@ import XCTest
 
 final class SuggestionEngineTests: XCTestCase {
 
+    let policy = SuggestionPolicy.defaultForApp()
+    
     // Replace with your engine type if named differently.
     private func makeEngine(with events: [EventOccurrence]) -> DefaultEventSuggestionEngine {
-        DefaultEventSuggestionEngine(calendar: DT.cal, eventFetcher: FakeEventFetcher(events))
+        DefaultEventSuggestionEngine(calendar: DT.cal, eventFetcher: FakeEventFetcher(events), policy: policy)
     }
 
     private var sampleDate: Date { DT.d("2025-08-12 12:00") } // any time that day (UTC)
@@ -54,7 +56,8 @@ final class SuggestionEngineTests: XCTestCase {
 
     func testFreeWindows_fullDay_min60() async throws {
         let engine = makeEngine(with: sampleEvents())
-        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 60, policy: fullDayUTC)
+        engine.policy = fullDayUTC
+        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 60)
 
         // Expect [01:00–06:30] and [11:00–22:00]
         XCTAssertEqual(free.count, 2)
@@ -69,13 +72,13 @@ final class SuggestionEngineTests: XCTestCase {
     func testNextEventStart_fullDay_examples() async throws {
         let engine = makeEngine(with: sampleEvents())
 
-        let s1 = await engine.nextEventStart(after: DT.d("2025-08-12 08:20"), on: sampleDate, policy: fullDayUTC)
+        let s1 = await engine.nextEventStart(after: DT.d("2025-08-12 08:20"), on: sampleDate)
         XCTAssertEqual(s1, DT.d("2025-08-12 09:00"))
 
-        let s2 = await engine.nextEventStart(after: DT.d("2025-08-12 10:45"), on: sampleDate, policy: fullDayUTC)
+        let s2 = await engine.nextEventStart(after: DT.d("2025-08-12 10:45"), on: sampleDate)
         XCTAssertEqual(s2, DT.d("2025-08-12 22:00"))
 
-        let s3 = await engine.nextEventStart(after: DT.d("2025-08-12 23:50"), on: sampleDate, policy: fullDayUTC)
+        let s3 = await engine.nextEventStart(after: DT.d("2025-08-12 23:50"), on: sampleDate)
         XCTAssertNil(s3)
     }
 
@@ -83,7 +86,8 @@ final class SuggestionEngineTests: XCTestCase {
 
     func testConflictingItemsCount_fullDay_isTwo() async throws {
         let engine = makeEngine(with: sampleEvents())
-        let count = await engine.conflictingItemsCount(on: sampleDate, policy: fullDayUTC)
+        engine.policy = fullDayUTC
+        let count = await engine.conflictingItemsCount(on: sampleDate)
         XCTAssertEqual(count, 2, "B∩C and E∩G")
     }
 
@@ -93,8 +97,9 @@ final class SuggestionEngineTests: XCTestCase {
         let engine = makeEngine(with: sampleEvents())
         var policy = fullDayUTC
         policy.absorbGapsBelow = 60*60 // 60 minutes
+        engine.policy = policy
 
-        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0, policy: policy)
+        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0)
 
         // Ensure there is NO free window exactly [08:15–09:00] after absorption.
         let hasGap = free.contains { $0.start == DT.d("2025-08-12 08:15") && $0.end == DT.d("2025-08-12 09:00") }
@@ -114,19 +119,21 @@ final class SuggestionEngineTests: XCTestCase {
             availabilityTimeZone: spTZ
         )
 
+        engine.policy = policy
+        
         // Free windows should only appear inside local 08–20, which is 11:00–23:00 UTC.
         // Given our events, busy inside availability becomes [22:00–23:00], so free is [11:00–22:00].
-        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0, policy: policy)
+        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0)
         XCTAssertEqual(free.count, 1)
         XCTAssertEqual(free[0].start, DT.d("2025-08-12 11:00"))
         XCTAssertEqual(free[0].end,   DT.d("2025-08-12 22:00"))
 
         // Next event start respects availability window (returns 22:00 UTC).
-        let next = await engine.nextEventStart(after: DT.d("2025-08-12 10:00"), on: sampleDate, policy: policy)
+        let next = await engine.nextEventStart(after: DT.d("2025-08-12 10:00"), on: sampleDate)
         XCTAssertEqual(next, DT.d("2025-08-12 22:00"))
 
         // No conflicts inside availability in this dataset
-        let conflicts = await engine.conflictingItemsCount(on: sampleDate, policy: policy)
+        let conflicts = await engine.conflictingItemsCount(on: sampleDate)
         XCTAssertEqual(conflicts, 0)
     }
 
@@ -138,7 +145,9 @@ final class SuggestionEngineTests: XCTestCase {
         policy.padBefore = 5*60
         policy.padAfter  = 5*60
 
-        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0, policy: policy)
+        engine.policy = policy
+        
+        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0)
 
         // The first big free block was [01:00–06:30]; with padding, preceding/next busy expand by 5m each,
         // so this window should be [01:05–06:25].

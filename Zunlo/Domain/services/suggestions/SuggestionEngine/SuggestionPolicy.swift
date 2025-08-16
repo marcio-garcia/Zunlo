@@ -23,7 +23,8 @@ public struct SuggestionPolicy: Sendable, Equatable {
     public var absorbGapsBelow: TimeInterval = 0     // merge tiny gaps (0 => only adjacency)
     public var padBefore: TimeInterval = 0           // pre-buffer (travel/setup)
     public var padAfter:  TimeInterval = 0           // post-buffer (cleanup/travel)
-
+    public var minFocusDuration: TimeInterval = 0    // min gap to create focus event
+    
     // Availability interpreted in `availabilityTimeZone` *per local day*
     public var availabilityStartHour: Int = 8
     public var availabilityStartMinute: Int = 0

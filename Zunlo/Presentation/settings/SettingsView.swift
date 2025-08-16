@@ -35,7 +35,11 @@ struct SettingsView: View {
                     }
 #endif
                     RoundedSection(title: "Availability") {
-                        AvailabilitySettingsSection()
+                        AvailabilitySettings()
+                    }
+                    
+                    RoundedSection(title: "Focus") {
+                        FreeWindowSettings()
                     }
                     
                     RoundedSection(title: "Account") {

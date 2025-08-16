@@ -139,11 +139,52 @@ public actor DatabaseActor {
     // MARK: Events
     // --------------------------------------------------------
 
-    func fetchAllEventsSorted() throws -> [Event] {
+    func fetchEvent(id: UUID) throws -> EventLocal? {
+        let realm = try openRealm()
+        guard let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: id) else {
+            return nil
+        }
+        return obj
+    }
+    
+    // Keep NSPredicate here because the filter is complex (ANY tags, ranges, etc.)
+    func fetchEvents(filteredBy filter: EventFilter?) throws -> [EventLocal] {
+        let realm = try openRealm()
+        var predicates: [NSPredicate] = []
+
+//        if let tags = filter?.tags, !tags.isEmpty {
+//            predicates.append(NSPredicate(format: "ANY tags IN %@", tags))
+//        }
+        if let userId = filter?.userId {
+            predicates.append(NSPredicate(format: "userId == %@", userId as CVarArg))
+        }
+//        if let priority = filter?.priority {
+//            predicates.append(NSPredicate(format: "priority == %@", priority.rawValue))
+//        }
+//        if let isCompleted = filter?.isCompleted {
+//            predicates.append(NSPredicate(format: "isCompleted == %@", NSNumber(value: isCompleted)))
+//        }
+        if let range = filter?.startDateRange {
+            predicates.append(NSPredicate(format: "startDate >= %@ AND startDate <= %@", range.lowerBound as NSDate, range.upperBound as NSDate))
+        }
+
+        var query = realm.objects(EventLocal.self)
+        if !predicates.isEmpty {
+            let compound = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+            query = query.filter(compound)
+        }
+
+        let sorted = query.sorted(by: [
+            SortDescriptor(keyPath: "startDate", ascending: true)
+        ])
+        return sorted.map { $0 }
+    }
+    
+    func fetchAllEventsSorted() throws -> [EventLocal] {
         let realm = try openRealm()
         let results = realm.objects(EventLocal.self)
             .sorted(byKeyPath: "startDate", ascending: true)
-        return results.map { Event(local: $0) }
+        return results.map { $0 }
     }
 
     func upsertEvent(from remote: EventRemote, userId: UUID?) throws {
@@ -158,11 +199,11 @@ public actor DatabaseActor {
         }
     }
 
-    func upsertEvent(from domain: Event, userId: UUID?) throws {
+    func upsertEvent(from local: EventLocal, userId: UUID?) throws {
         let realm = try openRealm()
         try realm.write {
-            let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: domain.id) ?? EventLocal(domain: domain)
-            obj.getUpdateFields(domain)
+            let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: local.id) ?? local
+            obj.getUpdateFields(local)
             if obj.userId == nil { obj.userId = userId }
             obj.updatedAt = Date()         // local stamp (server will overwrite)
             obj.needsSync = true
@@ -170,12 +211,12 @@ public actor DatabaseActor {
         }
     }
     
-    func upsertEvent(event: Event, rule: RecurrenceRule, userId: UUID?) throws {
+    func upsertEvent(local: EventLocal, rule: RecurrenceRule, userId: UUID?) throws {
         let realm = try openRealm()
         realm.beginWrite()
         do {
-            let localEvent = realm.object(ofType: EventLocal.self, forPrimaryKey: event.id) ?? EventLocal(domain: event)
-            localEvent.getUpdateFields(event)
+            let localEvent = realm.object(ofType: EventLocal.self, forPrimaryKey: local.id) ?? local
+            localEvent.getUpdateFields(local)
             if localEvent.userId == nil { localEvent.userId = userId }
             localEvent.updatedAt = Date()         // local stamp (server will overwrite)
             localEvent.needsSync = true
@@ -503,7 +544,7 @@ extension DatabaseActor {
     func splitRecurringEventFrom(
         originalEventId: UUID,
         splitDate: Date,
-        newEvent: Event,
+        newEvent: EventLocal,
         userId: UUID
     ) throws -> UUID {
         let realm = try openRealm()
@@ -526,23 +567,9 @@ extension DatabaseActor {
         realm.beginWrite()
         do {
             // 1) Insert new event, mark dirty
-            let newDomain = Event(
-                id: newEventId,
-                userId: userId,
-                title: newEvent.title,
-                notes: newEvent.notes,
-                startDate: newEvent.startDate,
-                endDate: newEvent.endDate,
-                isRecurring: newEvent.isRecurring,
-                location: newEvent.location,
-                createdAt: newEvent.createdAt,
-                updatedAt: now,
-                color: newEvent.color,
-                reminderTriggers: newEvent.reminderTriggers,
-                deletedAt: nil,
-                needsSync: true
-            )
-            let newLocal = EventLocal(domain: newDomain)
+            var newLocal = newEvent
+            newLocal.deletedAt = nil
+            newLocal.needsSync = true
             realm.add(newLocal, update: .modified)
 
             // 2) Clone ONE recurrence rule (LIMIT 1), mark dirty

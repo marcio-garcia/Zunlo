@@ -49,7 +49,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         taskRepo.lastTaskAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
             if case .fetch(let tasks) = action {
                 
-                let today = Date().startOfDay
+                let today = Date().startOfNextDay()
                 
                 let filtered = tasks.filter {
                     guard $0.deletedAt == nil else { return false }

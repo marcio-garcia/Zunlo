@@ -9,18 +9,20 @@ import Foundation
 
 protocol EventLocalStore {
     func upsert(_ event: EventRemote) async throws
-    func upsert(_ event: Event) async throws
-    func upsert(event: Event, rule: RecurrenceRule) async throws
+    func upsert(_ event: EventLocal) async throws
+    func upsert(event: EventLocal, rule: RecurrenceRule) async throws
     func delete(id: UUID) async throws
     func deleteAll(for userId: UUID) async throws
     func deleteAll() async throws
     
-    func fetchAll() async throws -> [Event]
+    func fetch(id: UUID) async throws -> EventLocal?
+    func fetch(startAt: Date) async throws -> Event?
+    func fetchAll() async throws -> [EventLocal]
     func fetchOccurrences(for userId: UUID?) async throws -> [EventOccurrenceResponse]
     
     func splitRecurringEvent(
         originalEventId: UUID,
         splitDate: Date,
-        newEvent: Event
+        newEvent: EventLocal
     ) async throws -> UUID
 }

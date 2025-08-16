@@ -36,3 +36,12 @@ public struct AISuggestion: Identifiable, Hashable, Sendable {
 public protocol AISuggester {
     func suggest(context: AIContext) -> AISuggestion?
 }
+
+public protocol AICoolDownSuggester: AISuggester {
+    var usage: SuggestionUsageStore { get set }
+
+    /// After a success, we dampen the score and let it recover over this period.
+    var cooldown: TimeInterval { get set }      // e.g. 6 hours
+    /// Maximum points to subtract right after a success (linearly decays to 0 by cooldown end).
+    var maxPenalty: Int { get set }             // e.g. 60
+}

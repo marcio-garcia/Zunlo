@@ -76,7 +76,8 @@ struct ZunloApp: App {
         
         let eventSuggestionEngine = DefaultEventSuggestionEngine(
             calendar: Calendar.appDefault,
-            eventFetcher: EventFetcher(repo: eventRepo)
+            eventFetcher: EventFetcher(repo: eventRepo),
+            policy: SuggestionPolicyProvider().policy
         )
         
         let taskSuggestionEngine = DefaultTaskSuggestionEngine(

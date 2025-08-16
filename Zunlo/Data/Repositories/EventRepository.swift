@@ -8,7 +8,7 @@
 import Foundation
 import MiniSignalEye
 
-final class EventRepository {
+final public class EventRepository {
     private let eventLocalStore: EventLocalStore
     private let eventRemoteStore: EventRemoteStore
     private let recurrenceRuleLocalStore: RecurrenceRuleLocalStore
@@ -68,8 +68,23 @@ final class EventRepository {
         }
     }
     
+    func fetchEvent(by id: UUID) async throws -> Event? {
+        if let event = try await eventLocalStore.fetch(id: id) {
+            return Event(local: event)
+        }
+        return nil
+    }
+    
+    func fetchEvent(startAt: Date) async throws -> Event? {
+        if let event = try await eventLocalStore.fetch(startAt: startAt) {
+            return event
+        }
+        return nil
+    }
+    
     private func fetchLocalEvents() async throws -> [Event] {
-        try await eventLocalStore.fetchAll()
+        let events = try await eventLocalStore.fetchAll()
+        return events.map { Event(local: $0) }
     }
     
     private func fetchLocalRules() async throws -> [RecurrenceRule] {
@@ -83,7 +98,7 @@ final class EventRepository {
     // MARK: - CRUD for Events
 
     func upsert(_ event: Event) async throws {
-        try await eventLocalStore.upsert(event)
+        try await eventLocalStore.upsert(EventLocal(domain: event))
         reminderScheduler.cancelReminders(for: event)
         reminderScheduler.scheduleReminders(for: event)
         lastEventAction.value = .update
@@ -97,7 +112,7 @@ final class EventRepository {
         let _ = try await eventLocalStore.splitRecurringEvent(
             originalEventId: originalEventId,
             splitDate: splitDate,
-            newEvent: newEvent
+            newEvent: EventLocal(domain: newEvent)
         )
         lastEventAction.value = .update
     }
@@ -163,6 +178,6 @@ final class EventRepository {
 
 extension EventRepository {
     func upsert(event: Event, rule: RecurrenceRule) async throws {
-        try await eventLocalStore.upsert(event: event, rule: rule)
+        try await eventLocalStore.upsert(event: EventLocal(domain: event), rule: rule)
     }
 }

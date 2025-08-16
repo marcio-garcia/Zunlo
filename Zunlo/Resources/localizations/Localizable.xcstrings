@@ -261,6 +261,9 @@
         }
       }
     },
+    "Create plan" : {
+
+    },
     "daily" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -271,6 +274,9 @@
           }
         }
       }
+    },
+    "Daily plan reduces context switching." : {
+
     },
     "Database" : {
       "localizations" : {
@@ -301,6 +307,9 @@
           }
         }
       }
+    },
+    "day_planner" : {
+
     },
     "Debug Menu" : {
 
@@ -805,6 +814,9 @@
         }
       }
     },
+    "Minimum focus duration" : {
+
+    },
     "monthly" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -935,6 +947,9 @@
           }
         }
       }
+    },
+    "Plan my day" : {
+
     },
     "Please enable location in Settings to use this app." : {
       "localizations" : {
@@ -1372,6 +1387,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por quê?"
+          }
+        }
+      }
+    },
+    "You have %lld task(s) due today, %lld overdue." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You have %1$lld task(s) due today, %2$lld overdue."
           }
         }
       }

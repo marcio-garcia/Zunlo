@@ -13,12 +13,19 @@ final class SuggestionPolicyProvider: ObservableObject {
         didSet { save(prefs) }
     }
 
+    @Published var minFocusDuration: TimeInterval {
+        didSet { save(minFocusDuration: minFocusDuration)}
+    }
+    
     /// Live policy you pass into the engine.
     var policy: SuggestionPolicy {
         SuggestionPolicy.from(prefs)
     }
 
-    init() { self.prefs = Self.load() }
+    init() {
+        self.prefs = Self.load()
+        self.minFocusDuration = Self.load()
+    }
 
     // MARK: persistence (UserDefaults keys match your earlier AppStorage)
     private static let kStartHour   = "avail.startHour"
@@ -26,6 +33,7 @@ final class SuggestionPolicyProvider: ObservableObject {
     private static let kEndHour     = "avail.endHour"
     private static let kEndMinute   = "avail.endMinute"
     private static let kTZ          = "avail.tz"
+    private static let kMinFocusDur = "minFocusDur"
 
     private static func load() -> AvailabilityPrefs {
         let d = UserDefaults.standard
@@ -37,6 +45,11 @@ final class SuggestionPolicyProvider: ObservableObject {
             timeZoneID:  d.string(forKey: kTZ) ?? TimeZone.current.identifier
         )
     }
+    
+    private static func load() -> TimeInterval {
+        let d = UserDefaults.standard
+        return d.object(forKey: kMinFocusDur) as? TimeInterval ?? 15
+    }
 
     private func save(_ p: AvailabilityPrefs) {
         let d = UserDefaults.standard
@@ -46,11 +59,17 @@ final class SuggestionPolicyProvider: ObservableObject {
         d.set(p.endMinute,   forKey: Self.kEndMinute)
         d.set(p.timeZoneID,  forKey: Self.kTZ)
     }
+    
+    private func save(minFocusDuration: TimeInterval) {
+        let d = UserDefaults.standard
+        d.set(minFocusDuration, forKey: Self.kMinFocusDur)
+    }
 
     // Convenience mutation helpers (nice for unit tests too)
     func setStart(hour: Int, minute: Int) { prefs.startHour = hour; prefs.startMinute = minute }
     func setEnd(hour: Int, minute: Int)   { prefs.endHour = hour;   prefs.endMinute = minute }
     func setTimeZone(_ tz: TimeZone)      { prefs.timeZoneID = tz.identifier }
+    func setMinFocusDuration(seconds: TimeInterval) { minFocusDuration = seconds }
     
     func utcAvailabilityRanges(
         for date: Date,
@@ -58,7 +77,7 @@ final class SuggestionPolicyProvider: ObservableObject {
         localEndHour: Int, localEndMinute: Int,
         tz: TimeZone
     ) -> [Range<Date>] {
-        var cal = Calendar(identifier: .gregorian)
+        var cal = Calendar.appDefault
         cal.timeZone = tz
 
         let sod = cal.startOfDay(for: date)

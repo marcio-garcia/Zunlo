@@ -12,17 +12,24 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     let eventFetcher: EventFetcherService
     let adjacencyMerges: Bool
     
-    init(calendar: Calendar, eventFetcher: EventFetcherService, adjacencyMerges: Bool = true) {
+    var policy: SuggestionPolicy
+    
+    init(calendar: Calendar,
+         eventFetcher: EventFetcherService,
+         policy: SuggestionPolicy,
+         adjacencyMerges: Bool = true
+    ) {
         self.calendar = calendar
         self.eventFetcher = eventFetcher
+        self.policy = policy
         self.adjacencyMerges = adjacencyMerges
     }
 
-    public func freeWindows(on date: Date, minimumMinutes: Int, policy: SuggestionPolicy) async -> [TimeWindow] {
-        let ranges = utcAvailabilityRanges(for: date, policy: policy)
+    public func freeWindows(on date: Date, minimumMinutes: Int) async -> [TimeWindow] {
+        let ranges = utcAvailabilityRanges(for: date)
         guard !ranges.isEmpty else { return [] }
 
-        let merged = await dayMergedBusyIntervals(on: date, policy: policy)
+        let merged = await dayMergedBusyIntervals(on: date)
         var free: [TimeWindow] = []
         let minDur = TimeInterval(max(0, minimumMinutes) * 60)
 
@@ -41,15 +48,15 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     }
 
     // Returns the first busy-block start strictly AFTER `t`, within `date`'s day.
-    public func nextEventStart(after t: Date, on date: Date, policy: SuggestionPolicy) async -> Date? {
-        let ranges = utcAvailabilityRanges(for: date, policy: policy)
+    public func nextEventStart(after t: Date, on date: Date) async -> Date? {
+        let ranges = utcAvailabilityRanges(for: date)
         guard !ranges.isEmpty else { return nil }
         
         // If t is before first availability, start from that lower bound
         let earliestAvail = ranges.map(\.lowerBound).min()!
         let threshold = max(t, earliestAvail)
         
-        let merged = await dayMergedBusyIntervals(on: date, policy: policy) // sorted
+        let merged = await dayMergedBusyIntervals(on: date) // sorted
         // Lower-bound binary search for first start > threshold
         var lo = 0, hi = merged.count
         while lo < hi {
@@ -62,14 +69,9 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
         return ranges.contains(where: { $0.contains(start) }) ? start : nil
     }
 
-    // Convenience: default policy = adjacency merged, no gap absorption/padding.
-    public func nextEventStart(after t: Date, on date: Date) async -> Date? {
-        await nextEventStart(after: t, on: date, policy: SuggestionPolicy())
-    }
-    
     /// If you also count conflicts, don't treat adjacency as a conflict:
     /// sort tie-break: ends (-1) before starts (+1)
-    public func conflictingItemsCount(on date: Date, policy: SuggestionPolicy) async -> Int {
+    public func conflictingItemsCount(on date: Date) async -> Int {
         let raw = await dayRawBusyIntervals(on: date, policy: policy)
         // Sweep-line, ends before starts at same instant => adjacency is not a conflict
         var pts: [(Date, Int)] = []
@@ -87,8 +89,8 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
 
     // MARK: helpers
 
-    private func utcAvailabilityRanges(for date: Date, policy: SuggestionPolicy) -> [Range<Date>] {
-        var localCal = Calendar(identifier: .gregorian)
+    private func utcAvailabilityRanges(for date: Date) -> [Range<Date>] {
+        var localCal = calendar
         localCal.timeZone = policy.availabilityTimeZone
 
         // Local start-of-day for the *target* date
@@ -126,7 +128,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
 
     // Build RAW busy intervals *clamped to the policy's availability windows for that day*.
     private func dayRawBusyIntervals(on date: Date, policy: SuggestionPolicy) async -> [BusyInterval] {
-        let ranges = utcAvailabilityRanges(for: date, policy: policy)
+        let ranges = utcAvailabilityRanges(for: date)
         guard !ranges.isEmpty else { return [] }
 
         // TODO: replace with a ranged fetch. For now, fetchAll + clamp.
@@ -155,7 +157,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     }
     
     /// Merged for the day with adjacency/gap absorption
-    func dayMergedBusyIntervals(on date: Date, policy: SuggestionPolicy) async -> [BusyInterval] {
+    func dayMergedBusyIntervals(on date: Date) async -> [BusyInterval] {
         mergeBusy(await dayRawBusyIntervals(on: date, policy: policy),
                   absorbGapsBelow: policy.absorbGapsBelow)
     }

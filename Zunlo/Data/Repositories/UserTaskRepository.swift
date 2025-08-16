@@ -8,7 +8,7 @@
 import Foundation
 import MiniSignalEye
 
-final class UserTaskRepository {
+final public class UserTaskRepository {
     private let localStore: UserTaskLocalStore
     private let remoteStore: UserTaskRemoteStore
     private let reminderScheduler: ReminderScheduler<UserTask>

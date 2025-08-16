@@ -31,7 +31,7 @@ protocol TaskSuggestionEngine {
 }
 
 public protocol EventSuggestionEngine {
-    func freeWindows(on date: Date, minimumMinutes: Int, policy: SuggestionPolicy) async -> [TimeWindow]
-    func nextEventStart(after: Date, on date: Date, policy: SuggestionPolicy) async -> Date?
-    func conflictingItemsCount(on date: Date, policy: SuggestionPolicy) async -> Int
+    func freeWindows(on date: Date, minimumMinutes: Int) async -> [TimeWindow]
+    func nextEventStart(after: Date, on date: Date) async -> Date?
+    func conflictingItemsCount(on date: Date) async -> Int
 }

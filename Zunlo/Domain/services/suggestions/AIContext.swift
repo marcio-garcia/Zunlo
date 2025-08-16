@@ -18,6 +18,8 @@ public struct TimeWindow: Equatable, Sendable {
         let avail = Int(duration / 60)
         return options.filter { $0 <= avail }.max() ?? options.min() ?? 15
     }
+    
+    func contains(_ date: Date) -> Bool { (start..<end).contains(date) }
 }
 
 /// High-level day period used for copy & heuristics.
@@ -42,6 +44,7 @@ public struct AIContext: Sendable {
     public let nextEventStart: Date?
     public let freeWindows: [TimeWindow]          // sorted, today, ≥ 10 min
     public let longestFreeWindow: TimeWindow?
+    public let minFocusDuration: TimeInterval
     
     // Tasks summary
     public let overdueCount: Int
@@ -62,15 +65,49 @@ public struct AIContext: Sendable {
 }
 
 public extension AIContext {
-    /// First free window strictly after `now`.
+    /// The next free window (if currently inside one, returns the remaining slice)
     var nextWindow: TimeWindow? {
-        freeWindows.first { $0.start > now }
+        if let inWin = freeWindows.first(where: { $0.contains(now) }) {
+            return TimeWindow(start: max(inWin.start, now), end: inWin.end)
+        }
+        return freeWindows.first(where: { $0.start > now })
     }
 
     /// Choose a reasonable focus duration for the next window from allowed options.
-    func bestFocusDuration(tuning: AITuning = .init()) -> Int {
-        guard let w = nextWindow else { return tuning.typicalFocusDurations.first ?? 15 }
-        return w.bestFit(minutes: tuning.typicalFocusDurations)
+//    func bestFocusDuration(tuning: AITuning = .init()) -> Int {
+//        guard let w = nextWindow else { return tuning.typicalFocusDurations.first ?? 15 }
+//        return w.bestFit(minutes: tuning.typicalFocusDurations)
+//    }
+    /// Choose a good focus length (minutes) honoring the user's minimum.
+    /// Strategy:
+    /// 1) Try tiered lengths [90, 60, 45, 30] that are >= minFocusDuration and <= available.
+    /// 2) If none fit but the window can fit the user's minimum, use the user's minimum.
+    /// 3) Otherwise, fall back to the available minutes (shorter than preferred).
+    func bestFocusDuration() -> Int {
+        // Enforce a sane floor on user preference (adjust if you allow smaller)
+        let minimum = Int(minFocusDuration / 60)
+        let userMin = max(minimum, 15)
+
+        guard let w = nextWindow else {
+            // No window info: return the preference (UI can still offer this as a default)
+            return userMin
+        }
+
+        let available = Int(max(0, w.duration / 60))
+
+        // Prefer standard tiers, filtered by the user's minimum
+        let tiers = [90, 60, 45, 30].filter { $0 >= userMin }
+        if let pick = tiers.first(where: { $0 <= available }) {
+            return pick
+        }
+
+        // If the window fits the user's minimum, use it
+        if available >= userMin {
+            return userMin
+        }
+
+        // Last resort: return the available minutes (shorter than preferred, but realistic)
+        return available
     }
 }
 

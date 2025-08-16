@@ -10,7 +10,7 @@ import Foundation
 public enum AIContextBuilder {
     static func build(
         time: TimeProvider,
-        policyProvider: SuggestionPolicyProvider,
+        policyProcider: SuggestionPolicyProvider,
         tasks: TaskSuggestionEngine,
         events: EventSuggestionEngine,
         weather: WeatherProvider?
@@ -19,16 +19,14 @@ public enum AIContextBuilder {
         let cal = time.calendar
         let dayStart = cal.startOfDay(for: now)
         let dayEnd = cal.date(bySettingHour: 23, minute: 59, second: 59, of: dayStart)!
-
-        let policy = await policyProvider.policy
         
         async let overdue = tasks.overdueCount(on: now)
         async let dueToday = tasks.dueTodayCount(on: now)
         async let highPrio = tasks.highPriorityCount(on: now)
         async let topUnscheduled = tasks.topUnscheduled(limit: 5)
-        async let windows = events.freeWindows(on: now, minimumMinutes: 30, policy: policy)
-        async let nextStart = events.nextEventStart(after: now, on: now, policy: policy)
-        async let conflicts = events.conflictingItemsCount(on: now, policy: policy)
+        async let windows = events.freeWindows(on: now, minimumMinutes: 30)
+        async let nextStart = events.nextEventStart(after: now, on: now)
+        async let conflicts = events.conflictingItemsCount(on: now)
         async let typicalStart = tasks.typicalStartTimeComponents()
 
         var weatherSummary: String? = nil
@@ -44,6 +42,8 @@ public enum AIContextBuilder {
         let free = await windows
         let longest = free.max(by: { $0.duration < $1.duration })
 
+        let policy = await policyProcider.policy
+        
         return AIContext(
             now: now,
             dayStart: dayStart,
@@ -52,6 +52,7 @@ public enum AIContextBuilder {
             nextEventStart: await nextStart,
             freeWindows: free,
             longestFreeWindow: longest,
+            minFocusDuration: policy.minFocusDuration,
             overdueCount: await overdue,
             dueTodayCount: await dueToday,
             highPriorityCount: await highPrio,

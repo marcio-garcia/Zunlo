@@ -139,4 +139,20 @@ extension EventLocal {
         self.deletedAt = event.deletedAt
         self.needsSync = true
     }
+    
+    func getUpdateFields(_ local: EventLocal) {
+        self.userId = local.userId
+        self.title = local.title
+        self.notes = local.notes
+        self.startDate = local.startDate
+        self.endDate = local.endDate
+        self.location = local.location
+        self.isRecurring = local.isRecurring
+        self.createdAt = local.createdAt
+        self.updatedAt = local.updatedAt
+        self.color = local.color
+        self.reminderTriggers = local.reminderTriggers
+        self.deletedAt = local.deletedAt
+        self.needsSync = true
+    }
 }

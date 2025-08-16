@@ -10,26 +10,39 @@ import Foundation
 final class RealmEventLocalStore: EventLocalStore {
     private let db: DatabaseActor
     private let auth: AuthProviding
-
+    
     init(db: DatabaseActor, auth: AuthProviding) {
         self.db = db
         self.auth = auth
     }
-
-    func fetchAll() async throws -> [Event] {
+    
+    func fetchAll() async throws -> [EventLocal] {
         try await db.fetchAllEventsSorted()
+    }
+    
+    func fetch(id: UUID) async throws -> EventLocal? {
+        try await db.fetchEvent(id: id)
+    }
+    
+    func fetch(startAt: Date) async throws -> Event? {
+        let filter = EventFilter(userId: auth.userId, startDateRange: startAt...startAt)
+        let events = try await db.fetchEvents(filteredBy: filter)
+        if let event = events.first {
+            return Event(local: event)
+        }
+        return nil
     }
 
     func upsert(_ event: EventRemote) async throws {
         try await db.upsertEvent(from: event, userId: auth.userId)
     }
 
-    func upsert(_ event: Event) async throws {
+    func upsert(_ event: EventLocal) async throws {
         try await db.upsertEvent(from: event, userId: auth.userId)
     }
     
-    func upsert(event: Event, rule: RecurrenceRule) async throws {
-        try await db.upsertEvent(event: event, rule: rule, userId: auth.userId)
+    func upsert(event: EventLocal, rule: RecurrenceRule) async throws {
+        try await db.upsertEvent(local: event, rule: rule, userId: auth.userId)
     }
 
     func delete(id: UUID) async throws {
@@ -56,7 +69,7 @@ extension RealmEventLocalStore {
     func splitRecurringEvent(
         originalEventId: UUID,
         splitDate: Date,
-        newEvent: Event
+        newEvent: EventLocal
     ) async throws -> UUID {
         guard let userId = auth.userId else {
             throw StoreError.invalidData("User must be either authenticated or id passed as parameter!")

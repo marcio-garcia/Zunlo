@@ -85,6 +85,13 @@ struct TodayView: View {
                                         policyProvider: policyProvider,
                                         tasksEngine: appState.taskSuggestionEngine!,
                                         eventsEngine: appState.eventSuggestionEngine!,
+                                        aiToolRunner: DefaultAIToolRunner(
+                                            toolRepo: AIToolRepository(
+                                                eventRepo: appState.eventRepository!,
+                                                taskRepo: appState.userTaskRepository!,
+                                                eventEngine: appState.eventSuggestionEngine!),
+                                            calendar: .appDefault,
+                                            nav: nil),
                                         weather: WeatherService.shared
                                     )
                                 )
