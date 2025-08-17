@@ -8,17 +8,17 @@
 import Foundation
 
 struct Event: Identifiable, Codable, Hashable {
-    let id: UUID
-    let userId: UUID?
-    let title: String
-    let notes: String?
-    let startDate: Date
-    let endDate: Date?
-    let isRecurring: Bool
-    let location: String?
-    let createdAt: Date
-    let updatedAt: Date
-    let color: EventColor
+    var id: UUID
+    var userId: UUID?
+    var title: String
+    var notes: String?
+    var startDate: Date
+    var endDate: Date?
+    var isRecurring: Bool
+    var location: String?
+    var createdAt: Date
+    var updatedAt: Date
+    var color: EventColor
     var reminderTriggers: [ReminderTrigger]?
     
     var deletedAt: Date?

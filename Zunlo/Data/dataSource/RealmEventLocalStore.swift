@@ -24,13 +24,19 @@ final class RealmEventLocalStore: EventLocalStore {
         try await db.fetchEvent(id: id)
     }
     
-    func fetch(startAt: Date) async throws -> Event? {
+    func fetch(startAt: Date) async throws -> EventLocal? {
         let filter = EventFilter(userId: auth.userId, startDateRange: startAt...startAt)
         let events = try await db.fetchEvents(filteredBy: filter)
         if let event = events.first {
-            return Event(local: event)
+            return event
         }
         return nil
+    }
+    
+    func fetch(filteredBy filter: EventFilter) async throws -> [EventLocal] {
+        var f = filter
+        if f.userId == nil { f.userId = auth.userId }
+        return try await db.fetchEvents(filteredBy: filter)
     }
 
     func upsert(_ event: EventRemote) async throws {

@@ -77,9 +77,14 @@ final public class EventRepository {
     
     func fetchEvent(startAt: Date) async throws -> Event? {
         if let event = try await eventLocalStore.fetch(startAt: startAt) {
-            return event
+            return Event(local: event)
         }
         return nil
+    }
+    
+    func fetchEvent(filteredBy filter: EventFilter) async throws -> [Event] {
+        let events = try await eventLocalStore.fetch(filteredBy: filter)
+        return events.map { Event(local: $0) }
     }
     
     private func fetchLocalEvents() async throws -> [Event] {

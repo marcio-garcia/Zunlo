@@ -16,7 +16,8 @@ protocol EventLocalStore {
     func deleteAll() async throws
     
     func fetch(id: UUID) async throws -> EventLocal?
-    func fetch(startAt: Date) async throws -> Event?
+    func fetch(startAt: Date) async throws -> EventLocal?
+    func fetch(filteredBy filter: EventFilter) async throws -> [EventLocal]
     func fetchAll() async throws -> [EventLocal]
     func fetchOccurrences(for userId: UUID?) async throws -> [EventOccurrenceResponse]
     

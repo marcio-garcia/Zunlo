@@ -15,6 +15,7 @@ protocol AIToolAPI {
     func updateTask(_ task: UserTask) async throws
     @discardableResult
     func createTask(title: String, dueDate: Date?, priority: UserTaskPriority) async throws -> UUID
+    func moveUnfinishedToTomorrow() async throws
 }
 
 
@@ -85,6 +86,44 @@ class AIToolRepository: AIToolAPI {
         )
         try await taskRepo.upsert(task)
         return id
+    }
+    
+    func moveUnfinishedToTomorrow() async throws {
+        let startOfDay = Date().startOfDay
+        let startOfNextDay = Date().startOfNextDay()
+        
+        var taskFilter: TaskFilter
+        
+        taskFilter = TaskFilter(
+            isCompleted: false,
+            dueDateRange: Date.distantPast...startOfNextDay
+        )
+        let tasksDueToday = try await taskRepo.fetchTasks(filteredBy: taskFilter)
+        
+        taskFilter = TaskFilter(
+            priority: UserTaskPriorityLocal.high,
+            isCompleted: false,
+            dueDateRange: Date.distantPast...startOfNextDay
+        )
+        let tasksHigh = try await taskRepo.fetchTasks(filteredBy: taskFilter)
+        
+        let tasks = Array(Set(tasksDueToday + tasksHigh))
+        
+        for task in tasks {
+            var t = task
+            t.dueDate = Date().addingTimeInterval(86400) // +24h
+            try await taskRepo.upsert(t)
+        }
+
+//        let eventFilter = EventFilter(endDateRange: startOfDay...startOfNextDay)
+//        let events = try await eventRepo.fetchEvent(filteredBy: eventFilter)
+//
+//        for event in events {
+//            var e = event
+//            e.startDate = event.startDate.addingTimeInterval(86400) // +24h
+//            e.endDate = event.endDate?.addingTimeInterval(86400) // +24h
+//            try await eventRepo.upsert(e)
+//        }
     }
     
     func toDomain(draft: EventDraft) -> Event {

@@ -95,7 +95,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
 
         // Local start-of-day for the *target* date
         let localStartOfDay = localCal.startOfDay(for: date)
-        let nextLocalMidnight = localCal.date(byAdding: .day, value: 1, to: localStartOfDay)!
+        let nextLocalMidnight = localStartOfDay.startOfNextDay()
 
         let startLocal = localCal.date(
             bySettingHour: policy.availabilityStartHour,
@@ -112,7 +112,10 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
 
         if endLocal > startLocal {
             // Single daytime window (e.g., 08:00–20:00 local)
-            return [startLocal..<endLocal]                // these Date values are absolute UTC instants
+            // adjust to current time
+            let start = max(startLocal, Date())
+            // these Date values are absolute UTC instants
+            return start > endLocal ? [] : [start..<endLocal]
         } else {
             // Overnight window (e.g., 22:00–06:00 local) -> split into two UTC ranges
             //   [00:00–endLocal] and [startLocal–24:00] in local time

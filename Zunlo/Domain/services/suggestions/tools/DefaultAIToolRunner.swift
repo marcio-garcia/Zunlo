@@ -143,6 +143,7 @@ public final class DefaultAIToolRunner: AIToolRunner {
            sixPM > now {
             try await bookSlot(at: sixPM, minutes: 15, title: "Evening wrap")
         }
+        try await toolRepo.moveUnfinishedToTomorrow()
 //        await nav?.presentEveningReview()
     }
 }

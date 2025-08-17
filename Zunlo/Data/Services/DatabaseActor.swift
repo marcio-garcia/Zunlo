@@ -167,6 +167,9 @@ public actor DatabaseActor {
         if let range = filter?.startDateRange {
             predicates.append(NSPredicate(format: "startDate >= %@ AND startDate <= %@", range.lowerBound as NSDate, range.upperBound as NSDate))
         }
+        if let range = filter?.endDateRange {
+            predicates.append(NSPredicate(format: "endDate >= %@ AND endDate <= %@", range.lowerBound as NSDate, range.upperBound as NSDate))
+        }
 
         var query = realm.objects(EventLocal.self)
         if !predicates.isEmpty {
@@ -478,7 +481,7 @@ public actor DatabaseActor {
             predicates.append(NSPredicate(format: "userId == %@", userId as CVarArg))
         }
         if let priority = filter?.priority {
-            predicates.append(NSPredicate(format: "priority == %@", priority.rawValue))
+            predicates.append(NSPredicate(format: "priority == %@", NSNumber(value: priority.rawValue)))
         }
         if let isCompleted = filter?.isCompleted {
             predicates.append(NSPredicate(format: "isCompleted == %@", NSNumber(value: isCompleted)))
