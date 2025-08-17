@@ -28,9 +28,9 @@ struct TimeboxTopTaskSuggester: AICoolDownSuggester {
     public func suggest(context: AIContext) -> AISuggestion? {
         guard let win = context.nextWindow, let task = context.bestCandidateForNextWindow else { return nil }
         let dur = context.bestFocusDuration()
-        let title  = "Timebox “\(task.title)”"
-        let detail = "Use the next free block at \(win.start.formatted(date: .omitted, time: .shortened))."
-        let reason = "Timeboxing improves completion odds."
+        let title  = String(localized: "Timebox “\(task.title)”")
+        let detail = String(localized: "Use the next free block at \(win.start.formatted(date: .omitted, time: .shortened)).")
+        let reason = String(localized: "Timeboxing improves completion odds.")
 
         let telemetryKey = "timebox_top_task"
         let baseScore = 90
@@ -47,29 +47,35 @@ struct TimeboxTopTaskSuggester: AICoolDownSuggester {
             detail: detail,
             reason: reason,
             ctas: [
-                AISuggestionCTA(title: "Block \(dur)m") {
-                    Task {
+                AISuggestionCTA(title: String(localized: "Block \(dur)m")) { store in
+                    let runID = store.start(kind: .aiTool(name: "ResolveNow"), status: String(localized: "Preparing…"))
+                    Task { @MainActor in
                         do {
+                            store.progress(runID, status: String(localized: "Working…"), fraction: 0.2)
                             try await tools.createFocusBlock(start: win.start, minutes: dur, suggestedTask: task)
                             usage.recordSuccess(forTelemetryKey: telemetryKey, at: Date())
+                            store.finish(runID, outcome: .toast(String(localized: "Conflicts resolved"), duration: 3))
                         } catch {
-                            print("TimeboxTopTaskSuggester Block CTA failed")
+                            store.fail(runID, error: error.localizedDescription)
                         }
                     }
                 },
-                AISuggestionCTA(title: "Split 2×30m") {
-                    Task {
+                AISuggestionCTA(title: String(localized: "Split 2×30m")) { store in
+                    let runID = store.start(kind: .aiTool(name: "ResolveNow"), status: String(localized: "Preparing…"))
+                    Task { @MainActor in
                         do {
+                            store.progress(runID, status: String(localized: "Working…"), fraction: 0.2)
                             // Optionally book two blocks (simplified: one now)
                             try await tools.createFocusBlock(start: win.start, minutes: 30, suggestedTask: task)
                             usage.recordSuccess(forTelemetryKey: telemetryKey, at: Date())
+                            store.finish(runID, outcome: .toast(String(localized: "Conflicts resolved"), duration: 3))
                         } catch {
-                            print("TimeboxTopTaskSuggester Split CTA failed")
+                            store.fail(runID, error: error.localizedDescription)
                         }
                     }
                 }
             ],
-            telemetryKey: "timebox_top_task",
+            telemetryKey: telemetryKey,
             score: adjusted
         )
     }

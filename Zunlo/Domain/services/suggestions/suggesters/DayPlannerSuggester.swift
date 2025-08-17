@@ -49,18 +49,18 @@ struct DayPlannerSuggester: AICoolDownSuggester {
             reason: reason,
             ctas: [
                 AISuggestionCTA(title: String(localized: "Create plan")) { store in
-                    let runID = store.start(kind: .aiTool(name: "DailyPlan"), status: "Preparing plan…")
+                    let runID = store.start(kind: .aiTool(name: "DailyPlan"), status: String(localized: "Preparing plan…"))
 
                     Task { @MainActor in
                         do {
-                            store.progress(runID, status: "Analyzing your day…", fraction: 0.2)
+                            store.progress(runID, status: String(localized: "Analyzing your day…"), fraction: 0.2)
 
                             try await tools.startDailyPlan(context: context)
                             usage.recordSuccess(forTelemetryKey: telemetryKey, at: Date())
                             
                             // Choose the outcome your app expects:
                             // 1) Toast
-                            store.finish(runID, outcome: .toast("Day plan created ✅", duration: 3))
+                            store.finish(runID, outcome: .toast(String(localized: "Day plan created"), duration: 3))
 
                             // or 2) Navigate (if you have a new plan ID)
                             // store.finish(runID, outcome: .navigate(.taskDetail(id: newPlanID)))

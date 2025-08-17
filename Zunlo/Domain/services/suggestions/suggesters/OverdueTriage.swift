@@ -8,8 +8,23 @@
 import Foundation
 
 //OverdueTriage shows the two top overdue candidates as bullets and offers concrete CTAs.
-public struct OverdueTriage: AISuggester {
-    public init() {}
+struct OverdueTriage: AICoolDownSuggester {
+    private let tools: AIToolRunner
+    var usage: SuggestionUsageStore
+    var cooldown: TimeInterval
+    var maxPenalty: Int
+    
+    init(tools: AIToolRunner,
+         usage: SuggestionUsageStore,
+         cooldownHours: Double = 6,
+         maxPenalty: Int = 60
+    ) {
+        self.tools = tools
+        self.usage = usage
+        self.cooldown = cooldownHours * 3600
+        self.maxPenalty = maxPenalty
+    }
+    
     public func suggest(context: AIContext) -> AISuggestion? {
         guard context.overdueCount >= 2 else { return nil }
 
@@ -19,25 +34,53 @@ public struct OverdueTriage: AISuggester {
                                     : Array(overdue.prefix(2))
         guard !picks.isEmpty else { return nil }
 
-        let title  = "Clear 2 overdue in 15 minutes?"
+        let title  = String(localized: "Clear 2 overdue in 15 minutes?")
         let bullet = picks.map { "• \($0.title)" }.joined(separator: "\n")
-        let detail = "Quick wins reduce today's pressure:\n\(bullet)"
-        let reason = "You have \(context.overdueCount) overdue tasks."
+        let detail = String(localized: "Quick wins reduce today's pressure:\n\(bullet)")
+        let reason = String(localized: "You have \(context.overdueCount) overdue tasks.")
 
+        let telemetryKey = "overdue_triage"
+        let baseScore = 92
+        let adjusted = usage.adjustedScore(
+            base: baseScore,
+            maxPenalty: maxPenalty,
+            cooldown: cooldown,
+            telemetryKey: telemetryKey,
+            now: context.now
+        )
+        
         return AISuggestion(
             title: title,
             detail: detail,
             reason: reason,
             ctas: [
-                AISuggestionCTA(title: "Start 15-min blitz") {
-                    // focus.runBlitz(tasks: picks, minutes: 15)
+                AISuggestionCTA(title: String(localized: "Start 15-min blitz")) { store in
+                    let runID = store.start(kind: .aiTool(name: "StartBlitz"), status: String(localized: "Preparing…"))
+                    Task { @MainActor in
+                        do {
+                            store.progress(runID, status: String(localized: "Working…"), fraction: 0.2)
+                            // focus.runBlitz(tasks: picks, minutes: 15)
+                            store.finish(runID, outcome: .toast(String(localized: "Start now"), duration: 3))
+                        } catch {
+                            store.fail(runID, error: error.localizedDescription)
+                        }
+                    }
                 },
-                AISuggestionCTA(title: "Move 2 to tomorrow") {
-                    // rescheduler.bulkMoveToTomorrowMorning(picks)
+                AISuggestionCTA(title: String(localized: "Move to tomorrow")) { store in
+                    let runID = store.start(kind: .aiTool(name: "MoveToTomorrow"), status: String(localized: "Preparing…"))
+                    Task { @MainActor in
+                        do {
+                            store.progress(runID, status: String(localized: "Working…"), fraction: 0.2)
+                            // rescheduler.bulkMoveToTomorrowMorning(picks)
+                            store.finish(runID, outcome: .toast(String(localized: "Start now"), duration: 3))
+                        } catch {
+                            store.fail(runID, error: error.localizedDescription)
+                        }
+                    }
                 }
             ],
-            telemetryKey: "overdue_triage",
-            score: 92
+            telemetryKey: telemetryKey,
+            score: adjusted
         )
     }
 }

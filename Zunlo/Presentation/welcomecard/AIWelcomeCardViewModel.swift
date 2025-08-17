@@ -19,16 +19,13 @@ public final class AIWelcomeCardViewModel: ObservableObject {
     private let aiToolRunner: AIToolRunner
     private let weather: WeatherProvider?
 
-    private let suggesters: [AISuggester]
-
     init(
         time: TimeProvider,
         policyProvider: SuggestionPolicyProvider,
         tasksEngine: TaskSuggestionEngine,
         eventsEngine: EventSuggestionEngine,
         aiToolRunner: AIToolRunner,
-        weather: WeatherProvider?,
-        suggesters: [AISuggester] = [GapPlanner(), OverdueTriage(), SmartRescheduler(), QuickAddSuggester()]
+        weather: WeatherProvider?
     ) {
         self.time = time
         self.policyProvider = policyProvider
@@ -36,7 +33,6 @@ public final class AIWelcomeCardViewModel: ObservableObject {
         self.eventsEngine = eventsEngine
         self.aiToolRunner = aiToolRunner
         self.weather = weather
-        self.suggesters = suggesters
     }
 
     public func load() {
@@ -53,18 +49,6 @@ public final class AIWelcomeCardViewModel: ObservableObject {
             
             let engine = makeDefaultSuggestionEngine(tools: aiToolRunner)
             let ranked = engine.run(context: ctx)
-            // → Render as chips/cards, and wire CTAs (already call tools)
-            
-//            let ctx = await AIContextBuilder.build(
-//                time: time,
-//                policyProvider: policyProvider,
-//                tasks: tasksEngine,
-//                events: eventsEngine,
-//                weather: weather
-//            )
-//            let produced = suggesters.compactMap { $0.suggest(context: ctx) }
-//            // Simple rank: higher score first, tie-break by telemetry key for stability
-//            let ranked = produced.sorted { ($0.score, $0.telemetryKey) > ($1.score, $1.telemetryKey) }
             self.suggestions = ranked
             self.isLoading = false
             // Telemetry: view impression can be sent here with top suggestion key
@@ -72,19 +56,20 @@ public final class AIWelcomeCardViewModel: ObservableObject {
     }
     
     func makeDefaultSuggestionEngine(tools: AIToolRunner) -> AISuggestionEngine {
-        AISuggestionEngine(suggesters: [
+        let usageStore = DefaultsSuggestionUsageStore()
+        return AISuggestionEngine(suggesters: [
             // Yours
-            GapPlanner(),
-            OverdueTriage(),
-            SmartRescheduler(),
-            QuickAddSuggester(),
+            GapPlanner(tools: tools, usage: usageStore),
+            OverdueTriage(tools: tools, usage: usageStore),
+            SmartRescheduler(tools: tools, usage: usageStore),
+            QuickAddSuggester(tools: tools, usage: usageStore),
             // New
-            DayPlannerSuggester(tools: tools, usage: DefaultsSuggestionUsageStore()),
-            TimeboxTopTaskSuggester(tools: tools, usage: DefaultsSuggestionUsageStore()),
-            FindSlotSuggester(minutes: 30, tools: tools),
-            WeatherNudgeSuggester(tools: tools),
-            EventPrepSuggester(tools: tools),
-            RoutineSuggester(tools: tools)
+            DayPlannerSuggester(tools: tools, usage: usageStore),
+            TimeboxTopTaskSuggester(tools: tools, usage: usageStore),
+            FindSlotSuggester(minutes: 30, tools: tools, usage: usageStore),
+            WeatherNudgeSuggester(tools: tools, usage: usageStore),
+            EventPrepSuggester(tools: tools, usage: usageStore),
+            RoutineSuggester(tools: tools, usage: usageStore)
         ])
     }
 }
