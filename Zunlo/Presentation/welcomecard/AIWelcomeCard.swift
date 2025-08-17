@@ -9,7 +9,8 @@ import SwiftUI
 
 public struct AIWelcomeCard: View {
     @StateObject private var vm: AIWelcomeCardViewModel
-
+    @EnvironmentObject var toolStore: ToolExecutionStore
+    
     public init(vm: AIWelcomeCardViewModel) {
         _vm = StateObject(wrappedValue: vm)
     }
@@ -33,7 +34,8 @@ public struct AIWelcomeCard: View {
 private struct CardContent: View {
     let suggestion: AISuggestion
     @State private var showWhy = false
-
+    @EnvironmentObject var toolStore: ToolExecutionStore
+    
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 12) {
@@ -45,13 +47,15 @@ private struct CardContent: View {
                 // 1–3 CTAs
                 HStack(spacing: 8) {
                     ForEach(suggestion.ctas) { cta in
-                        Button(cta.title) { cta.perform() }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 10)
-                            .background(Color.theme.accent)
-                            .foregroundColor(.white)
-                            .font(AppFontStyle.caption.font())
-                            .cornerRadius(8)
+                        Button(cta.title) {
+                            cta.perform(using: toolStore)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 10)
+                        .background(Color.theme.accent)
+                        .foregroundColor(.white)
+                        .font(AppFontStyle.caption.font())
+                        .cornerRadius(8)
                     }
                 }
                 

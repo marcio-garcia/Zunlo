@@ -48,13 +48,27 @@ struct DayPlannerSuggester: AICoolDownSuggester {
             detail: detail,
             reason: reason,
             ctas: [
-                AISuggestionCTA(title: String(localized: "Create plan")) {
-                    Task {
+                AISuggestionCTA(title: String(localized: "Create plan")) { store in
+                    let runID = store.start(kind: .aiTool(name: "DailyPlan"), status: "Preparing plan…")
+
+                    Task { @MainActor in
                         do {
+                            store.progress(runID, status: "Analyzing your day…", fraction: 0.2)
+
                             try await tools.startDailyPlan(context: context)
                             usage.recordSuccess(forTelemetryKey: telemetryKey, at: Date())
+                            
+                            // Choose the outcome your app expects:
+                            // 1) Toast
+                            store.finish(runID, outcome: .toast("Day plan created ✅", duration: 3))
+
+                            // or 2) Navigate (if you have a new plan ID)
+                            // store.finish(runID, outcome: .navigate(.taskDetail(id: newPlanID)))
+
+                            // or 3) Success payload (if TodayView reacts to it)
+                            // store.finish(runID, outcome: .success(payload: planSummary))
                         } catch {
-                            print("DayPlannerSuggester plan CTA failed")
+                            store.fail(runID, error: error.localizedDescription)
                         }
                     }
                 }

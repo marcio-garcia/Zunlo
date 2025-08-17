@@ -8,7 +8,6 @@
 import Foundation
 import FlowNavigator
 
-
 public final class DefaultAIToolRunner: AIToolRunner {
     private let toolRepo: AIToolAPI
     private let calendar: Calendar

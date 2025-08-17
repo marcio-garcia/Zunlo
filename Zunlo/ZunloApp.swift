@@ -26,6 +26,7 @@ struct ZunloApp: App {
     @StateObject var appSettings = AppSettings()
     @StateObject var appNavigationManager = AppNav()
     @StateObject private var policyProvider = SuggestionPolicyProvider()
+    @StateObject private var toolStore = ToolExecutionStore()
     @State private var deepLinkHandler: DeepLinkHandler?
     
     private let appState: AppState
@@ -126,6 +127,7 @@ struct ZunloApp: App {
                 .environmentObject(upgradeFlowManager)
                 .environmentObject(upgradeReminderManager)
                 .environmentObject(policyProvider)
+                .environmentObject(toolStore)
                 .onAppear(perform: {
                     if deepLinkHandler == nil {
                         deepLinkHandler = DeepLinkHandler(navigationManager: appNavigationManager)

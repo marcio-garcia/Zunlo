@@ -20,6 +20,7 @@ struct TodayView: View {
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
     @EnvironmentObject var upgradeReminderManager: UpgradeReminderManager
     @EnvironmentObject var policyProvider: SuggestionPolicyProvider
+    @EnvironmentObject var store: ToolExecutionStore
     
     @AppStorage("firstLaunchTimestamp") private var firstLaunchTimestamp: Double = 0
     @AppStorage("sessionCount") private var sessionCount = 0
@@ -32,6 +33,7 @@ struct TodayView: View {
     @State private var showRequestPush = false
     @State private var editableUserTask: UserTask?
     @State private var hasEarnedReward = false
+    @State private var toast: Toast?
     
     private let appState: AppState
     
@@ -79,6 +81,12 @@ struct TodayView: View {
                             VStack(alignment: .leading, spacing: 24) {
                                 TodayWeatherView(weather: viewModel.weather, greeting: viewModel.greeting)
 
+                                // Optionally reflect any ongoing runs:
+//                                if let running = store.runs.values.first(where: { $0.isRunning }) {
+//                                    ProgressView(running.status ?? "Working…", value: running.progress, total: 1)
+//                                        .padding()
+//                                }
+                                
                                 AIWelcomeCard(
                                     vm: AIWelcomeCardViewModel(
                                         time: SystemTimeProvider(),
@@ -157,6 +165,19 @@ struct TodayView: View {
                                     })
                             }
                         }
+                        .presentToolOutcomes(toast: $toast, includeKind: { kind in
+                            if case .aiTool = kind { return true }
+                                                return false
+                        }, onNavigate: { route in
+                            switch route {
+                            case let .taskDetail(id): /* nav.push(.taskDetail(id: id)) */
+                                break
+                            case let .eventDetail(id): /* nav.push(.eventDetail(id: id)) */
+                                break
+                            case let .url(url):        /* nav.open(url) */
+                                break
+                            }
+                        })
                         
                         VStack(spacing: 0) {
                             ToolbarView(blurStyle: .systemUltraThinMaterial /*Theme.isDarkMode ? .dark : .light*/) {
@@ -215,6 +236,7 @@ struct TodayView: View {
                     })
                     .ignoresSafeArea()
                     .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: !showChat)
+                    .toast($toast)
                 }
             case .loading:
                 VStack {
