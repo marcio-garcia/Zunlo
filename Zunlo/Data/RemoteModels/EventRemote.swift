@@ -10,17 +10,16 @@ import Foundation
 struct EventRemote: Codable, Identifiable {
     var id: UUID
     var user_id: UUID?
-    let title: String
-    let notes: String?
-    let start_datetime: Date
+    var title: String
+    var notes: String?
+    var start_datetime: Date
     var end_datetime: Date?
-    let is_recurring: Bool
-    let location: String?
+    var is_recurring: Bool
+    var location: String?
     var created_at: Date?
-    let updated_at: Date
-    let color: EventColor?
-    let reminder_triggers: [ReminderTrigger]?
-    
+    var updated_at: Date
+    var color: EventColor?
+    var reminder_triggers: [ReminderTrigger]?
     var deleted_at: Date?
     var version: Int?
     
