@@ -7,54 +7,21 @@
 
 import Foundation
 
-struct EventOverrideRemote: Codable, Identifiable {
-    var id: UUID
-    let event_id: UUID
-    let occurrence_date: Date
-    let overridden_title: String?
-    var overridden_start_datetime: Date?
-    var overridden_end_datetime: Date?
-    let overridden_location: String?
-    let is_cancelled: Bool
-    let notes: String?
-    var created_at: Date
-    var updated_at: Date
-    let color: EventColor?
-    
-    var deleted_at: Date?
-    var version: Int?
-    
-//    init(from decoder: Decoder) throws {
-//        let container = try decoder.container(keyedBy: CodingKeys.self)
-//        self.id = try? container.decodeSafely(UUID.self, forKey: .id)
-//        self.event_id = try container.decodeSafely(UUID.self, forKey: .event_id)
-//        self.overridden_title = try? container.decodeSafely(String.self, forKey: .overridden_title)
-//        self.overridden_location = try? container.decodeSafely(String.self, forKey: .overridden_location)
-//        self.is_cancelled = try container.decodeSafely(Bool.self, forKey: .is_cancelled)
-//        self.notes = try? container.decodeSafely(String.self, forKey: .notes)
-//        self.color = try? container.decodeSafely(EventColor.self, forKey: .color)
-//        
-//        let occurrence_date = try container.decodeSafely(String.self, forKey: .occurrence_date)
-//        let overridden_start_datetime = try? container.decodeSafely(String.self, forKey: .overridden_start_datetime)
-//        let overridden_end_datetime = try? container.decodeSafely(String.self, forKey: .overridden_end_datetime)
-//        let created_at = try container.decodeSafely(String.self, forKey: .created_at)
-//        let updated_at = try container.decodeSafely(String.self, forKey: .updated_at)
-//        
-//        self.occurrence_date = DateFormatter.iso8601WithoutFractionalSeconds.date(from: occurrence_date) ?? Date()
-//        
-//        self.overridden_start_datetime = nil
-//        if let date = overridden_start_datetime {
-//            self.overridden_start_datetime = DateFormatter.iso8601WithoutFractionalSeconds.date(from: date) ?? Date()
-//        }
-//        
-//        self.overridden_end_datetime = nil
-//        if let date = overridden_end_datetime {
-//            self.overridden_end_datetime = DateFormatter.iso8601WithoutFractionalSeconds.date(from: date) ?? Date()
-//        }
-//        
-//        self.created_at = DateFormatter.iso8601WithFractionalSeconds.date(from: created_at) ?? Date()
-//        self.updated_at = DateFormatter.iso8601WithoutFractionalSeconds.date(from: updated_at) ?? Date()
-//    }
+public struct EventOverrideRemote: Codable, Identifiable {
+    public var id: UUID
+    public var event_id: UUID
+    public var occurrence_date: Date
+    public var overridden_title: String?
+    public var overridden_start_datetime: Date?
+    public var overridden_end_datetime: Date?
+    public var overridden_location: String?
+    public var is_cancelled: Bool
+    public var notes: String?
+    public var created_at: Date
+    public var updated_at: Date
+    public var color: EventColor?
+    public var deleted_at: Date?
+    public var version: Int?
 }
 
 extension EventOverrideRemote {
@@ -72,7 +39,7 @@ extension EventOverrideRemote {
         self.updated_at = domain.updatedAt
         self.color = domain.color
         self.deleted_at = domain.deletedAt
-        self.version = nil
+        self.version = domain.version
     }
     
     init(local: EventOverrideLocal) {
@@ -89,6 +56,6 @@ extension EventOverrideRemote {
         self.updated_at = local.updatedAt
         self.color = local.color
         self.deleted_at = local.deletedAt
-        self.version = nil
+        self.version = local.version
     }
 }

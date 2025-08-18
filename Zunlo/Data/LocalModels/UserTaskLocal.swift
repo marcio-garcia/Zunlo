@@ -25,6 +25,7 @@ class UserTaskLocal: Object {
     // NEW
     @Persisted var deletedAt: Date?
     @Persisted var needsSync: Bool = false
+    @Persisted var version: Int?          // <-- NEW (nil means “unknown / never synced”)
     
     var tagsArray: [String] {
         get { Array(tags) }
@@ -63,6 +64,7 @@ class UserTaskLocal: Object {
         self.reminderTriggersArray = remote.reminderTriggers ?? []
         self.deletedAt = remote.deletedAt
         self.needsSync = false
+        self.version = remote.version
     }
 
     convenience init(domain: UserTask) {
@@ -80,6 +82,7 @@ class UserTaskLocal: Object {
         self.tags.removeAll()
         self.tags.append(objectsIn: domain.tags.map({ $0.text }))
         self.reminderTriggersArray = domain.reminderTriggers ?? []
+        self.version = domain.version
     }
     
     func toDomain() -> UserTask {
@@ -102,7 +105,8 @@ class UserTaskLocal: Object {
             }),
             reminderTriggers: reminderTriggersArray,
             deletedAt: deletedAt,
-            needsSync: needsSync
+            needsSync: needsSync,
+            version: version
         )
     }
     
@@ -119,6 +123,7 @@ class UserTaskLocal: Object {
         self.reminderTriggersArray = remote.reminderTriggers ?? []
         self.deletedAt = remote.deletedAt
         self.needsSync = false
+        self.version = remote.version
     }
     
     func getUpdateFields(domain: UserTask) {
@@ -134,6 +139,7 @@ class UserTaskLocal: Object {
         self.reminderTriggersArray = domain.reminderTriggers ?? []
         self.deletedAt = domain.deletedAt
         self.needsSync = true
+        self.version = domain.version
     }
 }
 
@@ -157,7 +163,7 @@ enum UserTaskPriorityLocal: Int, Codable, PersistableEnum {
     }
 }
 
-final class ReminderTriggerLocal: EmbeddedObject, ObjectKeyIdentifiable {
+final public class ReminderTriggerLocal: EmbeddedObject, ObjectKeyIdentifiable {
     @Persisted var timeBeforeDue: Double
     @Persisted var message: String?
 

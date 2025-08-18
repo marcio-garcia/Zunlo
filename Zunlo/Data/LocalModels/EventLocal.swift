@@ -23,6 +23,7 @@ class EventLocal: Object {
     @Persisted var reminderTriggers: List<ReminderTriggerLocal>
     @Persisted var deletedAt: Date?
     @Persisted var needsSync: Bool = false
+    @Persisted var version: Int?          // <-- NEW (nil means “unknown / never synced”)
     
     var reminderTriggersArray: [ReminderTrigger] {
         get {
@@ -50,7 +51,8 @@ class EventLocal: Object {
         color: EventColor? = .yellow,
         reminderTriggers: [ReminderTrigger],
         deletedAt: Date? = nil,
-        needsSync: Bool = false
+        needsSync: Bool = false,
+        version: Int?
     ) {
         self.init() // <-- MUST call the default init
         self.id = id
@@ -67,6 +69,7 @@ class EventLocal: Object {
         self.reminderTriggersArray = reminderTriggers
         self.deletedAt = deletedAt
         self.needsSync = needsSync
+        self.version = version
     }
 }
 
@@ -84,7 +87,8 @@ extension EventLocal {
             createdAt: domain.createdAt,
             updatedAt: domain.updatedAt,
             color: domain.color,
-            reminderTriggers: domain.reminderTriggers ?? []
+            reminderTriggers: domain.reminderTriggers ?? [],
+            version: domain.version
         )
     }
     
@@ -104,7 +108,8 @@ extension EventLocal {
             createdAt: created_at,
             updatedAt: remote.updated_at,
             color: remote.color ?? .yellow,
-            reminderTriggers: remote.reminder_triggers ?? []
+            reminderTriggers: remote.reminder_triggers ?? [],
+            version: remote.version
         )
     }
     
@@ -122,6 +127,7 @@ extension EventLocal {
         self.reminderTriggersArray = event.reminder_triggers ?? []
         self.deletedAt = event.deleted_at
         self.needsSync = false
+        self.version = event.version
     }
     
     func getUpdateFields(_ event: Event) {
@@ -138,6 +144,7 @@ extension EventLocal {
         self.reminderTriggersArray = event.reminderTriggers ?? []
         self.deletedAt = event.deletedAt
         self.needsSync = true
+        self.version = event.version
     }
     
     func getUpdateFields(_ local: EventLocal) {
@@ -154,5 +161,6 @@ extension EventLocal {
         self.reminderTriggers = local.reminderTriggers
         self.deletedAt = local.deletedAt
         self.needsSync = true
+        self.version = local.version
     }
 }

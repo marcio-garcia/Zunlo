@@ -23,6 +23,7 @@ class RecurrenceRuleLocal: Object {
     
     @Persisted var deletedAt: Date? = nil      // NEW
     @Persisted var needsSync: Bool = false     // NEW
+    @Persisted var version: Int?          // <-- NEW (nil means “unknown / never synced”)
 
     var byWeekdayArray: [Int] {
         get { Array(byWeekday) }
@@ -63,7 +64,8 @@ class RecurrenceRuleLocal: Object {
         createdAt: Date,
         updatedAt: Date,
         deletedAt: Date?,
-        needsSync: Bool = false
+        needsSync: Bool = false,
+        version: Int?
     ) {
         self.init()
         self.id = id
@@ -79,6 +81,7 @@ class RecurrenceRuleLocal: Object {
         self.updatedAt = updatedAt
         self.deletedAt = deletedAt
         self.needsSync = needsSync
+        self.version = version
     }
 }
 
@@ -97,7 +100,8 @@ extension RecurrenceRuleLocal {
             createdAt: domain.createdAt,
             updatedAt: domain.updatedAt,
             deletedAt: domain.deletedAt,
-            needsSync: true
+            needsSync: true,
+            version: domain.version
         )
     }
     
@@ -114,7 +118,8 @@ extension RecurrenceRuleLocal {
                   createdAt: remote.created_at,
                   updatedAt: remote.updated_at,
                   deletedAt: remote.deleted_at,
-                  needsSync: false
+                  needsSync: false,
+                  version: remote.version
         )
     }
     
@@ -130,6 +135,7 @@ extension RecurrenceRuleLocal {
         self.updatedAt = remote.updated_at
         self.deletedAt = remote.deleted_at
         self.needsSync = false
+        self.version = remote.version
     }
     
     func getUpdateFields(_ domain: RecurrenceRule) {
@@ -144,5 +150,6 @@ extension RecurrenceRuleLocal {
         self.updatedAt = domain.updatedAt
         self.deletedAt = domain.deletedAt
         self.needsSync = true
+        self.version = domain.version
     }
 }

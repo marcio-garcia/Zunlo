@@ -39,7 +39,8 @@ final class TaskEditor: TaskEditorService {
             priority: input.priority,
             parentEventId: nil,
             tags: input.tags,
-            reminderTriggers: input.reminderTriggers
+            reminderTriggers: input.reminderTriggers,
+            version: input.version
         )
         return task
     }

@@ -25,6 +25,7 @@ struct AddTaskInput {
     var tags: [Tag]
     var reminderTriggers: [ReminderTrigger]?
     var deleteAt: Date?
+    var version: Int?
 }
 
 typealias EditTaskInput = AddTaskInput

@@ -64,8 +64,8 @@ public actor DatabaseActor {
         let realm = try Realm()
         try realm.write {
             for r in rows {
-                if let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id),
-                   existing.needsSync == true { continue } // v1 trade-off
+//                if let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id),
+//                   existing.needsSync == true { continue } // v1 trade-off
                 let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id)
                 ?? EventLocal(value: ["id": r.id])
                 obj.getUpdateFields(r)
@@ -593,7 +593,8 @@ extension DatabaseActor {
                     createdAt: now,
                     updatedAt: now,
                     deletedAt: nil,
-                    needsSync: true
+                    needsSync: true,
+                    version: origRule.version
                 )
                 realm.add(cloned, update: .modified)
             }
@@ -1106,5 +1107,44 @@ extension DatabaseActor {
         if trimmed.count <= maxLen { return trimmed }
         let idx = trimmed.index(trimmed.startIndex, offsetBy: maxLen)
         return String(trimmed[..<idx]) + "…"
+    }
+}
+
+enum ConflictTable: String { case events, recurrence_rules, event_overrides, tasks }
+
+extension DatabaseActor {
+    func recordConflicts<T: Codable>(_ table: ConflictTable, items: [(local: T, server: T?)], idOf: (T) -> UUID, localVersion: (T) -> Int?, remoteVersion: (T?) -> Int?) throws {
+        let realm = try openRealm()
+        let enc = JSONEncoder()
+        try realm.write {
+            for (loc, srv) in items {
+                let rowId = idOf(loc)
+                let key = "\(table.rawValue):\(rowId.uuidString)"
+                let c = SyncConflictLocal()
+                c.id = key
+                c.table = table.rawValue
+                c.rowId = rowId
+                c.localVersion = localVersion(loc)
+                c.remoteVersion = remoteVersion(srv)
+                c.localJSON = String(data: try! enc.encode(loc), encoding: .utf8) ?? "{}"
+                c.remoteJSON = srv.flatMap { String(data: try! enc.encode($0), encoding: .utf8) }
+                c.createdAt = Date()
+                realm.add(c, update: .modified)
+            }
+        }
+    }
+
+    func fetchConflicts(_ table: ConflictTable? = nil) throws -> [SyncConflictLocal] {
+        let realm = try openRealm()
+        var q = realm.objects(SyncConflictLocal.self)
+        if let t = table { q = q.where { $0.table == t.rawValue } }
+        return Array(q.sorted(byKeyPath: "createdAt", ascending: true))
+    }
+
+    func resolveConflictWithServer(_ key: String) throws {
+        let realm = try openRealm()
+        if let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: key) {
+            try realm.write { c.resolvedAt = Date(); realm.delete(c) }
+        }
     }
 }

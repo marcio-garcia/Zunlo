@@ -22,6 +22,7 @@ struct RecurrenceRule: Identifiable, Codable, Hashable {
     
     var deletedAt: Date? = nil
     var needsSync: Bool = false
+    var version: Int?          // <-- NEW (nil means “unknown / never synced”)
 }
 
 extension RecurrenceRule {

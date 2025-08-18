@@ -24,6 +24,7 @@ class EventOverrideLocal: Object {
     
     @Persisted var deletedAt: Date? = nil
     @Persisted var needsSync: Bool = false
+    @Persisted var version: Int?          // <-- NEW (nil means “unknown / never synced”)
 
     // Convenience initializer
     convenience init(
@@ -40,7 +41,8 @@ class EventOverrideLocal: Object {
         updatedAt: Date,
         color: EventColor? = .yellow,
         deletedAt: Date? = nil,
-        needsSync: Bool = false
+        needsSync: Bool = false,
+        version: Int?
     ) {
         self.init()
         self.id = id
@@ -57,6 +59,7 @@ class EventOverrideLocal: Object {
         self.color = color
         self.deletedAt = deletedAt
         self.needsSync = needsSync
+        self.version = version
     }
 }
 
@@ -74,7 +77,8 @@ extension EventOverrideLocal {
             notes: domain.notes,
             createdAt: domain.createdAt,
             updatedAt: domain.updatedAt,
-            color: domain.color
+            color: domain.color,
+            version: domain.version
         )
     }
     
@@ -92,7 +96,8 @@ extension EventOverrideLocal {
                   updatedAt: remote.updated_at,
                   color: remote.color ?? .yellow,
                   deletedAt: remote.deleted_at,
-                  needsSync: false
+                  needsSync: false,
+                  version: remote.version
         )
     }
     
@@ -108,6 +113,7 @@ extension EventOverrideLocal {
         self.color = remote.color ?? .yellow
         self.deletedAt = remote.deleted_at
         self.needsSync = false
+        self.version = remote.version
     }
     
     func getUpdateFields(_ domain: EventOverride) {
@@ -122,5 +128,6 @@ extension EventOverrideLocal {
         self.color = domain.color
         self.deletedAt = domain.deletedAt
         self.needsSync = true
+        self.version = domain.version
     }
 }

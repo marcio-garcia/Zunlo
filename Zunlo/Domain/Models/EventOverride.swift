@@ -23,6 +23,7 @@ struct EventOverride: Identifiable, Codable, Hashable {
     
     var deletedAt: Date? = nil
     var needsSync: Bool = false
+    var version: Int?          // <-- NEW (nil means “unknown / never synced”)
 }
 
 extension EventOverride {
@@ -41,6 +42,7 @@ extension EventOverride {
         self.color = remote.color ?? .yellow
         self.deletedAt = remote.deleted_at
         self.needsSync = false
+        self.version = remote.version
     }
 
     init(local: EventOverrideLocal) {
@@ -57,5 +59,6 @@ extension EventOverride {
         self.updatedAt = local.updatedAt
         self.color = local.color ?? .yellow
         self.deletedAt = local.deletedAt
+        self.version = local.version
     }
 }

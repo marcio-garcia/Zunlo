@@ -15,11 +15,11 @@ protocol SchedulableReminderItem {
     var reminderTriggers: [ReminderTrigger]? { get }
 }
 
-struct ReminderTrigger: Codable, Hashable {
-    var timeBeforeDue: TimeInterval // seconds before dueDate
-    var message: String?
+public struct ReminderTrigger: Codable, Hashable {
+    public var timeBeforeDue: TimeInterval // seconds before dueDate
+    public var message: String?
     
-    func toLocal() -> ReminderTriggerLocal {
+    public func toLocal() -> ReminderTriggerLocal {
         ReminderTriggerLocal(timeBeforeDue: timeBeforeDue, message: message)
     }
 }

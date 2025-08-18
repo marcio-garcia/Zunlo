@@ -33,10 +33,11 @@ final class SyncCoordinator {
     
     init(db: DatabaseActor, supabase: SupabaseClient) {
         self.supabase = supabase
-        self.events = EventSyncEngine(db: db, supabase: supabase)
-        self.rules = RecurrenceRuleSyncEngine(db: db, supabase: supabase)
-        self.overrides = EventOverrideSyncEngine(db: db, supabase: supabase)
-        self.userTasks = UserTaskSyncEngine(db: db, supabase: supabase)
+        let syncApi = SupabaseSyncAPI(client: supabase)
+        self.events = EventSyncEngine(db: db, api: syncApi)
+        self.rules = RecurrenceRuleSyncEngine(db: db, api: syncApi)
+        self.overrides = EventOverrideSyncEngine(db: db, api: syncApi)
+        self.userTasks = UserTaskSyncEngine(db: db, api: syncApi)
         
         Task {
 //            try await db.markEventDirty(UUID(uuidString: "C74A7FDA-8EB0-4E18-B958-D7E9AF279C3B")!)

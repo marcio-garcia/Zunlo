@@ -82,7 +82,8 @@ class AIToolRepository: AIToolAPI {
             tags: [],
             reminderTriggers: nil,
             deletedAt: nil,
-            needsSync: true
+            needsSync: true,
+            version: nil
         )
         try await taskRepo.upsert(task)
         return id

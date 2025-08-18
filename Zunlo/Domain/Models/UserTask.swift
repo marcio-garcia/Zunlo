@@ -8,10 +8,10 @@
 import SwiftUI
 import RealmSwift
 
-enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
+public enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
     case low, medium, high
     
-    var color: Color {
+    public var color: Color {
         switch self {
         case .high: return .red.opacity(0.3)
         case .medium: return .orange.opacity(0.3)
@@ -19,7 +19,7 @@ enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
         }
     }
     
-    var description: String {
+    public var description: String {
         switch self {
         case .high: return String(localized: "high")
         case .medium: return String(localized: "medium")
@@ -27,7 +27,7 @@ enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
         }
     }
     
-    var weight: Int {
+    public var weight: Int {
         switch self {
         case .high: return 3
         case .medium: return 2
@@ -36,9 +36,9 @@ enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
     }
 }
 
-struct UserTask: Identifiable, Codable, Hashable, Sendable {
-    let id: UUID
-    let userId: UUID?
+struct UserTask: Identifiable, Codable, Hashable {
+    var id: UUID
+    var userId: UUID?
     var title: String
     var notes: String?
     var isCompleted: Bool
@@ -53,6 +53,7 @@ struct UserTask: Identifiable, Codable, Hashable, Sendable {
     // NEW for sync v1
     var deletedAt: Date? = nil
     var needsSync: Bool = false
+    var version: Int?          // <-- NEW (nil means “unknown / never synced”)
 
     var isActionable: Bool {
         !isCompleted && parentEventId == nil
@@ -72,7 +73,8 @@ struct UserTask: Identifiable, Codable, Hashable, Sendable {
         tags: [Tag],
         reminderTriggers: [ReminderTrigger]?,
         deletedAt: Date? = nil,
-        needsSync: Bool = false
+        needsSync: Bool = false,
+        version: Int?
     ) {
         self.id = id
         self.userId = userId
@@ -88,6 +90,7 @@ struct UserTask: Identifiable, Codable, Hashable, Sendable {
         self.reminderTriggers = reminderTriggers
         self.deletedAt = deletedAt
         self.needsSync = needsSync
+        self.version = version
     }
 }
 
@@ -111,6 +114,7 @@ extension UserTask {
         self.reminderTriggers = local.reminderTriggersArray
         self.deletedAt = local.deletedAt
         self.needsSync = local.needsSync
+        self.version = local.version
     }
 }
 
@@ -130,5 +134,6 @@ extension UserTask {
         self.reminderTriggers = []
         self.deletedAt = remote.deletedAt
         self.needsSync = false
+        self.version = remote.version
     }
 }

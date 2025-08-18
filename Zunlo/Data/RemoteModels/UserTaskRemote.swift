@@ -7,23 +7,21 @@
 
 import Foundation
 
-struct UserTaskRemote: Codable, Identifiable {
-    var id: UUID
-    var userId: UUID?
-    var title: String
-    var notes: String?
-    var isCompleted: Bool
-    var createdAt: Date?
-    var updatedAt: Date
-    var dueDate: Date?
-    var priority: UserTaskPriority
-    var parentEventId: UUID?
-    var tags: [String]
-    var reminderTriggers: [ReminderTrigger]?
-    
-    // NEW
-    var deletedAt: Date? = nil       // maps to deleted_at
-    var version: Int? = nil
+public struct UserTaskRemote: Codable, Identifiable {
+    public var id: UUID
+    public var userId: UUID?
+    public var title: String
+    public var notes: String?
+    public var isCompleted: Bool
+    public var createdAt: Date?
+    public var updatedAt: Date
+    public var dueDate: Date?
+    public var priority: UserTaskPriority
+    public var parentEventId: UUID?
+    public var tags: [String]
+    public var reminderTriggers: [ReminderTrigger]?
+    public var deletedAt: Date?
+    public var version: Int?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -88,7 +86,7 @@ struct UserTaskRemote: Codable, Identifiable {
         self.tags = domain.tags.map({ $0.text })
         self.reminderTriggers = domain.reminderTriggers
         self.deletedAt = domain.deletedAt
-        self.version = nil
+        self.version = domain.version
     }
     
     func toDomain() -> UserTask {
@@ -111,7 +109,8 @@ struct UserTaskRemote: Codable, Identifiable {
             }),
             reminderTriggers: reminderTriggers,
             deletedAt: deletedAt,
-            needsSync: false
+            needsSync: false,
+            version: version
         )
     }
 }

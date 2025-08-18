@@ -23,6 +23,7 @@ struct Event: Identifiable, Codable, Hashable {
     
     var deletedAt: Date?
     var needsSync: Bool
+    var version: Int?          // <-- NEW (nil means “unknown / never synced”)
 }
 
 extension Event: SchedulableReminderItem {
@@ -49,6 +50,7 @@ extension Event {
         
         self.deletedAt = remote.deleted_at
         self.needsSync = false
+        self.version = remote.version
     }
 
     init(local: EventLocal) {
@@ -67,5 +69,6 @@ extension Event {
         
         self.deletedAt = local.deletedAt
         self.needsSync = local.needsSync
+        self.version = local.version
     }
 }

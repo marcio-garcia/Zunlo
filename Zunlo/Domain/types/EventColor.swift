@@ -7,7 +7,7 @@
 
 import RealmSwift
 
-enum EventColor: String, PersistableEnum, CaseIterable, Codable {
+public enum EventColor: String, PersistableEnum, CaseIterable, Codable {
     case yellow      = "#FFD966"
     case blue        = "#AEEAF9"
     case pink        = "#F6B9C1"
