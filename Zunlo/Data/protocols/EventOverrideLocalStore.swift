@@ -17,4 +17,5 @@ protocol EventOverrideLocalStore {
     func delete(eventId: UUID) async throws
     func delete(id: UUID) async throws
     func deleteAll() async throws
+    func apply(rows: [EventOverrideRemote]) async throws
 }

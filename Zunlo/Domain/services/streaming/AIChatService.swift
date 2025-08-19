@@ -1,5 +1,5 @@
 //
-//  AIClient.swift
+//  AIChatService.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 8/15/25.
@@ -11,13 +11,15 @@ import Foundation
 
 public enum AIEvent {
     case started(replyId: UUID)                  // placeholder assistant message created
+    case responseCreated(responseId: String)
     case delta(replyId: UUID, text: String)      // streaming token(s)
     case toolCall(name: String, argumentsJSON: String)
+    case toolBatch([ToolCallRequest]) // <-- batch, not one-by-one
     case suggestions([String])                   // quick-reply chips
     case completed(replyId: UUID)
 }
 
-public protocol AIClient {
+public protocol AIChatService {
     func generate(
         conversationId: UUID,
         history: [ChatMessage],
@@ -27,4 +29,5 @@ public protocol AIClient {
     ) -> AsyncThrowingStream<AIEvent, Error>
 
     func cancelCurrentGeneration()
+    func submitToolOutputs(responseId: String, outputs: [ToolOutput]) async throws
 }

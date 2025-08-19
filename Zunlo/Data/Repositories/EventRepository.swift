@@ -130,6 +130,10 @@ final public class EventRepository {
         lastEventAction.value = .delete
     }
 
+    func apply(rows: [EventRemote]) async throws {
+        try await eventLocalStore.apply(rows: rows)
+    }
+
     // MARK: - CRUD for RecurrenceRule
 
     func saveRecurrenceRule(_ rule: RecurrenceRule) async throws {
@@ -142,6 +146,10 @@ final public class EventRepository {
 
     func deleteRecurrenceRule(_ rule: RecurrenceRule) async throws {
         try await recurrenceRuleLocalStore.delete(id: rule.id)
+    }
+    
+    func apply(rows: [RecurrenceRuleRemote]) async throws {
+        try await recurrenceRuleLocalStore.apply(rows: rows)
     }
 
     // MARK: - CRUD for EventOverride
@@ -156,6 +164,10 @@ final public class EventRepository {
 
     func deleteOverride(_ override: EventOverride) async throws {
         try await eventOverrideLocalStore.delete(id: override.id)
+    }
+    
+    func apply(rows: [EventOverrideRemote]) async throws {
+        try await eventOverrideLocalStore.apply(rows: rows)
     }
 
     // MARK: - Batch Delete & Sync

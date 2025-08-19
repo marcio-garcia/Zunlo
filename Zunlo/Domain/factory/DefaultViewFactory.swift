@@ -37,10 +37,17 @@ final class DefaultViewFactory: ViewFactory {
         // Ensure the Conversation row exists without blocking init
         Task { try? await appState.localDB!.ensureConversationExists(id: cid) }
 
-        let store = RealmChatLocalStore(db: appState.localDB!)
-        let repo = DefaultChatRepository(store: store)
-        let ai = NoopAIClient()
-
-        return ChatViewModel(conversationId: cid, repository: repo, ai: ai, userId: appState.authManager?.user?.id)
+        let aiChatService = SupabaseEdgeAIClient(supabase: appState.supabaseClient!)
+        let aiToolService = AIToolService(client: appState.supabaseClient!)
+        let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
+                                                 eventRepo: appState.eventRepository!)
+        let aiToolRouter = AIToolRouter(tools: aiToolService, repo: aiToolRepo)
+        return ChatViewModel(
+            conversationId: cid,
+            userId: appState.authManager?.user?.id,
+            aiChatService: aiChatService,
+            toolRouter: aiToolRouter,
+            chatRepo: appState.chatRepository!
+        )
     }
 }

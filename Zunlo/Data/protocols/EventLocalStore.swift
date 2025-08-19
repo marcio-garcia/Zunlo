@@ -14,6 +14,7 @@ protocol EventLocalStore {
     func delete(id: UUID) async throws
     func deleteAll(for userId: UUID) async throws
     func deleteAll() async throws
+    func apply(rows: [EventRemote]) async throws
     
     func fetch(id: UUID) async throws -> EventLocal?
     func fetch(startAt: Date) async throws -> EventLocal?

@@ -50,4 +50,8 @@ final class RealmEventOverrideLocalStore: EventOverrideLocalStore {
     func deleteAll() async throws {
         try await db.deleteAllOverrides()
     }
+    
+    func apply(rows: [EventOverrideRemote]) async throws {
+        try await db.applyRemoteEventOverrides(rows)
+    }
 }

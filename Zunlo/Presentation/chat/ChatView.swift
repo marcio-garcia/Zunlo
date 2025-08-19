@@ -34,7 +34,7 @@ struct ChatView: View {
         }
         .defaultBackground()
         .task { await viewModel.loadHistory() }
-        .onChange(of: viewModel.messages.count) { _, _ in scrollToBottom(animated: true) }
+//        .onChange(of: viewModel.messages.count) { _, _ in scrollToBottom(animated: true) }
         .swipeToDismiss(isPresented: $showChat, threshold: 300, predictedThreshold: 300, minOpacity: 0.7)
         .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: showChat)
     }
@@ -127,6 +127,7 @@ struct ChatView: View {
                 .frame(minHeight: 42, maxHeight: 120)
                 .background(RoundedRectangle(cornerRadius: 16).fill(Color.secondary.opacity(0.12)))
                 .focused($focused)
+                .submitLabel(.send)
                 .onSubmit { Task { await viewModel.send() } }
 
             Button {

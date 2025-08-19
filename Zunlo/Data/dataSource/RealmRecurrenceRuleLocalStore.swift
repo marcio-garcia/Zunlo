@@ -50,4 +50,8 @@ final class RealmRecurrenceRuleLocalStore: RecurrenceRuleLocalStore {
     func deleteAll() async throws {
         try await db.deleteAllRecurrenceRules()
     }
+    
+    func apply(rows: [RecurrenceRuleRemote]) async throws {
+        try await db.applyRemoteRecurrenceRules(rows)
+    }
 }

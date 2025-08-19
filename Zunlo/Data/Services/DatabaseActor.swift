@@ -69,8 +69,6 @@ public actor DatabaseActor {
                 let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id)
                 ?? EventLocal(value: ["id": r.id])
                 obj.getUpdateFields(r)
-                obj.deletedAt = r.deleted_at
-                obj.needsSync = false
                 realm.add(obj, update: .modified)
             }
         }
@@ -95,8 +93,8 @@ public actor DatabaseActor {
         let realm = try Realm()
         try realm.write {
             for r in rows {
-                if let existing = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id),
-                   existing.needsSync == true { continue }
+//                if let existing = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id),
+//                   existing.needsSync == true { continue }
                 let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id)
                     ?? RecurrenceRuleLocal(remote: r)
                 obj.getUpdateFields(r)
@@ -124,10 +122,9 @@ public actor DatabaseActor {
         let realm = try Realm()
         try realm.write {
             for r in rows {
-                let id = r.id // non-optional
-                if let existing = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: id),
-                   existing.needsSync == true { continue }
-                let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: id)
+//                if let existing = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: id),
+//                   existing.needsSync == true { continue }
+                let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: r.id)
                     ?? EventOverrideLocal(remote: r)
                 obj.getUpdateFields(r)
                 realm.add(obj, update: .modified)
@@ -420,8 +417,8 @@ public actor DatabaseActor {
         try realm.write {
             for r in rows {
                 let id = r.id
-                if let existing = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id),
-                   existing.needsSync == true { continue } // v1 trade-off: don't stomp local dirty
+//                if let existing = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id),
+//                   existing.needsSync == true { continue } // v1 trade-off: don't stomp local dirty
                 let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id) ?? UserTaskLocal(remote: r)
                 obj.getUpdateFields(remote: r)
                 realm.add(obj, update: .modified)
@@ -458,6 +455,14 @@ public actor DatabaseActor {
         }
     }
 
+    func fetchTask(id: UUID) throws -> UserTaskLocal? {
+        let realm = try openRealm()
+        guard let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id) else {
+            return nil
+        }
+        return obj
+    }
+    
     func fetchAllUserTasks() throws -> [UserTask] {
         let realm = try openRealm()
         let locals = Array(

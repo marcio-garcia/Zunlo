@@ -13,7 +13,7 @@ final public class UserTaskRepository {
     private let remoteStore: UserTaskRemoteStore
     private let reminderScheduler: ReminderScheduler<UserTask>
     private let calendar = Calendar.appDefault
-
+    
     var lastTaskAction = Observable<LastTaskAction>(.none)
     
     init(localStore: UserTaskLocalStore, remoteStore: UserTaskRemoteStore) {
@@ -21,18 +21,32 @@ final public class UserTaskRepository {
         self.remoteStore = remoteStore
         self.reminderScheduler = ReminderScheduler()
     }
-
+    
     func upsert(_ task: UserTask) async throws {
         try await localStore.upsert(task)
         reminderScheduler.cancelReminders(for: task)
         reminderScheduler.scheduleReminders(for: task)
         lastTaskAction.value = .update
     }
-
+    
     func delete(_ task: UserTask) async throws {
         try await localStore.delete(id: task.id)
         reminderScheduler.cancelReminders(for: task)
         lastTaskAction.value = .delete
+    }
+    
+    func apply(rows: [UserTaskRemote]) async throws {
+        try await localStore.apply(rows: rows)
+    }
+
+    @discardableResult
+    func fetchTask(id: UUID) async throws -> UserTask? {
+        guard let taskLocal = try await localStore.fetch(id: id) else {
+            return nil
+        }
+        let task = UserTask(local: taskLocal)
+        lastTaskAction.value = .fetch([task])
+        return task
     }
     
     @discardableResult

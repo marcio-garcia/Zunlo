@@ -8,7 +8,7 @@
 import Foundation
 
 // Offline/demo stub; swap for a real provider later.
-public final class NoopAIClient: AIClient {
+public final class NoopAIClient: AIChatService {
     private var cancelled = false
     public init() {}
 
@@ -63,5 +63,9 @@ public final class NoopAIClient: AIClient {
                 continuation.finish()
             }
         }
+    }
+    
+    public func submitToolOutputs(responseId: String, outputs: [ToolOutput]) async throws {
+        
     }
 }

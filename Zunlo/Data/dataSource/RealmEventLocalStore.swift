@@ -62,6 +62,10 @@ final class RealmEventLocalStore: EventLocalStore {
     func deleteAll() async throws {
         try await db.deleteAllEvents()
     }
+    
+    func apply(rows: [EventRemote]) async throws {
+        try await db.applyRemoteEvents(rows)
+    }
 }
 
 extension RealmEventLocalStore {

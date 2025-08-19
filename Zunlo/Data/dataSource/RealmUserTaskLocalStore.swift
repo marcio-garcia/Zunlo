@@ -24,6 +24,10 @@ final class RealmUserTaskLocalStore: UserTaskLocalStore {
         try await db.deleteUserTask(id: id)
     }
 
+    func fetch(id: UUID) async throws -> UserTaskLocal? {
+        try await db.fetchTask(id: id)
+    }
+    
     func fetchAll() async throws -> [UserTask] {
         try await db.fetchAllUserTasks()
     }
@@ -34,5 +38,9 @@ final class RealmUserTaskLocalStore: UserTaskLocalStore {
 
     func fetchAllUniqueTags() async throws -> [String] {
         try await db.fetchAllUniqueTaskTags()
+    }
+    
+    func apply(rows: [UserTaskRemote]) async throws {
+        try await db.applyRemoteUserTasks(rows)
     }
 }

@@ -8,13 +8,13 @@
 import Foundation
 
 extension JSONDecoder {
-    static func supabase() -> JSONDecoder {
+    static func decoder() -> JSONDecoder {
         let d = JSONDecoder()
         // Accept fractional and non-fractional RFC3339
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         d.dateDecodingStrategy = .custom { decoder in
             let s = try decoder.singleValueContainer().decode(String.self)
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             if let dt = f.date(from: s) { return dt }
             // try again without fractional seconds
             let g = ISO8601DateFormatter()
@@ -28,11 +28,12 @@ extension JSONDecoder {
 }
 
 extension JSONEncoder {
-    static func supabase() -> JSONEncoder {
+    static func encoder() -> JSONEncoder {
         let e = JSONEncoder()
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        e.keyEncodingStrategy = .convertToSnakeCase
         e.dateEncodingStrategy = .custom { date, encoder in
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             var c = encoder.singleValueContainer()
             try c.encode(f.string(from: date))
         }
