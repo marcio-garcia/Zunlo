@@ -46,24 +46,6 @@ public final class SupabaseEdgeAIClient: AIChatService {
         output: [ToolOutput],
         supportsTools: Bool
     ) throws -> AsyncThrowingStream<AIEvent, Error> {
-
-        struct Msg: Codable { let role: String; let content: String }
-        struct Body: Codable {
-            let model: String
-            let input: [Msg]
-            // Add tools/tool_choice later (Phase 4)
-        }
-
-//        let inputMsgs = history.map { Msg(role: $0.role.rawValue, content: $0.text) }
-        // Filter out .tool messages
-        
-//        let inputMsgs = history.compactMap({ msg -> Msg? in
-//            if msg.role == .tool { return nil }
-//            return Msg(role: msg.role.rawValue, content: msg.text)
-//        })
-//        let body = Body(model: "gpt-4o-mini", input: inputMsgs)
-        
-//        let body = try OpenAIResponsesAPIBuilder.buildResponsesHTTPBody(from: history)
         
         var textContent: [InputContent] = []
         
@@ -74,10 +56,10 @@ public final class SupabaseEdgeAIClient: AIChatService {
                     call_id: output.first!.tool_call_id,
                     output: output.first!.output
                 ))
-            } else if !msg.text.isEmpty {
+            } else if !msg.rawText.isEmpty {
                 textContent.append(InputContent(
                     role: mapRole(msg.role, defaultNonUser: "assistant"),
-                    content: msg.text
+                    content: msg.rawText
                 ))
             }
         }
@@ -137,6 +119,8 @@ public final class SupabaseEdgeAIClient: AIChatService {
                 supabase.functions.setAuth(token: session.accessToken)
             }
 
+            var responseCreated = false
+            
             var parser = SSEParser()
             let bytes = supabase.functions._invokeWithStreamedResponse("chat-msg", options: opts)
 
@@ -152,15 +136,16 @@ public final class SupabaseEdgeAIClient: AIChatService {
 //                        response.output_text.done
 //                        response.output_item.done
                         case name.contains("response.created"):
+                            responseCreated = true
                             if let rid = extractResponseId(from: event.data) {
                                 fn.responseId = rid
                                 continuation.yield(.responseCreated(responseId: rid))
                             }
 
                         case name.contains("response.output_item.added"):
-                            if let (itemId, toolName) = parseFunctionCallAdded(event.data) {
+                            if let (itemId, toolName, callId) = parseFunctionCallAdded(event.data) {
                                 print("[SSE] function_call started:", toolName, "id:", itemId)
-                                fn.startCall(id: itemId, name: toolName)
+                                fn.startCall(id: itemId, name: toolName, callId: callId)
                             }
 
                         case name.contains("response.function_call_arguments.delta"):
@@ -176,8 +161,9 @@ public final class SupabaseEdgeAIClient: AIChatService {
                                 // Convert to your AIEvent tool batch (single call here)
                                 let req = ToolCallRequest(
                                     id: itemId,
+                                    callId: call.callId,
                                     name: call.name,
-                                    argumentsJSON: call.argsJSON,
+                                    argumentsJSON: call.args,
                                     responseId: fn.responseId ?? "",
                                     origin: .streamed
                                 )
@@ -206,8 +192,10 @@ public final class SupabaseEdgeAIClient: AIChatService {
                 }
             }
 
-            // Server closed stream without an explicit completed event:
-            continuation.yield(.completed(replyId: draftId))
+            if !responseCreated {
+                // Server closed stream without an explicit completed event:
+                continuation.yield(.completed(replyId: draftId))
+            }
             continuation.finish()
 
         } catch {
@@ -244,10 +232,11 @@ public final class SupabaseEdgeAIClient: AIChatService {
           let tools = ra["tools"] as? [[String: Any]]
         else { return nil }
 
-        return tools.compactMap { t in
+        return tools.compactMap { t -> ToolCallRequest? in
             guard
               let id = t["id"] as? String,
-              let name = t["name"] as? String
+              let name = t["name"] as? String,
+              let callId = t["call_id"] as? String
             else { return nil }
             // arguments might be object or string
             let argsAny = (t["arguments"] as Any)
@@ -260,6 +249,7 @@ public final class SupabaseEdgeAIClient: AIChatService {
             }()
             return ToolCallRequest(
                 id: id,
+                callId: callId,
                 name: name,
                 argumentsJSON: argsJSON,
                 responseId: responseId,
@@ -339,7 +329,7 @@ public final class SupabaseEdgeAIClient: AIChatService {
         return "" // don't append raw JSON if we can't parse
     }
     
-    private func parseFunctionCallAdded(_ json: String) -> (itemId: String, name: String)? {
+    private func parseFunctionCallAdded(_ json: String) -> (itemId: String, name: String, callId: String)? {
         guard let data = json.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
 
@@ -355,14 +345,16 @@ public final class SupabaseEdgeAIClient: AIChatService {
         if let item = obj["item"] as? [String: Any],
            let type = item["type"] as? String, type == "function_call",
            let id = item["id"] as? String,
-           let name = item["name"] as? String {
-            return (id, name)
+           let name = item["name"] as? String,
+           let callId = item["call_id"] as? String {
+            return (id, name, callId)
         }
 
         // Fallbacks if schema varies slightly
         if let id = obj["item_id"] as? String,
+           let callId = obj["call_id"] as? String,
            let name = (obj["name"] as? String) ?? ((obj["function_call"] as? [String: Any])?["name"] as? String) {
-            return (id, name)
+            return (id, name, callId)
         }
         return nil
     }

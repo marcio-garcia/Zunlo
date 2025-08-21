@@ -16,7 +16,8 @@ struct EventOccurrenceService {
     
     /// Generate all event occurrences (including overrides/cancellations) in the given range.
     static func generate(rawOccurrences: [EventOccurrence],
-                         in range: Range<Date>) throws -> [EventOccurrence] {
+                         in range: Range<Date>,
+                         addFakeToday: Bool = true) throws -> [EventOccurrence] {
         var occurrences: [EventOccurrence] = []
 
         for rawOcc in rawOccurrences {
@@ -148,7 +149,7 @@ struct EventOccurrenceService {
             }
         }
 
-        let occ = RecurrenceHelper.addTodayIfNeeded(occurrences: occurrences)
+        let occ = addFakeToday ? RecurrenceHelper.addTodayIfNeeded(occurrences: occurrences) : occurrences
         return occ.sorted { $0.startDate < $1.startDate }
     }
 }

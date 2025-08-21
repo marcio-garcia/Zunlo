@@ -17,7 +17,8 @@ final class ChatMessageLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
     @Persisted(indexed: true) var conversationId: UUID
     @Persisted var roleRaw: String = "assistant"    // ChatRole.rawValue
-    @Persisted var text: String = ""
+    @Persisted var rawText: String = ""
+    @Persisted var formatRaw: String  // "plain" | "markdown" | "rich"
     @Persisted(indexed: true) var createdAt: Date = Date()
     @Persisted var statusRaw: String = "sent"       // MessageStatus.rawValue
     @Persisted var userId: UUID?
@@ -25,6 +26,11 @@ final class ChatMessageLocal: Object {
     @Persisted var actions: List<ChatActionLocal>
     @Persisted var parentId: UUID?
     @Persisted var errorDescription: String?
+    
+    var format: MessageFormat {
+        get { MessageFormat(rawValue: formatRaw) ?? .plain }
+        set { formatRaw = newValue.rawValue }
+    }
 }
 
 final class ChatAttachmentLocal: EmbeddedObject {
@@ -47,7 +53,8 @@ extension ChatMessageLocal {
         self.id = m.id
         self.conversationId = m.conversationId
         self.roleRaw = m.role.rawValue
-        self.text = m.text
+        self.rawText = m.rawText
+        self.format = m.format
         self.createdAt = m.createdAt
         self.statusRaw = m.status.rawValue
         self.userId = m.userId

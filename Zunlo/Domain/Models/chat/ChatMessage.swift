@@ -17,24 +17,34 @@ public enum MessageStatus: String, Codable {
     case sending, streaming, sent, failed
 }
 
+public enum MessageFormat: String, Codable {
+    case plain       // render literally
+    case markdown    // parse as Markdown
+    case rich        // use provided AttributedString
+}
+
 public struct ChatMessage: Identifiable, Hashable, Codable {
     public let id: UUID
     public let conversationId: UUID
     public let role: ChatRole
-    public var text: String
+    public var rawText: String
+    public var richText: AttributedString?
     public let createdAt: Date
     public var status: MessageStatus
+    public var format: MessageFormat
     public var userId: UUID?
     public var attachments: [ChatAttachment]
     public var actions: [ChatMessageAction] = []
     public var parentId: UUID?
     public var errorDescription: String?
+}
 
+extension ChatMessage {
     public init(
         id: UUID = UUID(),
         conversationId: UUID,
         role: ChatRole,
-        text: String,
+        plain text: String,
         createdAt: Date = Date(),
         status: MessageStatus = .sent,
         userId: UUID? = nil,
@@ -46,13 +56,141 @@ public struct ChatMessage: Identifiable, Hashable, Codable {
         self.id = id
         self.conversationId = conversationId
         self.role = role
-        self.text = text
+        self.rawText = text
+        self.format = .plain
+        self.richText = nil
         self.createdAt = createdAt
         self.status = status
         self.userId = userId
         self.attachments = attachments
         self.parentId = parentId
         self.errorDescription = errorDescription
+    }
+    
+    public init(
+        id: UUID = UUID(),
+        conversationId: UUID,
+        role: ChatRole,
+        markdown md: String,
+        createdAt: Date = Date(),
+        status: MessageStatus = .sent,
+        userId: UUID? = nil,
+        attachments: [ChatAttachment] = [],
+        actions: [ChatMessageAction] = [],
+        parentId: UUID? = nil,
+        errorDescription: String? = nil
+    ) {
+        self.id = id
+        self.conversationId = conversationId
+        self.role = role
+        self.rawText = md
+        self.format = .markdown
+        self.richText = nil
+        self.createdAt = createdAt
+        self.status = status
+        self.userId = userId
+        self.attachments = attachments
+        self.parentId = parentId
+        self.errorDescription = errorDescription
+    }
+    
+    public init(
+        id: UUID = UUID(),
+        conversationId: UUID,
+        role: ChatRole,
+        attributed attr: AttributedString,
+        createdAt: Date = Date(),
+        status: MessageStatus = .sent,
+        userId: UUID? = nil,
+        attachments: [ChatAttachment] = [],
+        actions: [ChatMessageAction] = [],
+        parentId: UUID? = nil,
+        errorDescription: String? = nil
+    ) {
+        self.id = id
+        self.conversationId = conversationId
+        self.role = role
+        self.rawText = String(attr.characters) // fallback/for search
+        self.format = .rich
+        self.richText = attr
+        self.createdAt = createdAt
+        self.status = status
+        self.userId = userId
+        self.attachments = attachments
+        self.parentId = parentId
+        self.errorDescription = errorDescription
+    }
+    
+//    public static func plainText(_ text: String) {
+//    }
+//
+//    public static func appendAssistantMarkdown(_ md: String) {
+//        repo.ChatMessage(role: .assistant, markdown: md))
+//    }
+//
+//    public static func appendAssistantRich(_ attr: AttributedString) {
+//        repo.add(ChatMessage(role: .assistant, attributed: attr))
+//    }
+}
+
+extension ChatMessage {
+    /// What the UI should render.
+    var displayAttributed: AttributedString {
+        switch format {
+        case .plain:
+            return AttributedString(rawText) // verbatim (no markdown parsing)
+        case .markdown:
+            return (try? AttributedString(
+                markdown: rawText,
+                options: .init(allowsExtendedAttributes: true, interpretedSyntax: .full)
+            )) ?? AttributedString(rawText)
+        case .rich:
+            return richText ?? AttributedString(rawText)
+        }
+    }
+    
+    /// Read/write surface for the message text as `AttributedString`.
+    /// - get: mirrors `displayAttributed`
+    /// - set: updates underlying storage based on current `format`
+    var editableAttributed: AttributedString {
+        get { displayAttributed }
+        set {
+            switch format {
+            case .plain:
+                // Keep only characters; no styling stored
+                rawText = String(newValue.characters)
+                richText = nil
+
+            case .markdown:
+                // Source of truth is the markdown string.
+                // If a styled value is assigned here, we keep only its characters.
+                rawText = String(newValue.characters)
+                richText = nil
+
+            case .rich:
+                // Preserve full styling + keep a plain fallback for search/share
+                richText = newValue
+                rawText = String(newValue.characters)
+            }
+        }
+    }
+    
+    mutating func setPlain(_ text: String) {
+        format = .plain
+        rawText = text
+        richText = nil
+    }
+
+    mutating func setMarkdown(_ md: String) {
+        format = .markdown
+        rawText = md
+        richText = nil
+    }
+
+    mutating func setAttributed(_ attr: AttributedString) {
+        format = .rich
+        richText = attr
+        rawText = String(attr.characters) // fallback for search/share
     }
 }
 
@@ -109,7 +247,9 @@ extension ChatMessage {
         self.id = r.id
         self.conversationId = r.conversationId
         self.role = ChatRole(rawValue: r.roleRaw) ?? .assistant
-        self.text = r.text
+        self.rawText = r.rawText
+        self.format = r.format
+        self.richText = nil
         self.createdAt = r.createdAt
         self.status = MessageStatus(rawValue: r.statusRaw) ?? .sent
         self.userId = r.userId

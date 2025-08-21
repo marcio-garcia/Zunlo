@@ -18,7 +18,7 @@ final class LocalAgendaComputer: AgendaComputing {
 
     func computeAgenda(range: Range<Date>, timezone: TimeZone) async throws -> GetAgendaResult {
         let events = try await toolRepo.fetchOccurrences()
-        let occs = try EventOccurrenceService.generate(rawOccurrences: events, in: range)
+        let occs = try EventOccurrenceService.generate(rawOccurrences: events, in: range, addFakeToday: false)
         let tasks = try await toolRepo.fetchTasks(range: range)
 
         // 5) map → Agenda items; sort

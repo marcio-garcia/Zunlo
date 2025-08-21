@@ -354,7 +354,8 @@ public enum ToolCallOrigin: Codable, Equatable, Sendable {
 }
 
 public struct ToolCallRequest: Codable, Hashable, Sendable {
-    public let id: String          // tool_call_id from OpenAI
+    public let id: String     // item_id from OpenAI
+    public let callId: String // tool_call_id from OpenAI
     public let name: String
     public let argumentsJSON: String
     public let responseId: String  // OpenAI response.id so we know where to submit

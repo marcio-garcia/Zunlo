@@ -51,10 +51,10 @@ final public class AIToolService: AIToolServiceAPI {
     }
     
     @discardableResult
-    public func getAgenda(range: Range<Date>, timezone: TimeZone) async throws -> AgendaRenderParts {
+    public func getAgenda(args: GetAgendaArgs, calculatedRange: Range<Date>, timezone: TimeZone) async throws -> AgendaRenderParts {
         let agendaComputer = LocalAgendaComputer(toolRepo: toolRepo)
-        let result = try await agendaComputer.computeAgenda(range: range, timezone: timezone)
-        let formatted = AgendaRenderer.renderParts(result)
+        let result = try await agendaComputer.computeAgenda(range: calculatedRange, timezone: timezone)
+        let formatted = AgendaRenderer.renderParts(result, agendaRange: args.dateRange)
         return formatted
     }
     

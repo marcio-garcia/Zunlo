@@ -996,7 +996,7 @@ extension DatabaseActor {
             let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: message.id) ?? ChatMessageLocal()
             if obj.realm == nil { obj.id = message.id; realm.add(obj, update: .modified) }
             Self.apply(domain: message, to: obj, in: realm)
-            Self.touchConversation(for: message, withText: message.text, in: realm)
+            Self.touchConversation(for: message, withText: message.rawText, in: realm)
         }
     }
 
@@ -1007,19 +1007,19 @@ extension DatabaseActor {
             throw ChatDBError.messageNotFound(messageId)
         }
         try realm.write {
-            obj.text += delta
+            obj.rawText += delta
             obj.statusRaw = status.rawValue
             // Update convo preview with the growing text
             let stub = ChatMessage(
                 id: obj.id,
                 conversationId: obj.conversationId,
                 role: ChatRole(rawValue: obj.roleRaw) ?? .assistant,
-                text: obj.text,
+                plain: obj.rawText,
                 createdAt: obj.createdAt,
                 status: MessageStatus(rawValue: obj.statusRaw) ?? .streaming,
                 userId: obj.userId
             )
-            Self.touchConversation(for: stub, withText: obj.text, in: realm)
+            Self.touchConversation(for: stub, withText: obj.rawText, in: realm)
         }
     }
 
@@ -1073,9 +1073,10 @@ extension DatabaseActor {
         let local = ChatMessageLocal(from: domain)
         obj.conversationId = local.conversationId
         obj.roleRaw = local.roleRaw
-        obj.text = local.text
+        obj.rawText = local.rawText
         obj.createdAt = local.createdAt
         obj.statusRaw = local.statusRaw
+        obj.format = local.format
         obj.userId = local.userId
         obj.parentId = local.parentId
         obj.errorDescription = local.errorDescription

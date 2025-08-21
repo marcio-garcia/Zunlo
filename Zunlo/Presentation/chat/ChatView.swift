@@ -261,8 +261,14 @@ private struct MessageBubble: View {
 
     private var bubble: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(message.text)
-                .themedBody()
+            if message.format == .plain {
+                Text(message.displayAttributed)
+                    .themedBody()
+                    .textSelection(.enabled)
+            } else {
+                Text(message.displayAttributed)
+                    .textSelection(.enabled)
+            }
 
             if !message.actions.isEmpty {
                 HStack(spacing: 8) {
@@ -292,7 +298,7 @@ private struct MessageBubble: View {
                       : Color.theme.accent.opacity(0.10))
         )
         .contextMenu {
-            Button("Copy") { UIPasteboard.general.string = message.text }
+            Button("Copy") { UIPasteboard.general.string = message.rawText }
             if message.status == .failed {
                 Button("Retry") { Task { await viewModel.retry(messageId: message.id) } }
             }

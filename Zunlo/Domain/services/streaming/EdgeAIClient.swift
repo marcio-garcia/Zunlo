@@ -39,7 +39,7 @@ public final class EdgeAIClient: AIChatService {
         }
 
         let msgs: [Msg] = history.map { m in
-            Msg(role: m.role.rawValue, content: m.text)
+            Msg(role: m.role.rawValue, content: m.rawText)
         } + [ Msg(role: "user", content: "" /*userInput*/) ]
 
         let body = Body(model: "gpt-5-mini", input: msgs)

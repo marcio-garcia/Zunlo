@@ -100,8 +100,8 @@ public struct OpenAIResponsesAPIBuilder {
         for (idx, msg) in messages.enumerated() {
             var parts: [ContentPart] = []
 
-            if !msg.text.isEmpty {
-                parts.append(.inputText(msg.text))
+            if !msg.rawText.isEmpty {
+                parts.append(.inputText(msg.rawText))
             }
 
             // Only include attachments for the last message

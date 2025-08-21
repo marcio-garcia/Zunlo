@@ -123,22 +123,22 @@ extension CalendarScheduleViewModel {
     func checkTop(date: Date) {
         if !isCheckingEdge {
             isCheckingEdge = true
-            edgeExecutor.execute(id: "top-edge-check") {
-                self.itemDateToScrollTo = date
-                self.expandVisibleRange(toEarlier: true)
-                self.isCheckingEdge = false
-            }
+//            edgeExecutor.execute(id: "top-edge-check") {
+//                self.itemDateToScrollTo = date
+//                self.expandVisibleRange(toEarlier: true)
+//                self.isCheckingEdge = false
+//            }
         }
     }
     
     func checkBottom(date: Date) {
         if !isCheckingEdge {
             isCheckingEdge = true
-            edgeExecutor.execute(id: "bottom-edge-check") {
-                self.itemDateToScrollTo = date
-                self.expandVisibleRange(toEarlier: false)
-                self.isCheckingEdge = false
-            }
+//            edgeExecutor.execute(id: "bottom-edge-check") {
+//                self.itemDateToScrollTo = date
+//                self.expandVisibleRange(toEarlier: false)
+//                self.isCheckingEdge = false
+//            }
         }
     }
     

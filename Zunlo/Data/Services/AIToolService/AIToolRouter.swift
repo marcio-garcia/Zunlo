@@ -19,7 +19,7 @@ enum ToolRoutingError: LocalizedError {
 }
 
 public struct ChatInsert {
-    public let text: String
+    public let text: AttributedString
     public let attachments: [ChatAttachment]
     public let actions: [ChatMessageAction]
 }
@@ -179,13 +179,13 @@ final public class AIToolRouter {
             }
             let (range, tz) = resolveWindow(from: args!) // today/tomorrow/week/custom
             
-            let result = try await tools.getAgenda(range: range, timezone: tz)
+            let result = try await tools.getAgenda(args: args!, calculatedRange: range, timezone: tz)
             
             // Split output
             let attachment = ChatAttachment.json(schema: result.schema, json: result.json)
 
             let ui = ChatInsert(
-                text: result.text,
+                text: result.attributed,
                 attachments: [attachment],
                 actions: [
                     .copyText,

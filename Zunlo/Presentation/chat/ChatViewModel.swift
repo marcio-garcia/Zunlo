@@ -33,8 +33,6 @@ public final class ChatViewModel: ObservableObject {
     private let calendar = Calendar.current
     private let iso8601 = ISO8601DateFormatter()
 
-    private var pendingMessages: [ChatMessage] = []
-    
     public init(
         conversationId: UUID,
         userId: UUID? = nil,
@@ -81,7 +79,7 @@ public final class ChatViewModel: ObservableObject {
         let userMessage = ChatMessage(
             conversationId: conversationId,
             role: .user,
-            text: trimmed,
+            attributed: AttributedString(stringLiteral: trimmed),
             createdAt: Date(),
             status: .sent,
             userId: userId,
@@ -115,11 +113,12 @@ public final class ChatViewModel: ObservableObject {
                 switch event {
                 case .started(let id):
                     replyId = id
+                    print("[VM] ***** new id: \(id)")
                     let assistant = ChatMessage(
                         id: id,
                         conversationId: conversationId,
                         role: .assistant,
-                        text: "",
+                        plain: "",
                         createdAt: Date(),
                         status: .streaming
                     )
@@ -129,8 +128,9 @@ public final class ChatViewModel: ObservableObject {
 
                 case .delta(let id, let delta):
                     if let idx = messages.firstIndex(where: { $0.id == id }) {
-                        messages[idx].text += delta
+                        messages[idx].rawText += delta
                         messages[idx].status = .streaming
+                        print("[VM] delta: \(delta)")
                         try await chatRepo.appendDelta(messageId: id, delta: delta, status: .streaming)
                         rebuildSections()
                     }
@@ -150,13 +150,9 @@ public final class ChatViewModel: ObservableObject {
                 case .completed(let id):
                     if let idx = messages.firstIndex(where: { $0.id == id }) {
                         messages[idx].status = .sent
-                        print("***** message: \(messages[idx])")
+                        print("[VM] ***** id: \(id) message: \(messages[idx])")
                         rebuildSections()
                         try await chatRepo.setStatus(messageId: id, status: .sent, error: nil)
-                    }
-                    if !pendingMessages.isEmpty {
-                        let msg = pendingMessages.removeFirst()
-                        await streamMsg(message: msg)
                     }
                     isGenerating = false
                 case .responseCreated(let rid):
@@ -233,14 +229,14 @@ public final class ChatViewModel: ObservableObject {
                     inserts.append(chatInsert)
                 }
                 outputs.append(ToolOutput(
-                    tool_call_id: c.id,
+                    tool_call_id: c.callId,
                     output: result.note // keep it short; model sees this
                 ))
             } catch {
                 let fail = "• \(c.name) failed: \(error.localizedDescription)"
                 notes.append(fail)
                 outputs.append(ToolOutput(
-                    tool_call_id: c.id,
+                    tool_call_id: c.callId,
                     output: fail
                 ))
             }
@@ -255,9 +251,13 @@ public final class ChatViewModel: ObservableObject {
                 try await aiChatService.submitToolOutputs(responseId: responseId, outputs: outputs)
             } catch {
                 // Surface error to chat
-                let m = ChatMessage(conversationId: conversationId, role: .tool,
-                                    text: "⚠️ Submit tool outputs failed: \(error.localizedDescription)",
-                                    createdAt: Date(), status: .sent)
+                let m = ChatMessage(
+                    conversationId: conversationId,
+                    role: .tool,
+                    plain: "⚠️ Submit tool outputs failed: \(error.localizedDescription)",
+                    createdAt: Date(),
+                    status: .sent
+                )
                 
 //                rebuildSections()
 //                messages.append(m)
@@ -271,16 +271,14 @@ public final class ChatViewModel: ObservableObject {
             // Optional: show a compact tool summary bubble
             let summary = (["🔧 Ran \(calls.count) tool(s):"] + notes).joined(separator: "\n")
             let text = inserts.first?.text ?? ""
-            let m = ChatMessage(conversationId: conversationId, role: .tool, text: text, createdAt: Date(), status: .sent)
+            let m = ChatMessage(conversationId: conversationId, role: .tool, attributed: text, createdAt: Date(), status: .sent)
 //            messages.append(m)
+//            rebuildSections()
 //            try? await chatRepo.upsert(m)
-            if isGenerating {
-                print("[VM] still streaming - add to pending")
-                pendingMessages.append(m)
-            } else {
-                print("[VM] streaming done - send tool response")
-//                messages.append(m)
-                await streamMsg(message: m)
+            let debounce = DebouncedExecutor()
+            let actionID = UUID()
+            if !isGenerating {
+                await self.streamMsg(message: m)
             }
         }
         
@@ -320,13 +318,15 @@ extension ChatViewModel {
             {"name":"\(name)","arguments":\(argsJSON)}
             """.utf8))
             let result = try await toolRouter.dispatch(env)
-            let m = ChatMessage(conversationId: conversationId, role: .tool, text: result.note, createdAt: Date(), status: .sent)
+            let m = ChatMessage(conversationId: conversationId, role: .tool, plain: result.note, createdAt: Date(), status: .sent)
 //            messages.append(m)
 //            rebuildSections()
 //            try? await chatRepo.upsert(m)
         } catch {
-            let m = ChatMessage(conversationId: conversationId, role: .tool,
-                                text: "⚠️ Tool error: \(error.localizedDescription)", createdAt: Date(), status: .sent)
+            let m = ChatMessage(
+                conversationId: conversationId, role: .tool, plain: "⚠️ Tool error: \(error.localizedDescription)",
+                createdAt: Date(), status: .sent
+            )
 //            messages.append(m)
 //            rebuildSections()
 //            try? await chatRepo.upsert(m)
@@ -339,7 +339,7 @@ extension ChatViewModel {
     func handleBubbleAction(_ action: ChatMessageAction, message: ChatMessage) {
         switch action {
         case .copyText:
-            copyToClipboard(message.text)
+            copyToClipboard(message.rawText)
 
         case .copyAttachment(let attachmentId):
             guard let att = message.attachments.first(where: { $0.id == attachmentId }),
@@ -369,7 +369,7 @@ extension ChatViewModel {
     private func sendAttachmentToAI(schema: String?, mime: String, data: Data) async {
         // Append a local user bubble so UI feels responsive
         var m = ChatMessage(conversationId: conversationId, role: .user,
-                            text: String(localized: "Please analyze the attached data."),
+                            plain: String(localized: "Please analyze the attached data."),
                             createdAt: Date(), status: .sending)
         // Include the attachment so your aiChatService can pass it as a content part
         m.attachments = [
