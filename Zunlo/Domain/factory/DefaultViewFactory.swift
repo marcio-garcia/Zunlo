@@ -38,9 +38,9 @@ final class DefaultViewFactory: ViewFactory {
         Task { try? await appState.localDB!.ensureConversationExists(id: cid) }
 
         let aiChatService = SupabaseEdgeAIClient(supabase: appState.supabaseClient!)
-        let aiToolService = AIToolService(client: appState.supabaseClient!)
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
                                                  eventRepo: appState.eventRepository!)
+        let aiToolService = AIToolService(toolRepo: aiToolRepo, client: appState.supabaseClient!)
         let aiToolRouter = AIToolRouter(tools: aiToolService, repo: aiToolRepo)
         return ChatViewModel(
             conversationId: cid,

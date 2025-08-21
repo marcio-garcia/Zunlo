@@ -16,9 +16,10 @@ struct FnCallAccumulator {
     mutating func appendArgs(id: String, chunk: String) {
         calls[id]?.args.append(chunk)
     }
-    mutating func finishCall(id: String) -> (name: String, argsJSON: String)? {
-        guard let c = calls.removeValue(forKey: id) else { return nil }
+    mutating func finishCall(id: String, args: String) -> (name: String, argsJSON: String)? {
+        guard var c = calls.removeValue(forKey: id) else { return nil }
         // Some models stream raw JSON fragments; ensure it’s valid JSON string
+//        c.args += args
         let json = c.args.trimmingCharacters(in: .whitespacesAndNewlines)
         return (c.name, json.isEmpty ? "{}" : json)
     }

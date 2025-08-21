@@ -33,7 +33,7 @@ class CalendarScheduleViewModel: ObservableObject {
     var itemDateToScrollTo = Date()
     
     var eventFetcher: EventFetcher
-    var visibleRange: ClosedRange<Date> = Date()...Date()
+    var visibleRange: Range<Date> = Date()..<Date()
     var locationService: LocationService
     
     init(eventFetcher: EventFetcher,
@@ -59,7 +59,7 @@ class CalendarScheduleViewModel: ObservableObject {
         }
     }
     
-    func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
+    func handleOccurrences(_ occurrences: [EventOccurrence], in range: Range<Date>) {
         do {
             eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
             self.state = occurrences.isEmpty ? .empty : .loaded
@@ -68,11 +68,12 @@ class CalendarScheduleViewModel: ObservableObject {
         }
     }
     
-    private func defaultDateRange() -> ClosedRange<Date> {
+    private func defaultDateRange() -> Range<Date> {
         let cal = Calendar.appDefault
-        let start = cal.date(byAdding: .month, value: -12, to: Date())!
-        let end = cal.date(byAdding: .month, value: 12, to: Date())!
-        return start...end
+        let now = Date()
+        let start = cal.date(byAdding: .month, value: -12, to: now)!
+        let end = cal.date(byAdding: .month, value: 12, to: now)!
+        return start..<end
     }
     
     func groupOccurrencesByMonthAndDay() -> [Date: [Date: [EventOccurrence]]] {
@@ -146,10 +147,10 @@ extension CalendarScheduleViewModel {
         if toEarlier {
             let newStart = cal.date(byAdding: .month, value: -6, to: visibleRange.lowerBound)!
             itemDateToScrollTo = visibleRange.lowerBound
-            visibleRange = newStart...visibleRange.upperBound
+            visibleRange = newStart..<visibleRange.upperBound
         } else {
             let newEnd = cal.date(byAdding: .month, value: 6, to: visibleRange.upperBound)!
-            visibleRange = visibleRange.lowerBound...newEnd
+            visibleRange = visibleRange.lowerBound..<newEnd
         }
         handleOccurrences(allOccurrences, in: visibleRange)
     }

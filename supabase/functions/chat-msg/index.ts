@@ -76,7 +76,10 @@ if (Array.isArray(enriched.tools) && enriched.tools.length) {
     console.error("❌ input_schema.properties is empty");
   }
 }
-
+  console.log(
+    "Payload: ",
+    JSON.stringify(enriched, null, 2)
+  );
   // --- Proxy OpenAI Responses stream ---
   const oai = await postResponsesStream(enriched);
 

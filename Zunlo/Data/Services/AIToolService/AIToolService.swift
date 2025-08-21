@@ -11,8 +11,12 @@ import Supabase
 /// Single responsibility: call /functions/v1/tools/* endpoints with typed payloads.
 final public class AIToolService: AIToolServiceAPI {
     private let client: SupabaseClient
+    private let toolRepo: DomainRepositories
     
-    public init(client: SupabaseClient) { self.client = client }
+    init(toolRepo: DomainRepositories, client: SupabaseClient) {
+        self.client = client
+        self.toolRepo = toolRepo
+    }
 
     // MARK: - Tasks
     @discardableResult
@@ -44,6 +48,33 @@ final public class AIToolService: AIToolServiceAPI {
     @discardableResult
     public func deleteEvent(_ payload: DeleteEventPayloadWire) async throws -> EventMutationResult {
         return try await invoke(payload, functionName: "tools/deleteEvent")
+    }
+    
+    @discardableResult
+    public func getAgenda(range: Range<Date>, timezone: TimeZone) async throws -> AgendaRenderParts {
+        let agendaComputer = LocalAgendaComputer(toolRepo: toolRepo)
+        let result = try await agendaComputer.computeAgenda(range: range, timezone: timezone)
+        let formatted = AgendaRenderer.renderParts(result)
+        return formatted
+    }
+    
+    @discardableResult
+    public func planWeek(
+        start: Date,
+        horizonDays: Int,
+        timezone: TimeZone,
+        objectives: [String],
+        constraints: Constraints?
+    ) async throws -> ProposedPlan {
+        let agendaComputer = LocalAgendaComputer(toolRepo: toolRepo)
+        let weekPlanner = LocalWeekPlanner(agenda: agendaComputer, toolRepo: toolRepo)
+        return try await weekPlanner.proposePlan(
+            start: start,
+            horizonDays: horizonDays,
+            timezone: .current,
+            objectives: objectives,
+            constraints: constraints
+        )
     }
     
     private func invoke<T: Encodable, R: Decodable>(_ payload: T, functionName: String) async throws -> R {

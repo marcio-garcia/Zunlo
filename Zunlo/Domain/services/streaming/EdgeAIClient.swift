@@ -26,8 +26,7 @@ public final class EdgeAIClient: AIChatService {
     public func generate(
         conversationId: UUID,
         history: [ChatMessage],
-        userInput: String,
-        attachments: [ChatAttachment],
+        output: [ToolOutput],
         supportsTools: Bool
     ) -> AsyncThrowingStream<AIEvent, Error> {
 
@@ -41,7 +40,7 @@ public final class EdgeAIClient: AIChatService {
 
         let msgs: [Msg] = history.map { m in
             Msg(role: m.role.rawValue, content: m.text)
-        } + [ Msg(role: "user", content: userInput) ]
+        } + [ Msg(role: "user", content: "" /*userInput*/) ]
 
         let body = Body(model: "gpt-5-mini", input: msgs)
 

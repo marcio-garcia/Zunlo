@@ -18,24 +18,40 @@ enum ToolRoutingError: LocalizedError {
     }
 }
 
+public struct ChatInsert {
+    public let text: String
+    public let attachments: [ChatAttachment]
+    public let actions: [ChatMessageAction]
+}
+
+public struct ToolDispatchResult {
+    public let note: String            // short note that the model sees
+    public let ui: ChatInsert?         // optional chat bubble to insert
+    
+    public init(note: String, ui: ChatInsert? = nil) {
+        self.note = note
+        self.ui = ui
+    }
+}
+
 /// Single responsibility: map a ToolEnvelope to the right ToolService call,
 /// inject `version`/ids, and apply server snapshots to local stores.
 final public class AIToolRouter {
     private let tools: AIToolService
     private let repo: DomainRepositories
     private let reason = "from tool call"
-
-    public init(tools: AIToolService, repo: DomainRepositories) {
+    
+    init(tools: AIToolService, repo: DomainRepositories) {
         self.tools = tools
         self.repo = repo
     }
 
     /// Dispatch one tool call. Returns a short user-facing note for the chat.
-    func dispatch(_ env: AIToolEnvelope) async throws -> String {
+    func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult {
         switch env.name {
 
         case "createTask": do {
-            let args = try JSONDecoder.decoder().decode(CreateTaskArgs.self, from: Data(env.arguments.rawJSON.utf8))
+            let args = try JSONDecoder.decoder().decode(CreateTaskArgs.self, from: Data(env.argsJSON.utf8))
             let p = CreateTaskPayloadWire(
                 idempotencyKey: UUID().uuidString,
                 reason: reason,
@@ -43,11 +59,11 @@ final public class AIToolRouter {
             )
             let res = try await tools.createTask(p)
             if let t = res.task { try await repo.apply(task: t) }
-            return "✅ Task created"
+            return ToolDispatchResult(note: "✅ Task created")
         }
 
         case "updateTask": do {
-            let args = try JSONDecoder.decoder().decode(UpdateTaskArgs.self, from: Data(env.arguments.rawJSON.utf8))
+            let args = try JSONDecoder.decoder().decode(UpdateTaskArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForTask(id: args.taskId) else {
                 throw ToolRoutingError.missingVersion(entity: "task", id: args.taskId)
             }
@@ -60,11 +76,11 @@ final public class AIToolRouter {
             )
             let res = try await tools.updateTask(p)
             if let t = res.task { try await repo.apply(task: t) }
-            return "✅ Task updated"
+            return ToolDispatchResult(note: "✅ Task updated")
         }
 
         case "deleteTask": do {
-            let args = try JSONDecoder.decoder().decode(DeleteTaskArgs.self, from: Data(env.arguments.rawJSON.utf8))
+            let args = try JSONDecoder.decoder().decode(DeleteTaskArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForTask(id: args.taskId) else {
                 throw ToolRoutingError.missingVersion(entity: "task", id: args.taskId)
             }
@@ -76,11 +92,11 @@ final public class AIToolRouter {
             )
             let res = try await tools.deleteTask(p)
             if let t = res.task { try await repo.apply(task: t) }
-            return "🗑️ Task deleted"
+            return ToolDispatchResult(note: "🗑️ Task deleted")
         }
 
         case "createEvent": do {
-            let args = try JSONDecoder.decoder().decode(CreateEventArgs.self, from: Data(env.arguments.rawJSON.utf8))
+            let args = try JSONDecoder.decoder().decode(CreateEventArgs.self, from: Data(env.argsJSON.utf8))
             let p = CreateEventPayloadWire(
                 idempotencyKey: UUID().uuidString,
                 reason: reason,
@@ -89,11 +105,11 @@ final public class AIToolRouter {
             let res = try await tools.createEvent(p)
             if let e = res.event { try await repo.apply(event: e) }
             if let r = res.recurrenceRule { try await repo.apply(recurrence: r) }
-            return "📅 Event created"
+            return ToolDispatchResult(note: "📅 Event created")
         }
 
         case "updateEvent": do {
-            let args = try JSONDecoder.decoder().decode(UpdateEventArgs.self, from: Data(env.arguments.rawJSON.utf8))
+            let args = try JSONDecoder.decoder().decode(UpdateEventArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForEvent(id: args.eventId) else {
                 throw ToolRoutingError.missingVersion(entity: "event", id: args.eventId)
             }
@@ -115,15 +131,15 @@ final public class AIToolRouter {
             if let o = res.override { try await repo.apply(override: o) }
             
             switch args.editScope {
-            case .single: return "✏️ Event updated"
-            case .override: return "✏️ Occurrence updated"
-            case .this_and_future: return "✂️ Series split & updated"
-            case .entire_series: return "✏️ Series updated"
+            case .single: return ToolDispatchResult(note: "✏️ Event updated")
+            case .override: return ToolDispatchResult(note: "✏️ Occurrence updated")
+            case .this_and_future: return ToolDispatchResult(note: "✂️ Series split & updated")
+            case .entire_series: return ToolDispatchResult(note: "✏️ Series updated")
             }
         }
 
         case "deleteEvent": do {
-            let args = try JSONDecoder.decoder().decode(DeleteEventArgs.self, from: Data(env.arguments.rawJSON.utf8))
+            let args = try JSONDecoder.decoder().decode(DeleteEventArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForEvent(id: args.eventId) else {
                 throw ToolRoutingError.missingVersion(entity: "event", id: args.eventId)
             }
@@ -143,21 +159,164 @@ final public class AIToolRouter {
             if let o = res.override { try await repo.apply(override: o) }
             
             switch args.editScope {
-            case .single: return "🗑️ Event deleted"
-            case .override: return "🚫 Occurrence cancelled"
-            case .this_and_future: return "✂️ Future series deleted"
-            case .entire_series: return "🗑️ Series deleted"
+            case .single: return ToolDispatchResult(note: "🗑️ Event deleted")
+            case .override: return ToolDispatchResult(note: "🚫 Occurrence cancelled")
+            case .this_and_future: return ToolDispatchResult(note: "✂️ Future series deleted")
+            case .entire_series: return ToolDispatchResult(note: "🗑️ Series deleted")
             }
         }
 
         case "getAgenda":
-            return "📋 Pulled agenda."
+            // {"dateRange":"tomorrow","start":"2025-08-21T00:00:00-03:00","end":"2025-08-22T00:00:00-03:00"}
+            
+            var args: GetAgendaArgs?
+            do {
+                args = try JSONDecoder.makeDecoder().decode(GetAgendaArgs.self, from: Data(env.argsJSON.utf8))
+            } catch let error as DecodingError {
+                let err = formatDecodingError(error)
+                print("ERROR: \(err)")
+                args = GetAgendaArgs(dateRange: .today, start: nil, end: nil)
+            }
+            let (range, tz) = resolveWindow(from: args!) // today/tomorrow/week/custom
+            
+            let result = try await tools.getAgenda(range: range, timezone: tz)
+            
+            // Split output
+            let attachment = ChatAttachment.json(schema: result.schema, json: result.json)
+
+            let ui = ChatInsert(
+                text: result.text,
+                attachments: [attachment],
+                actions: [
+                    .copyText,
+                    .copyAttachment(attachment.id),
+                    .sendAttachmentToAI(attachment.id)
+                ]
+            )
+            return ToolDispatchResult(note: "📋 Agenda ready", ui: ui)
 
         case "planWeek":
-            return "🧭 Proposed plan ready."
+            var args = try? JSONDecoder.decoder().decode(PlanWeekArgs.self, from: Data(env.argsJSON.utf8))
+            if args == nil {
+                args = PlanWeekArgs(startDate: Date(), objectives: [], constraints: nil, horizon: "7")
+            }
+            let start = args!.startDate.startOfDay
+            let horizonDays = (args!.horizon == "day") ? 1 : 7
+//            let agendaComputer = LocalAgendaComputer(toolRepo: repo)
+//            let weekPlanner = LocalWeekPlanner(agenda: agendaComputer, toolRepo: repo)
+//            let res = try await weekPlanner.proposePlan(
+//                start: start,
+//                horizonDays: horizonDays,
+//                timezone: .current,
+//                objectives: args!.objectives ?? [],
+//                constraints: nil
+//            )
+            
+            let res = try await tools.planWeek(start: start, horizonDays: horizonDays, timezone: .current, objectives: [], constraints: nil)
+            let json = try JSONEncoder.encoder().encode(res)
+            let out = String(data: json, encoding: .utf8) ?? "{}"
+            return ToolDispatchResult(note: out)
+//            if c.origin == .requiredAction, let rid = c.responseId {
+//                try? await aiChatService.submitToolOutputs(responseId: rid, outputs: [.init(tool_call_id: c.id, output: out)])
+//            } else {
+//                appendToolBubble("🧭 Proposed \(res.blocks.count) blocks")
+//            }
+//            return "🧭 Proposed plan ready."
 
         default:
-            return "ℹ️ Unrecognized tool: \(env.name)"
+            return ToolDispatchResult(note: "ℹ️ Unrecognized tool: \(env.name)")
         }
+    }
+}
+
+extension AIToolRouter {
+    /// Convert tool args into a concrete [start, end) window in a timezone.
+    @inlinable
+    func resolveWindow(from args: GetAgendaArgs,
+                       calendar calIn: Calendar = .autoupdatingCurrent,
+                       timeZone tz: TimeZone = .current,
+                       weekMode: WeekMode = .rolling7) -> (range: Range<Date>, timezone: TimeZone)
+    {
+        var cal = calIn
+        cal.timeZone = tz
+
+        let now = Date()
+        let startOfToday = cal.startOfDay(for: now)
+
+        let oneDay: TimeInterval = 24 * 60 * 60
+
+        switch args.dateRange {
+        case .today:
+            let start = startOfToday
+            let end = cal.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(oneDay)
+            return (range: start..<end, tz)
+
+        case .tomorrow:
+            let start = cal.date(byAdding: .day, value: 1, to: startOfToday) ?? startOfToday.addingTimeInterval(oneDay)
+            let end = cal.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(oneDay)
+            return (range: start..<end, tz)
+
+        case .week:
+            switch weekMode {
+            case .rolling7:
+                // [today 00:00, today+7d 00:00)
+                let start = startOfToday
+                let end = cal.date(byAdding: .day, value: 7, to: start) ?? start.addingTimeInterval(7 * oneDay)
+                return (range: start..<end, tz)
+
+            case .calendarWeek:
+                // Current calendar week (Mon–Sun or locale’s setting) as [weekStart, nextWeekStart)
+                let weekStart = cal.dateInterval(of: .weekOfYear, for: now)?.start ?? startOfToday
+                let next = cal.date(byAdding: .weekOfYear, value: 1, to: weekStart) ?? weekStart.addingTimeInterval(7 * oneDay)
+                return (range: weekStart..<next, tz)
+            }
+
+        case .custom:
+            // Use provided start/end; if missing/invalid, fall back to today.
+            guard let s = args.start, let e = args.end, e > s else {
+                let start = startOfToday
+                let end = cal.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(oneDay)
+                return (range: start..<end, tz)
+            }
+            // Normalize to timezone boundary if you want, otherwise just return as-is:
+            return (range: s..<e, tz)
+        }
+    }
+
+    /// Choose how "week" is interpreted.
+    public enum WeekMode { case rolling7, calendarWeek }
+
+    
+    @inlinable
+    func resolveHorizon(from args: PlanWeekArgs,
+                        calendar calIn: Calendar = .autoupdatingCurrent,
+                        timeZone tz: TimeZone = .current) -> (interval: DateInterval, timezone: TimeZone)
+    {
+        var cal = calIn
+        cal.timeZone = tz
+
+        // Start at local start-of-day for the provided date
+        let start = cal.startOfDay(for: args.startDate)
+
+        let days = (args.horizon?.lowercased() == "day") ? 1 : 7
+        let end = cal.date(byAdding: .day, value: days, to: start) ?? start.addingTimeInterval(TimeInterval(days) * 24 * 60 * 60)
+
+        return (DateInterval(start: start, end: end), tz)
+    }
+
+}
+
+private func formatDecodingError(_ error: DecodingError) -> String {
+    switch error {
+    case .typeMismatch(let type, let context):
+        return "Decoding error: type mismatch for \(type) at \(context.codingPath) – \(context.debugDescription)"
+    case .valueNotFound(let type, let context):
+        return "Decoding error: value not found for \(type) at \(context.codingPath) – \(context.debugDescription)"
+    case .keyNotFound(let key, let context):
+        return "Decoding error: key '\(key.stringValue)' not found – \(context.debugDescription)"
+    case .dataCorrupted(let context):
+        return "Decoding error: data corrupted – \(context.debugDescription)"
+    @unknown default:
+        return "Unknown decoding error"
     }
 }

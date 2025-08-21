@@ -57,9 +57,11 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
                     return due <= today && !$0.isCompleted
                 }
                 
+                let isEmpty = filtered.isEmpty
+                self?.todayTasks = filtered
+                
                 DispatchQueue.main.async {
-                    self?.todayTasks = filtered
-                    self?.state = filtered.isEmpty ? .empty : .loaded
+                    self?.state = isEmpty ? .empty : .loaded
                 }
 
             }
@@ -68,8 +70,8 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         eventRepo.lastEventAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
             if case .fetch(let occ) = action {
                 let today = Date().startOfDay
-                guard let tomorrow = Calendar.appDefault.date(byAdding: .day, value: 1, to: today) else { return }
-                self?.handleOccurrences(occ, in: today...tomorrow)
+                let tomorrow = today.startOfNextDay()
+                self?.handleOccurrences(occ, in: today..<tomorrow)
             }
         }
     }
@@ -87,7 +89,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         }
     }
     
-    func handleOccurrences(_ occurrences: [EventOccurrence], in range: ClosedRange<Date>) {
+    func handleOccurrences(_ occurrences: [EventOccurrence], in range: Range<Date>) {
         do {
             let today = Calendar.appDefault.startOfDay(for: Date())
             

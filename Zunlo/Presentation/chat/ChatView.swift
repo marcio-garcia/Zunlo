@@ -67,7 +67,9 @@ struct ChatView: View {
 
                         ForEach(section.items) { msg in
                             VStack(alignment: msg.role == .user ? .trailing : .leading, spacing: 4) {
-                                MessageBubble(message: msg)
+                                MessageBubble(message: msg) { action, message in
+                                    viewModel.handleBubbleAction(action, message: message)
+                                }
                                 Text(timeString(for: msg.createdAt))
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
@@ -193,6 +195,8 @@ struct ChatView: View {
 
 private struct MessageBubble: View {
     let message: ChatMessage
+    let onAction: (ChatMessageAction, ChatMessage) -> Void   // NEW
+
     var body: some View {
         HStack {
             if message.role == .assistant || message.role == .tool {
@@ -204,11 +208,26 @@ private struct MessageBubble: View {
             }
         }
     }
+
     private var bubble: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(message.text)
-                .font(.body)
-                .foregroundStyle(.primary)
+                .themedBody()
+
+            if !message.actions.isEmpty {
+                HStack(spacing: 8) {
+                    ForEach(message.actions) { action in
+                        Button(action.title) {
+                            onAction(action, message)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .clipShape(Capsule())
+                    }
+                }
+                .padding(.top, 2)
+            }
+
             if message.status == .failed, let err = message.errorDescription {
                 Text(err).font(.caption2).foregroundStyle(.red)
             } else if message.status == .streaming {
@@ -219,11 +238,12 @@ private struct MessageBubble: View {
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(message.role == .user
-                      ? Color.accentColor.opacity(0.22)
-                      : Color.accentColor.opacity(0.10))
+                      ? Color.theme.accent.opacity(0.22)
+                      : Color.theme.accent.opacity(0.10))
         )
     }
 }
+
 
 private struct TypingIndicator: View {
     var body: some View {

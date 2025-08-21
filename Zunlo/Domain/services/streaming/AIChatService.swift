@@ -23,10 +23,9 @@ public protocol AIChatService {
     func generate(
         conversationId: UUID,
         history: [ChatMessage],
-        userInput: String,
-        attachments: [ChatAttachment],
+        output: [ToolOutput],
         supportsTools: Bool
-    ) -> AsyncThrowingStream<AIEvent, Error>
+    ) throws -> AsyncThrowingStream<AIEvent, Error>
 
     func cancelCurrentGeneration()
     func submitToolOutputs(responseId: String, outputs: [ToolOutput]) async throws

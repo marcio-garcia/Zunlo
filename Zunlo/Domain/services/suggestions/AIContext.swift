@@ -20,6 +20,10 @@ public struct TimeWindow: Equatable, Sendable {
     }
     
     func contains(_ date: Date) -> Bool { (start..<end).contains(date) }
+    
+    func dateInterval() -> DateInterval {
+        return DateInterval(start: start, end: end)
+    }
 }
 
 /// High-level day period used for copy & heuristics.

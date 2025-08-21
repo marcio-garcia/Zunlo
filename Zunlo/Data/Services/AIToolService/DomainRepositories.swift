@@ -8,11 +8,14 @@
 import Foundation
 
 /// Your domain façade (implement with your repositories / DatabaseActor)
-public protocol DomainRepositories {
+protocol DomainRepositories: Sendable {
     func versionForTask(id: UUID) async -> Int?
     func versionForEvent(id: UUID) async -> Int?
     func apply(task: UserTaskRemote) async throws
     func apply(event: EventRemote) async throws
     func apply(recurrence: RecurrenceRuleRemote) async throws
     func apply(override: EventOverrideRemote) async throws
+    func fetchEvents(start: Date, end: Date) async throws -> [Event]
+    func fetchOccurrences() async throws -> [EventOccurrence]
+    func fetchTasks(range: Range<Date>) async throws -> [UserTask]
 }

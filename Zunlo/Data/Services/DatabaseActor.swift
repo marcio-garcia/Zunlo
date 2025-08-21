@@ -575,7 +575,7 @@ extension DatabaseActor {
         realm.beginWrite()
         do {
             // 1) Insert new event, mark dirty
-            var newLocal = newEvent
+            let newLocal = newEvent
             newLocal.deletedAt = nil
             newLocal.needsSync = true
             realm.add(newLocal, update: .modified)
@@ -982,9 +982,9 @@ extension DatabaseActor {
             .sorted(byKeyPath: "createdAt", ascending: true)
         if let limit, limit > 0, results.count > limit {
             let slice = results.suffix(limit)
-            return slice.map(Self.toDomain)
+            return slice.map { ChatMessage(from: $0) }
         } else {
-            return results.map(Self.toDomain)
+            return results.map { ChatMessage(from: $0) }
         }
     }
 
@@ -1051,43 +1051,19 @@ extension DatabaseActor {
 // MARK: - Private helpers
 
 extension DatabaseActor {
-    private static func toDomain(_ obj: ChatMessageLocal) -> ChatMessage {
-        let role = ChatRole(rawValue: obj.roleRaw) ?? .assistant
-        let status = MessageStatus(rawValue: obj.statusRaw) ?? .sent
-        let attachments: [ChatAttachment] = obj.attachments.map {
-            let kind = ChatAttachment.Kind(rawValue: $0.kindRaw) ?? .task
-            return ChatAttachment(kind: kind, id: $0.id)
-        }
-        return ChatMessage(
-            id: obj.id,
-            conversationId: obj.conversationId,
-            role: role,
-            text: obj.text,
-            createdAt: obj.createdAt,
-            status: status,
-            userId: obj.userId,
-            attachments: attachments,
-            parentId: obj.parentId,
-            errorDescription: obj.errorDescription
-        )
-    }
-
     private static func apply(domain: ChatMessage, to obj: ChatMessageLocal, in realm: Realm) {
-        obj.conversationId = domain.conversationId
-        obj.roleRaw = domain.role.rawValue
-        obj.text = domain.text
-        obj.createdAt = domain.createdAt
-        obj.statusRaw = domain.status.rawValue
-        obj.userId = domain.userId
-        obj.parentId = domain.parentId
-        obj.errorDescription = domain.errorDescription
+        let local = ChatMessageLocal(from: domain)
+        obj.conversationId = local.conversationId
+        obj.roleRaw = local.roleRaw
+        obj.text = local.text
+        obj.createdAt = local.createdAt
+        obj.statusRaw = local.statusRaw
+        obj.userId = local.userId
+        obj.parentId = local.parentId
+        obj.errorDescription = local.errorDescription
         obj.attachments.removeAll()
-        for a in domain.attachments {
-            let emb = ChatAttachmentEmbedded()
-            emb.kindRaw = a.kind.rawValue
-            emb.id = a.id
-            obj.attachments.append(emb)
-        }
+        obj.attachments = local.attachments
+        obj.actions = local.actions
     }
 
     /// Update conversation `updatedAt`, `lastMessageAt`, and `lastMessagePreview`.

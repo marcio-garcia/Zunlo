@@ -12,43 +12,46 @@ public final class AIWelcomeCardViewModel: ObservableObject {
     @Published public private(set) var suggestions: [AISuggestion] = []
     @Published public private(set) var isLoading = false
 
-    private let time: TimeProvider
-    private let policyProvider: SuggestionPolicyProvider
-    private let tasksEngine: TaskSuggestionEngine
-    private let eventsEngine: EventSuggestionEngine
+//    private let time: TimeProvider
+//    private let policyProvider: SuggestionPolicyProvider
+//    private let tasksEngine: TaskSuggestionEngine
+//    private let eventsEngine: EventSuggestionEngine
     private let aiToolRunner: AIToolRunner
-    private let weather: WeatherProvider?
+//    private let weather: WeatherProvider?
+    private let context: AIContext
 
-    init(
-        time: TimeProvider,
-        policyProvider: SuggestionPolicyProvider,
-        tasksEngine: TaskSuggestionEngine,
-        eventsEngine: EventSuggestionEngine,
-        aiToolRunner: AIToolRunner,
-        weather: WeatherProvider?
+    init(context: AIContext,
+//        time: TimeProvider,
+//        policyProvider: SuggestionPolicyProvider,
+//        tasksEngine: TaskSuggestionEngine,
+//        eventsEngine: EventSuggestionEngine,
+        aiToolRunner: AIToolRunner
+//        weather: WeatherProvider?
     ) {
-        self.time = time
-        self.policyProvider = policyProvider
-        self.tasksEngine = tasksEngine
-        self.eventsEngine = eventsEngine
+//        self.time = time
+//        self.policyProvider = policyProvider
+//        self.tasksEngine = tasksEngine
+//        self.eventsEngine = eventsEngine
         self.aiToolRunner = aiToolRunner
-        self.weather = weather
+//        self.weather = weather
+        self.context = context
     }
 
     public func load() {
         isLoading = true
         Task {
             // Build context (you already have the builder)
-            let ctx = await AIContextBuilder.build(
-                time: SystemTimeProvider(),
-                policyProcider: policyProvider,
-                tasks: tasksEngine,
-                events: eventsEngine,
-                weather: weather
-            )
+//            let ctx = await AIContextBuilder().build(
+//                time: SystemTimeProvider(),
+//                policyProvider: policyProvider,
+//                tasks: tasksEngine,
+//                events: eventsEngine,
+//                weather: weather,
+//                on: Date()
+//            )
             
             let engine = makeDefaultSuggestionEngine(tools: aiToolRunner)
-            let ranked = engine.run(context: ctx)
+            let ranked = engine.run(context: context)
             self.suggestions = ranked
             self.isLoading = false
             // Telemetry: view impression can be sent here with top suggestion key

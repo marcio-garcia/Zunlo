@@ -14,6 +14,8 @@
  * - Your format: [{ timeBeforeDue: seconds, message?: string }]
  */
 
+// schemas.ts
+
 export type ISODate = string;      // "YYYY-MM-DD"
 export type ISODateTime = string;  // e.g., "2025-08-18T08:00:00-03:00"
 
@@ -214,9 +216,11 @@ export const reminderTriggerSchema = {
   $id: 'ReminderTrigger',
   type: 'object',
   additionalProperties: false,
-  required: ['timeBeforeDue'],
+  // STRICT: include *every* key in properties
+  required: ['timeBeforeDue', 'message'],
   properties: {
     timeBeforeDue: { type: 'integer', minimum: 0 },
+    // required + nullable => caller must include the key, value may be null
     message: { anyOf: [{ type: 'string', maxLength: 200 }, { type: 'null' }] }
   }
 } as const;
@@ -225,7 +229,7 @@ export const recurrenceRuleSchema = {
   $id: 'RecurrenceRuleBody',
   type: 'object',
   additionalProperties: false,
-  required: ['freq'],
+  required: ['freq','interval','byWeekday','byMonthday','byMonth','until','count'],
   properties: {
     freq: { enum: ['daily', 'weekly', 'monthly', 'yearly'] },
     interval: { type: 'integer', minimum: 1, default: 1 },
@@ -250,7 +254,7 @@ export const eventBodySchema = {
   $id: 'EventBody',
   type: 'object',
   additionalProperties: false,
-  required: ['title', 'start_datetime'],
+  required: ['title', 'start_datetime','end_datetime','notes','location','color','reminder_triggers','recurrence_rule'],
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 200 },
     start_datetime: isoDateTime,
@@ -268,6 +272,7 @@ export const eventPatchSchema = {
   $id: 'EventPatch',
   type: 'object',
   additionalProperties: false,
+  required: ['title', 'start_datetime','end_datetime','notes','location','color','reminder_triggers','recurrence_rule'],
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 200 },
     start_datetime: isoDateTime,
@@ -284,7 +289,7 @@ export const taskBodySchema = {
   $id: 'TaskBody',
   type: 'object',
   additionalProperties: false,
-  required: ['title'],
+  required: ['title', 'notes','dueDate','isCompleted','tags','reminderTriggers','parentEventId','priority'],
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 200 },
     notes: { anyOf: [{ type: 'string', maxLength: 2000 }, { type: 'null' }] },
@@ -302,6 +307,7 @@ export const taskPatchSchema = {
   $id: 'TaskPatch',
   type: 'object',
   additionalProperties: false,
+  required: ['title', 'notes','dueDate','isCompleted','tags','reminderTriggers','parentEventId','priority'],
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 200 },
     notes: { anyOf: [{ type: 'string', maxLength: 2000 }, { type: 'null' }] },
@@ -318,7 +324,7 @@ export const baseMutationSchema = {
   $id: 'BaseMutation',
   type: 'object',
   additionalProperties: false,
-  required: ['intent', 'idempotencyKey', 'reason'],
+  required: ['intent', 'idempotencyKey', 'reason', 'dryRun'],
   properties: {
     intent: { enum: ['create', 'update', 'delete'] },
     idempotencyKey: { type: 'string', minLength: 8, maxLength: 100 },
@@ -393,7 +399,7 @@ export const updateEventSchema = {
     {
       type: 'object',
       additionalProperties: false,
-      required: ['eventId', 'version', 'editScope', 'patch'],
+      required: ['eventId', 'version', 'editScope', 'occurrenceDate', 'patch'],
       properties: {
         eventId: { type: 'string', minLength: 1 },        // consider: format: 'uuid'
         version: { type: 'integer', minimum: 0 },
@@ -435,7 +441,7 @@ export const deleteEventSchema = {
     {
       type: 'object',
       additionalProperties: false,
-      required: ['eventId', 'version', 'editScope'],
+      required: ['eventId', 'version', 'editScope', 'occurrenceDate'],
       properties: {
         eventId: { type: 'string', minLength: 1 },       // consider: format: 'uuid'
         version: { type: 'integer', minimum: 0 },
@@ -473,7 +479,7 @@ export const getAgendaSchema = {
   $id: 'GetAgendaInput',
   type: 'object',
   additionalProperties: false,
-  required: ['dateRange'],
+  required: ['dateRange', 'start', 'end'],
   properties: {
     dateRange: { enum: ['today','tomorrow','week','custom'] },
     start: isoDateTime,
@@ -491,7 +497,7 @@ export const planWeekInputSchema = {
   $id: 'PlanWeekInput',
   type: 'object',
   additionalProperties: false,
-  required: ['startDate'],
+  required: ['startDate', 'objectives', 'constraints', 'horizon'],
   properties: {
     startDate: isoDate,
     objectives: { type: 'array', items: { type: 'string' }, maxItems: 20 },
@@ -504,7 +510,7 @@ export const proposedChangeSchema = {
   $id: 'ProposedChange',
   type: 'object',
   additionalProperties: false,
-  required: ['entity','action','summary'],
+  required: ['entity','action','summary', 'targetId', 'editScope', 'occurrenceDate', 'patch'],
   properties: {
     entity: { enum: ['event','task'] },
     action: { enum: ['create','update','delete'] },
@@ -554,4 +560,3 @@ export const schemaRegistry = {
   ProposedChange: proposedChangeSchema,
   ProposedPlan: proposedPlanSchema
 } as const;
-

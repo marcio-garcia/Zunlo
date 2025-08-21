@@ -138,9 +138,9 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
         let events = (try? await eventFetcher.fetchOccurrences(for: nil)) ?? []
         
         let today = Date().startOfDay
-        guard let tomorrow = Calendar.appDefault.date(byAdding: .day, value: 1, to: today) else { return [] }
+        let tomorrow = today.startOfNextDay()
         
-        let occurrences = (try? EventOccurrenceService.generate(rawOccurrences: events, in: today...tomorrow)) ?? []
+        let occurrences = (try? EventOccurrenceService.generate(rawOccurrences: events, in: today..<tomorrow)) ?? []
 
         // Bound for open-ended events just to avoid huge spans; UTC calendar recommended.
         let utcDayEnd = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date))!

@@ -24,7 +24,7 @@ final class RecurrenceHelperTests: XCTestCase {
                                   interval: 1, byWeekday: nil, byMonthday: nil, byMonth: nil,
                                   until: nil, count: 3,
                                   createdAt: Date(), updatedAt: Date())
-        let range = date(2024, 7, 1)...date(2024, 7, 5)
+        let range = date(2024, 7, 1)..<date(2024, 7, 5)
         let result = RecurrenceHelper.generateRecurrenceDates(start: start, rule: rule, within: range)
         XCTAssertEqual(result, [date(2024,7,1), date(2024,7,2), date(2024,7,3)])
     }
@@ -36,7 +36,7 @@ final class RecurrenceHelperTests: XCTestCase {
                                   byMonthday: nil, byMonth: nil,
                                   until: nil, count: 4,
                                   createdAt: Date(), updatedAt: Date())
-        let range = date(2024, 7, 1)...date(2024, 7, 14)
+        let range = date(2024, 7, 1)..<date(2024, 7, 14)
         let result = RecurrenceHelper.generateRecurrenceDates(start: start, rule: rule, within: range)
         // July 1 (Mon), July 3 (Wed), July 8 (Mon), July 10 (Wed)
         XCTAssertEqual(result, [date(2024,7,1), date(2024,7,3), date(2024,7,8), date(2024,7,10)])
@@ -49,10 +49,10 @@ final class RecurrenceHelperTests: XCTestCase {
                                   byWeekday: nil, byMonthday: [31], byMonth: nil,
                                   until: nil, count: 3,
                                   createdAt: Date(), updatedAt: Date())
-        let range = date(2024, 1, 1)...date(2024, 5, 31)
+        let range = date(2024, 1, 1)..<date(2024, 5, 31)
         let result = RecurrenceHelper.generateRecurrenceDates(start: start, rule: rule, within: range)
-        // Only Jan 31, Mar 31, May 31 (Feb and Apr don't have 31st)
-        XCTAssertEqual(result, [date(2024,1,31), date(2024,3,31), date(2024,5,31)])
+        // Only Jan 31, Mar 31 (Feb don't have 31st)
+        XCTAssertEqual(result, [date(2024,1,31), date(2024,3,31)])
     }
 
     func testRecurrenceUntilDate() {
@@ -60,7 +60,7 @@ final class RecurrenceHelperTests: XCTestCase {
         let until = date(2024, 7, 3)
         let rule = RecurrenceRule(id: UUID(), eventId: UUID(), freq: RecurrenceFrequesncy.daily,
                                   interval: 1, byWeekday: nil, byMonthday: nil, byMonth: nil, until: until, count: nil, createdAt: Date(), updatedAt: Date())
-        let range = date(2024, 7, 1)...date(2024, 7, 10)
+        let range = date(2024, 7, 1)..<date(2024, 7, 10)
         let result = RecurrenceHelper.generateRecurrenceDates(start: start, rule: rule, within: range)
         XCTAssertEqual(result, [date(2024,7,1), date(2024,7,2), date(2024,7,3)])
     }
@@ -70,7 +70,7 @@ final class RecurrenceHelperTests: XCTestCase {
         let rule = RecurrenceRule(id: UUID(), eventId: UUID(),
                                   freq: RecurrenceFrequesncy.daily, interval: 1,
                                   byWeekday: nil, byMonthday: nil, byMonth: nil, until: nil, count: 3, createdAt: Date(), updatedAt: Date())
-        let range = date(2024, 7, 5)...date(2024, 7, 10)
+        let range = date(2024, 7, 5)..<date(2024, 7, 10)
         let result = RecurrenceHelper.generateRecurrenceDates(start: start, rule: rule, within: range)
         // None of the first 3 are in range
         XCTAssertEqual(result, [])

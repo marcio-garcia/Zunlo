@@ -54,8 +54,8 @@ struct MainView: View {
                                     .blur(radius: 10)
                                 
                                 ChatView(namespace: animationNamespace,
-                                               showChat: $isShowingChat,
-                                               factory: factory)
+                                         showChat: $isShowingChat,
+                                         factory: factory)
                             }
                         }
                         .animation(.spring(response: 0.6, dampingFraction: 0.90), value: isShowingChat)

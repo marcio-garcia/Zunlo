@@ -144,7 +144,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 14, // <- increment this every time you change schema!
+        schemaVersion: 15, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,
@@ -181,6 +181,12 @@ func setupRealm() {
                     newObj?["version"] = nil
                 }
                 // Add SyncConflictLocal if new
+            }
+            if oldSchemaVersion < 15 {
+                migration.enumerateObjects(ofType: ChatMessageLocal.className()) { oldObject, newObject in
+                    newObject?["actions"] = []
+                    newObject?["attachments"] = []
+                }
             }
         }
     )

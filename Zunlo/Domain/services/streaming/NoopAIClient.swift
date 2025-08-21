@@ -17,8 +17,7 @@ public final class NoopAIClient: AIChatService {
     public func generate(
         conversationId: UUID,
         history: [ChatMessage],
-        userInput: String,
-        attachments: [ChatAttachment],
+        output: [ToolOutput],
         supportsTools: Bool
     ) -> AsyncThrowingStream<AIEvent, Error> {
         let replyId = UUID()
@@ -28,7 +27,7 @@ public final class NoopAIClient: AIChatService {
             Task {
                 continuation.yield(.started(replyId: replyId))
 
-                let lower = userInput.lowercased()
+                let lower = "" // userInput.lowercased()
                 var canned = "Got it. I’ll help with tasks and scheduling once the AI provider is connected."
                 var chips: [String] = ["Break this down", "Plan my day", "Find 30-min slot"]
 

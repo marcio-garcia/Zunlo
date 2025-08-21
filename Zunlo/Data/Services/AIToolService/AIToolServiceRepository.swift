@@ -7,7 +7,7 @@
 
 import Foundation
 
-class AIToolServiceRepository: DomainRepositories {
+class AIToolServiceRepository: DomainRepositories, @unchecked Sendable {
     
     private let taskRepo: UserTaskRepository
     private let eventRepo: EventRepository
@@ -41,5 +41,21 @@ class AIToolServiceRepository: DomainRepositories {
     
     func apply(override: EventOverrideRemote) async throws {
         try await eventRepo.apply(rows: [override])
+    }
+    
+    func fetchEvents(start: Date, end: Date) async throws -> [Event] {
+        let startRange = start.startOfDay...start.startOfNextDay()
+        let endRange = end.startOfDay...end.startOfNextDay()
+        let filter = EventFilter(userId: nil, startDateRange: startRange, endDateRange: endRange)
+        return try await eventRepo.fetchEvent(filteredBy: filter)
+    }
+    
+    func fetchOccurrences() async throws -> [EventOccurrence] {
+        return try await eventRepo.fetchOccurrences(for: nil)
+    }
+    
+    func fetchTasks(range: Range<Date>) async throws -> [UserTask] {
+        let filter = TaskFilter(isCompleted: false, dueDateRange: range.lowerBound...range.upperBound)
+        return try await taskRepo.fetchTasks(filteredBy: filter)
     }
 }

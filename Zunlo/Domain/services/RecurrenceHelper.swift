@@ -21,7 +21,7 @@ class RecurrenceHelper {
     static func generateRecurrenceDates(
         start: Date,
         rule: RecurrenceRule,
-        within range: ClosedRange<Date>,
+        within range: Range<Date>,
         calendar: Calendar = .appDefault,
         eventTimeZone: TimeZone = .current
     ) -> [Date] {
@@ -48,7 +48,7 @@ class RecurrenceHelper {
     private static func generateDailyRecurrence(
         start startUTC: Date,
         rule: RecurrenceRule,
-        within rangeUTC: ClosedRange<Date>,
+        within rangeUTC: Range<Date>,
         calendar baseCalendar: Calendar,
         eventTimeZone: TimeZone
     ) -> [Date] {
@@ -113,7 +113,7 @@ class RecurrenceHelper {
             candidate = next
 
             // Early exit for open-ended series once we're past the query window.
-            if rule.count == nil, untilExclusive == nil, candidate > rangeUTC.upperBound {
+            if rule.count == nil, untilExclusive == nil, candidate >= rangeUTC.upperBound {
                 break
             }
         }
@@ -132,7 +132,7 @@ class RecurrenceHelper {
     private static func generateWeeklyRecurrence(
         start startUTC: Date,
         rule: RecurrenceRule,
-        within rangeUTC: ClosedRange<Date>,
+        within rangeUTC: Range<Date>,
         calendar baseCalendar: Calendar,
         eventTimeZone: TimeZone
     ) -> [Date] {
@@ -219,7 +219,7 @@ class RecurrenceHelper {
 
             // Early exits for open-ended schedules.
             if let until = untilExclusive, weekStart >= until { break }
-            if rule.count == nil, weekStart > rangeUTC.upperBound { break }
+            if rule.count == nil, weekStart >= rangeUTC.upperBound { break }
         }
 
         return dates
@@ -240,7 +240,7 @@ class RecurrenceHelper {
     private static func generateMonthlyRecurrence(
         start startUTC: Date,
         rule: RecurrenceRule,
-        within rangeUTC: ClosedRange<Date>,
+        within rangeUTC: Range<Date>,
         calendar baseCalendar: Calendar,
         eventTimeZone: TimeZone
     ) -> [Date] {
@@ -345,7 +345,7 @@ class RecurrenceHelper {
 
             // Early exits for open-ended series.
             if let until = untilExclusive, monthStart >= until { break }
-            if rule.count == nil, untilExclusive == nil, monthStart > rangeUTC.upperBound { break }
+            if rule.count == nil, untilExclusive == nil, monthStart >= rangeUTC.upperBound { break }
         }
 
         return dates
@@ -366,7 +366,7 @@ class RecurrenceHelper {
     private static func generateYearlyRecurrence(
         start startUTC: Date,
         rule: RecurrenceRule,
-        within rangeUTC: ClosedRange<Date>,
+        within rangeUTC: Range<Date>,
         calendar baseCalendar: Calendar,
         eventTimeZone: TimeZone
     ) -> [Date] {
@@ -473,7 +473,7 @@ class RecurrenceHelper {
 
             // Early exits for open-ended series.
             if let until = untilExclusive, yearStart >= until { break }
-            if rule.count == nil, untilExclusive == nil, yearStart > rangeUTC.upperBound { break }
+            if rule.count == nil, untilExclusive == nil, yearStart >= rangeUTC.upperBound { break }
         }
 
         return dates

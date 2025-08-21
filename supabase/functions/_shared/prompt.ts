@@ -5,6 +5,7 @@
 // NOTE: We intentionally import ONLY safe primitives from schemas.ts.
 // We do NOT expose BaseMutation / version / idempotency to the model.
 
+// prompt.ts
 import {
   // Safe primitives (reused to avoid duplication)
   reminderTriggerSchema as ReminderTrigger,
@@ -13,8 +14,11 @@ import {
 } from "./schemas.ts";
 
 /** Guardrails & style guide (short, enforceable) */
-export const SYSTEM_PROMPT = `
-You are Zunlo’s assistant for tasks and events.
+export const PROMPT_INSTRUCTIONS = `
+Zunlo is an app to help people with ADHD manage their tasks and events.
+You are Zunlo's assistant for tasks and events.
+Never mention ADHD unless the user specifically asks about it.
+Always be kind and encouraging, without overdoing it.
 
 Guardrail policy:
 - Model talks, tools act.
@@ -28,7 +32,7 @@ Conventions:
 - For recurring edits: single vs this_and_future vs entire_series — choose carefully and explain.
 - Apple weekdays: 1=Sun … 7=Sat for recurrence.
 - Use editScope=override to change/cancel a single occurrence of a recurring event; use single only for non-recurring events.
-`.trim();
+`.trim().replace("\n", "");
 
 /* -----------------------------
  * Small local schema primitives
@@ -52,28 +56,51 @@ const isoDateTime = { type: "string", format: "date-time" } as const;
 const taskBodyArgs = {
   type: "object",
   additionalProperties: false,
-  required: ["title"],
+  // strict tool schemas require a "required" array; include all declared keys
+  required: [
+    "title",
+    "notes",
+    "dueDate",
+    "isCompleted",
+    "tags",
+    "reminderTriggers",
+    "parentEventId",
+    "priority"
+  ],
   properties: {
     title: { type: "string", minLength: 1, maxLength: 200 },
-    notes: { type: "string", maxLength: 2000 },
-    dueDate: isoDateTime,
+    // allow null so callers can satisfy strict presence without content
+    notes: { anyOf: [{ type: "string", maxLength: 2000 }, { type: "null" }] },
+    dueDate: { anyOf: [isoDateTime, { type: "null" }] },
     isCompleted: { type: "boolean" },
     tags: { type: "array", items: { type: "string", minLength: 1 }, maxItems: 50 },
+    // ReminderTrigger itself is strict (both keys required; message nullable)
     reminderTriggers: { type: "array", items: ReminderTrigger, maxItems: 5 },
-    parentEventId: { type: "string" },
-    priority: { enum: ["low", "medium", "high"] }
+    parentEventId: { anyOf: [{ type: "string" }, { type: "null" }] },
+    priority: { type: "string", enum: ["low", "medium", "high"] }
   }
 } as const;
 
 const taskPatchArgs = {
+  // NOTE: for strict tool schemas, any object needs a "required" array.
+  // If you want a truly sparse patch, consider switching patch to an array of field ops.
+  // For now, mirror create shape so the validator is happy.
   ...taskBodyArgs,
-  required: [], // all optional for patch
 } as const;
 
 const eventBodyArgs = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "startDatetime"],
+  required: [
+    "title",
+    "startDatetime",
+    "endDatetime",
+    "notes",
+    "location",
+    "color",
+    "reminderTriggers",
+    "recurrenceRule"
+  ],
   properties: {
     title: { type: "string", minLength: 1, maxLength: 200 },
     startDatetime: isoDateTime,
@@ -88,7 +115,6 @@ const eventBodyArgs = {
 
 const eventPatchArgs = {
   ...eventBodyArgs,
-  required: [], // all optional for patch
 } as const;
 
 /* -----------------
@@ -100,6 +126,7 @@ type Tool = {
   function: {
     name: string,
     description?: string,
+    strict?: boolean,
     parameters: any
   }
 };
@@ -109,42 +136,51 @@ export const TOOLS: Tool[] = [
     type: "function",
     name: "getAgenda",
     description: "Get upcoming events and tasks for a time range.",
-    input_schema: {
+    strict: true,
+    parameters: {
       type: "object",
       additionalProperties: false,
-      required: ["dateRange"],
+      required: ["dateRange", "start", "end"], // strict wants all keys required
       properties: {
-        dateRange: { type: "string", enum: ["today", "tomorrow", "week", "custom"] },
+        dateRange: {
+          type: "string",
+          enum: ["today", "tomorrow", "week", "custom"],
+          description: "Define the period to get events and tasks."
+        },
         start: isoDateTime,
         end: isoDateTime,
-      },
-      allOf: [
-        { if: { properties: { dateRange: { const: "custom" } } }, then: { required: ["start", "end"] } }
-      ]
+      }
     }
   },
   {
     type: "function",
     name: "planWeek",
     description: "Suggest a plan; does not write. Returns a ProposedPlan.",
-    input_schema: {
+    strict: true,
+    parameters: {
       type: "object",
       additionalProperties: false,
-      required: ["startDate"],
+      required: ["startDate", "objectives", "horizon"],
       properties: {
         startDate: isoDate,
         objectives: { type: "array", items: { type: "string" }, maxItems: 20 },
-        constraints: { type: "object", additionalProperties: true },
         horizon: { type: "string", enum: ["day", "week"], default: "week" }
       }
     }
   },
-  { type: "function", name: "createTask", description: "Create a user task (open-ended todo).", input_schema: taskBodyArgs },
+  {
+    type: "function",
+    name: "createTask",
+    description: "Create a user task (open-ended todo).",
+    strict: true,
+    parameters: taskBodyArgs
+  },
   {
     type: "function",
     name: "updateTask",
     description: "Update a task by id; send only the fields you want to change in 'patch'.",
-    input_schema: {
+    strict: true,
+    parameters: {
       type: "object",
       additionalProperties: false,
       required: ["taskId", "patch"],
@@ -158,51 +194,52 @@ export const TOOLS: Tool[] = [
     type: "function",
     name: "deleteTask",
     description: "Delete/soft-delete a task by id.",
-    input_schema: {
+    strict: true,
+    parameters: {
       type: "object",
       additionalProperties: false,
       required: ["taskId"],
       properties: { taskId: { type: "string" } }
     }
   },
-  { type: "function", name: "createEvent", description: "Create a calendar event (may be recurring if recurrenceRule provided).", input_schema: eventBodyArgs },
+  {
+    type: "function",
+    name: "createEvent",
+    description: "Create a calendar event (may be recurring if recurrenceRule provided).",
+    strict: true,
+    parameters: eventBodyArgs
+  },
   {
     type: "function",
     name: "updateEvent",
     description: "Update an event; 'single' uses occurrenceDate to create an override.",
-    input_schema: {
+    strict: true,
+    parameters: {
       type: "object",
       additionalProperties: false,
-      required: ["eventId", "editScope", "patch"],
+      required: ["eventId", "editScope", "occurrenceDate", "patch"],
       properties: {
         eventId: { type: "string" },
         editScope: { type: "string", enum: ["single", "override", "this_and_future", "entire_series"] },
-        occurrenceDate: isoDateTime, // required for override & this_and_future
+        occurrenceDate: isoDateTime,
         patch: eventPatchArgs
-      },
-      allOf: [
-        { if: { properties: { editScope: { const: "override" } } }, then: { required: ["occurrenceDate"] } },
-        { if: { properties: { editScope: { const: "this_and_future" } } }, then: { required: ["occurrenceDate"] } }
-      ]
+      }
     }
   },
   {
     type: "function",
     name: "deleteEvent",
     description: "Delete/cancel an event; 'single' cancels one occurrence via override.",
-    input_schema: {
+    strict: true,
+    parameters: {
       type: "object",
       additionalProperties: false,
-      required: ["eventId", "editScope"],
+      required: ["eventId", "editScope", "occurrenceDate"],
       properties: {
         eventId: { type: "string" },
         editScope: { type: "string", enum: ["single", "override", "this_and_future", "entire_series"] },
         occurrenceDate: isoDateTime
-      },
-      allOf: [
-        { if: { properties: { editScope: { const: "override" } } }, then: { required: ["occurrenceDate"] } },
-        { if: { properties: { editScope: { const: "this_and_future" } } }, then: { required: ["occurrenceDate"] } }
-      ]
+      }
     }
   }
 ];
@@ -237,16 +274,19 @@ export function supportsTemperature(model?: string): boolean {
 export function enrichResponsesBody(body: any, force = false) {
   const cloned = JSON.parse(JSON.stringify(body ?? {}));
 
-  // Ensure messages array exists
+  // Payload "input". Ensure messages array exists
   const input = Array.isArray(cloned.input) ? cloned.input : [];
-  const hasSystem = input.some((m: any) => m?.role === "system");
-  if (!hasSystem) {
-    input.unshift({ role: "system", content: SYSTEM_PROMPT });
-  }
+  // const hasSystem = input.some((m: any) => m?.role === "system");
+  // if (!hasSystem) {
+  //   input.unshift({ role: "system", content: SYSTEM_PROMPT });
+  // }
   cloned.input = input;
 
-  // Default reasonable model if not set
+  // Payload "model". Default reasonable model if not set
   if (!cloned.model) cloned.model = Deno.env.get("OPENAI_MODEL") || "gpt-5-mini";
+
+  // Payload "instructions". Default instructions if not set
+  if (!cloned.instructions) cloned.instructions = PROMPT_INSTRUCTIONS;
 
   // Temperature: set only if missing or force=true; clamp to [0,2]
   // Temperature: only if model supports it (or force)

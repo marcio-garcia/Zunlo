@@ -34,6 +34,7 @@ struct TodayView: View {
     @State private var editableUserTask: UserTask?
     @State private var hasEarnedReward = false
     @State private var toast: Toast?
+    @State private var aiContext: AIContext?
     
     private let appState: AppState
     
@@ -80,29 +81,44 @@ struct TodayView: View {
                         ScrollView(.vertical) {
                             VStack(alignment: .leading, spacing: 24) {
                                 TodayWeatherView(weather: viewModel.weather, greeting: viewModel.greeting)
-
-                                // Optionally reflect any ongoing runs:
-//                                if let running = store.runs.values.first(where: { $0.isRunning }) {
-//                                    ProgressView(running.status ?? "Working…", value: running.progress, total: 1)
-//                                        .padding()
-//                                }
                                 
-                                AIWelcomeCard(
-                                    vm: AIWelcomeCardViewModel(
-                                        time: SystemTimeProvider(),
-                                        policyProvider: policyProvider,
-                                        tasksEngine: appState.taskSuggestionEngine!,
-                                        eventsEngine: appState.eventSuggestionEngine!,
-                                        aiToolRunner: DefaultAIToolRunner(
-                                            toolRepo: AIToolRepository(
-                                                eventRepo: appState.eventRepository!,
-                                                taskRepo: appState.userTaskRepository!,
-                                                eventEngine: appState.eventSuggestionEngine!),
-                                            calendar: .appDefault,
-                                            nav: nil),
-                                        weather: WeatherService.shared
+                                // Optionally reflect any ongoing runs:
+                                //                                if let running = store.runs.values.first(where: { $0.isRunning }) {
+                                //                                    ProgressView(running.status ?? "Working…", value: running.progress, total: 1)
+                                //                                        .padding()
+                                //                                }
+                                
+                                //                                AIWelcomeCard(
+                                //                                    vm: AIWelcomeCardViewModel(
+                                //                                        time: SystemTimeProvider(),
+                                //                                        policyProvider: policyProvider,
+                                //                                        tasksEngine: appState.taskSuggestionEngine!,
+                                //                                        eventsEngine: appState.eventSuggestionEngine!,
+                                //                                        aiToolRunner: DefaultAIToolRunner(
+                                //                                            toolRepo: AIToolRepository(
+                                //                                                eventRepo: appState.eventRepository!,
+                                //                                                taskRepo: appState.userTaskRepository!,
+                                //                                                eventEngine: appState.eventSuggestionEngine!),
+                                //                                            calendar: .appDefault,
+                                //                                            nav: nil),
+                                //                                        weather: WeatherService.shared
+                                //                                    )
+                                //                                )
+                                
+                                if let ctx = aiContext {
+                                    AIWelcomeCard(
+                                        vm: AIWelcomeCardViewModel(
+                                            context: ctx,
+                                            aiToolRunner: DefaultAIToolRunner(
+                                                toolRepo: AIToolRepository(
+                                                    eventRepo: appState.eventRepository!,
+                                                    taskRepo: appState.userTaskRepository!,
+                                                    eventEngine: appState.eventSuggestionEngine!),
+                                                calendar: .appDefault,
+                                                nav: nil)
+                                        )
                                     )
-                                )
+                                }
                                 
                                 if upgradeReminderManager.shouldShowReminder(isAnonymous: authManager.isAnonymous) {
                                     showBannerSection
@@ -441,5 +457,13 @@ struct TodayView: View {
         await viewModel.fetchData()
         await viewModel.fetchWeather()
         await viewModel.syncDB()
+        aiContext = await AIContextBuilder().build(
+            time: SystemTimeProvider(),
+            policyProvider: policyProvider,
+            tasks: appState.taskSuggestionEngine!,
+            events: appState.eventSuggestionEngine!,
+            weather: WeatherService.shared,
+            on: Date()
+        )
     }
 }

@@ -16,7 +16,7 @@ struct EventOccurrenceService {
     
     /// Generate all event occurrences (including overrides/cancellations) in the given range.
     static func generate(rawOccurrences: [EventOccurrence],
-                         in range: ClosedRange<Date>) throws -> [EventOccurrence] {
+                         in range: Range<Date>) throws -> [EventOccurrence] {
         var occurrences: [EventOccurrence] = []
 
         for rawOcc in rawOccurrences {

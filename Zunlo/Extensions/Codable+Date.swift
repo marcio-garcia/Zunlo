@@ -26,6 +26,35 @@ extension JSONDecoder {
         return d
     }
     
+    static func makeDecoder(assumeNoTZAsUTC: Bool = true) -> JSONDecoder {
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .custom { decoder in
+            let c = try decoder.singleValueContainer()
+            let s = try c.decode(String.self)
+
+            // 1) ISO8601 with timezone (e.g. ...Z or ...-03:00)
+            let iso = ISO8601DateFormatter()
+            iso.formatOptions = [.withInternetDateTime]
+            if let d = iso.date(from: s) { return d }
+
+            // 1b) ISO8601 with fractional seconds (just in case)
+            let isoFrac = ISO8601DateFormatter()
+            isoFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let d = isoFrac.date(from: s) { return d }
+
+            // 2) Fallback for strings with NO timezone (e.g. 2023-10-06T00:00:00)
+            let df = DateFormatter()
+            df.calendar = Calendar(identifier: .iso8601)
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.timeZone = assumeNoTZAsUTC ? TimeZone(secondsFromGMT: 0)! : .current
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            if let d = df.date(from: s) { return d }
+
+            throw DecodingError.dataCorruptedError(in: c, debugDescription: "Invalid date: \(s)")
+        }
+        return dec
+    }
+    
     /// Prefer microsecond precision; fall back to ISO8601 with/without fractional
     static func supabaseMicroFirst() -> JSONDecoder {
         let d = JSONDecoder()

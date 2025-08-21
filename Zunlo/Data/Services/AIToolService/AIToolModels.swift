@@ -38,6 +38,22 @@ struct DeleteEventArgs: Decodable {
     var occurrenceDate: Date?
 }
 
+// MARK: Args decoded for readonly tools
+public struct GetAgendaArgs: Codable {
+    public enum DateRange: String, Codable { case today, tomorrow, week, custom }
+    public let dateRange: DateRange
+    public let start: Date?
+    public let end: Date?
+    // Optionally add: public let timezone: String?
+}
+public struct PlanWeekArgs: Codable {
+    public let startDate: Date // YYYY-MM-DD from tool (decode with .iso8601 + dateOnly ok)
+    public let objectives: [String]?
+    public let constraints: [String: String]? // keep loose; you can structure later
+    public let horizon: String? // "day" | "week" (default "week")
+}
+
+
 /// Tri-state field for PATCH:
 /// - .omit      -> do not include the key
 /// - .set(val)  -> include key with value
@@ -276,6 +292,61 @@ public struct EventMutationResult: Codable {
     var code: String?
     var message: String?
 }
+
+// ---- GetAgenda tool
+
+public struct AgendaEvent: Codable {
+    var kind: String = "event"
+    var id: UUID
+    var title: String
+    var start: Date
+    var end: Date?
+    var location: String?
+    var color: String?
+    var isOverride: Bool
+    var isRecurring: Bool
+}
+
+public struct AgendaTask: Codable {
+    var kind: String = "task"
+    var id: UUID
+    var title: String
+    var dueDate: Date?
+    var priority: String  // "low"|"medium"|"high"
+    var tags: [String]
+}
+
+public struct GetAgendaResult: Codable {
+    var start: Date
+    var end: Date
+    var timezone: String
+    var items: [AgendaItem] // enum wrapper over event/task
+}
+
+public enum AgendaItem: Codable {
+    case event(AgendaEvent)
+    case task(AgendaTask)
+}
+
+// Output
+
+struct ProposedBlock: Codable {
+    enum Kind: String, Codable { case meeting, focus, buffer }
+    let kind: Kind
+    let start: Date
+    let end: Date?
+    let title: String
+    let taskId: UUID?
+    let eventId: UUID?
+}
+public struct ProposedPlan: Codable {
+    let start: Date
+    let end: Date
+    let blocks: [ProposedBlock]
+    let notes: [String]
+}
+
+// Tool call models
 
 public enum ToolCallOrigin: Codable, Equatable, Sendable {
     case requiredAction   // came from `response.required_action`

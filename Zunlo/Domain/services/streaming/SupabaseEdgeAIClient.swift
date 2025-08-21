@@ -8,6 +8,22 @@
 import Foundation
 import Supabase
 
+public struct ResponsesApiTextRequest: Encodable {
+    let model: String
+    let instructions: String?
+    let input: [InputContent]
+    let temperature: Double?
+    let metadata: [String: String]?
+}
+
+private func mapRole(_ role: ChatRole, defaultNonUser: String) -> String {
+    switch role {
+    case .user: return "user"
+    case .assistant, .tool: return defaultNonUser // treat tool output as assistant-side context
+    case .system: return ""
+    }
+}
+
 public final class SupabaseEdgeAIClient: AIChatService {
     private let supabase: SupabaseClient
     private var cancelBag = [Task<Void, Never>]()
@@ -27,10 +43,9 @@ public final class SupabaseEdgeAIClient: AIChatService {
     public func generate(
         conversationId: UUID,
         history: [ChatMessage],
-        userInput: String,
-        attachments: [ChatAttachment],
+        output: [ToolOutput],
         supportsTools: Bool
-    ) -> AsyncThrowingStream<AIEvent, Error> {
+    ) throws -> AsyncThrowingStream<AIEvent, Error> {
 
         struct Msg: Codable { let role: String; let content: String }
         struct Body: Codable {
@@ -39,8 +54,43 @@ public final class SupabaseEdgeAIClient: AIChatService {
             // Add tools/tool_choice later (Phase 4)
         }
 
-        let inputMsgs = history.map { Msg(role: $0.role.rawValue, content: $0.text) }
-        let body = Body(model: "gpt-5-mini", input: inputMsgs)
+//        let inputMsgs = history.map { Msg(role: $0.role.rawValue, content: $0.text) }
+        // Filter out .tool messages
+        
+//        let inputMsgs = history.compactMap({ msg -> Msg? in
+//            if msg.role == .tool { return nil }
+//            return Msg(role: msg.role.rawValue, content: msg.text)
+//        })
+//        let body = Body(model: "gpt-4o-mini", input: inputMsgs)
+        
+//        let body = try OpenAIResponsesAPIBuilder.buildResponsesHTTPBody(from: history)
+        
+        var textContent: [InputContent] = []
+        
+        for (idx, msg) in history.enumerated() {
+            if !output.isEmpty && idx == history.count - 1 {
+                textContent.append(InputContent(
+                    type: "function_call_output",
+                    call_id: output.first!.tool_call_id,
+                    output: output.first!.output
+                ))
+            } else if !msg.text.isEmpty {
+                textContent.append(InputContent(
+                    role: mapRole(msg.role, defaultNonUser: "assistant"),
+                    content: msg.text
+                ))
+            }
+        }
+        
+        let tail = Array(textContent.suffix(8))
+        
+        let body = ResponsesApiTextRequest(
+            model: "gpt-4o-mini",
+            instructions: nil,
+            input: tail,
+            temperature: 0.2,
+            metadata: nil
+        )
 
         return AsyncThrowingStream { continuation in
             // Prepare options (body is Encodable; client sets Content-Type automatically)
@@ -96,6 +146,11 @@ public final class SupabaseEdgeAIClient: AIChatService {
 
                     print("***** SSE event name: \(name)")
                     switch true {
+//                        response.in_progress
+//                        response.content_part.added
+//                        response.content_part.done
+//                        response.output_text.done
+//                        response.output_item.done
                         case name.contains("response.created"):
                             if let rid = extractResponseId(from: event.data) {
                                 fn.responseId = rid
@@ -106,7 +161,6 @@ public final class SupabaseEdgeAIClient: AIChatService {
                             if let (itemId, toolName) = parseFunctionCallAdded(event.data) {
                                 print("[SSE] function_call started:", toolName, "id:", itemId)
                                 fn.startCall(id: itemId, name: toolName)
-                                // (optional) debug: print("[SSE] function_call started:", toolName, "id:", itemId)
                             }
 
                         case name.contains("response.function_call_arguments.delta"):
@@ -116,8 +170,8 @@ public final class SupabaseEdgeAIClient: AIChatService {
                             }
 
                         case name.contains("response.function_call_arguments.done"):
-                            if let itemId = parseFunctionCallArgsDone(event.data),
-                               let call = fn.finishCall(id: itemId) {
+                            if let (itemId, args) = parseFunctionCallArgsDone(event.data),
+                               let call = fn.finishCall(id: itemId, args: args) {
                                 print("[SSE] function_call done for:", itemId)
                                 // Convert to your AIEvent tool batch (single call here)
                                 let req = ToolCallRequest(
@@ -147,8 +201,8 @@ public final class SupabaseEdgeAIClient: AIChatService {
                             continuation.yield(.completed(replyId: draftId))
 
                         default:
-                            break
-                        }
+                        print("[SSE] name:", name)
+                    }
                 }
             }
 
@@ -319,11 +373,24 @@ public final class SupabaseEdgeAIClient: AIChatService {
         return nil
     }
 
-    private func parseFunctionCallArgsDone(_ json: String) -> String? {
+    private func parseFunctionCallArgsDone(_ json: String) -> (itemId: String, args: String)? {
         // Usually carries { "item_id": "item_…" }
         guard let data = json.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
-        return (obj["item_id"] as? String) ?? (obj["id"] as? String)
+//        return (obj["item_id"] as? String) ?? (obj["id"] as? String)
+        
+//        {
+//          "type": "response.function_call_arguments.done",
+//          "item_id": "item-abc",
+//          "output_index": 1,
+//          "arguments": "{ \"arg\": 123 }",
+//          "sequence_number": 1
+//        }
+        if let id = (obj["item_id"] as? String) ?? (obj["id"] as? String),
+           let args = obj["arguments"] as? String {
+            return (id, args)
+        }
+        return nil
     }
 
 }
