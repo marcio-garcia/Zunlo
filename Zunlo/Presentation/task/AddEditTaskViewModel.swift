@@ -56,8 +56,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
 
     func navigationTitle() -> String {
         switch mode {
-        case .add: return String(localized: "Add Task")
-        case .edit: return String(localized: "Edit Task")
+        case .add: return String(localized: "Add task")
+        case .edit: return String(localized: "Edit task")
         }
     }
 

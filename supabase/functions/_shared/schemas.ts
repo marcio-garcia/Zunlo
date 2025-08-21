@@ -233,9 +233,9 @@ export const recurrenceRuleSchema = {
   properties: {
     freq: { enum: ['daily', 'weekly', 'monthly', 'yearly'] },
     interval: { type: 'integer', minimum: 1, default: 1 },
-    byWeekday: { type: 'array', items: { type: 'integer', minimum: 1, maximum: 7 }, maxItems: 7 }, // Apple: 1=Sun..7=Sat
-    byMonthday: { type: 'array', items: { type: 'integer', minimum: 1, maximum: 31 }, maxItems: 31 },
-    byMonth: { type: 'array', items: { type: 'integer', minimum: 1, maximum: 12 }, maxItems: 12 },
+    byWeekday: [{ type: 'array', items: { type: 'integer', minimum: 1, maximum: 7 }, maxItems: 7 }, 'null'], // Apple: 1=Sun..7=Sat
+    byMonthday: [{ type: 'array', items: { type: 'integer', minimum: 1, maximum: 31 }, maxItems: 31 }, 'null'],
+    byMonth: [{ type: 'array', items: { type: 'integer', minimum: 1, maximum: 12 }, maxItems: 12 }, 'null'],
     until: { anyOf: [isoDateTime, { type: 'null' }] },
     count: { anyOf: [{ type: 'integer', minimum: 1 }, { type: 'null' }] }
   }

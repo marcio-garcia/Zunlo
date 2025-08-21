@@ -33,4 +33,8 @@ public final class RealmChatLocalStore: ChatLocalStore {
     public func delete(messageId: UUID) async throws {
         try await db.deleteChatMessage(messageId: messageId)
     }
+    
+    public func deleteAll(_ conversationId: UUID) async throws {
+        try await db.deleteAllChatMessages(conversationId)
+    }
 }

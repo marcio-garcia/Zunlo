@@ -1046,6 +1046,24 @@ extension DatabaseActor {
         try realm.write { realm.delete(obj) }
         // You can choose to backfill preview by reading last message; omitted for simplicity.
     }
+    
+    /// Delete all messages (updates conversation id).
+    public func deleteAllChatMessages(_ conversationId: UUID) throws {
+        let realm = try openRealm()
+        guard let convo = realm.object(ofType: ConversationObject.self, forPrimaryKey: conversationId) else { return }
+
+        // If ChatMessageLocal has a conversationId field, filter by it.
+        let messagesInConversation = realm.objects(ChatMessageLocal.self)
+            .filter("conversationId == %@", conversationId)
+
+        try realm.write {
+            realm.delete(messagesInConversation)          // delete all messages for this convo
+            convo.updatedAt = Date()
+            convo.lastMessagePreview = nil
+            convo.lastMessageAt = nil
+            convo.draftInput = nil
+        }
+    }
 }
 
 // MARK: - Private helpers

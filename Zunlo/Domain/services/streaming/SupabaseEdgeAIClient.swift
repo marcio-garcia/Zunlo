@@ -345,6 +345,13 @@ public final class SupabaseEdgeAIClient: AIChatService {
 
         // Common shapes:
         // { ..., "item": {"id":"item_…", "type":"function_call", "name":"getAgenda"} }
+        // {
+        //     "id": "fc_12345xyz",
+        //     "call_id": "call_12345xyz",
+        //     "type": "function_call",
+        //     "name": "get_weather",
+        //     "arguments": "{\"location\":\"Paris, France\"}"
+        // }
         if let item = obj["item"] as? [String: Any],
            let type = item["type"] as? String, type == "function_call",
            let id = item["id"] as? String,

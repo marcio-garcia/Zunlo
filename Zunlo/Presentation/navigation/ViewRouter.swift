@@ -40,6 +40,10 @@ struct ViewRouter {
             return AnyView(TaskViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.task!, onOptionSelected: onOptionSelected))
         case .deleteEvent, .editRecurringEvent:
             return AnyView(EventViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.event!, onOptionSelected: onOptionSelected))
+        case .deleteChatMessage(let id):
+            return AnyView(ChatViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.chat!))
+        case .deleteAllChat:
+            return AnyView(ChatViewRouter.dialogView(for: route, navigationManager: navigationManager, factory: factory.chat!))
         }
     }
 

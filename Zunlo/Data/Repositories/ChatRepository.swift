@@ -13,6 +13,7 @@ public protocol ChatRepository {
     func appendDelta(messageId: UUID, delta: String, status: MessageStatus) async throws
     func setStatus(messageId: UUID, status: MessageStatus, error: String?) async throws
     func delete(messageId: UUID) async throws
+    func deleteAll(_ conversationId: UUID) async throws
 }
 
 public final class DefaultChatRepository: ChatRepository {
@@ -38,5 +39,9 @@ public final class DefaultChatRepository: ChatRepository {
 
     public func delete(messageId: UUID) async throws {
         try await store.delete(messageId: messageId)
+    }
+    
+    public func deleteAll(_ conversationId: UUID) async throws {
+        try await store.deleteAll(conversationId)
     }
 }

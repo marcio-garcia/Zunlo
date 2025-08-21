@@ -42,12 +42,16 @@ enum DialogRoute: AppDialogRoute {
     case deleteTask
     case deleteEvent(mode: AddEditEventViewMode)
     case editRecurringEvent
+    case deleteChatMessage(id: UUID)
+    case deleteAllChat
 
     var id: String {
         switch self {
         case .deleteTask: return "deleteTask"
         case .deleteEvent(let mode): return "deleteEvent_\(mode.id)"
         case .editRecurringEvent: return "editRecurringEvent"
+        case .deleteChatMessage(let id): return "deleteChatMessage_\(id)"
+        case .deleteAllChat: return "deleteAllChat"
         }
     }
 }

@@ -198,6 +198,12 @@ public final class ChatViewModel: ObservableObject {
         }
         try? await chatRepo.delete(messageId: messageId)
     }
+    
+    public func deleteAll() async {
+        messages.removeAll()
+        rebuildSections()
+        try? await chatRepo.deleteAll(conversationId)
+    }
 
     // MARK: Grouping
 

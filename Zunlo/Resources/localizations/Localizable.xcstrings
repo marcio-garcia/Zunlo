@@ -55,10 +55,24 @@
 
     },
     "A little prep reduces stress." : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma preparação prévia reduz o estresse."
+          }
+        }
+      }
     },
     "Add a quick task" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione uma tarefa"
+          }
+        }
+      }
     },
     "Add event" : {
       "localizations" : {
@@ -81,7 +95,14 @@
       }
     },
     "Add prep tasks" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar tarefas de preparação"
+          }
+        }
+      }
     },
     "Add Reminder" : {
       "localizations" : {
@@ -104,9 +125,6 @@
       }
     },
     "Add task" : {
-
-    },
-    "Add Task" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -228,6 +246,9 @@
 
     },
     "Clear 2 overdue in 15 minutes?" : {
+
+    },
+    "Clear all messages" : {
 
     },
     "Clear All Reminders" : {
@@ -379,6 +400,9 @@
         }
       }
     },
+    "Delete all messages" : {
+
+    },
     "Delete all series" : {
       "localizations" : {
         "pt-BR" : {
@@ -398,6 +422,12 @@
           }
         }
       }
+    },
+    "Delete message" : {
+
+    },
+    "Delete messages" : {
+
     },
     "Delete task" : {
       "localizations" : {
@@ -529,7 +559,7 @@
         }
       }
     },
-    "Edit Task" : {
+    "Edit task" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -610,7 +640,14 @@
       }
     },
     "Errands shifted" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterado"
+          }
+        }
+      }
     },
     "Error" : {
       "localizations" : {
@@ -653,7 +690,14 @@
       }
     },
     "Evening wrap" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumo do dia"
+          }
+        }
+      }
     },
     "Event detail view for %@" : {
       "localizations" : {
@@ -696,7 +740,14 @@
       }
     },
     "Fast capture reduces mental load." : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resolver tarefas rápidas reduz a carga mental."
+          }
+        }
+      }
     },
     "Finishing setup…" : {
       "localizations" : {
@@ -709,13 +760,34 @@
       }
     },
     "Fix %lld conflict(s)" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rosolver %lld conflito(s)"
+          }
+        }
+      }
     },
     "Focus" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foco"
+          }
+        }
+      }
     },
     "Focus block created" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo para foco criado"
+          }
+        }
+      }
     },
     "Get Started" : {
       "localizations" : {
@@ -808,7 +880,14 @@
       }
     },
     "Kick off your day" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vamos lá"
+          }
+        }
+      }
     },
     "Let’s set up your experience." : {
       "localizations" : {
@@ -861,7 +940,14 @@
       }
     },
     "Log wins, roll unfinished to tomorrow" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muita coisa hoje, né? Vamos mover o que não foi terminado para amanhã."
+          }
+        }
+      }
     },
     "low" : {
       "localizations" : {
@@ -883,11 +969,35 @@
         }
       }
     },
+    "Message" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mensagem"
+          }
+        }
+      }
+    },
     "Midday checkpoint" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checagem"
+          }
+        }
+      }
     },
     "Minimum focus duration" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo mínimo para foco"
+          }
+        }
+      }
     },
     "monthly" : {
       "extractionState" : "manual",
@@ -901,7 +1011,14 @@
       }
     },
     "Morning clarity improves throughput" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um bom planejamento pela manhã melhora o rendimento."
+          }
+        }
+      }
     },
     "Mostly clear" : {
       "localizations" : {
@@ -924,10 +1041,24 @@
       }
     },
     "Move the lowest-priority item to the next clean slot today" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mova um item de baixa prioridade para o próximo tempo livre de hoje."
+          }
+        }
+      }
     },
     "Move to tomorrow" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover para amanhã"
+          }
+        }
+      }
     },
     "Night 22–6" : {
       "localizations" : {
@@ -1030,13 +1161,34 @@
       }
     },
     "Pick 3 priorities and block the first focus" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha 3 prioridades de reserve um tempo para focar nelas"
+          }
+        }
+      }
     },
     "Plan my day" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planejar o meu dia"
+          }
+        }
+      }
     },
     "Please analyze the attached data." : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favor analisar os dados em anexo."
+          }
+        }
+      }
     },
     "Please enable location in Settings to use this app." : {
       "localizations" : {
@@ -1049,28 +1201,84 @@
       }
     },
     "Prep" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparação"
+          }
+        }
+      }
     },
     "Prep added" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo de preparação adicionado"
+          }
+        }
+      }
     },
     "Prep block added" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo de preparação adicionado"
+          }
+        }
+      }
     },
     "Prep for your next event" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparação para o próximo evento"
+          }
+        }
+      }
     },
     "Preparing block…" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando…"
+          }
+        }
+      }
     },
     "Preparing event…" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando…"
+          }
+        }
+      }
     },
     "Preparing plan…" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando…"
+          }
+        }
+      }
     },
     "Preparing…" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparando…"
+          }
+        }
+      }
     },
     "Priority" : {
       "localizations" : {
@@ -1083,7 +1291,14 @@
       }
     },
     "Quick wins reduce today's pressure:\n%@" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarefas rápidas reduzem a pressão do dia: %@"
+          }
+        }
+      }
     },
     "Rainy" : {
       "localizations" : {
@@ -1162,7 +1377,14 @@
       }
     },
     "Replan to stay realistic" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replanejar para seguir as metas"
+          }
+        }
+      }
     },
     "Reset Upgrade Reminder" : {
       "localizations" : {
@@ -1175,16 +1397,44 @@
       }
     },
     "Resolve conflicts" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resolver conflitos"
+          }
+        }
+      }
     },
     "Resolve now" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resolver agora"
+          }
+        }
+      }
     },
     "Retry" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De novo"
+          }
+        }
+      }
     },
     "Running behind? Shift one long block" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrasado? Remaneje um bloco de tempo"
+          }
+        }
+      }
     },
     "Save" : {
       "localizations" : {
@@ -1207,7 +1457,14 @@
       }
     },
     "Schedule top task" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agendar tarefa prioritária"
+          }
+        }
+      }
     },
     "Search properties" : {
       "localizations" : {
@@ -1270,7 +1527,14 @@
       }
     },
     "Shift errands" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar"
+          }
+        }
+      }
     },
     "Sign In" : {
       "localizations" : {
@@ -1313,7 +1577,14 @@
       }
     },
     "Slot booked" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agendado"
+          }
+        }
+      }
     },
     "Snowy" : {
       "localizations" : {
@@ -1326,7 +1597,14 @@
       }
     },
     "Split 2×30m" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir 2x30m"
+          }
+        }
+      }
     },
     "Start" : {
       "localizations" : {
@@ -1339,10 +1617,24 @@
       }
     },
     "Start %lld-min Focus" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicie foco de %lld min"
+          }
+        }
+      }
     },
     "Start 15-min blitz" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicie foco de 15 min"
+          }
+        }
+      }
     },
     "Start by adding your first event to your schedule." : {
       "localizations" : {
@@ -1365,13 +1657,34 @@
       }
     },
     "Start daily plan" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar planejamento do dia"
+          }
+        }
+      }
     },
     "Start now" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar"
+          }
+        }
+      }
     },
     "Stop" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar"
+          }
+        }
+      }
     },
     "Supabase Auth Demo" : {
 
@@ -1427,10 +1740,24 @@
       }
     },
     "Timebox “%@”" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo “%@”"
+          }
+        }
+      }
     },
     "Timeboxing improves completion odds." : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focar melhora a probalidade de atingir as metas"
+          }
+        }
+      }
     },
     "Title" : {
       "localizations" : {
@@ -1453,7 +1780,14 @@
       }
     },
     "today" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hoje"
+          }
+        }
+      }
     },
     "Today in UTC" : {
       "localizations" : {
@@ -1466,21 +1800,17 @@
       }
     },
     "tomorrow morning" : {
-
-    },
-    "Try “Buy gift for Ana • %@ • High”." : {
-
-    },
-    "Type a message..." : {
-      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Entre com uma mensagem..."
+            "value" : "amanhã de manh˜"
           }
         }
       }
+    },
+    "Try “Buy gift for Ana • %@ • High”." : {
+
     },
     "Upgrade Reminder" : {
       "localizations" : {
@@ -1499,11 +1829,24 @@
             "state" : "new",
             "value" : "Use %1$lf min before %2$@."
           }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aproveite os %1$lf min antes das %2$@."
+          }
         }
       }
     },
     "Use the next free block at %@." : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aproveito o próximo intervalo de tempo livre às %@."
+          }
+        }
+      }
     },
     "UTC" : {
 
@@ -1570,10 +1913,24 @@
       }
     },
     "Working…" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carregando…"
+          }
+        }
+      }
     },
     "You have %lld overdue tasks." : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você tem %lld tarefas atrasadas."
+          }
+        }
+      }
     },
     "You have %lld task(s) due today, %lld overdue." : {
       "localizations" : {
@@ -1581,6 +1938,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "You have %1$lld task(s) due today, %2$lld overdue."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Existe(m) %1$lld tarefa(s) para terminar hoje e %2$lld atrasadas."
           }
         }
       }
@@ -1626,9 +1989,6 @@
       }
     },
     "Zunlo" : {
-
-    },
-    "Zunlo Assistant" : {
 
     }
   },

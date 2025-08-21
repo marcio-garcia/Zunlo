@@ -13,4 +13,5 @@ public protocol ChatLocalStore {
     func append(messageId: UUID, delta: String, status: MessageStatus) async throws
     func updateStatus(messageId: UUID, status: MessageStatus, error: String?) async throws
     func delete(messageId: UUID) async throws
+    func deleteAll(_ conversationId: UUID) async throws
 }
