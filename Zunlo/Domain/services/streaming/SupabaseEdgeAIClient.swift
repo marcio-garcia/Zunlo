@@ -28,6 +28,7 @@ import Foundation
 public struct ResponsesApiTextRequest: Encodable {
     let model: String
     let instructions: String?
+    let previous_response_id: String?
     let input: [InputContent]
     let temperature: Double?
     let metadata: [String: String]?
@@ -132,6 +133,8 @@ public final class SupabaseEdgeAIClient: AIChatService {
         supportsTools: Bool
     ) throws -> AsyncThrowingStream<AIEvent, Error> {
 
+        var previousResponseId: String? = nil
+        
         // 1) Build instructions from system messages; keep only latest when multiple
         let systemInstructions: String? = {
             let sys = history.filter { $0.role == .system }.map { $0.rawText }.joined(separator: "\n\n")
@@ -152,6 +155,7 @@ public final class SupabaseEdgeAIClient: AIChatService {
         // 3) If we have function call outputs (streamed tool path), append *all* at the end
         if !output.isEmpty {
             for o in output {
+                previousResponseId = o.previous_response_id
                 textContent.append(InputContent(
                     type: "function_call_output",
                     call_id: o.tool_call_id,
@@ -166,6 +170,7 @@ public final class SupabaseEdgeAIClient: AIChatService {
         let body = ResponsesApiTextRequest(
             model: defaultModel,
             instructions: systemInstructions,
+            previous_response_id: previousResponseId,
             input: tail,
             temperature: defaultTemperature,
             metadata: nil
@@ -272,26 +277,30 @@ public final class SupabaseEdgeAIClient: AIChatService {
 
         switch true {
         case name.contains("response.created"):
+            print("[SSE] event data: \(event.data)")
             if let rid = extractResponseId(from: event.data) {
                 fn.responseId = rid
                 continuation.yield(.responseCreated(responseId: rid))
             }
 
         case name.contains("response.output_item.added"):
+            print("[SSE] event data: \(event.data)")
             if let (itemId, toolName, callId) = parseFunctionCallAdded(event.data) {
                 fn.startCall(id: itemId, name: toolName, callId: callId)
             }
 
         case name.contains("response.function_call_arguments.delta"):
+            print("[SSE] event data: \(event.data)")
             if let (itemId, chunk) = parseFunctionCallArgsDelta(event.data) {
                 fn.appendArgs(id: itemId, chunk: chunk)
             }
 
         case name.contains("response.function_call_arguments.done"):
+            print("[SSE] event data: \(event.data)")
             if let (itemId, args) = parseFunctionCallArgsDone(event.data),
                let call = fn.finishCall(id: itemId, args: args) {
                 let req = ToolCallRequest(
-                    id: itemId,
+                    itemId: itemId,
                     callId: call.callId,
                     name: call.name,
                     argumentsJSON: call.args,
@@ -301,21 +310,28 @@ public final class SupabaseEdgeAIClient: AIChatService {
                 continuation.yield(.toolBatch([req]))
             }
 
+        case name.contains("response.output_item.done"):
+            print("[SSE] event data: \(event.data)")
+            
         case name.contains("response.required_action"):
+            print("[SSE] event data: \(event.data)")
             if let batch = decodeToolBatch(from: event.data) {
                 continuation.yield(.toolBatch(batch))
             }
 
         case name.contains("response.output_text.delta") || name.contains("message.delta"):
+            print("[SSE] event data: \(event.data)")
             let text = extractTextDelta(from: event.data)
             if !text.isEmpty { continuation.yield(.delta(replyId: draftId, text: text)) }
 
         case /*name.contains("response.output_text.done") ||*/ name.contains("response.completed") || name == "completed":
+            print("[SSE] event data: \(event.data)")
             sawCompleted = true
             continuation.yield(.completed(replyId: draftId))
 
         // Optional: suggestions (if your Edge Function emits them)
         case name.contains("response.suggestions") || name.contains("ui.suggestions"):
+            print("[SSE] event data: \(event.data)")
             if let chips = extractSuggestions(from: event.data), !chips.isEmpty {
                 continuation.yield(.suggestions(chips))
             }
@@ -384,7 +400,7 @@ public final class SupabaseEdgeAIClient: AIChatService {
                    let s = String(data: d, encoding: .utf8) { return s }
                 return "{}"
             }()
-            return ToolCallRequest(id: id, callId: callId, name: name, argumentsJSON: argsJSON, responseId: responseId, origin: .requiredAction)
+            return ToolCallRequest(itemId: id, callId: callId, name: name, argumentsJSON: argsJSON, responseId: responseId, origin: .requiredAction)
         }
     }
 

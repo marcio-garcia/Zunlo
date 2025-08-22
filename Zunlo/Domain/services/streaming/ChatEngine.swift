@@ -269,11 +269,19 @@ public actor ChatEngine {
                 let result = try await tools.dispatch(env)
                 notes.append("• \(result.note)")
                 if let ui = result.ui { inserts.append(ui) }
-                outputs.append(ToolOutput(tool_call_id: c.callId, output: result.note))
+                outputs.append(ToolOutput(
+                    previous_response_id: c.responseId,
+                    tool_call_id: c.callId,
+                    output: String((result.ui?.text ?? AttributedString(stringLiteral: "")).characters)
+                ))
             } catch {
                 let fail = "• \(c.name) failed: \(error.localizedDescription)"
                 notes.append(fail)
-                outputs.append(ToolOutput(tool_call_id: c.callId, output: fail))
+                outputs.append(ToolOutput(
+                    previous_response_id: c.responseId,
+                    tool_call_id: c.callId,
+                    output: fail
+                ))
             }
         }
 
@@ -294,14 +302,14 @@ public actor ChatEngine {
 
             // Optional: visible summary bubble (keep or remove to taste)
             let summaryText = (["🔧 Ran \(calls.count) tool(s):"] + notes).joined(separator: "\n")
-//            let text = inserts.first?.text ?? summaryText
-            let m = ChatMessage(conversationId: conversationId,
-                                role: .tool,
-                                plain: summaryText,
-                                createdAt: Date(),
-                                status: .sent)
-            try? await repo.upsert(m)
-            continuation.yield(.messageAppended(m))
+////            let text = inserts.first?.text ?? summaryText
+//            let m = ChatMessage(conversationId: conversationId,
+//                                role: .tool,
+//                                plain: summaryText,
+//                                createdAt: Date(),
+//                                status: .sent)
+//            try? await repo.upsert(m)
+//            continuation.yield(.messageAppended(m))
 
             // IMPORTANT: do NOT call ai.submitToolOutputs here.
             // The follow-up turn will be kicked off after the current stream completes.

@@ -382,7 +382,7 @@ public enum ToolCallOrigin: Codable, Equatable, Sendable {
 }
 
 public struct ToolCallRequest: Codable, Hashable, Sendable {
-    public let id: String     // item_id from OpenAI
+    public let itemId: String     // item_id from OpenAI
     public let callId: String // tool_call_id from OpenAI
     public let name: String
     public let argumentsJSON: String
@@ -391,6 +391,7 @@ public struct ToolCallRequest: Codable, Hashable, Sendable {
 }
 
 public struct ToolOutput: Encodable {
+    public let previous_response_id: String
     public let tool_call_id: String
     public let output: String   // must be a string; JSON → stringify first
 }

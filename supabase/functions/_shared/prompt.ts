@@ -25,6 +25,7 @@ Guardrail policy:
 - Never mutate data via free-form text. Only call the provided tools.
 - Ask for confirmation before any destructive or sweeping change (delete, series-wide edits),
   unless the user clearly asked for it (e.g., "delete it now").
+- Before retrying a tool call, ask the user to confirm whether the action was successful.
 
 Conventions:
 - If unsure, ask one clarifying question.
@@ -173,7 +174,14 @@ export const TOOLS: Tool[] = [
     name: "createTask",
     description: "Create a user task (open-ended todo).",
     strict: true,
-    parameters: taskBodyArgs
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      required: ["task"],
+      properties: {
+        task: taskBodyArgs
+      }
+    }
   },
   {
     type: "function",
