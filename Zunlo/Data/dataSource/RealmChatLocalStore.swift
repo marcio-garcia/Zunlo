@@ -22,11 +22,11 @@ public final class RealmChatLocalStore: ChatLocalStore {
         try await db.upsertChatMessage(message)
     }
 
-    public func append(messageId: UUID, delta: String, status: MessageStatus) async throws {
+    public func append(messageId: UUID, delta: String, status: ChatMessageStatus) async throws {
         try await db.appendChatMessage(messageId: messageId, delta: delta, status: status)
     }
 
-    public func updateStatus(messageId: UUID, status: MessageStatus, error: String?) async throws {
+    public func updateStatus(messageId: UUID, status: ChatMessageStatus, error: String?) async throws {
         try await db.updateChatMessageStatus(messageId: messageId, status: status, error: error)
     }
 

@@ -174,6 +174,9 @@ final public class ReminderTriggerLocal: EmbeddedObject, ObjectKeyIdentifiable {
     }
 
     var toDomain: ReminderTrigger {
-        ReminderTrigger(timeBeforeDue: timeBeforeDue, message: message)
+        ReminderTrigger(
+            timeBeforeDue: timeBeforeDue,
+            message: message
+        )
     }
 }

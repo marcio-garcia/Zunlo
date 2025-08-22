@@ -7,75 +7,71 @@
 
 import SwiftUI
 
+// MARK: - ViewModel (UI-focused)
+
 @MainActor
 public final class ChatViewModel: ObservableObject {
-    // Source messages (flat)
+    // UI state
     @Published public private(set) var messages: [ChatMessage] = []
-
-    // Grouped for UI
     @Published public private(set) var daySections: [DaySection] = []
     @Published public private(set) var lastMessageAnchor: UUID?
 
-    // Input/UI state
     @Published public var input: String = ""
     @Published public var isGenerating: Bool = false
     @Published public var suggestions: [String] = []
-
-    // AI response id
     @Published private(set) var currentResponseId: String?
-    
+
     public let conversationId: UUID
-    private let chatRepo: ChatRepository
-    private let aiChatService: AIChatService
-    private let toolRouter: AIToolRouter
-    private let userId: UUID?
 
-    private let calendar = Calendar.current
-    private let iso8601 = ISO8601DateFormatter()
+    private let engine: ChatEngine
+    private let repo: ChatRepository
 
-    public init(
-        conversationId: UUID,
-        userId: UUID? = nil,
-        aiChatService: AIChatService,
-        toolRouter: AIToolRouter,
-        chatRepo: ChatRepository
-    ) {
+    // Deterministic calendar/formatting for stable section ids
+    private let calendar: Calendar
+    private let dayIdFormatter: DateFormatter
+
+    private let rebuildDebouncer = Debouncer()
+
+    public init(conversationId: UUID, engine: ChatEngine, repo: ChatRepository, timeZone: TimeZone = TimeZone(secondsFromGMT: 0)!) {
         self.conversationId = conversationId
-        self.chatRepo = chatRepo
-        self.aiChatService = aiChatService
-        self.toolRouter = toolRouter
-        self.userId = userId
+        self.engine = engine
+        self.repo = repo
+
+        var cal = Calendar(identifier: .iso8601)
+        cal.timeZone = timeZone
+        self.calendar = cal
+
+        let df = DateFormatter()
+        df.calendar = cal
+        df.dateFormat = "yyyy-MM-dd"
+        df.timeZone = timeZone
+        self.dayIdFormatter = df
     }
 
     // MARK: Loading
 
     public func loadHistory(limit: Int? = 200) async {
         do {
-            messages = try await chatRepo.loadMessages(conversationId: conversationId, limit: limit)
+            messages = try await engine.loadHistory(limit: limit)
             rebuildSections()
         } catch {
+            // Surface minimally; in production route to a banner/system bubble
             print("Failed to load chat: \(error)")
         }
     }
 
     // MARK: Sending / Streaming
 
-    public func send(text: String? = nil, attachments: [ChatAttachment] = []) async {
-//        let args = "{\"dateRange\":\"tomorrow\",\"start\":\"2025-08-21T00:00:00-03:00\",\"end\":\"2025-08-22T00:00:00-03:00\"}"
-//        let req = ToolCallRequest(
-//            id: "124",
-//            name: "getAgenda",
-//            argumentsJSON: args,
-//            responseId: "345",
-//            origin: ToolCallOrigin.streamed
-//        )
-//        await handleToolBatch([req])
-//        return
-        
+    public func send(text: String? = nil, attachments: [ChatAttachment] = [], userId: UUID? = nil) async {
         let trimmed = (text ?? input).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isGenerating else { return }
-        
-        // 1) Persist user message
+
+        // Clear UI affordances
+        input = ""
+        suggestions = []
+        isGenerating = true
+
+        // 1) Append local user bubble immediately for responsiveness
         let userMessage = ChatMessage(
             conversationId: conversationId,
             role: .user,
@@ -85,106 +81,35 @@ public final class ChatViewModel: ObservableObject {
             userId: userId,
             attachments: attachments
         )
-        await streamMsg(message: userMessage)
-    }
-    
-    public func streamMsg(message: ChatMessage, output: [ToolOutput] = []) async {
-        input = ""
+        messages.append(userMessage)
+        rebuildSections()
 
-        suggestions = []
-        
-        // Generate assistant reply
-        isGenerating = true
-        var replyId: UUID?
-
-        do {
-            messages.append(message)
-            rebuildSections()
-            try await chatRepo.upsert(message)
-            
-            let stream = try aiChatService.generate(
-                conversationId: conversationId,
-                history: messages,
-                output: output,
-                supportsTools: true
-            )
-
-            for try await event in stream {
-                switch event {
-                case .started(let id):
-                    replyId = id
-                    print("[VM] ***** new id: \(id)")
-                    let assistant = ChatMessage(
-                        id: id,
-                        conversationId: conversationId,
-                        role: .assistant,
-                        plain: "",
-                        createdAt: Date(),
-                        status: .streaming
-                    )
-                    messages.append(assistant)
-                    rebuildSections()
-                    try await chatRepo.upsert(assistant)
-
-                case .delta(let id, let delta):
-                    if let idx = messages.firstIndex(where: { $0.id == id }) {
-                        messages[idx].rawText += delta
-                        messages[idx].status = .streaming
-                        print("[VM] delta: \(delta)")
-                        try await chatRepo.appendDelta(messageId: id, delta: delta, status: .streaming)
-                        rebuildSections()
-                    }
-
-                case .toolCall(let name, let argsJSON):
-                    await handleToolCall(name: name, argsJSON: argsJSON)
-
-                case .toolBatch(let calls):
-                    for c in calls {
-                        print("[VM] tool call:", c.name, "args:", c.argumentsJSON)
-                    }
-                    await handleToolBatch(calls)
-                    
-                case .suggestions(let chips):
-                    suggestions = chips
-
-                case .completed(let id):
-                    if let idx = messages.firstIndex(where: { $0.id == id }) {
-                        messages[idx].status = .sent
-                        print("[VM] ***** id: \(id) message: \(messages[idx])")
-                        rebuildSections()
-                        try await chatRepo.setStatus(messageId: id, status: .sent, error: nil)
-                    }
-                    isGenerating = false
-                case .responseCreated(let rid):
-                    currentResponseId = rid
-                }
-            }
-        } catch {
-            isGenerating = false
-            if let id = replyId, let idx = messages.firstIndex(where: { $0.id == id }) {
-                messages[idx].status = .failed
-                messages[idx].errorDescription = "\(error)"
-                rebuildSections()
-                try? await chatRepo.setStatus(messageId: id, status: .failed, error: "\(error)")
-            }
-        }
-    }
-
-    public func retry(messageId: UUID) async {
-        guard let _ = messages.first(where: { $0.id == messageId && $0.status == .failed }) else { return }
-        if let lastUser = messages.reversed().first(where: { $0.role == .user }) {
-            await streamMsg(message: lastUser)
+        // 2) Start engine stream and react to events
+        let historySnapshot = messages // pass snapshot to engine
+        Task { [weak self] in
+            guard let self else { return }
+            let stream = await engine.startStream(history: historySnapshot, userMessage: userMessage)
+            for await ev in stream { await self.consume(ev) }
         }
     }
 
     public func stopGeneration() {
-        aiChatService.cancelCurrentGeneration()
+        Task { await engine.stop() }
         isGenerating = false
-        if var last = messages.last, last.role == .assistant {
-            last.status = .sent
+        // If last is assistant, ensure UI shows it as sent
+        if let idx = messages.indices.last, messages[idx].role == .assistant {
+            messages[idx].status = .sent
             rebuildSections()
-            Task { try? await chatRepo.setStatus(messageId: last.id, status: .sent, error: nil) }
+            Task { try? await repo.setStatus(messageId: messages[idx].id, status: .sent, error: nil) }
         }
+    }
+
+    public func retry(failedAssistantId: UUID) async {
+        // Find the user message immediately preceding this assistant
+        guard let failedIndex = messages.firstIndex(where: { $0.id == failedAssistantId && $0.status == .failed }) else { return }
+        let prevUser = messages[..<failedIndex].last { $0.role == .user }
+        guard let userMessage = prevUser else { return }
+        await send(text: userMessage.rawText)
     }
 
     public func delete(messageId: UUID) async {
@@ -192,13 +117,69 @@ public final class ChatViewModel: ObservableObject {
             messages.remove(at: idx)
             rebuildSections()
         }
-        try? await chatRepo.delete(messageId: messageId)
+        try? await repo.delete(messageId: messageId)
     }
-    
+
     public func deleteAll() async {
         messages.removeAll()
         rebuildSections()
-        try? await chatRepo.deleteAll(conversationId)
+        try? await repo.deleteAll(conversationId)
+    }
+
+    // MARK: Consume Engine Events
+
+    private func consume(_ ev: ChatEngineEvent) async {
+        switch ev {
+        case .messageAppended(let m):
+            upsertLocal(m)
+            if m.role == .assistant { lastMessageAnchor = m.id }
+            rebuildSections()
+
+        case .messageDelta(let id, let delta):
+            if let idx = messages.firstIndex(where: { $0.id == id }) {
+                messages[idx].rawText += delta
+                messages[idx].status = .streaming
+                // Debounce expensive section rebuilds during token bursts
+                rebuildDebouncer.schedule { [weak self] in self?.rebuildSections() }
+            }
+
+        case .messageStatusUpdated(let id, let status, _):
+            if let idx = messages.firstIndex(where: { $0.id == id }) {
+                messages[idx].status = status
+            }
+            rebuildSections()
+
+        case .suggestions(let chips):
+            suggestions = chips
+
+        case .responseCreated(let rid):
+            currentResponseId = rid
+
+        case .stateChanged(let s):
+            switch s {
+            case .idle:
+                isGenerating = false
+            case .streaming:
+                isGenerating = true
+            case .awaitingTools:
+                isGenerating = true
+            case .failed(let msg):
+                isGenerating = false
+                print("Stream failed: \(msg)")
+            }
+
+        case .completed:
+            isGenerating = false
+            rebuildSections()
+        }
+    }
+
+    private func upsertLocal(_ message: ChatMessage) {
+        if let idx = messages.firstIndex(where: { $0.id == message.id }) {
+            messages[idx] = message
+        } else {
+            messages.append(message)
+        }
     }
 
     // MARK: Grouping
@@ -208,131 +189,12 @@ public final class ChatViewModel: ObservableObject {
         let sortedDays = groups.keys.sorted()
         daySections = sortedDays.map { day in
             let items = (groups[day] ?? []).sorted { $0.createdAt < $1.createdAt }
-            return DaySection(id: iso8601.string(from: day), date: day, items: items)
+            return DaySection(id: dayIdFormatter.string(from: day), date: day, items: items)
         }
         lastMessageAnchor = messages.last?.id
     }
-    
-    private func handleToolBatch(_ calls: [ToolCallRequest]) async {
-        guard let responseId = calls.first?.responseId else { return }
-
-        var outputs: [ToolOutput] = []
-        var notes: [String] = []
-        var inserts: [ChatInsert] = []
-        
-        for c in calls {
-            do {
-                let envelope = AIToolEnvelope(name: c.name, argsJSON: c.argumentsJSON)
-                let result = try await toolRouter.dispatch(envelope)
-                notes.append("• \(result.note)")
-                if let chatInsert = result.ui {
-                    inserts.append(chatInsert)
-                }
-                outputs.append(ToolOutput(
-                    tool_call_id: c.callId,
-                    output: result.note // keep it short; model sees this
-                ))
-            } catch {
-                let fail = "• \(c.name) failed: \(error.localizedDescription)"
-                notes.append(fail)
-                outputs.append(ToolOutput(
-                    tool_call_id: c.callId,
-                    output: fail
-                ))
-            }
-        }
-        
-        // 2) If any came from required_action → submit tool_outputs
-        if let rid = calls.first(where: { $0.origin == .requiredAction })?.responseId {
-            try? await aiChatService.submitToolOutputs(responseId: rid, outputs: outputs)
-            // The original SSE stream should continue and produce more tokens.
-            // Submit tool outputs so OpenAI can continue the same streaming response
-            do {
-                try await aiChatService.submitToolOutputs(responseId: responseId, outputs: outputs)
-            } catch {
-                // Surface error to chat
-                let m = ChatMessage(
-                    conversationId: conversationId,
-                    role: .tool,
-                    plain: "⚠️ Submit tool outputs failed: \(error.localizedDescription)",
-                    createdAt: Date(),
-                    status: .sent
-                )
-                
-//                rebuildSections()
-//                messages.append(m)
-//                try? await chatRepo.upsert(m)
-                return
-            }
-
-        } else {
-            // Streamed function_call path: DON'T call tool_outputs.
-            // Optionally: kick off a follow-up turn using the tool result if you want the model to narrate.
-            // Optional: show a compact tool summary bubble
-            let summary = (["🔧 Ran \(calls.count) tool(s):"] + notes).joined(separator: "\n")
-            let text = inserts.first?.text ?? ""
-            let m = ChatMessage(conversationId: conversationId, role: .tool, attributed: text, createdAt: Date(), status: .sent)
-//            messages.append(m)
-//            rebuildSections()
-//            try? await chatRepo.upsert(m)
-            let debounce = DebouncedExecutor()
-            let actionID = UUID()
-            if !isGenerating {
-                await self.streamMsg(message: m)
-            }
-        }
-        
-        // Insert any UI messages produced by tools (e.g., Agenda text + JSON attachment + actions)
-//        for ins in inserts {
-//            var chat = ChatMessage(
-//                conversationId: conversationId,
-//                role: .tool,
-//                text: ins.text,
-//                createdAt: Date(),
-//                status: .sent
-//            )
-//            chat.attachments = ins.attachments
-//            chat.actions = ins.actions
-//            print("[VM] created tool response message")
-//            if isGenerating {
-//                print("[VM] still streaming - add to pending")
-//                pendingMessages.append(chat)
-//            } else {
-//                print("[VM] streaming done - send tool response")
-//                messages.append(chat)
-//                try? await chatRepo.upsert(chat)
-//                await streamMsg(message: chat)
-//            }
-//        }
-
-        
-    }
 }
 
-// MARK: Tools
-
-extension ChatViewModel {
-    private func handleToolCall(name: String, argsJSON: String) async {
-        do {
-            let env = try JSONDecoder.decoder().decode(AIToolEnvelope.self, from: Data("""
-            {"name":"\(name)","arguments":\(argsJSON)}
-            """.utf8))
-            let result = try await toolRouter.dispatch(env)
-            let m = ChatMessage(conversationId: conversationId, role: .tool, plain: result.note, createdAt: Date(), status: .sent)
-//            messages.append(m)
-//            rebuildSections()
-//            try? await chatRepo.upsert(m)
-        } catch {
-            let m = ChatMessage(
-                conversationId: conversationId, role: .tool, plain: "⚠️ Tool error: \(error.localizedDescription)",
-                createdAt: Date(), status: .sent
-            )
-//            messages.append(m)
-//            rebuildSections()
-//            try? await chatRepo.upsert(m)
-        }
-    }
-}
 
 extension ChatViewModel {
     // Called by MessageBubble.onAction
@@ -367,30 +229,17 @@ extension ChatViewModel {
 
     // user-triggered “Send it to me” that creates a new user turn
     private func sendAttachmentToAI(schema: String?, mime: String, data: Data) async {
-        // Append a local user bubble so UI feels responsive
-        var m = ChatMessage(conversationId: conversationId, role: .user,
-                            plain: String(localized: "Please analyze the attached data."),
-                            createdAt: Date(), status: .sending)
-        // Include the attachment so your aiChatService can pass it as a content part
-        m.attachments = [
+        let attachments = [
             ChatAttachment(
                 id: UUID(), mime: mime, schema: schema,
                 filename: "payload.json", dataBase64: data.base64EncodedString()
             )
         ]
-//        messages.append(m)
-//        rebuildSections()
-//        try? await chatRepo.upsert(m)
-
-        // Send through API
-        await streamMsg(message: m)
-        
-        // Mark as sent
-        if let idx = messages.firstIndex(where: { $0.id == m.id }) {
-            messages[idx].status = .sent
-        }
-        
-        rebuildSections()
+        await send(
+            text: String(localized: "Please analyze the attached data."),
+            attachments: attachments,
+            userId: nil
+        )
     }
 
 }

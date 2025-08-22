@@ -15,8 +15,19 @@ const ajv = new Ajv({ allErrors: true, strict: true });
 addFormats(ajv);
 
 // Register all referenced schemas so $ref works.
-for (const [_k, schema] of Object.entries(schemaRegistry)) {
-  ajv.addSchema(schema);
+for (const [name, schema] of Object.entries(schemaRegistry)) {
+  try {
+    // Optional: pre-check to log more readable errors
+    const ok = ajv.validateSchema(schema);
+    if (!ok) {
+      console.error(`[AJV] Invalid schema '${name}' ($id=${(schema as any).$id ?? "n/a"})`, ajv.errors);
+      throw new Error("Invalid schema");
+    }
+    ajv.addSchema(schema);
+  } catch (e) {
+    console.error(`[AJV] addSchema failed for '${name}' ($id=${(schema as any).$id ?? "n/a"})`, e);
+    throw e;
+  }
 }
 
 /** Validate and either return the typed value or a Response with 400 + errors. */
@@ -31,4 +42,3 @@ export function validate<T>(schema: object, value: unknown): T | Response {
     { status: 400, headers: { "Content-Type": "application/json" } }
   );
 }
-

@@ -7,6 +7,34 @@
 
 import Foundation
 
+@propertyWrapper
+public struct NullCodable<Value: Codable>: Codable {
+    public var wrappedValue: Value?
+
+    public init(wrappedValue: Value?) {
+        self.wrappedValue = wrappedValue
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() {
+            wrappedValue = nil
+        } else {
+            wrappedValue = try c.decode(Value.self)
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        if let v = wrappedValue {
+            try c.encode(v)
+        } else {
+            try c.encodeNil()
+        }
+    }
+}
+
+
 public enum EditScope: String, Codable { case single, override, this_and_future, entire_series }
 
 /// Used when we don't need to decode any response payload.
@@ -99,13 +127,13 @@ struct PatchEncoder {
 // CREATE
 struct TaskCreateInput: Codable {
     var title: String
-    var notes: String?
-    var dueDate: Date?
-    var isCompleted: Bool?
-    var tags: [String]?
-    var reminderTriggers: [ReminderTrigger]?
-    var parentEventId: UUID?
-    var priority: UserTaskPriority?
+    @NullCodable var notes: String?
+    @NullCodable var dueDate: Date?
+    var isCompleted: Bool
+    var tags: [String]
+    var reminderTriggers: [ReminderTrigger]
+    @NullCodable var parentEventId: UUID?
+    var priority: UserTaskPriority
 }
 
 struct EventCreateInput: Codable {
@@ -222,7 +250,7 @@ public struct CreateTaskPayloadWire: Encodable {
     var intent: String = "create"
     var idempotencyKey: String
     var reason: String
-    var dryRun: Bool?
+    var dryRun: Bool = false
     var task: TaskCreateInput
 }
 

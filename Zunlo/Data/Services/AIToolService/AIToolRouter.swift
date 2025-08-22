@@ -34,9 +34,13 @@ public struct ToolDispatchResult {
     }
 }
 
+public protocol ToolRouter {
+    func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult
+}
+
 /// Single responsibility: map a ToolEnvelope to the right ToolService call,
 /// inject `version`/ids, and apply server snapshots to local stores.
-final public class AIToolRouter {
+public class AIToolRouter: ToolRouter {
     private let tools: AIToolService
     private let repo: DomainRepositories
     private let reason = "from tool call"
@@ -47,11 +51,11 @@ final public class AIToolRouter {
     }
 
     /// Dispatch one tool call. Returns a short user-facing note for the chat.
-    func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult {
+    public func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult {
         switch env.name {
 
         case "createTask": do {
-            let args = try JSONDecoder.decoder().decode(CreateTaskArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(CreateTaskArgs.self, from: Data(env.argsJSON.utf8))
             let p = CreateTaskPayloadWire(
                 idempotencyKey: UUID().uuidString,
                 reason: reason,
@@ -63,7 +67,7 @@ final public class AIToolRouter {
         }
 
         case "updateTask": do {
-            let args = try JSONDecoder.decoder().decode(UpdateTaskArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(UpdateTaskArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForTask(id: args.taskId) else {
                 throw ToolRoutingError.missingVersion(entity: "task", id: args.taskId)
             }
@@ -80,7 +84,7 @@ final public class AIToolRouter {
         }
 
         case "deleteTask": do {
-            let args = try JSONDecoder.decoder().decode(DeleteTaskArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(DeleteTaskArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForTask(id: args.taskId) else {
                 throw ToolRoutingError.missingVersion(entity: "task", id: args.taskId)
             }
@@ -96,7 +100,7 @@ final public class AIToolRouter {
         }
 
         case "createEvent": do {
-            let args = try JSONDecoder.decoder().decode(CreateEventArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(CreateEventArgs.self, from: Data(env.argsJSON.utf8))
             let p = CreateEventPayloadWire(
                 idempotencyKey: UUID().uuidString,
                 reason: reason,
@@ -109,7 +113,7 @@ final public class AIToolRouter {
         }
 
         case "updateEvent": do {
-            let args = try JSONDecoder.decoder().decode(UpdateEventArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(UpdateEventArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForEvent(id: args.eventId) else {
                 throw ToolRoutingError.missingVersion(entity: "event", id: args.eventId)
             }
@@ -139,7 +143,7 @@ final public class AIToolRouter {
         }
 
         case "deleteEvent": do {
-            let args = try JSONDecoder.decoder().decode(DeleteEventArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(DeleteEventArgs.self, from: Data(env.argsJSON.utf8))
             guard let v = await repo.versionForEvent(id: args.eventId) else {
                 throw ToolRoutingError.missingVersion(entity: "event", id: args.eventId)
             }
@@ -196,7 +200,7 @@ final public class AIToolRouter {
             return ToolDispatchResult(note: "📋 Agenda ready", ui: ui)
 
         case "planWeek":
-            var args = try? JSONDecoder.decoder().decode(PlanWeekArgs.self, from: Data(env.argsJSON.utf8))
+            var args = try? JSONDecoder.makeDecoder().decode(PlanWeekArgs.self, from: Data(env.argsJSON.utf8))
             if args == nil {
                 args = PlanWeekArgs(startDate: Date(), objectives: [], constraints: nil, horizon: "7")
             }

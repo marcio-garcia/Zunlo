@@ -300,7 +300,7 @@ private struct MessageBubble: View {
         .contextMenu {
             Button("Copy") { UIPasteboard.general.string = message.rawText }
             if message.status == .failed {
-                Button("Retry") { Task { await viewModel.retry(messageId: message.id) } }
+                Button("Retry") { Task { await viewModel.retry(failedAssistantId: message.id) } }
             }
             Button(role: .destructive) {
                 Task { nav.showDialog(DialogRoute.deleteChatMessage(id: message.id), for: viewID) }

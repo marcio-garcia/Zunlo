@@ -93,4 +93,12 @@ extension JSONEncoder {
         }
         return e
     }
+    
+    static func makeEncoder(taskPriorityEncoding: UserTaskPriority.Encoding = .int) -> JSONEncoder {
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.withoutEscapingSlashes] // optional, cleaner JSON
+        enc.dateEncodingStrategy = .iso8601
+        enc.userInfo[.priorityEncodingStrategy] = taskPriorityEncoding
+        return enc
+    }
 }

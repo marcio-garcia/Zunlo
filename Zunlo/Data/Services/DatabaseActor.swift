@@ -1001,7 +1001,7 @@ extension DatabaseActor {
     }
 
     /// Append streaming delta and set status; also refresh conversation preview/updatedAt.
-    public func appendChatMessage(messageId: UUID, delta: String, status: MessageStatus) throws {
+    public func appendChatMessage(messageId: UUID, delta: String, status: ChatMessageStatus) throws {
         let realm = try openRealm()
         guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
             throw ChatDBError.messageNotFound(messageId)
@@ -1016,7 +1016,7 @@ extension DatabaseActor {
                 role: ChatRole(rawValue: obj.roleRaw) ?? .assistant,
                 plain: obj.rawText,
                 createdAt: obj.createdAt,
-                status: MessageStatus(rawValue: obj.statusRaw) ?? .streaming,
+                status: ChatMessageStatus(rawValue: obj.statusRaw) ?? .streaming,
                 userId: obj.userId
             )
             Self.touchConversation(for: stub, withText: obj.rawText, in: realm)
@@ -1024,7 +1024,7 @@ extension DatabaseActor {
     }
 
     /// Update a message status and optional error; touch conversation timestamp.
-    public func updateChatMessageStatus(messageId: UUID, status: MessageStatus, error: String?) throws {
+    public func updateChatMessageStatus(messageId: UUID, status: ChatMessageStatus, error: String?) throws {
         let realm = try openRealm()
         guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
             throw ChatDBError.messageNotFound(messageId)
@@ -1091,23 +1091,23 @@ extension DatabaseActor {
         convo.updatedAt = Date()
         // lastMessageAt reflects the message creation time; keeps chronological sense even with streaming
         convo.lastMessageAt = message.createdAt
-        // Update preview only for user/assistant (skip system/tool)
-        switch message.role {
-        case .user, .assistant:
-            convo.lastMessagePreview = makePreview(text)
-        default:
-            break
-        }
+//        // Update preview only for user/assistant (skip system/tool)
+//        switch message.role {
+//        case .user, .assistant:
+//            convo.lastMessagePreview = makePreview(text)
+//        default:
+//            break
+//        }
     }
 
-    private static func makePreview(_ text: String, maxLen: Int = 140) -> String {
-        let trimmed = text
-            .replacingOccurrences(of: "\n", with: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.count <= maxLen { return trimmed }
-        let idx = trimmed.index(trimmed.startIndex, offsetBy: maxLen)
-        return String(trimmed[..<idx]) + "…"
-    }
+//    private static func makePreview(_ text: String, maxLen: Int = 140) -> String {
+//        let trimmed = text
+//            .replacingOccurrences(of: "\n", with: " ")
+//            .trimmingCharacters(in: .whitespacesAndNewlines)
+//        if trimmed.count <= maxLen { return trimmed }
+//        let idx = trimmed.index(trimmed.startIndex, offsetBy: maxLen)
+//        return String(trimmed[..<idx]) + "…"
+//    }
 }
 
 enum ConflictTable: String { case events, recurrence_rules, event_overrides, tasks }

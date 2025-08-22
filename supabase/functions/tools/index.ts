@@ -9,7 +9,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 // Phase 1 returns "Not Implemented" after validating the payload shape.
 
 import { Hono } from "jsr:@hono/hono";
-import { withAuth } from "../_shared/guard.ts";
+import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
+import { withAuth, type AuthContext } from "../_shared/guard.ts";
 import { validate } from "../_shared/validate.ts";
 import {
   // Schemas & types
@@ -21,8 +22,6 @@ import {
   type GetAgendaInput, type PlanWeekInput, type EventBody, type TaskBody
 } from "../_shared/schemas.ts";
 import { getIdempotentResult, saveIdempotentResult } from "../_shared/idempotency.ts";
-
-import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   assertMutationAllowed,
   recordMutation,
@@ -30,7 +29,7 @@ import {
   jsonOk,
 } from "../_shared/entitlements.ts";
 
-const app = new Hono();
+const app = new Hono({ strict: false }).basePath("/tools");
 
 // --- service-role client (for idempotency + usage accounting only) ---
 const SERVICE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -40,83 +39,187 @@ const service = createClient(SERVICE_URL, SERVICE_KEY);
 // --- helpers ---
 const nowISO = () => new Date().toISOString();
 const priorityToInt = (p?: string) => (p === "high" ? 2 : p === "medium" ? 1 : 0);
+async function readJson<T = unknown>(c: any): Promise<T | Response> {
+  try {
+    return (await c.req.json()) as T;
+  } catch {
+    return c.json({ error: "Bad JSON" }, 400);
+  }
+};
+// Auth middleware: attaches { supabase, userId, token } to the context
+const authMiddleware = async (c: any, next: Function) => {
+  const auth = await withAuth(c.req);
+  if (auth instanceof Response) return auth;  // early return on 401/500
+  c.set("auth", auth);
+  await next();
+};
 
-// Wrap handlers with auth; pass both user client and userId
-function authed(handler: (ctx: { req: Request; userId: string; body: any }) => Promise<Response>) {
-  return async (c: any) => {
-    const auth = await withAuth(c.req.raw);
-    if (auth instanceof Response) return auth;
-    let body: any;
-    try { body = await c.req.json(); }
-    catch { return c.json({ error: "Bad JSON" }, 400); }
-    return handler({ req: c.req.raw, userId: auth.userId, body });
-  };
-}
+console.log("[boot] ENV", {
+  hasURL: !!Deno.env.get("SUPABASE_URL"),
+  hasAnon: !!Deno.env.get("SUPABASE_ANON_KEY"),
+  // don’t log keys themselves
+});
+
+console.log("[boot] basePath=/tools");
+
+// Simple request logger with timing
+app.use("*", async (c, next) => {
+  const rid = crypto.randomUUID();
+  (c as any).rid = rid; // stash if you want it later
+  const t0 = performance.now();
+  const url = new URL(c.req.url);
+  try {
+    await next();
+  } finally {
+    const ms = (performance.now() - t0).toFixed(1);
+    console.log(`[${c.req.method} ${new URL(c.req.url).pathname}][${rid}] status=${c.res.status} ms=${ms}`);
+    console.log(`[POST ${url.pathname}] status=${c.res.status}`);
+  }
+});
+
+app.onError((err, c) => {
+  console.error("[onError]", err);
+  return c.json({ error: "Internal Error", message: err?.message ?? String(err) }, 500);
+});
+
+app.notFound((c) => {
+  const path = new URL(c.req.url).pathname;
+  console.warn("[notFound]", path);
+  return c.json({ error: "Not Found", path }, 404);
+});
 
 /* -------------------
  * Read-only endpoints
  * ------------------- */
 
-app.post("/getAgenda", authed(async ({ body }) => {
-  const valid = validate<GetAgendaInput>(getAgendaSchema, body);
-  if (valid instanceof Response) return valid;
-  return jsonOk({ ok: true, preview: true });
-}));
+app.post("/getAgenda", authMiddleware, async (c) => {
+  const rid = c.get("rid");
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
 
-app.post("/planWeek", authed(async ({ body }) => {
-  const valid = validate<PlanWeekInput>(planWeekInputSchema, body);
-  if (valid instanceof Response) return valid;
+  const valid = validate(getAgendaSchema, body);
+  if (valid instanceof Response) {
+    console.warn(`[tools/getAgenda][${rid}] validation failed`);
+    return valid;
+  }
   return jsonOk({ ok: true, preview: true });
-}));
+});
+
+app.post("/planWeek", authMiddleware, async (c) => {
+  const rid = c.get("rid");
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
+
+  const valid = validate(planWeekInputSchema, body);
+  if (valid instanceof Response) {
+    console.warn(`[tools/planWeek][${rid}] validation failed`);
+    return valid;
+  }
+  return jsonOk({ ok: true, preview: true });
+});
 
 /* ---------------
  * Task mutations
  * --------------- */
 
-app.post("/createTask", authed(async ({ body, userId, supabase }) => {
-  const payload = validate<CreateTaskPayload>(createTaskSchema, body);
-  if (payload instanceof Response) return payload;
+app.post("/createTask", authMiddleware, async (c) => {
+  const rid = c.get("rid");
+  const { supabase, userId } = c.get("auth") as AuthContext;
 
-  // Phase 5: paywall & idempotency pre-check
-  try { await assertMutationAllowed(service, userId); }
-  catch (e) { return e instanceof Response ? e : jsonErr("Forbidden", 403); }
+  const path = "tools/createTask";
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
 
-  const cached = await getIdempotentResult(service, userId, payload.idempotencyKey);
-  if (cached) return jsonOk(cached);
+  console.log(`[${path}][${rid}] start userId=${userId} bodyKeys=${Object.keys(body ?? {})}`);
 
-  // Map to DB row (user client for RLS)
-  const task = payload.task as TaskBody;
-  const insertBody: any = {
-    user_id: userId,
-    title: task.title,
-    notes: task.notes ?? null,
-    is_completed: task.isCompleted ?? false,
-    due_date: task.dueDate ?? null,
-    priority: priorityToInt(task.priority),
-    parent_event_id: task.parentEventId ?? null,
-    tags: task.tags ?? [],
-    reminder_triggers: task.reminderTriggers ?? [],
-    created_at: nowISO(),
-    updated_at: nowISO(),
-    version: 1
-  };
+  try {
+    const payload = validate<CreateTaskPayload>(createTaskSchema, body);
+    if (payload instanceof Response) {
+      console.warn(`[${path}][${rid}] validation failed`);
+      return payload;
+    }
 
-  const { data, error } = await supabase
-    .from("tasks")
-    .insert(insertBody)
-    .select("*")
-    .single();
+    console.log(
+      `[${path}][${rid}] idempotencyKey=${payload.idempotencyKey} title="${payload.task?.title ?? "<nil>"}" priority=${payload.task?.priority}`
+    );
 
-  if (error) return jsonErr(error.message, 400);
+    // Paywall / usage gate
+    try {
+      await assertMutationAllowed(service, userId);
+    } catch (e) {
+      console.warn(`[${path}][${rid}] assertMutationAllowed denied:`, e?.message ?? e);
+      return e instanceof Response ? e : jsonErr("Forbidden", 403);
+    }
 
-  const result = { ok: true, task: data };
-  // Save idempotent result + record mutation using service client
-  await saveIdempotentResult(service, userId, payload.idempotencyKey, result);
-  await recordMutation(service, userId);
-  return jsonOk(result);
-}));
+    // Idempotency cache
+    const cached = await getIdempotentResult(service, userId, payload.idempotencyKey);
+    if (cached) {
+      console.log(`[${path}][${rid}] idempotency cache hit`);
+      return jsonOk(cached);
+    }
 
-app.post("/updateTask", authed(async ({ body, userId, supabase }) => {
+    // Map request → DB row (user client w/ RLS)
+    const task = payload.task as TaskBody;
+    const insertBody: any = {
+      user_id: userId,
+      title: task.title,
+      notes: task.notes ?? null,
+      is_completed: task.isCompleted ?? false,
+      due_date: task.dueDate ?? null,
+      priority: priorityToInt(task.priority),
+      parent_event_id: task.parentEventId ?? null,
+      tags: task.tags ?? [],
+      reminder_triggers: task.reminderTriggers ?? [],
+      created_at: nowISO(),
+      updated_at: nowISO(),
+      version: 1,
+    };
+
+    // Log just a summary of what we’ll write
+    console.log(`[${path}][${rid}] supabase.hasFrom=${typeof (supabase as any)?.from === "function"}`);
+    console.log(`[${path}][${rid}] inserting`, {
+        title: insertBody.title,
+        due_date: insertBody.due_date,
+        priority: insertBody.priority,
+        tags_len: Array.isArray(insertBody.tags) ? insertBody.tags.length : null,
+        reminders_len: Array.isArray(insertBody.reminder_triggers) ? insertBody.reminder_triggers.length : null,
+      },
+    );
+
+    const tIns = performance.now();
+    const { data, error } = await supabase.from("tasks").insert(insertBody).select("*").single();
+    console.log(`[${path}][${rid}] supabase.insert ms=${(performance.now() - tIns).toFixed(1)}`);
+
+    if (error) {
+      console.error(`[${path}][${rid}] db error`, {
+        code: error.code, message: error.message, details: error.details, hint: error.hint,
+      });
+      return jsonErr(error.message, 400);
+    }
+
+    const result = { ok: true, task: data };
+
+    const tMeta = performance.now();
+    await saveIdempotentResult(service, userId, payload.idempotencyKey, result);
+    await recordMutation(service, userId);
+    console.log(`[${path}][${rid}] success ms=${(performance.now() - tMeta).toFixed(1)}`);
+
+    return jsonOk(result);
+  } catch (e) {
+    // Anything that throws will land here (e.g., coding errors, unexpected shapes)
+    console.error(`[${path}][${rid}] unhandled error`, e);
+    return jsonErr("Internal error", 500);
+  }
+});
+
+app.post("/updateTask", authMiddleware, async (c) => {
+  const rid = c.get("rid");
+  const { supabase, userId } = c.get("auth") as AuthContext;
+
+  const path = "tools/updateTask";
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
+
   const payload = validate<UpdateTaskPayload>(updateTaskSchema, body);
   if (payload instanceof Response) return payload;
 
@@ -156,9 +259,16 @@ app.post("/updateTask", authed(async ({ body, userId, supabase }) => {
   await saveIdempotentResult(service, userId, payload.idempotencyKey, result);
   await recordMutation(service, userId);
   return jsonOk(result);
-}));
+});
 
-app.post("/deleteTask", authed(async ({ body, userId, supabase }) => {
+app.post("/deleteTask", authMiddleware, async (c) => {
+  const rid = c.get("rid");
+  const { supabase, userId } = c.get("auth") as AuthContext;
+
+  const path = "tools/deleteTask";
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
+
   const payload = validate<DeleteTaskPayload>(deleteTaskSchema, body);
   if (payload instanceof Response) return payload;
 
@@ -190,13 +300,20 @@ app.post("/deleteTask", authed(async ({ body, userId, supabase }) => {
   await saveIdempotentResult(service, userId, payload.idempotencyKey, result);
   await recordMutation(service, userId);
   return jsonOk(result);
-}));
+});
 
 /* ----------------
  * Event mutations
  * ---------------- */
 
-app.post("/createEvent", authed(async ({ body, userId, supabase }) => {
+app.post("/createEvent", authMiddleware, async (c) => {
+    const rid = c.get("rid");
+  const { supabase, userId } = c.get("auth") as AuthContext;
+
+  const path = "tools/createEvent";
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
+
   const payload = validate<CreateEventPayload>(createEventSchema, body);
   if (payload instanceof Response) return payload;
 
@@ -268,9 +385,16 @@ app.post("/createEvent", authed(async ({ body, userId, supabase }) => {
   await saveIdempotentResult(service, userId, payload.idempotencyKey, result);
   await recordMutation(service, userId);
   return jsonOk(result);
-}));
+});
 
-app.post("/updateEvent", authed(async ({ body, userId, supabase }) => {
+app.post("/updateEvent", authMiddleware, async (c) => {
+    const rid = c.get("rid");
+  const { supabase, userId } = c.get("auth") as AuthContext;
+
+  const path = "tools/updateEvent";
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
+
   const payload = validate<UpdateEventPayload>(updateEventSchema, body);
   if (payload instanceof Response) return payload;
 
@@ -435,9 +559,16 @@ app.post("/updateEvent", authed(async ({ body, userId, supabase }) => {
       return jsonOk(result);
     }
   }
-}));
+});
 
-app.post("/deleteEvent", authed(async ({ body, userId, supabase }) => {
+app.post("/deleteEvent", authMiddleware, async (c) => {
+    const rid = c.get("rid");
+  const { supabase, userId } = c.get("auth") as AuthContext;
+
+  const path = "tools/deleteEvent";
+  const body = await readJson(c);
+  if (body instanceof Response) return body;
+
   const payload = validate<DeleteEventPayload>(deleteEventSchema, body);
   if (payload instanceof Response) return payload;
 
@@ -540,7 +671,7 @@ app.post("/deleteEvent", authed(async ({ body, userId, supabase }) => {
   await saveIdempotentResult(service, userId, payload.idempotencyKey, result);
   await recordMutation(service, userId);
   return jsonOk(result);
-}));
+});
 
 /* ---- server ---- */
 Deno.serve(app.fetch);

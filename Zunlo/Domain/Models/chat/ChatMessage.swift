@@ -13,11 +13,11 @@ public enum ChatRole: String, Codable {
     case user, assistant, system, tool
 }
 
-public enum MessageStatus: String, Codable {
+public enum ChatMessageStatus: String, Codable {
     case sending, streaming, sent, failed
 }
 
-public enum MessageFormat: String, Codable {
+public enum ChatMessageFormat: String, Codable {
     case plain       // render literally
     case markdown    // parse as Markdown
     case rich        // use provided AttributedString
@@ -30,8 +30,8 @@ public struct ChatMessage: Identifiable, Hashable, Codable {
     public var rawText: String
     public var richText: AttributedString?
     public let createdAt: Date
-    public var status: MessageStatus
-    public var format: MessageFormat
+    public var status: ChatMessageStatus
+    public var format: ChatMessageFormat
     public var userId: UUID?
     public var attachments: [ChatAttachment]
     public var actions: [ChatMessageAction] = []
@@ -46,7 +46,7 @@ extension ChatMessage {
         role: ChatRole,
         plain text: String,
         createdAt: Date = Date(),
-        status: MessageStatus = .sent,
+        status: ChatMessageStatus = .sent,
         userId: UUID? = nil,
         attachments: [ChatAttachment] = [],
         actions: [ChatMessageAction] = [],
@@ -73,7 +73,7 @@ extension ChatMessage {
         role: ChatRole,
         markdown md: String,
         createdAt: Date = Date(),
-        status: MessageStatus = .sent,
+        status: ChatMessageStatus = .sent,
         userId: UUID? = nil,
         attachments: [ChatAttachment] = [],
         actions: [ChatMessageAction] = [],
@@ -100,7 +100,7 @@ extension ChatMessage {
         role: ChatRole,
         attributed attr: AttributedString,
         createdAt: Date = Date(),
-        status: MessageStatus = .sent,
+        status: ChatMessageStatus = .sent,
         userId: UUID? = nil,
         attachments: [ChatAttachment] = [],
         actions: [ChatMessageAction] = [],
@@ -251,7 +251,7 @@ extension ChatMessage {
         self.format = r.format
         self.richText = nil
         self.createdAt = r.createdAt
-        self.status = MessageStatus(rawValue: r.statusRaw) ?? .sent
+        self.status = ChatMessageStatus(rawValue: r.statusRaw) ?? .sent
         self.userId = r.userId
         self.parentId = r.parentId
         self.errorDescription = r.errorDescription

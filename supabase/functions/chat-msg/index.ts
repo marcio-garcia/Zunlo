@@ -66,14 +66,14 @@ if (Array.isArray(enriched.tools) && enriched.tools.length) {
   );
   // Assert it's Responses-style and not empty:
   const t = enriched.tools[0] as any;
-  if (!(t.type === "function" && typeof t.name === "string" && t.input_schema)) {
+  if (!(t.type === "function" && typeof t.name === "string" && t.parameters)) {
     console.error("❌ Tool not in Responses format");
   } else if (
-    t.input_schema?.type !== "object" ||
-    !t.input_schema?.properties ||
-    Object.keys(t.input_schema.properties).length === 0
+    t.parameters?.type !== "object" ||
+    !t.parameters?.properties ||
+    Object.keys(t.parameters.properties).length === 0
   ) {
-    console.error("❌ input_schema.properties is empty");
+    console.error("❌ parameters.properties is empty");
   }
 }
   console.log(

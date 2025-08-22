@@ -15,12 +15,20 @@ protocol SchedulableReminderItem {
     var reminderTriggers: [ReminderTrigger]? { get }
 }
 
-public struct ReminderTrigger: Codable, Hashable {
+public struct ReminderTrigger: Equatable, Hashable, Codable {
     public var timeBeforeDue: TimeInterval // seconds before dueDate
-    public var message: String?
+    @NullCodable public var message: String?
     
     public func toLocal() -> ReminderTriggerLocal {
         ReminderTriggerLocal(timeBeforeDue: timeBeforeDue, message: message)
+    }
+    
+    public static func == (lhs: ReminderTrigger, rhs: ReminderTrigger) -> Bool {
+        return lhs.timeBeforeDue == rhs.timeBeforeDue
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        return hasher.combine(timeBeforeDue)
     }
 }
 

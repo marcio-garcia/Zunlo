@@ -42,12 +42,29 @@ final class DefaultViewFactory: ViewFactory {
                                                  eventRepo: appState.eventRepository!)
         let aiToolService = AIToolService(toolRepo: aiToolRepo, client: appState.supabaseClient!)
         let aiToolRouter = AIToolRouter(tools: aiToolService, repo: aiToolRepo)
+        
+//        Task {
+//            do {
+//                let env = AIToolEnvelope(
+//                    name: "createTask",
+//                    argsJSON: "{\"idempotencyKey\": \"abc-5678\",\"intent\": \"create\",\"reason\": \"The reason\",\"dryRun\": true,\"task\": {\"title\": \"Buy new toaster 3\",\"notes\": null,\"isCompleted\": false,\"dueDate\": \"2023-10-06T00:00:00\",\"priority\": \"medium\",\"tags\": [],\"reminderTriggers\": [],\"parentEventId\": null}}")
+//                let result = try await aiToolRouter.dispatch(env)
+//                print(result)
+//            } catch {
+//                print(error.localizedDescription)
+//            }
+//        }
+        
+        let aiChatEngine = ChatEngine(
+            conversationId: cid,
+            ai: aiChatService,
+            tools: aiToolRouter,
+            repo: appState.chatRepository!)
         return ChatViewModel(
             conversationId: cid,
-            userId: appState.authManager?.user?.id,
-            aiChatService: aiChatService,
-            toolRouter: aiToolRouter,
-            chatRepo: appState.chatRepository!
+            engine: aiChatEngine,
+            repo: appState.chatRepository!,
+            timeZone: TimeZone.current
         )
     }
 }

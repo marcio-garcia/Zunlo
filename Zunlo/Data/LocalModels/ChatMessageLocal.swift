@@ -27,8 +27,8 @@ final class ChatMessageLocal: Object {
     @Persisted var parentId: UUID?
     @Persisted var errorDescription: String?
     
-    var format: MessageFormat {
-        get { MessageFormat(rawValue: formatRaw) ?? .plain }
+    var format: ChatMessageFormat {
+        get { ChatMessageFormat(rawValue: formatRaw) ?? .plain }
         set { formatRaw = newValue.rawValue }
     }
 }

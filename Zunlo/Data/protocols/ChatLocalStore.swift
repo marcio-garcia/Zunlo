@@ -10,8 +10,8 @@ import Foundation
 public protocol ChatLocalStore {
     func fetch(conversationId: UUID, limit: Int?) async throws -> [ChatMessage]
     func upsert(_ message: ChatMessage) async throws
-    func append(messageId: UUID, delta: String, status: MessageStatus) async throws
-    func updateStatus(messageId: UUID, status: MessageStatus, error: String?) async throws
+    func append(messageId: UUID, delta: String, status: ChatMessageStatus) async throws
+    func updateStatus(messageId: UUID, status: ChatMessageStatus, error: String?) async throws
     func delete(messageId: UUID) async throws
     func deleteAll(_ conversationId: UUID) async throws
 }

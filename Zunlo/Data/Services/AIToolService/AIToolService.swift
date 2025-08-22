@@ -21,33 +21,39 @@ final public class AIToolService: AIToolServiceAPI {
     // MARK: - Tasks
     @discardableResult
     public func createTask(_ payload: CreateTaskPayloadWire) async throws -> TaskMutationResult {
-        return try await invoke(payload, functionName: "tools/createTask")
+        let body = try JSONEncoder.makeEncoder(taskPriorityEncoding: .string).encode(payload)
+        return try await invoke(body: body, functionName: "tools/createTask")
     }
 
     @discardableResult
     public func updateTask(_ payload: UpdateTaskPayloadWire) async throws -> TaskMutationResult {
-        return try await invoke(payload, functionName: "tools/updateTask")
+        let body = try JSONEncoder.makeEncoder(taskPriorityEncoding: .string).encode(payload)
+        return try await invoke(body: body, functionName: "tools/updateTask")
     }
 
     @discardableResult
     public func deleteTask(_ payload: DeleteTaskPayloadWire) async throws -> TaskMutationResult {
-        return try await invoke(payload, functionName: "tools/deleteTask")
+        let body = try JSONEncoder.makeEncoder(taskPriorityEncoding: .string).encode(payload)
+        return try await invoke(body: body, functionName: "tools/deleteTask")
     }
 
     // MARK: - Events
     @discardableResult
     public func createEvent(_ payload: CreateEventPayloadWire) async throws -> EventMutationResult {
-        return try await invoke(payload, functionName: "tools/createEvent")
+        let body = try JSONEncoder.makeEncoder().encode(payload)
+        return try await invoke(body: body, functionName: "tools/createEvent")
     }
 
     @discardableResult
     public func updateEvent(_ payload: UpdateEventPayloadWire) async throws -> EventMutationResult {
-        return try await invoke(payload, functionName: "tools/updateEvent")
+        let body = try JSONEncoder.makeEncoder().encode(payload)
+        return try await invoke(body: body, functionName: "tools/updateEvent")
     }
 
     @discardableResult
     public func deleteEvent(_ payload: DeleteEventPayloadWire) async throws -> EventMutationResult {
-        return try await invoke(payload, functionName: "tools/deleteEvent")
+        let body = try JSONEncoder.makeEncoder().encode(payload)
+        return try await invoke(body: body, functionName: "tools/deleteEvent")
     }
     
     @discardableResult
@@ -101,4 +107,30 @@ final public class AIToolService: AIToolServiceAPI {
             throw error
         }
     }
+    
+    private func invoke<R: Decodable>(body: Data, functionName: String) async throws -> R {
+        do {
+            let response = try await client.functions
+                .invoke(
+                    functionName,
+                    options: FunctionInvokeOptions(
+                        body: body
+                    ),
+                    decode: { data, response in
+                        try JSONDecoder.decoder().decode(R.self, from: data)
+                    }
+                )
+            return response
+        } catch FunctionsError.httpError(let code, let data) {
+            print("Function returned code \(code) with response \(String(data: data, encoding: .utf8) ?? "")")
+            throw FunctionsError.httpError(code: code, data: data)
+        } catch FunctionsError.relayError {
+            print("Relay error")
+            throw FunctionsError.relayError
+        } catch {
+            print("Other error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
 }

@@ -9,7 +9,7 @@ import SwiftUI
 import RealmSwift
 
 public enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
-    case low, medium, high
+    case low = 0, medium = 1, high = 2
     
     public var color: Color {
         switch self {
@@ -19,11 +19,21 @@ public enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertibl
         }
     }
     
+    // UI-only (localized). Don't use for API encoding.
     public var description: String {
         switch self {
-        case .high: return String(localized: "high")
+        case .high:   return String(localized: "high")
         case .medium: return String(localized: "medium")
-        case .low: return String(localized: "low")
+        case .low:    return String(localized: "low")
+        }
+    }
+    
+    // Stable API string
+    private var apiString: String {
+        switch self {
+        case .low:    return "low"
+        case .medium: return "medium"
+        case .high:   return "high"
         }
     }
     
@@ -34,6 +44,54 @@ public enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertibl
         case .low: return 1
         }
     }
+    
+    // Strategy knob you can set on JSONEncoder.userInfo
+    public enum Encoding: Sendable { case int, string }
+
+    // Decode from either "low"/"medium"/"high" or 0/1/2
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        
+        // Try Int first (backward compatibility)
+        if let intVal = try? container.decode(Int.self), let v = UserTaskPriority(rawValue: intVal) {
+            self = v
+            return
+        }
+        
+        // Then String
+        if let strVal = try? container.decode(String.self) {
+            switch strVal.lowercased() {
+            case "low":    self = .low
+            case "medium", "med": self = .medium
+            case "high":   self = .high
+            default:
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Invalid priority '\(strVal)'"
+                )
+            }
+            return
+        }
+        
+        throw DecodingError.dataCorruptedError(
+            in: container,
+            debugDescription: "Expected String or Int for priority"
+        )
+    }
+    
+    // Encode as int or string depending on encoder.userInfo
+    public func encode(to encoder: Encoder) throws {
+        let strategy = (encoder.userInfo[.priorityEncodingStrategy] as? Encoding) ?? .string
+        var c = encoder.singleValueContainer()
+        switch strategy {
+        case .int:    try c.encode(rawValue)
+        case .string: try c.encode(apiString)
+        }
+    }
+}
+
+public extension CodingUserInfoKey {
+    static let priorityEncodingStrategy = CodingUserInfoKey(rawValue: "priorityEncodingStrategy")!
 }
 
 struct UserTask: Identifiable, Codable, Hashable {

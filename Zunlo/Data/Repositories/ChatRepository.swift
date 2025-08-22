@@ -10,8 +10,8 @@ import Foundation
 public protocol ChatRepository {
     func loadMessages(conversationId: UUID, limit: Int?) async throws -> [ChatMessage]
     func upsert(_ message: ChatMessage) async throws
-    func appendDelta(messageId: UUID, delta: String, status: MessageStatus) async throws
-    func setStatus(messageId: UUID, status: MessageStatus, error: String?) async throws
+    func appendDelta(messageId: UUID, delta: String, status: ChatMessageStatus) async throws
+    func setStatus(messageId: UUID, status: ChatMessageStatus, error: String?) async throws
     func delete(messageId: UUID) async throws
     func deleteAll(_ conversationId: UUID) async throws
 }
@@ -29,11 +29,11 @@ public final class DefaultChatRepository: ChatRepository {
         try await store.upsert(message)
     }
 
-    public func appendDelta(messageId: UUID, delta: String, status: MessageStatus) async throws {
+    public func appendDelta(messageId: UUID, delta: String, status: ChatMessageStatus) async throws {
         try await store.append(messageId: messageId, delta: delta, status: status)
     }
 
-    public func setStatus(messageId: UUID, status: MessageStatus, error: String?) async throws {
+    public func setStatus(messageId: UUID, status: ChatMessageStatus, error: String?) async throws {
         try await store.updateStatus(messageId: messageId, status: status, error: error)
     }
 

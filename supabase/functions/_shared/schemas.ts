@@ -16,8 +16,11 @@
 
 // schemas.ts
 
-export type ISODate = string;      // "YYYY-MM-DD"
-export type ISODateTime = string;  // e.g., "2025-08-18T08:00:00-03:00"
+const isoDate = { type: 'string', format: 'date' } as const;
+export const isoDateTime = { 
+  type: 'string',
+  pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:Z|[+-]\\d{2}:\\d{2})?$'
+};
 
 /* --------------------------------
  * Shared tiny TypeScript interfaces
@@ -27,7 +30,7 @@ export interface ReminderTrigger {
   /** seconds before start/due (>= 0). Example: 900 (15m), 1800 (30m) */
   timeBeforeDue: number;
   /** optional message to display with the reminder */
-  message?: string | null;
+  message: string | null;
 }
 
 /** Keep your exact color raw values (hex as strings) */
@@ -40,18 +43,18 @@ export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface RecurrenceRuleBody {
   /** FREQ from your model */
-  freq: RecurrenceFrequency;
-  /** default 1 */
-  interval?: number;                  // >=1
-  /** Apple weekday numbering: 1=Sun..7=Sat */
-  byWeekday?: number[];
-  /** specific month days [1..31] */
-  byMonthday?: number[];
-  /** months [1..12] */
-  byMonth?: number[];
-  /** end by date or by count (one or the other) */
-  until?: ISODateTime | null;
-  count?: number | null;
+  freq: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  /** default 1 (tool may send null, we’ll coerce to 1) */
+  interval: number | null;                  // >= 1
+  /** Apple weekday numbering: 1=Sun..7=Sat (tool may send null) */
+  byWeekday: number[] | null;
+  /** specific month days [1..31] (tool may send null) */
+  byMonthday: number[] | null;
+  /** months [1..12] (tool may send null) */
+  byMonth: number[] | null;
+  /** end by date or by count (tool sends null for the unused one) */
+  until: string | null;    // ISO 8601 (prefer with timezone)
+  count: number | null;    // >= 1
 }
 
 /** Envelope for all mutating payloads */
@@ -63,7 +66,7 @@ export interface BaseMutation {
   /** natural language rationale (helps auditing & UX) */
   reason: string;
   /** preview-only: server returns a diff; no writes performed */
-  dryRun?: boolean;
+  dryRun: boolean;
 }
 
 /* -------------
@@ -76,19 +79,19 @@ export interface TaskBody {
   /** required */
   title: string;
   /** optional */
-  notes?: string | null;
+  notes: string | null;
   /** open-ended by default (no due date required) */
-  dueDate?: ISODateTime | null;
+  dueDate: isoDateTime | null;
   /** default false server-side on create */
-  isCompleted?: boolean;
+  isCompleted: boolean;
   /** mapped to your tags model by server; keep payload simple */
-  tags?: string[];
+  tags: string[];
   /** reminders in your format */
-  reminderTriggers?: ReminderTrigger[];
+  reminderTriggers: ReminderTrigger[];
   /** optional parent relation */
-  parentEventId?: string | null; // UUID-string
+  parentEventId: string | null; // UUID-string
   /** priority enum; maps to your UserTaskPriority(int) server-side */
-  priority?: UserTaskPriority;
+  priority: UserTaskPriority;
 }
 
 export interface CreateTaskPayload extends BaseMutation {
@@ -114,9 +117,9 @@ export interface EventBody {
   /** required */
   title: string;
   /** required in your model */
-  start_datetime: ISODateTime;
+  start_datetime: isoDateTime;
   /** optional in model but UI typically sets an end */
-  end_datetime?: ISODateTime | null;
+  end_datetime?: isoDateTime | null;
   notes?: string | null;
   location?: string | null;
   color?: EventColor | null;
@@ -148,7 +151,7 @@ export interface UpdateEventPayload extends BaseMutation {
   eventId: string; // UUID-string
   version: number; // optimistic concurrency for the base event
   editScope: EditScope;
-  occurrenceDate?: ISODateTime; // required for 'single'
+  occurrenceDat?: isoDateTime; // required for 'single'
   patch: Partial<EventBody>;
 }
 
@@ -162,7 +165,7 @@ export interface DeleteEventPayload extends BaseMutation {
   eventId: string; // UUID-string
   version: number; // optimistic concurrency gate on base event
   editScope: EditScope;
-  occurrenceDate?: ISODateTime; // required for 'single'
+  occurrenceDate: isoDateTime; // required for 'single'
 }
 
 /* ----------------
@@ -171,17 +174,17 @@ export interface DeleteEventPayload extends BaseMutation {
 
 export interface GetAgendaInput {
   dateRange: 'today' | 'tomorrow' | 'week' | 'custom';
-  start?: ISODateTime; // when custom
-  end?: ISODateTime;   // when custom
+  start: isoDateTime; // when custom
+  end: isoDateTime;   // when custom
 }
 
 /** Planning (read-only proposal, no writes) */
 export interface PlanWeekInput {
-  startDate: ISODate;                // e.g., "2025-08-18"
-  objectives?: string[];
-  constraints?: Record<string, unknown>;
+  startDate: isoDate;                // e.g., "2025-08-18"
+  objectives: string[];
+  constraints: Record<string, unknown>;
   /** free users may use 'day'; pro can use 'week' */
-  horizon?: 'day' | 'week';
+  horizon: 'day' | 'week';
 }
 
 /** Proposed changes for preview/confirmation */
@@ -191,16 +194,16 @@ export interface ProposedChange {
   entity: EntityKind;                 // 'event' | 'task'
   action: 'create' | 'update' | 'delete';
   summary: string;                    // human-readable bullet
-  targetId?: string;                  // UUID-string (for update/delete)
+  targetId: string;                  // UUID-string (for update/delete)
   /** For event recurrence-aware previews */
-  editScope?: EditScope;
-  occurrenceDate?: ISODateTime;
+  editScope: EditScope;
+  occurrenceDate: isoDateTime;
   /** Minimal shape used to render client-side diffs */
-  patch?: Partial<EventBody> | Partial<TaskBody>;
+  patch: Partial<EventBody> | Partial<TaskBody>;
 }
 
 export interface ProposedPlan {
-  startDate: ISODate;
+  startDate: isoDate;
   horizon: 'day' | 'week';
   items: ProposedChange[];            // capped server-side (e.g., <= 200)
 }
@@ -208,9 +211,6 @@ export interface ProposedPlan {
 /* -----------------------------
  * JSON Schemas (draft-07 style)
  * ----------------------------- */
-
-const isoDate = { type: 'string', format: 'date' } as const;
-const isoDateTime = { type: 'string', format: 'date-time' } as const;
 
 export const reminderTriggerSchema = {
   $id: 'ReminderTrigger',
@@ -229,16 +229,47 @@ export const recurrenceRuleSchema = {
   $id: 'RecurrenceRuleBody',
   type: 'object',
   additionalProperties: false,
-  required: ['freq','interval','byWeekday','byMonthday','byMonth','until','count'],
+  required: ['freq', 'interval', 'byWeekday', 'byMonthday', 'byMonth', 'until', 'count'],
   properties: {
-    freq: { enum: ['daily', 'weekly', 'monthly', 'yearly'] },
+    freq: { type: 'string', enum: ['daily', 'weekly', 'monthly', 'yearly'] },
     interval: { type: 'integer', minimum: 1, default: 1 },
-    byWeekday: [{ type: 'array', items: { type: 'integer', minimum: 1, maximum: 7 }, maxItems: 7 }, 'null'], // Apple: 1=Sun..7=Sat
-    byMonthday: [{ type: 'array', items: { type: 'integer', minimum: 1, maximum: 31 }, maxItems: 31 }, 'null'],
-    byMonth: [{ type: 'array', items: { type: 'integer', minimum: 1, maximum: 12 }, maxItems: 12 }, 'null'],
-    until: { anyOf: [isoDateTime, { type: 'null' }] },
-    count: { anyOf: [{ type: 'integer', minimum: 1 }, { type: 'null' }] }
-  }
+
+    byWeekday: {
+      anyOf: [
+        {
+          type: 'array',
+          items: { type: 'integer', minimum: 1, maximum: 7 }, // 1=Sun..7=Sat
+          maxItems: 7,
+        },
+        { type: 'null' },
+      ],
+    },
+
+    byMonthday: {
+      anyOf: [
+        {
+          type: 'array',
+          items: { type: 'integer', minimum: 1, maximum: 31 },
+          maxItems: 31,
+        },
+        { type: 'null' },
+      ],
+    },
+
+    byMonth: {
+      anyOf: [
+        {
+          type: 'array',
+          items: { type: 'integer', minimum: 1, maximum: 12 },
+          maxItems: 12,
+        },
+        { type: 'null' },
+      ],
+    },
+
+    until: { anyOf: [{ type: 'string', format: 'date-time' }, { type: 'null' }] },
+    count: { anyOf: [{ type: 'integer', minimum: 1 }, { type: 'null' }] },
+  },
 } as const;
 
 export const eventColorSchema = {
@@ -258,7 +289,7 @@ export const eventBodySchema = {
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 200 },
     start_datetime: isoDateTime,
-    end_datetime: { anyOf: [isoDateTime, { type: 'null' }] },
+    end_datetime: { anyOf: [ isoDateTime, { type: 'null' } ] },
     notes: { anyOf: [{ type: 'string', maxLength: 2000 }, { type: 'null' }] },
     location: { anyOf: [{ type: 'string', maxLength: 200 }, { type: 'null' }] },
     color: { anyOf: [eventColorSchema, { type: 'null' }] },
@@ -323,10 +354,9 @@ export const taskPatchSchema = {
 export const baseMutationSchema = {
   $id: 'BaseMutation',
   type: 'object',
-  additionalProperties: false,
   required: ['intent', 'idempotencyKey', 'reason', 'dryRun'],
   properties: {
-    intent: { enum: ['create', 'update', 'delete'] },
+    intent: { type: 'string', enum: ['create','update','delete'] },
     idempotencyKey: { type: 'string', minLength: 8, maxLength: 100 },
     reason: { type: 'string', minLength: 3, maxLength: 500 },
     dryRun: { type: 'boolean' }
@@ -335,15 +365,13 @@ export const baseMutationSchema = {
 
 export const createTaskSchema = {
   $id: 'CreateTaskPayload',
-  allOf: [
-    { $ref: 'BaseMutation' },
-    {
-      type: 'object',
-      additionalProperties: false,
-      required: ['task'],
-      properties: { task: { $ref: 'TaskBody' } }
-    }
-  ]
+  type: 'object',
+  additionalProperties: false,
+  required: [...baseMutationSchema.required, 'task'],
+  properties: {
+    ...baseMutationSchema.properties,
+    task: { $ref: 'TaskBody' },
+  }
 } as const;
 
 export const updateTaskSchema = {
@@ -404,7 +432,7 @@ export const updateEventSchema = {
         eventId: { type: 'string', minLength: 1 },        // consider: format: 'uuid'
         version: { type: 'integer', minimum: 0 },
         editScope: { enum: ['single','override','this_and_future','entire_series'] },
-        occurrenceDate: isoDateTime,                      // required only for some scopes below
+        occurrenceDate: { anyOf: [ isoDateTime, { type: 'null' } ] },                      // required only for some scopes below
         patch: { $ref: 'EventPatch' }
       },
       allOf: [
@@ -446,7 +474,7 @@ export const deleteEventSchema = {
         eventId: { type: 'string', minLength: 1 },       // consider: format: 'uuid'
         version: { type: 'integer', minimum: 0 },
         editScope: { enum: ['single','override','this_and_future','entire_series'] },
-        occurrenceDate: isoDateTime                      // required only for some scopes below
+        occurrenceDate: { anyOf: [ isoDateTime, { type: 'null' } ] }                      // required only for some scopes below
       },
       allOf: [
         // Require occurrenceDate for override
