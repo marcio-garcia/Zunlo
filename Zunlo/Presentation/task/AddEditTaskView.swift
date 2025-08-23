@@ -13,7 +13,6 @@ struct AddEditTaskView: View {
     
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var nav: AppNav
-    @State private var error: String?
     @State private var tagEditorHeight: CGFloat = .zero
     @StateObject var viewModel: AddEditTaskViewModel
     
@@ -37,15 +36,21 @@ struct AddEditTaskView: View {
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
-                            viewModel.save { result in
-                                switch result {
-                                case .success:
+                            Task {
+                                if await viewModel.save() {
                                     dismiss()
                                     onDismiss?()
-                                case .failure(let err):
-                                    error = err.localizedDescription
                                 }
                             }
+//                            viewModel.save { result in
+//                                switch result {
+//                                case .success:
+//                                    dismiss()
+//                                    onDismiss?()
+//                                case .failure:
+//                                    break
+//                                }
+//                            }
                         }
                         .themedSecondaryButton(isEnabled: isEnabled)
                         .disabled(!isEnabled)
@@ -82,12 +87,8 @@ struct AddEditTaskView: View {
                             }
                     }
                 }
-                .alert("Error Saving Task", isPresented: isShowingError) {
-                    Button("Ok", role: .cancel) { error = nil }
-                } message: {
-                    Text(error ?? "Unknown error.")
-                }
                 .themedBody()
+                .errorAlert(viewModel.errorHandler)
         }
     }
     
@@ -170,13 +171,6 @@ struct AddEditTaskView: View {
                 Spacer()
             }
         }
-    }
-    
-    private var isShowingError: Binding<Bool> {
-        Binding(
-            get: { error != nil },
-            set: { if !$0 { error = nil } }
-        )
     }
     
     private var isEnabled: Bool {

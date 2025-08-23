@@ -15,22 +15,38 @@ extension View {
 
 struct ErrorAlertModifier: ViewModifier {
     @ObservedObject var handler: ErrorHandler
+    @State var toast: Toast?
     
     func body(content: Content) -> some View {
         content
-            .alert("Error", isPresented: Binding<Bool>(
-                get: { handler.message != nil },
+            .toast(Binding<Toast?>(
+                get: {
+                    if let msg = handler.message {
+                        return Toast(msg)
+                    }
+                    return nil
+                },
                 set: { newValue in
-                    if !newValue {
+                    if newValue == nil {
                         DispatchQueue.main.async {
                             handler.clear()
                         }
                     }
                 }
-            )) {
-                Button("Ok", role: .cancel) {}
-            } message: {
-                Text(handler.message ?? "Unknown error")
-            }
+            ))
+//            .alert("Error", isPresented: Binding<Bool>(
+//                get: { handler.message != nil },
+//                set: { newValue in
+//                    if !newValue {
+//                        DispatchQueue.main.async {
+//                            handler.clear()
+//                        }
+//                    }
+//                }
+//            )) {
+//                Button("Ok", role: .cancel) {}
+//            } message: {
+//                Text(handler.message ?? "Unknown error")
+//            }
     }
 }

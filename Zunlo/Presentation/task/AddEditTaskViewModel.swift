@@ -42,6 +42,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     var createdAt: Date?
     var onTaskChanged: Observable<UserTask?>?
     
+    @MainActor let errorHandler = ErrorHandler()
+    
     var id: String {
         switch mode {
         case .add: return "add"
@@ -69,25 +71,42 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         }
     }
 
-    func save(completion: @escaping (Result<Void, Error>) -> Void) {
-        guard !isProcessing, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        isProcessing = true
+    func save() async -> Bool {
+        guard !isProcessing, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
+        await MainActor.run { isProcessing = true }
 
-        Task {
-            do {
-                try await taskEditor.upsert(input: makeInput(mode: mode))
-                await MainActor.run {
-                    self.isProcessing = false
-                    completion(.success(()))
-                }
-            } catch {
-                await MainActor.run {
-                    self.isProcessing = false
-                }
-                completion(.failure(error))
-            }
+        do {
+            try await taskEditor.upsert(input: makeInput(mode: mode))
+            await MainActor.run { self.isProcessing = false }
+            return true
+        } catch {
+            await MainActor.run { self.isProcessing = false }
+            await errorHandler.handle(error)
+            return false
         }
     }
+    
+//    func save(completion: @escaping (Result<Void, Error>) -> Void) {
+//        guard !isProcessing, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+//        isProcessing = true
+//
+//        Task {
+//            do {
+//                try await taskEditor.upsert(input: makeInput(mode: mode))
+//                await MainActor.run {
+//                    self.isProcessing = false
+//                    completion(.success(()))
+//                }
+//            } catch {
+//                await MainActor.run {
+//                    self.isProcessing = false
+//                    completion(.failure(error))
+//                }
+//                await errorHandler.handle(error)
+//                
+//            }
+//        }
+//    }
 
     private func loadFields() {
         if case .edit(let task) = mode {
@@ -130,8 +149,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
                 try await taskEditor.delete(task: userTask)
                 isProcessing = false
             } catch {
-                print("error: \(error.localizedDescription)")
                 self.isProcessing = false
+                errorHandler.handle(error)
             }
         }
     }

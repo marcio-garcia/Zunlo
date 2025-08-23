@@ -17,5 +17,3 @@ public struct Toast: Identifiable, Equatable {
         self.duration = duration
     }
 }
-
-public enum ToastPosition { case top, bottom }

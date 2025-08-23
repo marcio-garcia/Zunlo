@@ -650,6 +650,7 @@
       }
     },
     "Error" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -670,6 +671,7 @@
       }
     },
     "Error Saving Task" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

@@ -6,13 +6,18 @@
 //
 
 import Foundation
+import SupabaseSDK
 
 @MainActor
 class ErrorHandler: ObservableObject {
     @Published var message: String?
 
     func handle(_ error: Error) {
-        message = SupabaseErrorFormatter.format(error)
+        if let err = error as? SupabaseServiceError {
+            message = SupabaseErrorFormatter.format(error)
+        } else if let err = error as? EventError {
+            message = err.description
+        }
     }
 
     func clear() {

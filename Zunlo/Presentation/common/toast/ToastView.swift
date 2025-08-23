@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+public enum ToastPosition { case top, bottom }
+
 struct ToastView: View {
     let message: String
     let onDismiss: () -> Void

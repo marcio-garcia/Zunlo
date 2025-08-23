@@ -8,11 +8,24 @@
 import Foundation
 import SwiftUI
 
-enum EventError: Error {
+enum EventError: Error, CustomStringConvertible {
     case errorOnEventInsert
     case errorOnEventUpdate
     case errorOnEventDelete
     case validation(String)
+    
+    var description: String {
+        switch self {
+        case .errorOnEventInsert:
+            return "Error on trying to insert event"
+        case .errorOnEventUpdate:
+            return "Error on trying to update event"
+        case .errorOnEventDelete:
+            return "Error on trying to delete event"
+        case .validation(let msg):
+            return "Validation error - \(msg)"
+        }
+    }
 }
 
 final class AddEditEventViewModel: ObservableObject {
