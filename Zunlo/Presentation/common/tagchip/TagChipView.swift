@@ -69,7 +69,7 @@ struct TagChipView: View {
         var verticalPadding: Double {
             switch self {
             case .large: 6
-            case .small: 4
+            case .small: 3
             }
         }
     }

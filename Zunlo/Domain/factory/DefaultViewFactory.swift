@@ -54,6 +54,15 @@ final class DefaultViewFactory: ViewFactory {
 //                print(error.localizedDescription)
 //            }
 //        }
+//        Task {
+//            let messages = try await appState.chatRepository!.loadMessages(conversationId: cid, limit: nil)
+//            let sorted = messages.sorted { $0.createdAt < $1.createdAt }
+//            if let msg = sorted.last {
+//                var up = msg
+//                up.format = .markdown
+//                try await appState.chatRepository!.upsert(up)
+//            }
+//        }
         
         let aiChatEngine = ChatEngine(
             conversationId: cid,

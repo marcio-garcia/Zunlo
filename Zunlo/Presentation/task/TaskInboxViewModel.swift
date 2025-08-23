@@ -11,9 +11,10 @@ import MiniSignalEye
 
 class UserTaskInboxViewModel: ObservableObject {
     @Published var state: ViewState = .loading
-    @Published var completeTasks: [UserTask] = []
-    @Published var incompleteTasks: [UserTask] = []
     @Published var tags: [Tag] = []
+    
+    var completeTasks: [UserTask] = []
+    var incompleteTasks: [UserTask] = []
 
     let taskRepo: UserTaskRepository
     var tasks: [UserTask] = []
@@ -24,21 +25,23 @@ class UserTaskInboxViewModel: ObservableObject {
     }
     
     func observeTaskRepo() {
-        self.taskRepo.lastTaskAction.observe(owner: self, fireNow: false) { [weak self] action in
-            if case .fetch(let tasks) = action {
-                guard let self else { return }
-                self.tasks = tasks
-                self.completeTasks = tasks.filter { $0.deletedAt == nil && $0.isCompleted }
-                self.incompleteTasks = tasks.filter { $0.deletedAt == nil && !$0.isCompleted }
-                self.state = .loaded
-            }
-        }
-}
+//        self.taskRepo.lastTaskAction.observe(owner: self, fireNow: false) { [weak self] action in
+//            if case .fetch(let tasks) = action {
+//                guard let self else { return }
+//                self.tasks = tasks
+//                self.completeTasks = tasks.filter { $0.deletedAt == nil && $0.isCompleted }
+//                self.incompleteTasks = tasks.filter { $0.deletedAt == nil && !$0.isCompleted }
+//                self.state = .loaded
+//            }
+//        }
+    }
 
     func fetchTasks() async {
         do {
             let taskFetcher = UserTaskFetcher(repo: taskRepo)
-            let _ = try await taskFetcher.fetchTasks()
+            let tasks = try await taskFetcher.fetchTasks()
+            handleTasks(tasks)
+            try await fetchTags()
         } catch {
             await MainActor.run {
                 state = .error(error.localizedDescription)
@@ -46,20 +49,14 @@ class UserTaskInboxViewModel: ObservableObject {
         }
     }
 
-    func fetchTags() async {
-        do {
-            let taskFetcher = UserTaskFetcher(repo: taskRepo)
-            let tags = try await taskFetcher.fetchAllUniqueTags()
-            let tagObjects = tags.map {
-                Tag(id: UUID(), text: $0, color: Theme.highlightColor(for: $0), selected: false)
-            }
-            await MainActor.run {
-                self.tags = tagObjects
-            }
-        } catch {
-            await MainActor.run {
-                state = .error(error.localizedDescription)
-            }
+    func fetchTags() async throws {
+        let taskFetcher = UserTaskFetcher(repo: taskRepo)
+        let tags = try await taskFetcher.fetchAllUniqueTags()
+        let tagObjects = tags.map {
+            Tag(id: UUID(), text: $0, color: Theme.highlightColor(for: $0), selected: false)
+        }
+        await MainActor.run {
+            self.tags = tagObjects
         }
     }
     
@@ -69,7 +66,8 @@ class UserTaskInboxViewModel: ObservableObject {
             let selectedTags = tags.filter({ $0.selected })
             let filter = selectedTags.isEmpty ? nil : selectedTags.map({ $0.text })
             let taskFilter = TaskFilter(tags: filter)
-            let _ = try await taskFetcher.fetchTasks(filteredBy: taskFilter)
+            let tasks = try await taskFetcher.fetchTasks(filteredBy: taskFilter)
+            handleTasks(tasks)
         } catch {
             await MainActor.run {
                 state = .error(error.localizedDescription)
@@ -83,8 +81,17 @@ class UserTaskInboxViewModel: ObservableObject {
         
         Task {
             let taskEditor = TaskEditor(repo: taskRepo)
-            try? await taskEditor.upsert(makeInput(task: updated))
+            try? await taskEditor.upsert(input: makeInput(task: updated))
             await fetchTasks()
+        }
+    }
+    
+    private func handleTasks(_ tasks: [UserTask]) {
+        self.tasks = tasks
+        self.completeTasks = tasks.filter { $0.deletedAt == nil && $0.isCompleted }
+        self.incompleteTasks = tasks.filter { $0.deletedAt == nil && !$0.isCompleted }
+        DispatchQueue.main.async {
+            self.state = .loaded
         }
     }
     

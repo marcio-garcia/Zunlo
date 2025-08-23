@@ -9,7 +9,7 @@ import SwiftUI
 
 struct TagChipListView: View {
     @Binding var tags: [Tag]
-    var mode: Mode = .readonly(true)
+    var mode: Mode = .readonly(selectable: true)
     var chipType: TagChipView.ChipType = .large
     var onTagsChanged: (([Tag]) async -> Void)? = nil
     var allPossibleTags: [String] = [] // Autocomplete pool
@@ -31,7 +31,7 @@ struct TagChipListView: View {
                         )
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, self.chipType == TagChipView.ChipType.large ? 10 : 0)
             }
 
             if mode == .editable {
@@ -141,6 +141,6 @@ struct TagChipListView: View {
 extension TagChipListView {
     enum Mode: Equatable {
         case editable
-        case readonly(_ selectable: Bool)
+        case readonly(selectable: Bool)
     }
 }

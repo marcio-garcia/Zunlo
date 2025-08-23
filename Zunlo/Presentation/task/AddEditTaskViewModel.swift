@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MiniSignalEye
 
 final class AddEditTaskViewModel: ObservableObject, Identifiable {
     enum Mode {
@@ -39,6 +40,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     private let taskFetcher: UserTaskFetcherService
     private let taskEditor: TaskEditorService
     var createdAt: Date?
+    var onTaskChanged: Observable<UserTask?>?
     
     var id: String {
         switch mode {
@@ -51,6 +53,12 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         self.mode = mode
         self.taskFetcher = taskFetcher
         self.taskEditor = taskEditor
+        
+        switch mode {
+        case .add: self.onTaskChanged = Observable(nil)
+        case .edit(let task): self.onTaskChanged = Observable(task)
+        }
+        
         loadFields()
     }
 
@@ -67,7 +75,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
 
         Task {
             do {
-                try await taskEditor.upsert(makeInput())
+                try await taskEditor.upsert(input: makeInput(mode: mode))
                 await MainActor.run {
                     self.isProcessing = false
                     completion(.success(()))
@@ -119,7 +127,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         
         if case .edit(let userTask) = mode {
             do {
-                try await taskEditor.delete(makeInput(), id: userTask.id)
+                try await taskEditor.delete(task: userTask)
                 isProcessing = false
             } catch {
                 print("error: \(error.localizedDescription)")
@@ -128,16 +136,31 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         }
     }
     
-    private func makeInput() -> AddTaskInput {
-        AddTaskInput(
-            id: UUID(),
-            userId: nil,
+    private func makeInput(mode: Mode) -> AddTaskInput {
+        var id: UUID
+        var userId: UUID?
+        var parentEventId: UUID?
+        
+        switch mode {
+        case .add:
+            id = UUID()
+            userId = nil
+            parentEventId = nil
+        case .edit(let task):
+            id = task.id
+            userId = task.userId
+            parentEventId = task.parentEventId
+        }
+        
+        return AddTaskInput(
+            id: id,
+            userId: userId,
             title: title,
             notes: notes,
             dueDate: dueDate,
             isCompleted: isCompleted,
             priority: priority,
-            parentEventId: nil,
+            parentEventId: parentEventId,
             tags: tags,
             reminderTriggers: reminderTriggers,
             deleteAt: nil

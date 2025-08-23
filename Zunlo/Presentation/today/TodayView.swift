@@ -55,6 +55,9 @@ struct TodayView: View {
             editableTaskProvider: { self.editableUserTask },
             onAddEditTaskViewDismiss: {
                 Task { await viewModel.fetchData() }
+            },
+            onTaskInboxDismiss: {
+                Task { await viewModel.fetchData() }
             }
         )
         let eventFactory = EventViewFactory(
@@ -456,7 +459,7 @@ struct TodayView: View {
     private func fetchInfo() async {
         await viewModel.fetchData()
         await viewModel.fetchWeather()
-        await viewModel.syncDB()
+//        await viewModel.syncDB()
         aiContext = await AIContextBuilder().build(
             time: SystemTimeProvider(),
             policyProvider: policyProvider,

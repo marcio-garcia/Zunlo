@@ -443,6 +443,7 @@ public actor DatabaseActor {
             obj.getUpdateFields(domain: domain)
             realm.add(obj, update: .modified)
         }
+        print("******** user task upserted: \(domain.title)")
     }
     
     func deleteUserTask(id: UUID) throws {

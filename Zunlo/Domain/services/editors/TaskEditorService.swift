@@ -8,8 +8,8 @@
 import Foundation
 
 protocol TaskEditorService {
-    func upsert(_ input: AddTaskInput) async throws
-    func delete(_ input: EditTaskInput, id: UUID) async throws
+    func upsert(input: AddTaskInput) async throws
+    func delete(task: UserTask) async throws
 }
 
 // DTOs decouple UI from domain defaults/validation

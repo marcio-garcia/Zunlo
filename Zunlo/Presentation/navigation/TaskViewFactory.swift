@@ -13,23 +13,29 @@ struct TaskViewFactory: TaskViews {
     let nav: AppNav
     let editableTaskProvider: (() -> UserTask?)?
     let onAddEditTaskViewDismiss: (() -> Void)?
+    let onTaskInboxDismiss: (() -> Void)?
     
     internal init(
         viewID: UUID,
         nav: AppNav,
         editableTaskProvider: (() -> UserTask?)? = nil,
-        onAddEditTaskViewDismiss: (() -> Void)? = nil
+        onAddEditTaskViewDismiss: (() -> Void)? = nil,
+        onTaskInboxDismiss: (() -> Void)? = nil
     ) {
         self.viewID = viewID
         self.nav = nav
         self.editableTaskProvider = editableTaskProvider
         self.onAddEditTaskViewDismiss = onAddEditTaskViewDismiss
+        self.onTaskInboxDismiss = onTaskInboxDismiss
     }
 
     func buildTaskInboxView() -> AnyView {
         AnyView(
-            TaskInboxView(repository: AppState.shared.userTaskRepository!)
-                .environmentObject(nav)
+            TaskInboxView(
+                repository: AppState.shared.userTaskRepository!,
+                onDismiss: onTaskInboxDismiss
+            )
+            .environmentObject(nav)
         )
     }
 

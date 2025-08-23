@@ -16,8 +16,11 @@ struct TaskInboxView: View {
     @StateObject private var viewModel: UserTaskInboxViewModel
     @State private var editableUserTask: UserTask?
     
-    init(repository: UserTaskRepository) {
+    var onDismiss: (() -> Void)?
+    
+    init(repository: UserTaskRepository, onDismiss: (() -> Void)?) {
         _viewModel = StateObject(wrappedValue: UserTaskInboxViewModel(taskRepo:repository))
+        self.onDismiss = onDismiss
     }
     
     var body: some View {
@@ -55,14 +58,14 @@ struct TaskInboxView: View {
                 VStack {
                     TagChipListView(
                         tags: $viewModel.tags,
-                        mode: .readonly(true),
+                        mode: .readonly(selectable: true),
                         onTagsChanged: { _ in await viewModel.filter() }
                     )
                     
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 16) {
                             ForEach(viewModel.incompleteTasks) { task in
-                                TaskRow(task: task) {
+                                TaskRow(task: task, chipType: .small) {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
                                     editableUserTask = task
@@ -73,7 +76,7 @@ struct TaskInboxView: View {
                             Divider()
                             
                             ForEach(viewModel.completeTasks) { task in
-                                TaskRow(task: task) {
+                                TaskRow(task: task, chipType: .small) {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
                                     editableUserTask = task
@@ -92,6 +95,7 @@ struct TaskInboxView: View {
                         }
                         ToolbarItem(placement: .cancellationAction) {
                             Button(action: {
+                                onDismiss?()
                                 dismiss()
                                 nav.pop()
                             }) {
@@ -118,7 +122,6 @@ struct TaskInboxView: View {
         }
         .task {
             await viewModel.fetchTasks()
-            await viewModel.fetchTags()
         }
     }
 }

@@ -17,19 +17,19 @@ final class TaskEditor: TaskEditorService {
         self.clock = clock
     }
 
-    func upsert(_ input: AddTaskInput) async throws {
-        try await repo.upsert(makeUserTask(input, id: nil))
+    func upsert(input: AddTaskInput) async throws {
+        try await repo.upsert(makeUserTask(input))
     }
 
-    func delete(_ input: EditTaskInput, id: UUID) async throws {
-        try await repo.delete(makeUserTask(input, id: id))
+    func delete(task: UserTask) async throws {
+        try await repo.delete(task)
     }
     
-    private func makeUserTask(_ input: AddTaskInput, id: UUID?) -> UserTask {
+    private func makeUserTask(_ input: AddTaskInput) -> UserTask {
         let now = Date()
         let task = UserTask(
-            id: id ?? UUID(),
-            userId: nil, // Backend fills this
+            id: input.id,
+            userId: input.userId,
             title: input.title,
             notes: input.notes.nilIfEmpty,
             isCompleted: input.isCompleted,
@@ -37,7 +37,7 @@ final class TaskEditor: TaskEditorService {
             updatedAt: now,
             dueDate: input.dueDate,
             priority: input.priority,
-            parentEventId: nil,
+            parentEventId: input.parentEventId,
             tags: input.tags,
             reminderTriggers: input.reminderTriggers,
             version: input.version

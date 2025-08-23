@@ -14,7 +14,7 @@ final public class UserTaskRepository {
     private let reminderScheduler: ReminderScheduler<UserTask>
     private let calendar = Calendar.appDefault
     
-    var lastTaskAction = Observable<LastTaskAction>(.none)
+//    var lastTaskAction = Observable<LastTaskAction>(.none)
     
     init(localStore: UserTaskLocalStore, remoteStore: UserTaskRemoteStore) {
         self.localStore = localStore
@@ -26,13 +26,13 @@ final public class UserTaskRepository {
         try await localStore.upsert(task)
         reminderScheduler.cancelReminders(for: task)
         reminderScheduler.scheduleReminders(for: task)
-        lastTaskAction.value = .update
+//        lastTaskAction.value = .update
     }
     
     func delete(_ task: UserTask) async throws {
         try await localStore.delete(id: task.id)
         reminderScheduler.cancelReminders(for: task)
-        lastTaskAction.value = .delete
+//        lastTaskAction.value = .delete
     }
     
     func apply(rows: [UserTaskRemote]) async throws {
@@ -45,14 +45,14 @@ final public class UserTaskRepository {
             return nil
         }
         let task = UserTask(local: taskLocal)
-        lastTaskAction.value = .fetch([task])
+//        lastTaskAction.value = .fetch([task])
         return task
     }
     
     @discardableResult
     func fetchAll() async throws -> [UserTask] {
         let tasks = try await localStore.fetchAll()
-        lastTaskAction.value = .fetch(tasks)
+//        lastTaskAction.value = .fetch(tasks)
         return tasks
     }
     
@@ -60,14 +60,14 @@ final public class UserTaskRepository {
     func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
         // Prefer local first, or merge with remote if needed
         let tasks = try await localStore.fetchTasks(filteredBy: filter)
-        lastTaskAction.value = .fetch(tasks)
+//        lastTaskAction.value = .fetch(tasks)
         return tasks
     }
     
     @discardableResult
     func fetchAllUniqueTags() async throws -> [String] {
         let tags = try await localStore.fetchAllUniqueTags()
-        lastTaskAction.value = .fetchTags(tags)
+//        lastTaskAction.value = .fetchTags(tags)
         return tags
     }
 }

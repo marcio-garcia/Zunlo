@@ -34,6 +34,14 @@ struct TaskRow: View {
                             .strikethrough(task.isCompleted, color: .gray)
                             .foregroundColor(task.isCompleted ? .gray : .primary)
                     }
+                    
+                    if !task.tags.isEmpty {
+                        TagChipListView(
+                            tags: Binding(get: { task.tags }, set: { newValue in }),
+                            mode: .readonly(selectable: false),
+                            chipType: chipType
+                        )
+                    }
                 }
                 
                 Spacer()
@@ -54,14 +62,6 @@ struct TaskRow: View {
                 }
             }
             .padding(.vertical, 8)
-            
-            if !task.tags.isEmpty {
-                TagChipListView(
-                    tags: Binding(get: { task.tags }, set: { newValue in }),
-                    mode: .readonly(false),
-                    chipType: chipType
-                )
-            }
         }
         .contentShape(Rectangle())
         .onTapGesture {

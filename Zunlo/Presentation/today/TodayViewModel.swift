@@ -46,26 +46,26 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     }
 
     private func observeRepositories() {
-        taskRepo.lastTaskAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
-            if case .fetch(let tasks) = action {
-                
-                let today = Date().startOfNextDay()
-                
-                let filtered = tasks.filter {
-                    guard $0.deletedAt == nil else { return false }
-                    guard let due = $0.dueDate else { return !$0.isCompleted }
-                    return due <= today && !$0.isCompleted
-                }
-                
-                let isEmpty = filtered.isEmpty
-                self?.todayTasks = filtered
-                
-                DispatchQueue.main.async {
-                    self?.state = isEmpty ? .empty : .loaded
-                }
-
-            }
-        }
+//        taskRepo.lastTaskAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
+//            if case .fetch(let tasks) = action {
+//                
+//                let today = Date().startOfNextDay()
+//                
+//                let filtered = tasks.filter {
+//                    guard $0.deletedAt == nil else { return false }
+//                    guard let due = $0.dueDate else { return !$0.isCompleted }
+//                    return due <= today && !$0.isCompleted
+//                }
+//                
+//                let isEmpty = filtered.isEmpty
+//                self?.todayTasks = filtered
+//                
+//                DispatchQueue.main.async {
+//                    self?.state = isEmpty ? .empty : .loaded
+//                }
+//
+//            }
+//        }
         
         eventRepo.lastEventAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
             if case .fetch(let occ) = action {
@@ -79,13 +79,35 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     func fetchData() async {
         do {
             let taskFetcher = UserTaskFetcher(repo: taskRepo)
-            let _ = try await taskFetcher.fetchTasks()
+            let tasks = try await taskFetcher.fetchTasks()
+            handleTasks(tasks)
             
             let eventFetcher = EventFetcher(repo: eventRepo)
             let _ = try await eventFetcher.fetchOccurrences()
             
         } catch {
             await errorHandler.handle(error)
+        }
+    }
+    
+    func handleTasks(_ tasks: [UserTask]) {
+        let today = Date().startOfNextDay()
+        
+        let filtered = tasks.filter {
+            guard $0.deletedAt == nil else { return false }
+            guard let due = $0.dueDate else { return !$0.isCompleted }
+            return due <= today && !$0.isCompleted
+        }
+        
+        let isEmpty = filtered.isEmpty
+        todayTasks = filtered
+        
+        filtered.forEach { task in
+            print("******** user task fetched: \(task.title)")
+        }
+        
+        DispatchQueue.main.async {
+            self.state = isEmpty ? .empty : .loaded
         }
     }
     
@@ -121,7 +143,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         updated.isCompleted.toggle()
         Task {
             let taskEditor = TaskEditor(repo: taskRepo)
-            try? await taskEditor.upsert(makeInput(task: updated))
+            try? await taskEditor.upsert(input: makeInput(task: updated))
             await fetchData()
         }
     }
