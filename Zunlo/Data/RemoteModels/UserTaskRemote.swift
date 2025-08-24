@@ -103,8 +103,8 @@ public struct UserTaskRemote: Codable, Identifiable {
             parentEventId: parentEventId,
             tags: tags.map({
                 Tag(id: UUID(),
-                    text: $0, color:
-                        Theme.highlightColor(for: $0),
+                    text: $0,
+                    color: "",
                     selected: false)
             }),
             reminderTriggers: reminderTriggers,

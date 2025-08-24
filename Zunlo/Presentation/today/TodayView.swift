@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 import FlowNavigator
 import AdStack
 
@@ -448,7 +449,7 @@ struct TodayView: View {
         switch weather.condition {
         case .clear, .mostlyClear: return isDay ? "bg_clear_day" : "bg_clear_night"
         case .partlyCloudy, .mostlyCloudy: return isDay ? "bg_partly_cloudy_day" : "bg_partly_cloudy_night"
-        case .cloudy: return isDay ? "bg_cloudy_day" : "bg_cloudy_night"
+        case .cloudy, .windy: return isDay ? "bg_cloudy_day" : "bg_cloudy_night"
         case .rain: return isDay ? "bg_rain_day" : "bg_rain_night"
         case .snow: return isDay ? "bg_snow_day" : "bg_snow_night"
         case .foggy: return isDay ? "bg_fog_day" : "bg_fog_night"

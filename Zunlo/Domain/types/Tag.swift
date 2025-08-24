@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct Tag: Identifiable, Equatable, Hashable, Codable {
     let id: UUID

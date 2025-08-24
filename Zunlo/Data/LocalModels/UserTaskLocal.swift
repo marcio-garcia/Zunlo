@@ -100,7 +100,7 @@ class UserTaskLocal: Object {
             tags: Array(tags).map({
                 Tag(id: UUID(),
                     text: $0,
-                    color: Theme.highlightColor(for: $0),
+                    color: "",
                     selected: false)
             }),
             reminderTriggers: reminderTriggersArray,

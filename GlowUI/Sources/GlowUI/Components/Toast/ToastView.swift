@@ -1,22 +1,22 @@
 //
 //  ToastView.swift
-//  Zunlo
+//  GlowUI
 //
-//  Created by Marcio Garcia on 8/16/25.
+//  Created by Marcio Garcia on 8/24/25.
 //
 
 import SwiftUI
 
 public enum ToastPosition { case top, bottom }
 
-struct ToastView: View {
+public struct ToastView: View {
     let message: String
     let onDismiss: () -> Void
     
     @State private var yOffset: CGFloat = 0
     @State private var isAppeared = false
     
-    var body: some View {
+    public var body: some View {
         Text(message)
             .font(AppFontStyle.callout.font())
             .foregroundColor(.white)
@@ -55,13 +55,13 @@ struct ToastView: View {
 
 // MARK: - Modifier
 
-struct ToastPresenter: ViewModifier {
+public struct ToastPresenter: ViewModifier {
     @Binding var toast: Toast?
     var position: ToastPosition = .bottom
     
     @State private var dismissTask: Task<Void, Never>?
     
-    func body(content: Content) -> some View {
+    public func body(content: Content) -> some View {
         content
             .overlay(alignment: position == .top ? .top : .bottom) {
                 Group {

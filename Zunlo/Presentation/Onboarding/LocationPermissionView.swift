@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct LocationPermissionView: View {
     var locationService: LocationService

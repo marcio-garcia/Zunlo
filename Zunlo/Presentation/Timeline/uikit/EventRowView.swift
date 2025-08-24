@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import GlowUI
 
 class EventRowView: UIView {
     private let card = RoundedStrokeView()

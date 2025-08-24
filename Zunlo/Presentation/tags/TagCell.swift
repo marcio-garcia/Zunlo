@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import GlowUI
 
 class TagCell: UICollectionViewCell {
     static let reuseIdentifier = "TagCell"

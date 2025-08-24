@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import GlowUI
 
 final class CalendarTopBarView: UIView {
     // MARK: - Public callbacks

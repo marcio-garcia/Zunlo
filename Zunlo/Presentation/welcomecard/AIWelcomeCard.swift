@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 
 public struct AIWelcomeCard: View {
     @StateObject private var vm: AIWelcomeCardViewModel

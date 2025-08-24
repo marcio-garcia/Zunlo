@@ -1,8 +1,8 @@
 //
 //  Toast.swift
-//  Zunlo
+//  GlowUI
 //
-//  Created by Marcio Garcia on 8/16/25.
+//  Created by Marcio Garcia on 8/24/25.
 //
 
 import Foundation

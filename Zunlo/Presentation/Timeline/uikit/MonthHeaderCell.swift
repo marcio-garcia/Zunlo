@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import GlowUI
 
 class MonthHeaderCell: UICollectionViewCell {
     private let imageView = UIImageView()

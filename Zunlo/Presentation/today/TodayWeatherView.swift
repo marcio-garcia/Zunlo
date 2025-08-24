@@ -47,26 +47,10 @@ struct TodayWeatherView: View {
             case .mostlyCloudy: return String(localized: "Mostly cloudy")
             case .rain: return String(localized: "Rainy")
             case .snow: return String(localized: "Snowy")
+            case .windy: return String(localized: "Windy")
             default: return String(localized: "Weather update")
             }
         }
         return String(localized: "Weather update")
-    }
-    
-    private var backgroundImageName: String {
-        if let weather = weather?.condition {
-            let hour = Calendar.appDefault.component(.hour, from: Date())
-            let isDay = (6...18).contains(hour)
-            
-            switch weather {
-            case .clear, .mostlyClear: return isDay ? "bg_clear_day" : "bg_clear_night"
-            case .partlyCloudy, .mostlyCloudy: return isDay ? "bg_partly_cloudy_day" : "bg_partly_cloudy_night"
-            case .cloudy: return "bg_cloudy"
-            case .rain: return "bg_rain"
-            case .snow: return "bg_snow"
-            default: return "bg_default"
-            }
-        }
-        return "bg_default"
     }
 }

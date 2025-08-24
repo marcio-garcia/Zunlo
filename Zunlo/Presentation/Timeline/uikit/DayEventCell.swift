@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import GlowUI
 
 class DayEventCell: UICollectionViewCell {
     private let containerView = UIView()

@@ -66,6 +66,8 @@ extension WeatherCondition {
             return "cloud.bolt.rain.fill"
         case .foggy:
             return "cloud.fog.fill"
+        case .windy:
+            return "wind"
         default:
             return "cloud"
         }

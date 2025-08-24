@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct ToolOutcomePresenter: ViewModifier {
     @EnvironmentObject private var store: ToolExecutionStore

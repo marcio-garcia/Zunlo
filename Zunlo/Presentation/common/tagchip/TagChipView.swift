@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct TagChipView: View {
     let tag: Tag
@@ -36,7 +37,7 @@ struct TagChipView: View {
         .padding(.horizontal, 10)
         .background(
             Capsule()
-                .fill(tag.selected ? Color.theme.accent : Color(hex: tag.color) ?? Color.theme.disabled)
+                .fill(tag.selected ? Color.theme.accent :  Color(hex: Theme.highlightColor(for: tag.text)) ?? Color.theme.disabled)
         )
         .onTapGesture {
             if selectable { toggleSelection() }

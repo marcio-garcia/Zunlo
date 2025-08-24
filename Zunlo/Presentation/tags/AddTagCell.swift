@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import GlowUI
 
 class AddTagCell: UICollectionViewCell, UITextFieldDelegate {
     static let reuseIdentifier = "AddTagCell"

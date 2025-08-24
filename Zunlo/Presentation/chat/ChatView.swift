@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct ChatView: View {
     @State private var viewID = UUID()
