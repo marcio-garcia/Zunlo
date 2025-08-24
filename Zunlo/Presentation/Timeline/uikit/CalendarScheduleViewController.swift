@@ -424,7 +424,7 @@ extension CalendarScheduleViewController {
         let vm = AddEditEventViewModel(mode: mode, editor: EventEditor(repo: AppState.shared.eventRepository!))
         let addView = AddEditEventView(
             viewModel: vm,
-            onDismiss: { [weak self] startDate in
+            onDismiss: { [weak self] in
                 guard let self else { return }
                 Task { await self.viewModel.fetchEvents() }
             })

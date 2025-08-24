@@ -14,9 +14,8 @@ struct AddEditEventView: View {
     @StateObject var viewModel: AddEditEventViewModel
     @EnvironmentObject var nav: AppNav
     @State private var showUntil: Bool = false
-    @State private var error: String?
     
-    var onDismiss: ((Date?) -> Void)?
+    var onDismiss: (() -> Void)?
     
     private let recurrenceOptions: [String] = [
         RecurrenceFrequesncy.daily.rawValue,
@@ -65,11 +64,10 @@ struct AddEditEventView: View {
                             switch option {
                             case "delete":
                                 Task {
-                                    await viewModel.delete()
-                                    await MainActor.run {
+                                    if await viewModel.delete() {
                                         nav.dismissDialog(for: viewID)
+                                        onDismiss?()
                                         dismiss()
-                                        onDismiss?(nil)
                                     }
                                 }
                             case "cancel":
@@ -86,13 +84,10 @@ struct AddEditEventView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        viewModel.save { result in
-                            switch result {
-                            case .success(let startDate):
+                        Task {
+                            if await viewModel.save() {
+                                onDismiss?()
                                 dismiss()
-                                onDismiss?(startDate)
-                            case .failure(let err):
-                                error = err.localizedDescription
                             }
                         }
                     }
@@ -102,14 +97,7 @@ struct AddEditEventView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .alert("Error Saving Event", isPresented: Binding(
-                get: { error != nil },
-                set: { if !$0 { error = nil } }
-            )) {
-                Button("Ok", role: .cancel) { error = nil }
-            } message: {
-                Text(error ?? "Unknown error.")
-            }
+            .errorAlert(viewModel.errorHandler)
         }
     }
 

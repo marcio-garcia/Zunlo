@@ -49,9 +49,7 @@ struct EventViewFactory: EventViews {
         AnyView(
             AddEditEventView(
                 viewModel: AddEditEventViewModel(mode: .add, editor: EventEditor(repo: AppState.shared.eventRepository!)),
-                onDismiss: { date in
-                    onAddEditEventDismiss?()
-                }
+                onDismiss: onAddEditEventDismiss
             )
             .environmentObject(nav)
         )
@@ -61,9 +59,7 @@ struct EventViewFactory: EventViews {
         AnyView(
             AddEditEventView(
                 viewModel: AddEditEventViewModel(mode: editMode, editor: EventEditor(repo: AppState.shared.eventRepository!)),
-                onDismiss: { date in
-                    onAddEditEventDismiss?()
-                }
+                onDismiss: onAddEditEventDismiss
             )
             .environmentObject(nav)
         )

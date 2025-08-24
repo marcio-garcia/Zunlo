@@ -52,6 +52,8 @@ final class AddEditEventViewModel: ObservableObject {
     let mode: AddEditEventViewMode
     private let editor: EventEditorService
     
+    @MainActor let errorHandler = ErrorHandler()
+    
     init(
         mode: AddEditEventViewMode,
         editor: EventEditorService
@@ -181,49 +183,51 @@ final class AddEditEventViewModel: ObservableObject {
         }
     }
     
-    func save(completion: @escaping (Result<Date, Error>) -> Void) {
-        guard !title.isEmpty else { return }
-        isProcessing = true
-
-        Task {
-            do {
-                switch mode {
-                case .add:
-                    _ = try await editor.add(makeInput())
-                case .editAll(let event, let oldRule):
-                    try await editor.editAll(event: event, with: makeInput(), oldRule: oldRule)
-                case .editSingle(let parent, _, let occ):
-                    try await editor.editSingle(parent: parent, occurrence: occ, with: makeInput())
-                case .editOverride(let ov):
-                    try await editor.editOverride(ov, with: makeInput())
-                case .editFuture(let parent, _, let occ):
-                    try await editor.editFuture(parent: parent, startingFrom: occ, with: makeInput())
-                }
-                await MainActor.run { self.isProcessing = false; completion(.success(self.startDate)) }
-            } catch {
-                await MainActor.run { self.isProcessing = false; completion(.failure(error)) }
+    func save() async -> Bool {
+        guard !isProcessing, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        await MainActor.run { isProcessing = true }
+        
+        do {
+            switch mode {
+            case .add:
+                try await editor.add(makeInput())
+            case .editAll(let event, let oldRule):
+                try await editor.editAll(event: event, with: makeInput(), oldRule: oldRule)
+            case .editSingle(let parent, _, let occ):
+                try await editor.editSingle(parent: parent, occurrence: occ, with: makeInput())
+            case .editOverride(let ov):
+                try await editor.editOverride(ov, with: makeInput())
+            case .editFuture(let parent, _, let occ):
+                try await editor.editFuture(parent: parent, startingFrom: occ, with: makeInput())
             }
+            await MainActor.run { self.isProcessing = false }
+            return true
+        } catch {
+            await MainActor.run { self.isProcessing = false }
+            await errorHandler.handle(error)
+            return false
         }
     }
     
     @MainActor
-    func delete() async {
-        isProcessing = true
+    func delete() async -> Bool {
+        await MainActor.run { isProcessing = true }
         if case .editAll(let event, _) = mode {
-            Task {
-                do {
-                    try await editor.delete(event: event)
-                    isProcessing = true
-                } catch {
-                    isProcessing = true
-                }
+            do {
+                try await editor.delete(event: event)
+                await MainActor.run { isProcessing = false }
+                return true
+            } catch {
+                errorHandler.handle(error)
             }
         }
+        await MainActor.run { isProcessing = false }
+        return false
     }
     
     private func makeInput() -> AddEventInput {
         AddEventInput(
-            title: title,
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             notes: notes,
             startDate: startDate,
             endDate: endDate,

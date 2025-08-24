@@ -152,7 +152,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         return AddTaskInput(
             id: id,
             userId: userId,
-            title: title,
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             notes: notes,
             dueDate: dueDate,
             isCompleted: isCompleted,
