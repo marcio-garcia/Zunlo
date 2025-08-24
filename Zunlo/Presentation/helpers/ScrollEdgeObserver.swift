@@ -50,7 +50,6 @@ struct ScrollEdgeObserver: ViewModifier {
                 // Skip initial trigger until scroll has moved
                 guard hasScrolledOnce else { return }
                 
-                print("------- top: \(top), -screenHeight * 2: \(-screenHeight * 2)")
                 if top > -screenHeight * 2 {
                     onEdgeNearTop()
                 } else if bottom < screenHeight * 2.5 {

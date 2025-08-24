@@ -85,28 +85,6 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             return false
         }
     }
-    
-//    func save(completion: @escaping (Result<Void, Error>) -> Void) {
-//        guard !isProcessing, !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-//        isProcessing = true
-//
-//        Task {
-//            do {
-//                try await taskEditor.upsert(input: makeInput(mode: mode))
-//                await MainActor.run {
-//                    self.isProcessing = false
-//                    completion(.success(()))
-//                }
-//            } catch {
-//                await MainActor.run {
-//                    self.isProcessing = false
-//                    completion(.failure(error))
-//                }
-//                await errorHandler.handle(error)
-//                
-//            }
-//        }
-//    }
 
     private func loadFields() {
         if case .edit(let task) = mode {

@@ -42,15 +42,6 @@ struct AddEditTaskView: View {
                                     onDismiss?()
                                 }
                             }
-//                            viewModel.save { result in
-//                                switch result {
-//                                case .success:
-//                                    dismiss()
-//                                    onDismiss?()
-//                                case .failure:
-//                                    break
-//                                }
-//                            }
                         }
                         .themedSecondaryButton(isEnabled: isEnabled)
                         .disabled(!isEnabled)

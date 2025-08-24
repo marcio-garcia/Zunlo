@@ -14,7 +14,7 @@ class ErrorHandler: ObservableObject {
 
     func handle(_ error: Error) {
         if let err = error as? SupabaseServiceError {
-            message = SupabaseErrorFormatter.format(error)
+            message = SupabaseErrorFormatter.format(err)
         } else if let err = error as? EventError {
             message = err.description
         }

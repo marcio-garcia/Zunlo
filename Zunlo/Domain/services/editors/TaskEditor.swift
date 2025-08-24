@@ -18,7 +18,6 @@ final class TaskEditor: TaskEditorService {
     }
 
     func upsert(input: AddTaskInput) async throws {
-//        throw EventError.validation("sdfjh dskfh skfh kshfkajshf kasjfhlkasgflksflskdhgflskdjhf ldskjfh askjhf aksdjhf askdfh laskjfh askdljfh lsakjfh lasdkjfh adslkfjh lasdkfh laskjfh laskjhf laksjhf kljasdh fkljdsahflkadshflkadsjhf dklsjfh dkslfh dsk")
         try await repo.upsert(makeUserTask(input))
     }
 

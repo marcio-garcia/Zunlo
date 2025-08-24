@@ -12,9 +12,12 @@ public enum ToastPosition { case top, bottom }
 public struct ToastView: View {
     let message: String
     let onDismiss: () -> Void
+    var onHoldStart: () -> Void = {}
+    var onHoldEnd: () -> Void = {}
     
     @State private var yOffset: CGFloat = 0
     @State private var isAppeared = false
+    @State private var holdActivated = false   // becomes true after a 1s long-press
     
     public var body: some View {
         Text(message)
@@ -29,7 +32,7 @@ public struct ToastView: View {
             )
             .shadow(radius: 12, y: 4)
             .offset(y: yOffset)
-            .gesture(
+            .gesture( // Swipe to dismiss (unchanged)
                 DragGesture(minimumDistance: 10)
                     .onChanged { value in
                         // Follow vertical drag a bit for feel; cap to avoid huge offsets
@@ -46,6 +49,22 @@ public struct ToastView: View {
                             withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
                                 yOffset = 0
                             }
+                        }
+                    }
+            )
+            .simultaneousGesture( // 1s long press -> pause timer
+                LongPressGesture(minimumDuration: 1.0)
+                    .onEnded { _ in
+                        holdActivated = true
+                        onHoldStart()   // cancel auto-dismiss timer
+                    }
+            )
+            .simultaneousGesture( // watch for release; if we did a long-press, dismiss on lift
+                DragGesture(minimumDistance: 0)
+                    .onEnded { _ in
+                        if holdActivated {
+                            holdActivated = false
+                            onHoldEnd()   // dismiss now
                         }
                     }
             )
@@ -66,7 +85,12 @@ public struct ToastPresenter: ViewModifier {
             .overlay(alignment: position == .top ? .top : .bottom) {
                 Group {
                     if let toast {
-                        ToastView(message: toast.message, onDismiss: dismiss)
+                        ToastView(
+                            message: toast.message,
+                            onDismiss: dismiss,
+                            onHoldStart: cancelTimer,   // pause while held
+                            onHoldEnd: dismiss          // release after hold -> dismiss
+                        )
                             .padding(.horizontal, 16)
                             .padding(.vertical, 24)
                             .transition(.move(edge: position == .top ? .top : .bottom).combined(with: .opacity))
@@ -77,7 +101,7 @@ public struct ToastPresenter: ViewModifier {
                 }
                 .animation(.spring(response: 0.32, dampingFraction: 0.9), value: toast?.id)
             }
-            // Restart timer on new toast value
+            // Restart/pause timer on new toast value
             .onChange(of: toast?.id) { _, _ in
                 if let t = toast {
                     startTimer(for: t.duration)
@@ -92,7 +116,9 @@ public struct ToastPresenter: ViewModifier {
         guard seconds > 0 else { return }
         dismissTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: UInt64(max(0, seconds) * 1_000_000_000))
-            if !Task.isCancelled { dismiss() }
+            if !Task.isCancelled {
+                dismiss()
+            }
         }
     }
     
