@@ -158,7 +158,6 @@ extension ChatMessage {
             case .plain:
                 // Keep only characters; no styling stored
                 rawText = String(newValue.characters)
-                richText = nil
 
             case .markdown:
                 // Source of truth is the markdown string.
@@ -177,13 +176,12 @@ extension ChatMessage {
     mutating func setPlain(_ text: String) {
         format = .plain
         rawText = text
-        richText = nil
     }
 
     mutating func setMarkdown(_ md: String) {
         format = .markdown
         rawText = md
-        richText = nil
+        richText = MarkdownConverter.convertToAttributedString(md)
     }
 
     mutating func setAttributed(_ attr: AttributedString) {

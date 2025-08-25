@@ -76,10 +76,13 @@ public final class ChatViewModel: ObservableObject {
     public func displayMessageText(_ msg: ChatMessage) -> AttributedString {
         switch msg.format {
         case .plain:
+            print("\(msg.id) - rawText")
             return AttributedString(msg.rawText)
         case .markdown:
+            print("\(msg.id) - markdown")
             return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
         case .rich:
+            print("\(msg.id) - rich")
             return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
         }
     }
@@ -164,7 +167,11 @@ public final class ChatViewModel: ObservableObject {
         case .messageStatusUpdated(let id, let status, _):
             if let idx = messages.firstIndex(where: { $0.id == id }) {
                 print("update status: \(id) - \(messages[idx].rawText)")
-                messages[idx].status = status
+                if status == .deleted {
+                    messages.remove(at: idx)
+                } else {
+                    messages[idx].status = status
+                }
             }
             rebuildSections()
 
@@ -172,10 +179,6 @@ public final class ChatViewModel: ObservableObject {
             if let idx = messages.firstIndex(where: { $0.id == id }) {
                 print("format \(format.rawValue) for \(id) \(messages[idx].rawText) ")
                 messages[idx].format = format
-                messages[idx].editableAttributed = MarkdownConverter.convertToAttributedString(
-                    messages[idx].rawText,
-                    config: markdownConverterConfig
-                )
                 rebuildSections() // optional; only if your cell depends on format for layout
             }
         

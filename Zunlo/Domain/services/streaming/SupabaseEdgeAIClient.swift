@@ -342,7 +342,8 @@ public final class SupabaseEdgeAIClient: AIChatService {
             }
 
         case name.contains("response.output_text.delta") || name.contains("message.delta"):
-            print("[SSE] event data: \(event.data)")
+//            print("[SSE] event data: \(event.data)")
+            print("[SSE] event data: \(event.data.prefix(40))")
             let text = extractTextDelta(from: event.data)
             if !text.isEmpty { continuation.yield(.delta(replyId: draftId, text: text)) }
 

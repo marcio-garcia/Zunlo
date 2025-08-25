@@ -649,39 +649,6 @@
         }
       }
     },
-    "Error" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erro"
-          }
-        }
-      }
-    },
-    "Error Saving Event" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erro ao salvar evento"
-          }
-        }
-      }
-    },
-    "Error Saving Task" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erro ao salvar tarefa"
-          }
-        }
-      }
-    },
     "Error: %@" : {
       "localizations" : {
         "pt-BR" : {
@@ -1119,17 +1086,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nada pra hoje"
-          }
-        }
-      }
-    },
-    "Ok" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ok"
           }
         }
       }

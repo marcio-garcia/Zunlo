@@ -166,7 +166,7 @@ public actor ChatEngine {
         case .started(let id):
             // If we were awaiting tools and left an ephemeral bubble, drop it now.
             if case .awaitingTools = state, let prior = toolingAssistantId, !emittedText.contains(prior) {
-                try? await repo.setStatus(messageId: prior, status: .deleted, error: nil)
+                try? await repo.delete(messageId: prior)
                 continuation.yield(.messageStatusUpdated(messageId: prior, status: .deleted, error: nil))
                 toolingAssistantId = nil
             }
@@ -214,7 +214,13 @@ public actor ChatEngine {
             }
             if let a = currentAssistantIdIfAny(), !emittedText.contains(a) {
                 let toolNames = calls.map { $0.name }.joined(separator: ", ")
-                continuation.yield(.messageDelta(messageId: a, delta: "⏳ Using \(toolNames)…"))
+                var awaitingText = ""
+                if EnvConfig.shared.environment == .dev {
+                    awaitingText = "⏳ Using \(toolNames)…"
+                } else {
+                    awaitingText = "⏳ Thinking..."
+                }
+                continuation.yield(.messageDelta(messageId: a, delta: awaitingText))
                 toolingAssistantId = a
             }
             await runToolBatch(calls, continuation: continuation)
