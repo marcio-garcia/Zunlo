@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct EventRow: View {
     let occurrence: EventOccurrence
@@ -16,15 +17,16 @@ struct EventRow: View {
             onTap()
         } label: {
             HStack {
-                let eventColorHex = occurrence.isFakeOccForEmptyToday ? "#E0E0E0" : occurrence.color.rawValue
+                let titleColor = titleColor(occurrence: occurrence)
                 Rectangle()
-                    .fill(Color(hex: eventColorHex) ?? Color.gray)
+                    .fill(eventIndicatorColor(occurrence: occurrence))
                     .frame(width: 6)
                     .cornerRadius(3)
                 VStack(alignment: .leading) {
                     Text(occurrence.title)
-                        .themedSubtitle()
-                        .strikethrough(occurrence.isCancelled, color: Color.theme.disabled)
+                        .font(AppFontStyle.subtitle.font())
+                        .foregroundStyle(titleColor)
+                        .strikethrough(occurrence.isCancelled, color: titleColor)
                     if !occurrence.isFakeOccForEmptyToday {
                         Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
                             .themedFootnote()
@@ -46,5 +48,25 @@ struct EventRow: View {
             text.append(" - \(endDate.formattedDate(dateFormat: .time))")
         }
         return text
+    }
+    
+    func titleColor(occurrence: EventOccurrence) -> Color {
+        if occurrence.isFakeOccForEmptyToday || occurrence.isCancelled {
+            return Color.theme.tertiaryText
+        } else {
+            return Color.theme.text
+        }
+    }
+    
+    func timeColor(occurrence: EventOccurrence) -> Color {
+        return occurrence.isCancelled ? Color.theme.tertiaryText : Color.theme.secondaryText
+    }
+    
+    func eventIndicatorColor(occurrence: EventOccurrence) -> Color {
+        if occurrence.isFakeOccForEmptyToday || occurrence.isCancelled {
+            return Color.theme.disabled
+        } else {
+            return Color(hex: occurrence.color.rawValue)!
+        }
     }
 }
