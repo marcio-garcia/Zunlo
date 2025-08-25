@@ -28,6 +28,7 @@ Guardrail policy:
 - Before retrying a tool call, ask the user to confirm whether the action was successful.
 
 Conventions:
+- Current date time: ${Date()}
 - If unsure, ask one clarifying question.
 - Prefer getting context (“getAgenda”) before proposing changes.
 - For recurring edits: single vs this_and_future vs entire_series — choose carefully and explain.
@@ -280,7 +281,9 @@ export function supportsTemperature(model?: string): boolean {
 }
 
 export function enrichResponsesBody(body: any, force = false) {
-  const cloned = JSON.parse(JSON.stringify(body ?? {}));
+  // const cloned = JSON.parse(JSON.stringify(body ?? {}));
+  const cloned: any =
+    (typeof structuredClone === "function" ? structuredClone(body ?? {}) : JSON.parse(JSON.stringify(body ?? {})));
 
   // Payload "input". Ensure messages array exists
   const input = Array.isArray(cloned.input) ? cloned.input : [];
@@ -293,8 +296,28 @@ export function enrichResponsesBody(body: any, force = false) {
   // Payload "model". Default reasonable model if not set
   if (!cloned.model) cloned.model = Deno.env.get("OPENAI_MODEL") || "gpt-5-mini";
 
-  // Payload "instructions". Default instructions if not set
-  if (!cloned.instructions) cloned.instructions = PROMPT_INSTRUCTIONS;
+  const tzId: string | undefined = cloned.localTimezone;
+  const nowLocalISO: string | undefined = cloned.localNowISO;
+
+  // Remove helper fields from the payload we send to the model
+  delete cloned.localTimezone;
+  delete cloned.localNowISO;
+
+  // Build your base/system instructions (your buildPromptInstructions should already flatten newlines)
+  const base = buildPromptInstructions(tzId ?? "UTC", nowLocalISO ?? new Date().toISOString());
+
+  // Append/merge logic:
+  // - If force=true: always prepend base.
+  // - If force=false and no instructions, set base.
+  // - If force=false and instructions exist, prepend base unless it already seems present.
+  const hasTimePolicy = typeof cloned.instructions === "string" &&
+                        /Time handling policy/i.test(cloned.instructions);
+
+  if (force || !cloned.instructions) {
+    cloned.instructions = base + (cloned.instructions ? ` ${cloned.instructions}` : "");
+  } else if (!hasTimePolicy) {
+    cloned.instructions = `${base} ${cloned.instructions}`;
+  }
 
   // Temperature: set only if missing or force=true; clamp to [0,2]
   // Temperature: only if model supports it (or force)
@@ -325,4 +348,43 @@ export function enrichResponsesBody(body: any, force = false) {
   cloned.stream = true;
 
   return cloned;
+}
+
+export function buildPromptInstructions(tzId: string, nowLocalISO: string) {
+  const s = `
+Zunlo is an app to help people with ADHD manage their tasks and events.
+You are Zunlo's assistant for tasks and events.
+Never mention ADHD unless the user specifically asks about it.
+Always be kind and encouraging, without overdoing it.
+
+Guardrail policy:
+- Model talks, tools act.
+- Never mutate data via free-form text. Only call the provided tools.
+- Ask for confirmation before any destructive or sweeping change (delete, series-wide edits),
+  unless the user clearly asked for it (e.g., "delete it now").
+- Before retrying a tool call, ask the user to confirm whether the action was successful.
+
+Time handling policy (UTC-first):
+- User time zone: ${tzId}
+- Current local time: ${nowLocalISO}
+- Interpret all user-relative times in ${tzId}.
+- Convert all times to UTC before calling any tool. Use RFC3339 with 'Z' (e.g., 2025-08-25T18:00:00Z).
+- When speaking to the user, present times in ${tzId} and mention the zone if helpful.
+- For recurrences, treat the wall-clock time in ${tzId} as authoritative (e.g., “every Monday 9:00 in ${tzId}”),
+  but pass individual occurrences to tools in UTC.
+- For all-day items, treat the local day in ${tzId} as authoritative (00:00–24:00 local),
+  but persist UTC boundaries.
+
+### Examples (for reference only — do not execute)
+User (${tzId}): create "Call mom" tomorrow at 3pm
+Assistant → tools.createTask args: {"title":"Call mom","dueDate":"2025-08-25T18:00:00Z"}
+Assistant → Okay! I’ll schedule it for Mon, Aug 25 at 3:00 PM (${tzId}).
+
+Conventions:
+- Prefer getting context (“getAgenda”) before proposing changes.
+- For recurring edits: single vs this_and_future vs entire_series — choose carefully and explain.
+- Apple weekdays: 1=Sun … 7=Sat for recurrence.
+- Use editScope=override to change/cancel a single occurrence of a recurring event; use single only for non-recurring events.
+`.trim().replace(/\s*\n\s*/g, ' ').replace(/\s{2,}/g, ' ');
+  return s;
 }

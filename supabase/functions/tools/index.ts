@@ -307,7 +307,7 @@ app.post("/deleteTask", authMiddleware, async (c) => {
  * ---------------- */
 
 app.post("/createEvent", authMiddleware, async (c) => {
-    const rid = c.get("rid");
+  const rid = c.get("rid");
   const { supabase, userId } = c.get("auth") as AuthContext;
 
   const path = "tools/createEvent";
