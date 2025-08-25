@@ -85,13 +85,6 @@ extension Date {
         return df
     }()
     
-    static var isoWithFractionalSeconds: DateFormatter = {
-        Date.formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX"
-        Date.formatter.locale = Locale(identifier: "en_US_POSIX")
-        Date.formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        return Date.formatter
-    }()
-    
     func formattedDate(
         dateFormat: DateFormat,
         locale: Locale = Locale(identifier: "en_US_POSIX")
@@ -133,6 +126,13 @@ extension Date {
         let t = self.timeIntervalSince1970
         let bumped = (floor(t * 1000.0) + 1.0) / 1000.0 // add 1 ms
         return RFC3339.micro.string(from: Date(timeIntervalSince1970: bumped))
+    }
+    
+    static func localDateToAI() -> String {
+        let fmt = ISO8601DateFormatter()
+        fmt.timeZone = .current
+        fmt.formatOptions = [.withInternetDateTime, .withColonSeparatorInTimeZone]
+        return fmt.string(from: Date()) // e.g. 2025-08-24T11:10:00-03:00
     }
 }
 

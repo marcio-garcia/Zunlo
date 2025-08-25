@@ -13,7 +13,7 @@ public enum AIEvent {
     case started(replyId: UUID)                  // placeholder assistant message created
     case responseCreated(responseId: String)
     case delta(replyId: UUID, text: String)      // streaming token(s)
-    case toolCall(name: String, argumentsJSON: String)
+    case toolCall(responseId: UUID, name: String, argumentsJSON: String)
     case toolBatch([ToolCallRequest]) // <-- batch, not one-by-one
     case suggestions([String])                   // quick-reply chips
     case completed(replyId: UUID)

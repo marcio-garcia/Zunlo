@@ -24,6 +24,7 @@
 		25B7BDC22E424075004E1C12 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 25B7BDC12E424075004E1C12 /* GoogleMobileAds */; };
 		25B7BDC52E4241CA004E1C12 /* AdStack in Frameworks */ = {isa = PBXBuildFile; productRef = 25B7BDC42E4241CA004E1C12 /* AdStack */; };
 		25F5BB6E2E5B660200747955 /* GlowUI in Frameworks */ = {isa = PBXBuildFile; productRef = 25F5BB6D2E5B660200747955 /* GlowUI */; };
+		25F5BB732E5BB4B300747955 /* ZunloHelpers in Frameworks */ = {isa = PBXBuildFile; productRef = 25F5BB722E5BB4B300747955 /* ZunloHelpers */; };
 		25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 25FAA9702E0B6E56000AACA2 /* SupabaseSDK */; };
 /* End PBXBuildFile section */
 
@@ -73,6 +74,7 @@
 		251483572E40FB8A00B59FF8 /* FlowNavigator */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = FlowNavigator; sourceTree = "<group>"; };
 		25B7BDC32E4241BC004E1C12 /* AdStack */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = AdStack; sourceTree = "<group>"; };
 		25F5BB6C2E5B65A100747955 /* GlowUI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = GlowUI; sourceTree = "<group>"; };
+		25F5BB712E5BB30C00747955 /* ZunloHelpers */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = ZunloHelpers; sourceTree = "<group>"; };
 		25FA19FD2E0854F800E740A3 /* Zunlo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zunlo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FA1A0F2E0854F900E740A3 /* ZunloTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZunloTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		25FA1A192E0854F900E740A3 /* ZunloUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZunloUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -123,6 +125,7 @@
 				25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */,
 				252D730E2E2D5E6C002320B8 /* Auth in Frameworks */,
 				25B7BDC22E424075004E1C12 /* GoogleMobileAds in Frameworks */,
+				25F5BB732E5BB4B300747955 /* ZunloHelpers in Frameworks */,
 				25ACE3482E25F028009F0218 /* FirebaseMessaging in Frameworks */,
 				252D73122E2D5E6C002320B8 /* PostgREST in Frameworks */,
 				25B7BDC52E4241CA004E1C12 /* AdStack in Frameworks */,
@@ -155,6 +158,7 @@
 		25FA19F42E0854F800E740A3 = {
 			isa = PBXGroup;
 			children = (
+				25F5BB712E5BB30C00747955 /* ZunloHelpers */,
 				25F5BB6C2E5B65A100747955 /* GlowUI */,
 				25B7BDC32E4241BC004E1C12 /* AdStack */,
 				251483572E40FB8A00B59FF8 /* FlowNavigator */,
@@ -220,6 +224,7 @@
 				25B7BDC12E424075004E1C12 /* GoogleMobileAds */,
 				25B7BDC42E4241CA004E1C12 /* AdStack */,
 				25F5BB6D2E5B660200747955 /* GlowUI */,
+				25F5BB722E5BB4B300747955 /* ZunloHelpers */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -968,6 +973,10 @@
 		25F5BB6D2E5B660200747955 /* GlowUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = GlowUI;
+		};
+		25F5BB722E5BB4B300747955 /* ZunloHelpers */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ZunloHelpers;
 		};
 		25FAA9702E0B6E56000AACA2 /* SupabaseSDK */ = {
 			isa = XCSwiftPackageProductDependency;

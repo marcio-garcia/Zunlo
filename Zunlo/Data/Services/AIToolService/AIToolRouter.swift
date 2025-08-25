@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import ZunloHelpers
 
 enum ToolRoutingError: LocalizedError {
     case missingVersion(entity: String, id: UUID)
@@ -52,10 +53,17 @@ public class AIToolRouter: ToolRouter {
 
     /// Dispatch one tool call. Returns a short user-facing note for the chat.
     public func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult {
+        let timezone =  TimeZone.current.identifier
+        let normalizedArgsJSON = try ToolTimeNormalizer.normalize(
+            json: env.argsJSON,
+            tzId: timezone,
+            onlyKeys: ["startSate","endDate","dueDate"]
+        )
+        
         switch env.name {
 
         case "createTask": do {
-            let args = try JSONDecoder.makeDecoder().decode(CreateTaskArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(CreateTaskArgs.self, from: Data(normalizedArgsJSON.utf8))
             let p = CreateTaskPayloadWire(
                 idempotencyKey: UUID().uuidString,
                 reason: reason,
@@ -67,7 +75,7 @@ public class AIToolRouter: ToolRouter {
         }
 
         case "updateTask": do {
-            let args = try JSONDecoder.makeDecoder().decode(UpdateTaskArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(UpdateTaskArgs.self, from: Data(normalizedArgsJSON.utf8))
             guard let v = await repo.versionForTask(id: args.taskId) else {
                 throw ToolRoutingError.missingVersion(entity: "task", id: args.taskId)
             }
@@ -84,7 +92,7 @@ public class AIToolRouter: ToolRouter {
         }
 
         case "deleteTask": do {
-            let args = try JSONDecoder.makeDecoder().decode(DeleteTaskArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(DeleteTaskArgs.self, from: Data(normalizedArgsJSON.utf8))
             guard let v = await repo.versionForTask(id: args.taskId) else {
                 throw ToolRoutingError.missingVersion(entity: "task", id: args.taskId)
             }
@@ -100,7 +108,7 @@ public class AIToolRouter: ToolRouter {
         }
 
         case "createEvent": do {
-            let args = try JSONDecoder.makeDecoder().decode(CreateEventArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(CreateEventArgs.self, from: Data(normalizedArgsJSON.utf8))
             let p = CreateEventPayloadWire(
                 idempotencyKey: UUID().uuidString,
                 reason: reason,
@@ -113,7 +121,7 @@ public class AIToolRouter: ToolRouter {
         }
 
         case "updateEvent": do {
-            let args = try JSONDecoder.makeDecoder().decode(UpdateEventArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(UpdateEventArgs.self, from: Data(normalizedArgsJSON.utf8))
             guard let v = await repo.versionForEvent(id: args.eventId) else {
                 throw ToolRoutingError.missingVersion(entity: "event", id: args.eventId)
             }
@@ -143,7 +151,7 @@ public class AIToolRouter: ToolRouter {
         }
 
         case "deleteEvent": do {
-            let args = try JSONDecoder.makeDecoder().decode(DeleteEventArgs.self, from: Data(env.argsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(DeleteEventArgs.self, from: Data(normalizedArgsJSON.utf8))
             guard let v = await repo.versionForEvent(id: args.eventId) else {
                 throw ToolRoutingError.missingVersion(entity: "event", id: args.eventId)
             }
@@ -175,7 +183,7 @@ public class AIToolRouter: ToolRouter {
             
             var args: GetAgendaArgs?
             do {
-                args = try JSONDecoder.makeDecoder().decode(GetAgendaArgs.self, from: Data(env.argsJSON.utf8))
+                args = try JSONDecoder.makeDecoder().decode(GetAgendaArgs.self, from: Data(normalizedArgsJSON.utf8))
             } catch let error as DecodingError {
                 let err = formatDecodingError(error)
                 print("ERROR: \(err)")
@@ -200,7 +208,7 @@ public class AIToolRouter: ToolRouter {
             return ToolDispatchResult(note: "📋 Agenda ready", ui: ui)
 
         case "planWeek":
-            var args = try? JSONDecoder.makeDecoder().decode(PlanWeekArgs.self, from: Data(env.argsJSON.utf8))
+            var args = try? JSONDecoder.makeDecoder().decode(PlanWeekArgs.self, from: Data(normalizedArgsJSON.utf8))
             if args == nil {
                 args = PlanWeekArgs(startDate: Date(), objectives: [], constraints: nil, horizon: "7")
             }
@@ -323,4 +331,57 @@ private func formatDecodingError(_ error: DecodingError) -> String {
     @unknown default:
         return "Unknown decoding error"
     }
+}
+
+
+extension AIToolRouter {
+    enum ToolTimeNormalizer {
+        static func normalize(json: String, tzId: String, onlyKeys: Set<String>? = nil) throws -> String {
+            let data = Data(json.utf8)
+            let obj = try JSONSerialization.jsonObject(with: data, options: [])
+
+            // Reuse your Swift port of ensureUtcArgs/toUtcIso
+            let normalized = EnsureUTCHelper.ensureUtcArgs(obj, tzId: tzId, onlyKeys: onlyKeys)
+
+            let out = try JSONSerialization.data(withJSONObject: normalized, options: [])
+            guard let s = String(data: out, encoding: .utf8) else {
+                throw NSError(domain: "ToolTimeNormalizer", code: 1, userInfo: [NSLocalizedDescriptionKey: "UTF-8 encode failed"])
+            }
+            return s
+        }
+    }
+
+    enum PayloadGuards {
+        // Walk any Encodable payload and ensure all datetimes end with 'Z' (or are not date-like)
+        static func assertUtcOnly<T: Encodable>(_ payload: T) throws {
+            let data = try JSONEncoder().encode(payload)
+            let obj = try JSONSerialization.jsonObject(with: data, options: [])
+            var bad: [String] = []
+            walk(obj, path: [], bad: &bad)
+            if !bad.isEmpty {
+                throw NSError(domain: "PayloadGuards", code: 1, userInfo: [
+                    NSLocalizedDescriptionKey: "Non-UTC datetimes in fields: \(bad.joined(separator: ", "))"
+                ])
+            }
+        }
+
+        private static func walk(_ v: Any, path: [String], bad: inout [String]) {
+            switch v {
+            case let s as String:
+                // simple heuristic: looks like a datetime but not Z-terminated
+                if s.range(of: #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}"#, options: .regularExpression) != nil &&
+                   !s.hasSuffix("Z") &&
+                   s.range(of: #"[+-]\d{2}:\d{2}$"#, options: .regularExpression) == nil {
+                    bad.append(path.joined(separator: "."))
+                }
+            case let d as [String: Any]:
+                for (k, vv) in d { walk(vv, path: path + [k], bad: &bad) }
+            case let a as [Any]:
+                for (i, vv) in a.enumerated() { walk(vv, path: path + ["[\(i)]"], bad: &bad) }
+            default:
+                break
+            }
+        }
+    }
+
 }

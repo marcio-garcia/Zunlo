@@ -13,7 +13,7 @@ final class ChatAttachmentEmbedded: EmbeddedObject {
     @Persisted var id: UUID = UUID()
 }
 
-final class ChatMessageLocal: Object {
+public final class ChatMessageLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
     @Persisted(indexed: true) var conversationId: UUID
     @Persisted var roleRaw: String = "assistant"    // ChatRole.rawValue

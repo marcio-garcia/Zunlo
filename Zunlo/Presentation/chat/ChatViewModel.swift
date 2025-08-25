@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import GlowUI
+import ZunloHelpers
 
 // MARK: - ViewModel (UI-focused)
 
@@ -31,6 +33,17 @@ public final class ChatViewModel: ObservableObject {
     private let dayIdFormatter: DateFormatter
 
     private let rebuildDebouncer = Debouncer()
+    
+    let markdownConverterConfig = MarkdownConverterConfig(
+        heading1Font: AppFontStyle.title.font(),
+        heading2Font: AppFontStyle.subtitle.font(),
+        heading3Font: AppFontStyle.heading.font(),
+        bodyFont: AppFontStyle.body.font(),
+        boldFont: AppFontStyle.strongBody.font(),
+        codeFont: AppFontStyle.caption.font(),
+        codeBackgroundColor: Color.theme.surface,
+        linkColor: Color.theme.accent
+    )
 
     public init(conversationId: UUID, engine: ChatEngine, repo: ChatRepository, timeZone: TimeZone = TimeZone(secondsFromGMT: 0)!) {
         self.conversationId = conversationId
@@ -48,7 +61,7 @@ public final class ChatViewModel: ObservableObject {
         self.dayIdFormatter = df
     }
 
-    // MARK: Loading
+    // MARK: Loading / Display
 
     public func loadHistory(limit: Int? = 200) async {
         do {
@@ -60,6 +73,17 @@ public final class ChatViewModel: ObservableObject {
         }
     }
 
+    public func displayMessageText(_ msg: ChatMessage) -> AttributedString {
+        switch msg.format {
+        case .plain:
+            return AttributedString(msg.rawText)
+        case .markdown:
+            return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
+        case .rich:
+            return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
+        }
+    }
+    
     // MARK: Sending / Streaming
 
     public func send(text: String? = nil, attachments: [ChatAttachment] = [], userId: UUID? = nil) async {
@@ -94,14 +118,8 @@ public final class ChatViewModel: ObservableObject {
     }
 
     public func stopGeneration() {
-        Task { await engine.stop() }
         isGenerating = false
-        // If last is assistant, ensure UI shows it as sent
-        if let idx = messages.indices.last, messages[idx].role == .assistant {
-            messages[idx].status = .sent
-            rebuildSections()
-            Task { try? await repo.setStatus(messageId: messages[idx].id, status: .sent, error: nil) }
-        }
+        Task { await engine.stop() }
     }
 
     public func retry(failedAssistantId: UUID) async {
@@ -145,10 +163,22 @@ public final class ChatViewModel: ObservableObject {
 
         case .messageStatusUpdated(let id, let status, _):
             if let idx = messages.firstIndex(where: { $0.id == id }) {
+                print("update status: \(id) - \(messages[idx].rawText)")
                 messages[idx].status = status
             }
             rebuildSections()
 
+        case .messageFormatUpdated(let id, let format):
+            if let idx = messages.firstIndex(where: { $0.id == id }) {
+                print("format \(format.rawValue) for \(id) \(messages[idx].rawText) ")
+                messages[idx].format = format
+                messages[idx].editableAttributed = MarkdownConverter.convertToAttributedString(
+                    messages[idx].rawText,
+                    config: markdownConverterConfig
+                )
+                rebuildSections() // optional; only if your cell depends on format for layout
+            }
+        
         case .suggestions(let chips):
             suggestions = chips
 
@@ -158,10 +188,13 @@ public final class ChatViewModel: ObservableObject {
         case .stateChanged(let s):
             switch s {
             case .idle:
+                print("IDLE:")
                 isGenerating = false
-            case .streaming:
+            case .streaming(let assistantId):
+                print("STREAMING - assistent id: \(assistantId)")
                 isGenerating = true
-            case .awaitingTools:
+            case .awaitingTools(let responseId, let assistantId):
+                print("AWAITINGTOOLS - response id: \(responseId) -  assistent id: \(assistantId?.uuidString ?? "nil")")
                 isGenerating = true
             case .failed(let msg):
                 isGenerating = false
@@ -169,7 +202,7 @@ public final class ChatViewModel: ObservableObject {
             }
 
         case .completed:
-            isGenerating = false
+            currentResponseId = nil
             rebuildSections()
         }
     }

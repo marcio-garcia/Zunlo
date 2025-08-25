@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import ZunloHelpers
 
 // MARK: - Core Models
 
@@ -14,7 +15,7 @@ public enum ChatRole: String, Codable {
 }
 
 public enum ChatMessageStatus: String, Codable {
-    case sending, streaming, sent, failed
+    case sending, streaming, sent, failed, deleted
 }
 
 public enum ChatMessageFormat: String, Codable {
@@ -72,6 +73,7 @@ extension ChatMessage {
         conversationId: UUID,
         role: ChatRole,
         markdown md: String,
+        richText: AttributedString? = nil,
         createdAt: Date = Date(),
         status: ChatMessageStatus = .sent,
         userId: UUID? = nil,
@@ -85,7 +87,7 @@ extension ChatMessage {
         self.role = role
         self.rawText = md
         self.format = .markdown
-        self.richText = nil
+        self.richText = richText
         self.createdAt = createdAt
         self.status = status
         self.userId = userId
@@ -140,10 +142,7 @@ extension ChatMessage {
         case .plain:
             return AttributedString(rawText) // verbatim (no markdown parsing)
         case .markdown:
-            return (try? AttributedString(
-                markdown: rawText,
-                options: .init(allowsExtendedAttributes: true, interpretedSyntax: .full)
-            )) ?? AttributedString(rawText)
+            return richText ?? AttributedString(rawText)
         case .rich:
             return richText ?? AttributedString(rawText)
         }
@@ -165,7 +164,7 @@ extension ChatMessage {
                 // Source of truth is the markdown string.
                 // If a styled value is assigned here, we keep only its characters.
                 rawText = String(newValue.characters)
-                richText = nil
+                richText = newValue
 
             case .rich:
                 // Preserve full styling + keep a plain fallback for search/share

@@ -31,6 +31,7 @@ public enum ChatEngineEvent {
     case messageAppended(ChatMessage)                 // new message persisted/emitted (user/assistant/tool)
     case messageDelta(messageId: UUID, delta: String) // assistant token delta
     case messageStatusUpdated(messageId: UUID, status: ChatMessageStatus, error: String?)
+    case messageFormatUpdated(messageId: UUID, format: ChatMessageFormat)
     case suggestions([String])
     case responseCreated(String)
     case stateChanged(ChatStreamState)
@@ -54,6 +55,9 @@ public actor ChatEngine {
     private let deltaFlushNs: UInt64 = 150_000_000 // 150ms
 
     private var pendingStreamedToolOutputs: [ToolOutput] = []
+    private var emittedText = Set<UUID>()      // assistant ids that streamed any text
+    private var toolingAssistantId: UUID?      // the draft bubble we turned into a "processing" placeholder
+    private var mdDetectors: [UUID: MarkdownFormatDetector] = [:]
     
     public init(conversationId: UUID, ai: AIChatService, tools: ToolRouter, repo: ChatRepository) {
         self.conversationId = conversationId
@@ -89,6 +93,7 @@ public actor ChatEngine {
 
     public func stop() async {
         cancelCurrentStreamIfAny()
+        ai.cancelCurrentGeneration()
         // Best-effort: mark last streaming assistant as sent (if we can infer it)
         if case .streaming(let assistantId) = state {
             // Flush any pending deltas and mark as sent
@@ -106,10 +111,10 @@ public actor ChatEngine {
         do {
             try await repo.upsert(userMessage)
             continuation.yield(.messageAppended(userMessage))
-
+            
             let baseHistory = history + [userMessage]
             try await consumeStream(history: baseHistory, outputs: [], continuation: continuation)
-
+            
             while true {
                 let outs = drainPendingStreamedToolOutputs()   // no await needed; we’re on the actor
                 if outs.isEmpty { break }
@@ -117,8 +122,22 @@ public actor ChatEngine {
                 try await consumeStream(history: hist, outputs: outs, continuation: continuation)
             }
         } catch is CancellationError {
+            if let id = currentAssistantIdIfAny() {
+                await flushDeltaNow(id)
+                try? await repo.setStatus(messageId: id, status: .failed, error: "Cancelled")
+                continuation.yield(.messageStatusUpdated(messageId: id, status: .failed, error: "Cancelled"))
+                emittedText.remove(id)
+                if toolingAssistantId == id { toolingAssistantId = nil }
+            }
+            await setState(.failed("Chat cancelled"), continuation: continuation)
         } catch {
-            print("***** \(error)")
+            if let id = currentAssistantIdIfAny() {
+                await flushDeltaNow(id)
+                try? await repo.setStatus(messageId: id, status: .failed, error: "\(error)")
+                continuation.yield(.messageStatusUpdated(messageId: id, status: .failed, error: "\(error)"))
+                emittedText.remove(id)
+                if toolingAssistantId == id { toolingAssistantId = nil }
+            }
             await setState(.failed("\(error)"), continuation: continuation)
         }
         continuation.finish()
@@ -145,6 +164,13 @@ public actor ChatEngine {
     private func handleAIEvent(_ event: AIEvent, continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
         switch event {
         case .started(let id):
+            // If we were awaiting tools and left an ephemeral bubble, drop it now.
+            if case .awaitingTools = state, let prior = toolingAssistantId, !emittedText.contains(prior) {
+                try? await repo.setStatus(messageId: prior, status: .deleted, error: nil)
+                continuation.yield(.messageStatusUpdated(messageId: prior, status: .deleted, error: nil))
+                toolingAssistantId = nil
+            }
+            
             // Create assistant placeholder
             let assistant = ChatMessage(
                 id: id,
@@ -154,6 +180,8 @@ public actor ChatEngine {
                 createdAt: Date(),
                 status: .streaming
             )
+            mdDetectors[id] = MarkdownFormatDetector()
+            
             try? await repo.upsert(assistant)
             continuation.yield(.messageAppended(assistant))
             await setState(.streaming(assistantId: id), continuation: continuation)
@@ -161,28 +189,66 @@ public actor ChatEngine {
         case .delta(let id, let delta):
             // Yield to UI and debounce persistence
             continuation.yield(.messageDelta(messageId: id, delta: delta))
+            emittedText.insert(id)
             await bufferDelta(id: id, delta: delta)
 
-        case .toolCall(let name, let argsJSON):
+            if var det = mdDetectors[id], det.feed(delta) {
+//                mdDetectors[id] = det
+                continuation.yield(.messageFormatUpdated(messageId: id, format: .markdown))
+                try? await repo.setFormat(messageId: id, format: .markdown)
+            }
+
+        case .toolCall(let responseId, let name, let argsJSON):
+            // If you track the last response id, use it here
+            await setState(.awaitingTools(responseId: responseId.uuidString,
+                                          assistantId: currentAssistantIdIfAny()),
+                           continuation: continuation)
             await runSingleTool(name: name, argsJSON: argsJSON, continuation: continuation)
 
         case .toolBatch(let calls):
+            // Flip to awaiting-tools as soon as we know tools are in play
+            if let first = calls.first {
+                await setState(.awaitingTools(responseId: first.responseId,
+                                              assistantId: currentAssistantIdIfAny()),
+                               continuation: continuation)
+            }
+            if let a = currentAssistantIdIfAny(), !emittedText.contains(a) {
+                let toolNames = calls.map { $0.name }.joined(separator: ", ")
+                continuation.yield(.messageDelta(messageId: a, delta: "⏳ Using \(toolNames)…"))
+                toolingAssistantId = a
+            }
             await runToolBatch(calls, continuation: continuation)
 
         case .suggestions(let chips):
             continuation.yield(.suggestions(chips))
 
         case .completed(let id):
-            // Final flush + mark sent
+            // If this turn called tools and produced no text, keep the placeholder alive.
+            if toolingAssistantId == id && !emittedText.contains(id) {
+                // Do NOT flush/mark .sent or .idle; we're still awaiting tools.
+                continuation.yield(.completed(messageId: id)) // optional; safe to keep/omit
+                return
+            }
+            
+            // Final chance to promote (in case last chunk tipped it over and repo call didn’t run)
+            if let det = mdDetectors[id], det.decided {
+                try? await repo.setFormat(messageId: id, format: .markdown)
+                continuation.yield(.messageFormatUpdated(messageId: id, format: .markdown))
+            }
+            
+            // Normal text-only path: Final flush + mark sent
             await flushDeltaNow(id)
             try? await repo.setStatus(messageId: id, status: .sent, error: nil)
             continuation.yield(.messageStatusUpdated(messageId: id, status: .sent, error: nil))
             continuation.yield(.completed(messageId: id))
+            
+            mdDetectors[id] = nil
+            emittedText.remove(id)
+            if toolingAssistantId == id { toolingAssistantId = nil }
             await setState(.idle, continuation: continuation)
 
         case .responseCreated(let rid):
             continuation.yield(.responseCreated(rid))
-            await setState(.awaitingTools(responseId: rid, assistantId: currentAssistantIdIfAny()), continuation: continuation)
         }
     }
     
@@ -193,8 +259,16 @@ public actor ChatEngine {
     }
 
     private func currentAssistantIdIfAny() -> UUID? {
-        if case .streaming(let a) = state { return a }
-        return nil
+        switch state {
+        case .idle:
+            return nil
+        case .streaming(let assistantId):
+            return assistantId
+        case .awaitingTools(let responseId, let assistantId):
+            return assistantId
+        case .failed(let string):
+            return nil
+        }
     }
 
     private func setState(_ new: ChatStreamState, continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
@@ -225,7 +299,7 @@ public actor ChatEngine {
     private func flushDeltaNow(_ id: UUID) async {
         deltaFlushTasks[id]?.cancel()
         deltaFlushTasks[id] = nil
-        guard let buf = deltaBuffers[id], !buf.isEmpty else { return }
+        guard let buf = deltaBuffers[id], !buf.isEmpty else { deltaBuffers[id] = nil; return }
         deltaBuffers[id] = ""
         try? await repo.appendDelta(messageId: id, delta: buf, status: .streaming)
     }
@@ -299,20 +373,6 @@ public actor ChatEngine {
             // Streamed function_call path → accumulate outputs for a follow-up turn,
             // and (optionally) show a compact tool bubble now.
             pendingStreamedToolOutputs.append(contentsOf: outputs)
-
-            // Optional: visible summary bubble (keep or remove to taste)
-            let summaryText = (["🔧 Ran \(calls.count) tool(s):"] + notes).joined(separator: "\n")
-////            let text = inserts.first?.text ?? summaryText
-//            let m = ChatMessage(conversationId: conversationId,
-//                                role: .tool,
-//                                plain: summaryText,
-//                                createdAt: Date(),
-//                                status: .sent)
-//            try? await repo.upsert(m)
-//            continuation.yield(.messageAppended(m))
-
-            // IMPORTANT: do NOT call ai.submitToolOutputs here.
-            // The follow-up turn will be kicked off after the current stream completes.
         }
     }
 }

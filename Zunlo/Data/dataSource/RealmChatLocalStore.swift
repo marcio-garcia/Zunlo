@@ -14,7 +14,7 @@ public final class RealmChatLocalStore: ChatLocalStore {
     
     public init(db: DatabaseActor) { self.db = db }
 
-    public func fetch(conversationId: UUID, limit: Int?) async throws -> [ChatMessage] {
+    public func fetch(conversationId: UUID, limit: Int?) async throws -> [ChatMessageLocal] {
         try await db.fetchChatMessages(conversationId: conversationId, limit: limit)
     }
 
@@ -36,5 +36,9 @@ public final class RealmChatLocalStore: ChatLocalStore {
     
     public func deleteAll(_ conversationId: UUID) async throws {
         try await db.deleteAllChatMessages(conversationId)
+    }
+    
+    public func setFormat(messageId: UUID, format: ChatMessageFormat) async throws {
+        try await db.setFormat(messageId: messageId, format: format)
     }
 }

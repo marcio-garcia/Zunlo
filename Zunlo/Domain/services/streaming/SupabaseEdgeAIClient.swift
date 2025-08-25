@@ -32,6 +32,24 @@ public struct ResponsesApiTextRequest: Encodable {
     let input: [InputContent]
     let temperature: Double?
     let metadata: [String: String]?
+    let localNowISO: String?
+    let localTimezone: String?
+}
+
+public struct InputContent: Encodable {
+    public init(type: String? = nil, role: String? = nil, content: String? = nil, call_id: String? = nil, output: String? = nil) {
+        self.type = type
+        self.role = role
+        self.content = content
+        self.call_id = call_id
+        self.output = output
+    }
+    
+    let type: String?
+    let role: String?           // "user" | "assistant"
+    let content: String?  // text + (for last message) input_json
+    let call_id: String?
+    let output: String?
 }
 
 private func mapRole(_ role: ChatRole, defaultNonUser: String) -> String {
@@ -156,15 +174,17 @@ public final class SupabaseEdgeAIClient: AIChatService {
         if !output.isEmpty {
             for o in output {
                 previousResponseId = o.previous_response_id
-                textContent.append(InputContent(
+                let content = InputContent(
                     type: "function_call_output",
                     call_id: o.tool_call_id,
                     output: o.output
-                ))
+                )
+                print("function call outputs: \(content)")
+                textContent.append(content)
             }
         }
 
-        // 4) Windowing (avoid magic 8; make it configurable). Keep more recent messages.
+        // 4) Windowing. Keep more recent messages.
         let tail = Array(textContent.suffix(maxWindowMessages))
 
         let body = ResponsesApiTextRequest(
@@ -173,7 +193,9 @@ public final class SupabaseEdgeAIClient: AIChatService {
             previous_response_id: previousResponseId,
             input: tail,
             temperature: defaultTemperature,
-            metadata: nil
+            metadata: nil,
+            localNowISO: Date.localDateToAI(),
+            localTimezone: TimeZone.current.identifier
         )
 
         return AsyncThrowingStream { continuation in
@@ -277,7 +299,7 @@ public final class SupabaseEdgeAIClient: AIChatService {
 
         switch true {
         case name.contains("response.created"):
-            print("[SSE] event data: \(event.data)")
+            print("[SSE] event data: \(event.data.prefix(30))")
             if let rid = extractResponseId(from: event.data) {
                 fn.responseId = rid
                 continuation.yield(.responseCreated(responseId: rid))
@@ -324,20 +346,20 @@ public final class SupabaseEdgeAIClient: AIChatService {
             let text = extractTextDelta(from: event.data)
             if !text.isEmpty { continuation.yield(.delta(replyId: draftId, text: text)) }
 
-        case /*name.contains("response.output_text.done") ||*/ name.contains("response.completed") || name == "completed":
-            print("[SSE] event data: \(event.data)")
-            sawCompleted = true
-            continuation.yield(.completed(replyId: draftId))
-
         // Optional: suggestions (if your Edge Function emits them)
         case name.contains("response.suggestions") || name.contains("ui.suggestions"):
             print("[SSE] event data: \(event.data)")
             if let chips = extractSuggestions(from: event.data), !chips.isEmpty {
                 continuation.yield(.suggestions(chips))
             }
+            
+        case /*name.contains("response.output_text.done") ||*/ name.contains("response.completed") || name == "completed":
+            print("[SSE] event data: \(event.data.prefix(30))")
+            sawCompleted = true
+            continuation.yield(.completed(replyId: draftId))
 
         default:
-            // Debug: print(name)
+            print(name)
             break
         }
     }

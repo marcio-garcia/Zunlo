@@ -14,6 +14,7 @@ public protocol ChatRepository {
     func setStatus(messageId: UUID, status: ChatMessageStatus, error: String?) async throws
     func delete(messageId: UUID) async throws
     func deleteAll(_ conversationId: UUID) async throws
+    func setFormat(messageId: UUID, format: ChatMessageFormat) async throws
 }
 
 public final class DefaultChatRepository: ChatRepository {
@@ -22,7 +23,8 @@ public final class DefaultChatRepository: ChatRepository {
     public init(store: ChatLocalStore) { self.store = store }
 
     public func loadMessages(conversationId: UUID, limit: Int? = 200) async throws -> [ChatMessage] {
-        try await store.fetch(conversationId: conversationId, limit: limit)
+        let messages = try await store.fetch(conversationId: conversationId, limit: limit)
+        return messages.map { ChatMessage(from: $0) }
     }
 
     public func upsert(_ message: ChatMessage) async throws {
@@ -43,5 +45,9 @@ public final class DefaultChatRepository: ChatRepository {
     
     public func deleteAll(_ conversationId: UUID) async throws {
         try await store.deleteAll(conversationId)
+    }
+    
+    public func setFormat(messageId: UUID, format: ChatMessageFormat) async throws {
+        try await store.setFormat(messageId: messageId, format: format)
     }
 }

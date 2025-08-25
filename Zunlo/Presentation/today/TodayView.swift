@@ -460,7 +460,7 @@ struct TodayView: View {
     private func fetchInfo() async {
         await viewModel.fetchData()
         await viewModel.fetchWeather()
-//        await viewModel.syncDB()
+        await viewModel.syncDB()
         aiContext = await AIContextBuilder().build(
             time: SystemTimeProvider(),
             policyProvider: policyProvider,

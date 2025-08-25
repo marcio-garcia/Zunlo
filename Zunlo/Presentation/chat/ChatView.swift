@@ -209,7 +209,8 @@ struct ChatView: View {
     }
     
     private func scrollToBottom(animated: Bool) {
-        if let id = viewModel.messages.last?.id {
+        let filtered = viewModel.messages.filter { $0.status != .deleted }
+        if let id = filtered.last?.id {
             withAnimation(animated ? .easeOut(duration: 0.25) : nil) {
                 scrollProxy?.scrollTo(id, anchor: .bottom)
             }
@@ -262,12 +263,13 @@ private struct MessageBubble: View {
 
     private var bubble: some View {
         VStack(alignment: .leading, spacing: 8) {
+            Text(message.id.uuidString)
             if message.format == .plain {
-                Text(message.displayAttributed)
+                Text(viewModel.displayMessageText(message))
                     .themedBody()
                     .textSelection(.enabled)
             } else {
-                Text(message.displayAttributed)
+                Text(viewModel.displayMessageText(message))
                     .textSelection(.enabled)
             }
 

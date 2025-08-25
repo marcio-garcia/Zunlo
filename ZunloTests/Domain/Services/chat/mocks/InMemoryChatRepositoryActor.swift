@@ -30,6 +30,10 @@ public actor InMemoryChatRepositoryActor: ChatRepository {
     }
     public func delete(messageId: UUID) async throws { messages.removeValue(forKey: messageId) }
     public func deleteAll(_ conversationId: UUID) async throws { messages.removeAll() }
+    public func setFormat(messageId: UUID, format: Zunlo.ChatMessageFormat) async throws {
+        messages[messageId]?.format = format
+    }
+
 }
 
 

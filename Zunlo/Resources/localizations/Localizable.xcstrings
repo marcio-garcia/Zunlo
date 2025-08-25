@@ -792,6 +792,9 @@
         }
       }
     },
+    "From Markdown (your renderer)" : {
+
+    },
     "Get Started" : {
       "localizations" : {
         "pt-BR" : {
@@ -961,6 +964,9 @@
           }
         }
       }
+    },
+    "Manual AttributedString" : {
+
     },
     "medium" : {
       "localizations" : {
