@@ -36,6 +36,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         }
     }
     
+    let userId: UUID
     let mode: Mode
     private let taskFetcher: UserTaskFetcherService
     private let taskEditor: TaskEditorService
@@ -51,7 +52,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
         }
     }
 
-    init(mode: Mode, taskFetcher: UserTaskFetcherService, taskEditor: TaskEditorService) {
+    init(userId: UUID, mode: Mode, taskFetcher: UserTaskFetcherService, taskEditor: TaskEditorService) {
+        self.userId = userId
         self.mode = mode
         self.taskFetcher = taskFetcher
         self.taskEditor = taskEditor
@@ -135,18 +137,18 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
     
     private func makeInput(mode: Mode) -> AddTaskInput {
         var id: UUID
-        var userId: UUID?
         var parentEventId: UUID?
+        var version: Int?
         
         switch mode {
         case .add:
             id = UUID()
-            userId = nil
             parentEventId = nil
+            version = nil
         case .edit(let task):
             id = task.id
-            userId = task.userId
             parentEventId = task.parentEventId
+            version = task.version
         }
         
         return AddTaskInput(
@@ -160,7 +162,8 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             parentEventId: parentEventId,
             tags: tags,
             reminderTriggers: reminderTriggers,
-            deleteAt: nil
+            deleteAt: nil,
+            version: version
         )
     }
 }

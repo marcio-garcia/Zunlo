@@ -20,8 +20,8 @@ final class RealmUserTaskLocalStore: UserTaskLocalStore {
         try await db.upsertUserTask(from: domain)
     }
 
-    func delete(id: UUID) async throws {
-        try await db.deleteUserTask(id: id)
+    func delete(id: UUID, userId: UUID) async throws {
+        try await db.deleteUserTask(id: id, userId: userId)
     }
 
     func fetch(id: UUID) async throws -> UserTaskLocal? {

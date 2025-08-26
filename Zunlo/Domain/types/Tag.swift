@@ -8,23 +8,11 @@
 import SwiftUI
 import GlowUI
 
-struct Tag: Identifiable, Equatable, Hashable, Codable {
-    let id: UUID
-    var text: String
-    var color: String
-    var selected: Bool
-    
-//    init(
-//        id: UUID = UUID(),
-//        text: String,
-//        color: Color = Color.secondary,
-//        selected: Bool = false
-//    ) {
-//        self.id = id
-//        self.text = text
-//        self.color = color
-//        self.selected = selected
-//    }
+public struct Tag: Identifiable, Equatable, Hashable, Codable {
+    public let id: UUID
+    public var text: String
+    public var color: String
+    public var selected: Bool
     
     static func toTag(tags: [String]) -> [Tag] {
         tags.map { tag in

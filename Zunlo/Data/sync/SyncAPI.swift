@@ -31,4 +31,6 @@ public protocol SyncAPI: Sendable {
     func updateUserTaskIfVersionMatches(_ dto: UserTaskRemote) async throws -> UserTaskRemote?
     func fetchUserTask(id: UUID) async throws -> UserTaskRemote?
     func fetchUserTasksToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [UserTaskRemote]
+    func insertUserTasksPayloadReturning(_ batch: [TaskInsertPayload]) async throws -> [UserTaskRemote]
+    func updateUserTaskIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: TaskUpdatePayload) async throws -> UserTaskRemote?
 }

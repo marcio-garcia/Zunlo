@@ -15,6 +15,7 @@ final public class EventRepository {
     private let recurrenceRuleRemoteStore: RecurrenceRuleRemoteStore
     private let eventOverrideLocalStore: EventOverrideLocalStore
     private let eventOverrideRemoteStore: EventOverrideRemoteStore
+    private let auth: AuthProviding
     
     private let reminderScheduler: ReminderScheduler<Event>
     private let calendar = Calendar.appDefault
@@ -22,6 +23,7 @@ final public class EventRepository {
     var lastEventAction = Observable<LastEventAction>(.none)
     
     init(
+        auth: AuthProviding,
         eventLocalStore: EventLocalStore,
         eventRemoteStore: EventRemoteStore,
         recurrenceRuleLocalStore: RecurrenceRuleLocalStore,
@@ -29,6 +31,7 @@ final public class EventRepository {
         eventOverrideLocalStore: EventOverrideLocalStore,
         eventOverrideRemoteStore: EventOverrideRemoteStore
     ) {
+        self.auth = auth
         self.eventLocalStore = eventLocalStore
         self.eventRemoteStore = eventRemoteStore
         self.recurrenceRuleLocalStore = recurrenceRuleLocalStore
@@ -103,6 +106,7 @@ final public class EventRepository {
     // MARK: - CRUD for Events
 
     func upsert(_ event: Event) async throws {
+        guard await auth.isAuthorized(), let userId = auth.userId else { return }
         try await eventLocalStore.upsert(EventLocal(domain: event))
         reminderScheduler.cancelReminders(for: event)
         reminderScheduler.scheduleReminders(for: event)
@@ -114,6 +118,7 @@ final public class EventRepository {
         splitDate: Date,
         newEvent: Event
     ) async throws {
+        guard await auth.isAuthorized(), let userId = auth.userId else { return }
         let _ = try await eventLocalStore.splitRecurringEvent(
             originalEventId: originalEventId,
             splitDate: splitDate,
@@ -123,7 +128,8 @@ final public class EventRepository {
     }
 
     func delete(id: UUID, reminderTriggers: [ReminderTrigger]? = nil) async throws {
-        try await eventLocalStore.delete(id: id)
+        guard await auth.isAuthorized(), let userId = auth.userId else { return }
+        try await eventLocalStore.delete(id: id, userId: userId)
         if let reminders = reminderTriggers {
             reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminders)
         }
@@ -131,6 +137,7 @@ final public class EventRepository {
     }
 
     func apply(rows: [EventRemote]) async throws {
+        guard await auth.isAuthorized(), let userId = auth.userId else { return }
         try await eventLocalStore.apply(rows: rows)
     }
 

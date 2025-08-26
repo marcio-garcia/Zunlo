@@ -31,6 +31,7 @@ public protocol AuthProviding {
     var userId: UUID? { get }
     var accessToken: String? { get }
     func refreshSession(refreshToken: String?) async throws -> AuthToken?
+    func isAuthorized() async -> Bool
 }
 
 final class AuthManager: ObservableObject, AuthProviding {
@@ -109,6 +110,14 @@ final class AuthManager: ObservableObject, AuthProviding {
         } else {
             try await signInAnonymously()
         }
+    }
+    
+    public func isAuthorized() async -> Bool {
+        if let auth = authToken, authService.validateToken(auth) {
+            return true
+        }
+        await unauthenticated()
+        return false
     }
     
     func signIn(email: String, password: String) async throws {

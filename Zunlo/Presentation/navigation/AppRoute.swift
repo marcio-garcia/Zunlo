@@ -11,7 +11,7 @@ import FlowNavigator
 enum SheetRoute: AppSheetRoute {
     case settings
     case addTask
-    case editTask(_ id: UUID)
+    case editTask(_ task: UserTask)
     case addEvent
     case editEvent(_ editMode: AddEditEventViewMode)
     

@@ -8,11 +8,18 @@
 import Foundation
 
 final class LocalWeekPlanner: WeekPlanning {
+    private let userId: UUID
     private let cal: Calendar
     private let agenda: AgendaComputing
     private let toolRepo: DomainRepositories
     
-    init(agenda: AgendaComputing, toolRepo: DomainRepositories, calendar: Calendar = .appDefault) {
+    init(
+        userId: UUID,
+        agenda: AgendaComputing,
+        toolRepo: DomainRepositories,
+        calendar: Calendar = .appDefault
+    ) {
+        self.userId = userId
         self.agenda = agenda
         self.cal = calendar
         self.toolRepo = toolRepo
@@ -40,6 +47,7 @@ final class LocalWeekPlanner: WeekPlanning {
 //        let free = computeFreeBlocks(start: start, end: end, workHours: work, busy: busy, tz: timezone)
 
         let context = await AIContextBuilder().build(
+            userId: userId,
             time: SystemTimeProvider(),
             policyProvider: SuggestionPolicyProvider(),
             tasks: AppState.shared.taskSuggestionEngine!,

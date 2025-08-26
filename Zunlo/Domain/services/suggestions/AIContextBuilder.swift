@@ -79,6 +79,7 @@ public class AIContextBuilder {
     /// Builds an AIContext for an arbitrary date range. For backward compatibility, `dayStart`/`dayEnd` in `AIContext`
     /// will be set to `rangeStart`/`rangeEnd`.
     func build(
+        userId: UUID,
         time: TimeProvider,
         policyProvider: SuggestionPolicyProvider,
         tasks: TaskSuggestionEngine,
@@ -169,6 +170,7 @@ public class AIContextBuilder {
         // -------- Compose AIContext --------
 
         return AIContext(
+            userId: userId,
             now: now,
             dayStart: interval.start,
             dayEnd: interval.end,
@@ -193,6 +195,7 @@ public class AIContextBuilder {
 
     /// Keeps your original call sites working. This builds a range for the given `date`'s calendar day.
     func build(
+        userId: UUID,
         time: TimeProvider,
         policyProvider: SuggestionPolicyProvider,
         tasks: TaskSuggestionEngine,
@@ -205,6 +208,7 @@ public class AIContextBuilder {
         // End inclusive(ish) like your original code; if you prefer a real end-of-day boundary, adjust to start of next day minus 1 second.
         let dayEnd = cal.date(bySettingHour: 23, minute: 59, second: 59, of: dayStart)!
         return await build(
+            userId: userId,
             time: time,
             policyProvider: policyProvider,
             tasks: tasks,

@@ -40,19 +40,22 @@ final class RealmEventLocalStore: EventLocalStore {
     }
 
     func upsert(_ event: EventRemote) async throws {
+        if event.user_id == nil { throw EventError.validation("userId can not be nil!")}
         try await db.upsertEvent(from: event, userId: auth.userId)
     }
 
     func upsert(_ event: EventLocal) async throws {
+        if event.userId == nil { throw EventError.validation("userId can not be nil!")}
         try await db.upsertEvent(from: event, userId: auth.userId)
     }
     
     func upsert(event: EventLocal, rule: RecurrenceRule) async throws {
+        if event.userId == nil { throw EventError.validation("userId can not be nil!")}
         try await db.upsertEvent(local: event, rule: rule, userId: auth.userId)
     }
 
-    func delete(id: UUID) async throws {
-        try await db.softDeleteEvent(id: id, userId: auth.userId)
+    func delete(id: UUID, userId: UUID) async throws {
+        try await db.softDeleteEvent(id: id, userId: userId)
     }
 
     func deleteAll(for userId: UUID) async throws {

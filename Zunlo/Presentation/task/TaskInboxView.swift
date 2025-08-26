@@ -27,7 +27,7 @@ struct TaskInboxView: View {
         let taskViewFactory = TaskViewFactory(
             viewID: viewID,
             nav: nav,
-            editableTaskProvider: { self.editableUserTask },
+            userId: UUID(),
             onAddEditTaskViewDismiss: {
                 Task { await viewModel.fetchTasks() }
             }
@@ -69,7 +69,7 @@ struct TaskInboxView: View {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
                                     editableUserTask = task
-                                    nav.showSheet(.editTask(task.id), for: viewID)
+                                    nav.showSheet(.editTask(task), for: viewID)
                                 }
                             }
                             
@@ -80,7 +80,7 @@ struct TaskInboxView: View {
                                     viewModel.toggleCompletion(for: task)
                                 } onTap: {
                                     editableUserTask = task
-                                    nav.showSheet(.editTask(task.id), for: viewID)
+                                    nav.showSheet(.editTask(task), for: viewID)
                                 }
                             }
                         }

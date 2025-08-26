@@ -20,8 +20,8 @@ enum TaskViewRouter {
         case .addTask:
             return factory.buildAddTaskView()
 
-        case .editTask(let id):
-            return factory.buildEditTaskView(id: id)
+        case .editTask(let task):
+            return factory.buildEditTaskView(task: task)
 
         default:
             return AnyView(FallbackView(message: "No view found for this task sheet route.", nav: nav, viewID: UUID()))

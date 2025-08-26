@@ -8,6 +8,11 @@
 import Foundation
 import RealmSwift
 
+enum LocalDBError: Error {
+    case notFound
+    case unauthorized
+}
+
 public actor DatabaseActor {
     private let config: Realm.Configuration
     // Keeps the in-memory realm alive for the test's lifetime
@@ -402,7 +407,7 @@ public actor DatabaseActor {
     func readDirtyUserTasks() throws -> ([UserTaskRemote], [UUID]) {
         let realm = try openRealm()
         let dirty = Array(realm.objects(UserTaskLocal.self).where { $0.needsSync == true })
-        return (dirty.map { UserTaskRemote(domain: $0.toDomain()) }, dirty.map(\.id))
+        return (dirty.map { UserTaskRemote(local: $0) }, dirty.map(\.id))
     }
 
     func markUserTasksClean(_ ids: [UUID]) throws {
@@ -417,8 +422,6 @@ public actor DatabaseActor {
         try realm.write {
             for r in rows {
                 let id = r.id
-//                if let existing = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id),
-//                   existing.needsSync == true { continue } // v1 trade-off: don't stomp local dirty
                 let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id) ?? UserTaskLocal(remote: r)
                 obj.getUpdateFields(remote: r)
                 realm.add(obj, update: .modified)
@@ -446,10 +449,13 @@ public actor DatabaseActor {
         print("******** user task upserted: \(domain.title)")
     }
     
-    func deleteUserTask(id: UUID) throws {
+    func deleteUserTask(id: UUID, userId: UUID) throws {
         let realm = try openRealm()
         try realm.write {
             if let existing = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: id) {
+                guard existing.userId == userId else {
+                    throw LocalDBError.unauthorized
+                }
                 existing.deletedAt = Date()
                 existing.needsSync = true
             }
@@ -833,21 +839,16 @@ extension DatabaseActor {
 }
 
 extension DatabaseActor {
-    enum EventDeleteError: Error {
-        case eventNotFound
-        case unauthorized
-    }
-
     /// Soft-delete an event and all of its children (rules, overrides).
     /// Marks every changed row `needsSync = true` so push will upsert tombstones.
     func softDeleteEvent(id: UUID, userId: UUID?) throws {
         let realm = try openRealm()
 
         guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: id) else {
-            throw EventDeleteError.eventNotFound
+            throw LocalDBError.notFound
         }
         guard existing.userId == userId else {
-            throw EventDeleteError.unauthorized
+            throw LocalDBError.unauthorized
         }
 
         let now = Date()
@@ -887,7 +888,7 @@ extension DatabaseActor {
     func undeleteEvent(id: UUID, userId: UUID) throws {
         let realm = try openRealm()
         guard let ev = realm.object(ofType: EventLocal.self, forPrimaryKey: id),
-              ev.userId == userId else { throw EventDeleteError.eventNotFound }
+              ev.userId == userId else { throw LocalDBError.notFound }
         let now = Date()
         try realm.write {
             ev.deletedAt = nil; ev.updatedAt = now; ev.needsSync = true
@@ -1125,6 +1126,8 @@ extension DatabaseActor {
     }
 }
 
+// MARK: SYNC
+
 enum ConflictTable: String { case events, recurrence_rules, event_overrides, tasks }
 
 extension DatabaseActor {
@@ -1162,4 +1165,68 @@ extension DatabaseActor {
             try realm.write { c.resolvedAt = Date(); realm.delete(c) }
         }
     }
+}
+
+extension DatabaseActor {
+    /// Returns a *managed* cursor object, creating it if needed.
+    /// Safe to call both inside and outside a write transaction.
+    fileprivate func ensureCursor(for key: String, in realm: Realm) throws -> SyncCursor {
+        if let c = realm.object(ofType: SyncCursor.self, forPrimaryKey: key) { return c }
+        let c = SyncCursor(); c.pk = key
+        if realm.isInWriteTransaction { realm.add(c) } else { try realm.write{ realm.add(c) } }
+        return c
+    }
+    
+    // Generic cursor read
+    func readCursor(for key: String) throws -> (Date, String?, UUID?) {
+        let realm = try openRealm()
+        let c = try ensureCursor(for: key, in: realm)
+        return (c.lastTs, c.lastTsRaw, c.lastId)
+    }
+    
+    // Generic page apply + cursor advance (entity-specific upsert supplied by closure)
+    func applyPage<R: RemoteEntity>(for key: String, rows: [R], upsert: (_ realm: Realm, _ rows: [R]) -> Void) throws {
+        let realm = try openRealm()
+        try realm.write {
+            upsert(realm, rows)  // do your entity-specific upserts (tasks/events)
+            if let last = rows.last {
+                let cursor = try! ensureCursor(for: key, in: realm)
+                cursor.lastTs = last.updatedAt
+                cursor.lastTsRaw = last.updatedAtRaw
+                cursor.lastId = last.id
+            }
+        }
+    }
+    
+//    func applyTaskSync(rows: [UserTaskRemote]) throws {
+//        let realm = try openRealm()
+//        try realm.write {
+//            for r in rows {
+//                // upsert rows
+//                if let tomb = r.deletedAt {
+//                    // choose either: delete hard, or mark soft-deleted
+//                    if let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: r.id) {
+//                        obj.deletedAt = tomb
+//                        obj.needsSync = false
+//                        obj.version = r.version
+//                        // optionally also clear other fields or delete the object
+//                    }
+//                    continue
+//                }
+//                let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: r.id) ?? {
+//                    let o = UserTaskLocal(); o.id = r.id; return o
+//                }()
+//                obj.getUpdateFields(remote: r)     // make sure this sets *all* fields including updatedAt, version, deletedAt, needsSync=false
+//                realm.add(obj, update: .modified)
+//            }
+//
+//            // advance cursor to exactly the last row in this page
+//            if let last = rows.last {
+//                let cursor = try! ensureTaskCursor(in: realm) // safe inside write
+//                cursor.lastTs = last.updatedAt
+//                cursor.lastTsRaw = last.updatedAtRaw
+//                cursor.lastId = last.id
+//            }
+//        }
+//    }
 }

@@ -71,7 +71,7 @@ public final class AIWelcomeCardViewModel: ObservableObject {
             TimeboxTopTaskSuggester(tools: tools, usage: usageStore),
             FindSlotSuggester(minutes: 30, tools: tools, usage: usageStore),
             WeatherNudgeSuggester(tools: tools, usage: usageStore),
-            EventPrepSuggester(tools: tools, usage: usageStore),
+            EventPrepSuggester(userId: context.userId, tools: tools, usage: usageStore),
             RoutineSuggester(tools: tools, usage: usageStore)
         ])
     }

@@ -11,6 +11,7 @@ import FlowNavigator
 struct TaskViewFactory: TaskViews {
     let viewID: UUID
     let nav: AppNav
+    let userId: UUID
     let editableTaskProvider: (() -> UserTask?)?
     let onAddEditTaskViewDismiss: (() -> Void)?
     let onTaskInboxDismiss: (() -> Void)?
@@ -18,12 +19,14 @@ struct TaskViewFactory: TaskViews {
     internal init(
         viewID: UUID,
         nav: AppNav,
+        userId: UUID,
         editableTaskProvider: (() -> UserTask?)? = nil,
         onAddEditTaskViewDismiss: (() -> Void)? = nil,
         onTaskInboxDismiss: (() -> Void)? = nil
     ) {
         self.viewID = viewID
         self.nav = nav
+        self.userId = userId
         self.editableTaskProvider = editableTaskProvider
         self.onAddEditTaskViewDismiss = onAddEditTaskViewDismiss
         self.onTaskInboxDismiss = onTaskInboxDismiss
@@ -43,6 +46,7 @@ struct TaskViewFactory: TaskViews {
         AnyView(
             AddEditTaskView(
                 viewModel: AddEditTaskViewModel(
+                    userId: userId,
                     mode: .add,
                     taskFetcher: UserTaskFetcher(repo: AppState.shared.userTaskRepository!),
                     taskEditor: TaskEditor(repo: AppState.shared.userTaskRepository!)
@@ -55,13 +59,11 @@ struct TaskViewFactory: TaskViews {
         )
     }
 
-    func buildEditTaskView(id: UUID) -> AnyView {
-        guard let task = editableTaskProvider?(), task.id == id else {
-            return AnyView(FallbackView(message: "Could not edit task.", nav: nav, viewID: viewID))
-        }
+    func buildEditTaskView(task: UserTask) -> AnyView {
         return AnyView(
             AddEditTaskView(
                 viewModel: AddEditTaskViewModel(
+                    userId: userId,
                     mode: .edit(task),
                     taskFetcher: UserTaskFetcher(repo: AppState.shared.userTaskRepository!),
                     taskEditor: TaskEditor(repo: AppState.shared.userTaskRepository!)

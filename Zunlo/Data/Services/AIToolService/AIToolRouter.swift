@@ -42,11 +42,13 @@ public protocol ToolRouter {
 /// Single responsibility: map a ToolEnvelope to the right ToolService call,
 /// inject `version`/ids, and apply server snapshots to local stores.
 public class AIToolRouter: ToolRouter {
+    private let userId: UUID
     private let tools: AIToolService
     private let repo: DomainRepositories
     private let reason = "from tool call"
     
-    init(tools: AIToolService, repo: DomainRepositories) {
+    init(userId: UUID, tools: AIToolService, repo: DomainRepositories) {
+        self.userId = userId
         self.tools = tools
         self.repo = repo
     }
@@ -224,7 +226,14 @@ public class AIToolRouter: ToolRouter {
 //                constraints: nil
 //            )
             
-            let res = try await tools.planWeek(start: start, horizonDays: horizonDays, timezone: .current, objectives: [], constraints: nil)
+            let res = try await tools.planWeek(
+                userId: userId,
+                start: start,
+                horizonDays: horizonDays,
+                timezone: .current,
+                objectives: [],
+                constraints: nil
+            )
             let json = try JSONEncoder.encoder().encode(res)
             let out = String(data: json, encoding: .utf8) ?? "{}"
             return ToolDispatchResult(note: out)

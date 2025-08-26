@@ -66,6 +66,7 @@ final public class AIToolService: AIToolServiceAPI {
     
     @discardableResult
     public func planWeek(
+        userId: UUID,
         start: Date,
         horizonDays: Int,
         timezone: TimeZone,
@@ -73,7 +74,7 @@ final public class AIToolService: AIToolServiceAPI {
         constraints: Constraints?
     ) async throws -> ProposedPlan {
         let agendaComputer = LocalAgendaComputer(toolRepo: toolRepo)
-        let weekPlanner = LocalWeekPlanner(agenda: agendaComputer, toolRepo: toolRepo)
+        let weekPlanner = LocalWeekPlanner(userId: userId, agenda: agendaComputer, toolRepo: toolRepo)
         return try await weekPlanner.proposePlan(
             start: start,
             horizonDays: horizonDays,

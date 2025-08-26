@@ -81,7 +81,7 @@ public enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertibl
     
     // Encode as int or string depending on encoder.userInfo
     public func encode(to encoder: Encoder) throws {
-        let strategy = (encoder.userInfo[.priorityEncodingStrategy] as? Encoding) ?? .string
+        let strategy = (encoder.userInfo[.priorityEncodingStrategy] as? Encoding) ?? .int
         var c = encoder.singleValueContainer()
         switch strategy {
         case .int:    try c.encode(rawValue)
@@ -94,32 +94,32 @@ public extension CodingUserInfoKey {
     static let priorityEncodingStrategy = CodingUserInfoKey(rawValue: "priorityEncodingStrategy")!
 }
 
-struct UserTask: Identifiable, Codable, Hashable {
-    var id: UUID
-    var userId: UUID?
-    var title: String
-    var notes: String?
-    var isCompleted: Bool
-    var createdAt: Date
-    var updatedAt: Date
-    var dueDate: Date?
-    var priority: UserTaskPriority
-    var parentEventId: UUID?
-    var tags: [Tag]
-    var reminderTriggers: [ReminderTrigger]?
+public struct UserTask: Identifiable, Codable, Hashable {
+    public var id: UUID
+    public var userId: UUID
+    public var title: String
+    public var notes: String?
+    public var isCompleted: Bool
+    public var createdAt: Date
+    public var updatedAt: Date
+    public var dueDate: Date?
+    public var priority: UserTaskPriority
+    public var parentEventId: UUID?
+    public var tags: [Tag]
+    public var reminderTriggers: [ReminderTrigger]?
     
     // NEW for sync v1
-    var deletedAt: Date? = nil
-    var needsSync: Bool = false
-    var version: Int?          // <-- NEW (nil means “unknown / never synced”)
+    public var deletedAt: Date? = nil
+    public var needsSync: Bool = false
+    public var version: Int?          // <-- NEW (nil means “unknown / never synced”)
 
-    var isActionable: Bool {
+    public var isActionable: Bool {
         !isCompleted && parentEventId == nil
     }
     
     init(
         id: UUID,
-        userId: UUID? = nil,
+        userId: UUID,
         title: String,
         notes: String? = nil,
         isCompleted: Bool,

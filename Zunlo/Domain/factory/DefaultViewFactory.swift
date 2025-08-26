@@ -41,7 +41,11 @@ final class DefaultViewFactory: ViewFactory {
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
                                                  eventRepo: appState.eventRepository!)
         let aiToolService = AIToolService(toolRepo: aiToolRepo, client: appState.supabaseClient!)
-        let aiToolRouter = AIToolRouter(tools: aiToolService, repo: aiToolRepo)
+        let aiToolRouter = AIToolRouter(
+            userId: appState.authManager!.userId!,
+            tools: aiToolService,
+            repo: aiToolRepo
+        )
         
 //        Task {
 //            do {

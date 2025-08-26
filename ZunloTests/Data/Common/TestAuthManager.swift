@@ -14,6 +14,7 @@ import Foundation
 public struct TestAuthManager: AuthProviding {
     public let userId: UUID?
     public var accessToken: String?
+    public var authorized: Bool = true
     
     public init(userId: UUID? = UUID()) {
         self.userId = userId
@@ -25,5 +26,9 @@ public struct TestAuthManager: AuthProviding {
     
     public func refreshSession(refreshToken: String?) async throws -> AuthToken? {
         AuthToken(accessToken: "", refreshToken: "", expiresAt: Date())
+    }
+    
+    public func isAuthorized() async -> Bool {
+        return authorized
     }
 }

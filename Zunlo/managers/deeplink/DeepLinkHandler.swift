@@ -9,10 +9,12 @@ import Foundation
 import FlowNavigator
 
 class DeepLinkHandler: ObservableObject {
-    let navigationManager: AppNav
+    let appState: AppState
+    let nav: AppNav
     
-    init(navigationManager: AppNav) {
-        self.navigationManager = navigationManager
+    init(appState: AppState, nav: AppNav) {
+        self.appState = appState
+        self.nav = nav
     }
     
     @MainActor
@@ -23,19 +25,24 @@ class DeepLinkHandler: ObservableObject {
             break
 
         case .editTask(let id):
-            navigationManager.showSheet(.editTask(id), for: UUID())
+            Task {
+                guard let task = try? await appState.userTaskRepository?.fetchTask(id: id) else {
+                    return
+                }
+                nav.showSheet(.editTask(task), for: UUID())
+            }
 
         case .addTask:
-            navigationManager.showSheet(.addTask, for: UUID())
+            nav.showSheet(.addTask, for: UUID())
 
         case .onboarding:
-            navigationManager.showFullScreen(.onboarding, for: UUID())
+            nav.showFullScreen(.onboarding, for: UUID())
 
         case .magicLink(let url):
             NotificationCenter.default.post(name: .authDeepLink, object: url)
 
         case .showSettings:
-            navigationManager.showSheet(.settings, for: UUID())
+            nav.showSheet(.settings, for: UUID())
         }
     }
 }

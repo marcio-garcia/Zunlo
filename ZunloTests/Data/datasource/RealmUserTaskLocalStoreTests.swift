@@ -34,26 +34,16 @@ final class RealmUserTaskLocalStoreTests: XCTestCase {
     // MARK: - Helpers
 
     private func createTask(title: String, tags: [String]) async throws {
-//            print("createTask - Using in-memory ID:", testConfig.inMemoryIdentifier ?? "nil")
         let task = UserTaskRemote(
             id: UUID(),
             userId: UUID(),
             title: title,
             isCompleted: false,
+            createdAt: Date(),
             updatedAt: Date(),
             priority: .low,
             tags: tags
         )
-//            task.id = UUID()
-//            task.userId = UUID()
-//            task.title = title
-//            task.tags.append(objectsIn: tags)
-        
-        
-//            try realm.write {
-//                realm.add(task)
-//            }
-//            let count = realm.objects(UserTaskLocal.self).count
         
         try await store.upsert(task)
         let all = try await store.fetchAll()

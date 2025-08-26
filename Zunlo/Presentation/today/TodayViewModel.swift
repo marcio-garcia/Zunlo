@@ -68,10 +68,14 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
 //        }
         
         eventRepo.lastEventAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
-            if case .fetch(let occ) = action {
+            switch action {
+            case .fetch(let occ):
                 let today = Date().startOfDay
                 let tomorrow = today.startOfNextDay()
                 self?.handleOccurrences(occ, in: today..<tomorrow)
+            case .error(let error):
+                Task { await self?.errorHandler.handle(error) }
+            default: break
             }
         }
     }
@@ -235,11 +239,15 @@ extension TodayViewModel {
         
         let sync = SyncCoordinator(db: localDB, supabase: appState.supabaseClient!)
         
-        let rowsAffected = await sync.syncAllOnLaunch()
-        await MainActor.run { self.isSyncingDB = false }
-        
-        if rowsAffected > 0 {
-            await fetchData()
+        do {
+            let report = try await sync.syncAllOnLaunch()
+            await MainActor.run { self.isSyncingDB = false }
+            
+            if report.taskReport.pulled > 0 {
+                await fetchData()
+            }
+        } catch {
+            await errorHandler.handle(error)
         }
     }
 }

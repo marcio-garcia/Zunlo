@@ -108,7 +108,7 @@ public final class DefaultAIToolRunner: AIToolRunner {
         }
     }
 
-    public func addPrepTasksForNextEvent(prepTemplate: PrepPackTemplate) async throws {
+    public func addPrepTasksForNextEvent(userId: UUID, prepTemplate: PrepPackTemplate) async throws {
         do {
             let now = Date()
             if let next = try await toolRepo.nextUpcomingEvent(after: now) {
@@ -116,6 +116,7 @@ public final class DefaultAIToolRunner: AIToolRunner {
                 let due = (next.start > now) ? next.start : now
                 for item in prepTemplate.items {
                     _ = try await toolRepo.createTask(
+                        userId: userId,
                         title: "\(item) — \(next.title)",
                         dueDate: due.addingTimeInterval(-30*60),
                         priority: .medium

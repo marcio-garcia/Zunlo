@@ -17,7 +17,7 @@ protocol AIToolRunner {
     func scheduleTask(_ task: UserTask, at start: Date, minutes: Int) async throws
     func bookSlot(at start: Date, minutes: Int, title: String?) async throws
     func resolveConflictsToday() async throws
-    func addPrepTasksForNextEvent(prepTemplate: PrepPackTemplate) async throws
+    func addPrepTasksForNextEvent(userId: UUID, prepTemplate: PrepPackTemplate) async throws
     func shiftErrandsEarlierToday() async throws
     func startEveningWrap() async throws
 }

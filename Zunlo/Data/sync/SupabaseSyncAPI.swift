@@ -14,6 +14,31 @@ extension Data {
     }
 }
 
+// Example helpers using Supabase/Postgrest style builders
+extension PostgrestFilterBuilder {
+    func executeFilterWithStatus() async throws -> (status: Int, data: Data) {
+        let resp = try await self.execute()
+        // If your library already throws for non-2xx, adapt to capture status.
+        // Here we pass through and raise our own error for non-2xx:
+        guard (200..<300).contains(resp.status) else {
+            throw HTTPStatusError(status: resp.status, body: resp.data)
+        }
+        return (resp.status, resp.data)
+    }
+}
+
+extension PostgrestTransformBuilder {
+    func executeTransformWithStatus() async throws -> (status: Int, data: Data) {
+        let resp = try await self.execute()
+        // If your library already throws for non-2xx, adapt to capture status.
+        // Here we pass through and raise our own error for non-2xx:
+        guard (200..<300).contains(resp.status) else {
+            throw HTTPStatusError(status: resp.status, body: resp.data)
+        }
+        return (resp.status, resp.data)
+    }
+}
+
 public struct SupabaseSyncAPI: SyncAPI {
     private let client: SupabaseClient
     
@@ -107,7 +132,7 @@ public struct SupabaseSyncAPI: SyncAPI {
     
     public func fetchEventOverridesToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [EventOverrideRemote] {
         let data = try await client
-            .from("recurrence_rules")
+            .from("event_overrides")
             .select()
             .or("updated_at.gt.\(sinceTimestamp),and(updated_at.eq.\(sinceTimestamp),id.gt.\(sinceID?.uuidString ?? "00000000-0000-0000-0000-000000000000"))")
             .order("updated_at", ascending: true)
@@ -122,20 +147,38 @@ public struct SupabaseSyncAPI: SyncAPI {
 
     // MARK: - Tasks
     public func insertUserTasksReturning(_ batch: [UserTaskRemote]) async throws -> [UserTaskRemote] {
-        let r = try await client.from("tasks").insert(batch).select().execute()
+        let r = try await client
+            .from("tasks")
+            .insert(batch)
+            .select()
+            .executeTransformWithStatus()
         let result: [UserTaskRemote] = try r.data.decodeSupabase()
         return result
     }
     public func updateUserTaskIfVersionMatches(_ dto: UserTaskRemote) async throws -> UserTaskRemote? {
-        let r = try await client.from("tasks")
-            .update(dto).eq("id", value: dto.id).eq("version", value: dto.version ?? -1).select().execute()
+        let r = try await client
+            .from("tasks")
+            .update(dto)
+            .eq("id", value: dto.id)
+            .eq("version", value: dto.version ?? -1)
+            .select()
+            .executeTransformWithStatus()
         let result: [UserTaskRemote] = try r.data.decodeSupabase()
         return result.first
     }
     public func fetchUserTask(id: UUID) async throws -> UserTaskRemote? {
-        let r = try await client.from("tasks").select().eq("id", value: id).limit(1).execute()
-        let result: [UserTaskRemote] = try r.data.decodeSupabase()
-        return result.first
+        do {
+            let r = try await client
+                .from("tasks")
+                .select()
+                .eq("id", value: id)
+                .single()
+                .executeTransformWithStatus()
+            let result: UserTaskRemote = try r.data.decodeSupabase()
+            return result
+        } catch let e as HTTPStatusError where e.status == 404 {
+            return nil
+        }
     }
     
     public func fetchUserTasksToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [UserTaskRemote] {
@@ -154,4 +197,27 @@ public struct SupabaseSyncAPI: SyncAPI {
     }
 }
 
+public extension SupabaseSyncAPI {
+    // Insert with payloads
+    func insertUserTasksPayloadReturning(_ batch: [TaskInsertPayload]) async throws -> [UserTaskRemote] {
+        let r = try await client
+            .from("tasks")
+            .insert(batch)
+            .select()
+            .executeTransformWithStatus()
+        return try r.data.decodeSupabase()
+    }
 
+    // Guarded update with payload patch
+    func updateUserTaskIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: TaskUpdatePayload) async throws -> UserTaskRemote? {
+        let r = try await client
+            .from("tasks")
+            .update(patch)
+            .eq("id", value: id)
+            .eq("version", value: expectedVersion)
+            .select()
+            .executeTransformWithStatus()
+        let rows: [UserTaskRemote] = try r.data.decodeSupabase()
+        return rows.first
+    }
+}

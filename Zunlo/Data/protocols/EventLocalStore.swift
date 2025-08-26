@@ -11,7 +11,7 @@ protocol EventLocalStore {
     func upsert(_ event: EventRemote) async throws
     func upsert(_ event: EventLocal) async throws
     func upsert(event: EventLocal, rule: RecurrenceRule) async throws
-    func delete(id: UUID) async throws
+    func delete(id: UUID, userId: UUID) async throws
     func deleteAll(for userId: UUID) async throws
     func deleteAll() async throws
     func apply(rows: [EventRemote]) async throws

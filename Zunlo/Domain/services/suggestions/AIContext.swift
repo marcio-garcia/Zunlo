@@ -39,6 +39,8 @@ public struct AITuning: Sendable, Equatable {
 
 /// Snapshot of “what matters right now” for AI suggestions.
 public struct AIContext: Sendable {
+    public let userId: UUID
+    
     public let now: Date
     public let dayStart: Date
     public let dayEnd: Date

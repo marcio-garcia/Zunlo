@@ -63,12 +63,13 @@ struct ZunloApp: App {
         let localDB = DatabaseActor()
         
         let eventRepo = EventRepositoryFactory.make(
+            auth: authManager,
             supabase: supabase,
-            authManager: authManager,
             localDB: localDB
         )
         
         let taskRepo = UserTaskRepository(
+            auth: authManager,
             localStore: RealmUserTaskLocalStore(db: localDB),
             remoteStore: SupabaseUserTaskRemoteStore(supabase: supabase, auth: authManager)
         )
@@ -130,7 +131,7 @@ struct ZunloApp: App {
                 .environmentObject(toolStore)
                 .onAppear(perform: {
                     if deepLinkHandler == nil {
-                        deepLinkHandler = DeepLinkHandler(navigationManager: appNavigationManager)
+                        deepLinkHandler = DeepLinkHandler(appState: appState, nav: appNavigationManager)
                     }
                 })
                 .onOpenURL { url in
@@ -144,7 +145,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 16, // <- increment this every time you change schema!
+        schemaVersion: 19, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,
@@ -193,6 +194,16 @@ func setupRealm() {
                     newObject?["rawText"] = oldObject?["text"]
                     newObject?["formatRaw"] = "plain"
                 }
+            }
+            if oldSchemaVersion < 17 {
+                migration.enumerateObjects(ofType: UserTaskLocal.className()) { oldObject, newObject in
+                    newObject?["userId"] = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+                }
+            }
+            if oldSchemaVersion < 19 {
+//                migration.enumerateObjects(ofType: SyncCursor.className()) { oldObject, newObject in
+//                    newObject?["lastTsRaw"] = nil
+//                }
             }
         }
     )

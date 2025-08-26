@@ -19,10 +19,10 @@ struct AddEditTaskView: View {
     var onDismiss: (() -> Void)?
     
     var body: some View {
-        
         let taskFactory = TaskViewFactory(
             viewID: viewID,
-            nav: nav
+            nav: nav,
+            userId: viewModel.userId
         )
         let factory = NavigationViewFactory(task: taskFactory)
         

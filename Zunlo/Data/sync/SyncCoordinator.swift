@@ -8,6 +8,14 @@
 import Foundation
 import Supabase
 
+struct SyncSummary {
+    let taskReport: SyncReport
+    
+    internal init(taskReport: SyncReport = .zero) {
+        self.taskReport = taskReport
+    }
+}
+
 final class SyncCoordinator {
     private let supabase: SupabaseClient
     
@@ -22,14 +30,7 @@ final class SyncCoordinator {
     var rulesPulled: Int = 0
     var overridesPushed: Int = 0
     var overridesPulled: Int = 0
-    var taskPushed: Int = 0
-    var taskPulled: Int = 0
-    var totalRowsAffected: Int {
-        let total = eventsPushed + eventsPulled + rulesPushed + rulesPulled +
-        overridesPushed + overridesPulled + taskPushed + taskPulled
-        
-        return total
-    }
+    var taskReport: SyncReport = .zero
     
     init(db: DatabaseActor, supabase: SupabaseClient) {
         self.supabase = supabase
@@ -54,24 +55,24 @@ final class SyncCoordinator {
         }
     }
 
-    func syncAllOnLaunch() async -> Int {
+    func syncAllOnLaunch() async throws -> SyncSummary {
         do {
             let session = try await supabase.auth.session
             guard !session.isExpired else {
                 print("⚠️ Sync aborted: no user session (using anon key).")
-                return 0
+                return SyncSummary()
             }
             print("Sync with user:", session.user.id)
             print("✅ Using USER JWT:", session.accessToken.prefix(16), "…")
         } catch {
             print("Auth error before sync. \(error.localizedDescription)")
-            return 0
+            return SyncSummary()
         }
         
-        (eventsPushed, eventsPulled) = await events.syncNow()
-        (rulesPushed, rulesPulled)  = await rules.syncNow()       // depends on events
-        (overridesPushed, overridesPulled) = await overrides.syncNow()   // depends on events, optional after rules
-        (taskPushed, taskPulled) = await userTasks.syncNow()
-        return totalRowsAffected
+//        (eventsPushed, eventsPulled) = await events.syncNow()
+//        (rulesPushed, rulesPulled)  = await rules.syncNow()       // depends on events
+//        (overridesPushed, overridesPulled) = await overrides.syncNow()   // depends on events, optional after rules
+        taskReport = try await userTasks.syncNow()
+        return SyncSummary(taskReport: taskReport)
     }
 }

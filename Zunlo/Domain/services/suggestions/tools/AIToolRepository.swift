@@ -14,7 +14,7 @@ protocol AIToolAPI {
     func resolveConflictsToday() async throws
     func updateTask(_ task: UserTask) async throws
     @discardableResult
-    func createTask(title: String, dueDate: Date?, priority: UserTaskPriority) async throws -> UUID
+    func createTask(userId: UUID, title: String, dueDate: Date?, priority: UserTaskPriority) async throws -> UUID
     func moveUnfinishedToTomorrow() async throws
 }
 
@@ -66,11 +66,11 @@ class AIToolRepository: AIToolAPI {
         try await taskRepo.upsert(task)
     }
     
-    func createTask(title: String, dueDate: Date?, priority: UserTaskPriority) async throws -> UUID {
+    func createTask(userId: UUID, title: String, dueDate: Date?, priority: UserTaskPriority) async throws -> UUID {
         let id = UUID()
         let task = UserTask(
             id: id,
-            userId: nil,
+            userId: userId,
             title: title,
             notes: nil,
             isCompleted: false,
@@ -90,7 +90,6 @@ class AIToolRepository: AIToolAPI {
     }
     
     func moveUnfinishedToTomorrow() async throws {
-        let startOfDay = Date().startOfDay
         let startOfNextDay = Date().startOfNextDay()
         
         var taskFilter: TaskFilter
@@ -116,6 +115,7 @@ class AIToolRepository: AIToolAPI {
             try await taskRepo.upsert(t)
         }
 
+//        let startOfDay = Date().startOfDay
 //        let eventFilter = EventFilter(endDateRange: startOfDay...startOfNextDay)
 //        let events = try await eventRepo.fetchEvent(filteredBy: eventFilter)
 //

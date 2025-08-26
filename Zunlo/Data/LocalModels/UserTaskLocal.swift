@@ -10,7 +10,7 @@ import RealmSwift
 
 class UserTaskLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
-    @Persisted var userId: UUID?
+    @Persisted var userId: UUID
     @Persisted var title: String = ""
     @Persisted var notes: String?
     @Persisted var isCompleted: Bool = false
@@ -114,6 +114,7 @@ class UserTaskLocal: Object {
         self.title = remote.title
         self.notes = remote.notes
         self.isCompleted = remote.isCompleted
+        self.createdAt = remote.createdAt
         self.updatedAt = remote.updatedAt
         self.dueDate = remote.dueDate
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)

@@ -27,7 +27,11 @@ final class MainViewModel: ObservableObject {
                 
         let sync = SyncCoordinator(db: localDB, supabase: appState.supabaseClient!)
         
-        let _ = await sync.syncAllOnLaunch()
-        await MainActor.run { self.state = .loaded }
+        do {
+            let _ = try await sync.syncAllOnLaunch()
+            await MainActor.run { self.state = .loaded }
+        } catch {
+            print("Sync error: \(error)")
+        }
     }
 }

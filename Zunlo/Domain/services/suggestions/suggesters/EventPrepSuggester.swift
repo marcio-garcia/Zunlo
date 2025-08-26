@@ -8,16 +8,20 @@
 import Foundation
 
 struct EventPrepSuggester: AICoolDownSuggester {
+    private let userId: UUID
     private let tools: AIToolRunner
     var usage: SuggestionUsageStore
     var cooldown: TimeInterval
     var maxPenalty: Int
     
-    init(tools: AIToolRunner,
-         usage: SuggestionUsageStore,
-         cooldownHours: Double = 6,
-         maxPenalty: Int = 60
+    init(
+        userId: UUID,
+        tools: AIToolRunner,
+        usage: SuggestionUsageStore,
+        cooldownHours: Double = 6,
+        maxPenalty: Int = 60
     ) {
+        self.userId = userId
         self.tools = tools
         self.usage = usage
         self.cooldown = cooldownHours * 3600
@@ -53,7 +57,7 @@ struct EventPrepSuggester: AICoolDownSuggester {
                     Task { @MainActor in
                         do {
                             store.progress(runID, status: String(localized: "Working…"), fraction: 0.2)
-                            try await tools.addPrepTasksForNextEvent(prepTemplate: PrepPackTemplate())
+                            try await tools.addPrepTasksForNextEvent(userId: userId, prepTemplate: PrepPackTemplate())
                             store.finish(runID, outcome: .toast(String(localized: "Prep added"), duration: 3))
                         } catch {
                             store.fail(runID, error: error.localizedDescription)

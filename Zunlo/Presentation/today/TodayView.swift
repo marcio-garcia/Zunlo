@@ -36,6 +36,7 @@ struct TodayView: View {
     @State private var hasEarnedReward = false
     @State private var toast: Toast?
     @State private var aiContext: AIContext?
+    @State private var factory: NavigationViewFactory?
     
     private let appState: AppState
     
@@ -50,30 +51,6 @@ struct TodayView: View {
     }
     
     var body: some View {
-        let taskFactory = TaskViewFactory(
-            viewID: viewID,
-            nav: nav,
-            editableTaskProvider: { self.editableUserTask },
-            onAddEditTaskViewDismiss: {
-                Task { await viewModel.fetchData() }
-            },
-            onTaskInboxDismiss: {
-                Task { await viewModel.fetchData() }
-            }
-        )
-        let eventFactory = EventViewFactory(
-            viewID: viewID,
-            nav: nav,
-            onAddEditEventDismiss: {
-                Task { await viewModel.fetchData() }
-            })
-        let settingsFactory = SettingsViewFactory(authManager: appState.authManager!)
-        let factory = NavigationViewFactory(
-            task: taskFactory,
-            event: eventFactory,
-            settings: settingsFactory
-        )
-        
         ZStack {
             Color.theme.background.ignoresSafeArea()
             
@@ -152,7 +129,7 @@ struct TodayView: View {
                             .ignoresSafeArea()
                         )
                         .sheet(item: nav.sheetBinding(for: viewID)) { route in
-                            ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
+                            ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory!)
                         }
                         .confirmationDialog(
                             "Edit Recurring Event",
@@ -163,7 +140,7 @@ struct TodayView: View {
                                 ViewRouter.dialogView(
                                     for: route,
                                     navigationManager: nav,
-                                    factory: factory,
+                                    factory: factory!,
                                     onOptionSelected: { option in
                                         guard let editOption = EditEventDialogOption(rawValue: option) else {
                                             nav.dismissDialog(for: viewID)
@@ -252,7 +229,7 @@ struct TodayView: View {
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationTitle("")
                     .navigationDestination(for: StackRoute.self, destination: { route in
-                        ViewRouter.navigationDestination(for: route, navigationManager: nav, factory: factory)
+                        ViewRouter.navigationDestination(for: route, navigationManager: nav, factory: factory!)
                     })
                     .ignoresSafeArea()
                     .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: !showChat)
@@ -280,6 +257,7 @@ struct TodayView: View {
             }
         }
         .task {
+            factory = await getNavViewFactory()
             await fetchInfo()
             await appState.adManager?.loadInterstitial(for: .openCalendar)
             await appState.adManager?.loadRewarded(for: .chat)
@@ -396,7 +374,7 @@ struct TodayView: View {
                                 viewModel.toggleTaskCompletion(for: task)
                             } onTap: {
                                 editableUserTask = task
-                                nav.showSheet(.editTask(task.id), for: viewID)
+                                nav.showSheet(.editTask(task), for: viewID)
                             }
                         }
                     }
@@ -457,11 +435,50 @@ struct TodayView: View {
         }
     }
     
+    private func getNavViewFactory() async -> NavigationViewFactory {
+        let taskFactory = TaskViewFactory(
+            viewID: viewID,
+            nav: nav,
+            userId: await getUserId(),
+            editableTaskProvider: { self.editableUserTask },
+            onAddEditTaskViewDismiss: {
+                Task { await viewModel.fetchData() }
+            },
+            onTaskInboxDismiss: {
+                Task { await viewModel.fetchData() }
+            }
+        )
+        let eventFactory = EventViewFactory(
+            viewID: viewID,
+            nav: nav,
+            onAddEditEventDismiss: {
+                Task { await viewModel.fetchData() }
+            })
+        let settingsFactory = SettingsViewFactory(authManager: appState.authManager!)
+        let factory = NavigationViewFactory(
+            task: taskFactory,
+            event: eventFactory,
+            settings: settingsFactory
+        )
+        return factory
+    }
+    
+    private func getUserId() async -> UUID {
+        guard await authManager.isAuthorized(), let userId = authManager.userId else {
+            return UUID()
+        }
+        return userId
+    }
+    
     private func fetchInfo() async {
+        guard await authManager.isAuthorized(), let userId = authManager.userId else {
+            return
+        }
         await viewModel.fetchData()
         await viewModel.fetchWeather()
         await viewModel.syncDB()
         aiContext = await AIContextBuilder().build(
+            userId: userId,
             time: SystemTimeProvider(),
             policyProvider: policyProvider,
             tasks: appState.taskSuggestionEngine!,

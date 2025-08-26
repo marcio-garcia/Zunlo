@@ -15,7 +15,7 @@ protocol TaskEditorService {
 // DTOs decouple UI from domain defaults/validation
 struct AddTaskInput {
     var id: UUID
-    var userId: UUID?
+    var userId: UUID
     var title: String
     var notes: String?
     var dueDate: Date?

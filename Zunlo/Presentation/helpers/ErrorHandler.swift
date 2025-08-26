@@ -17,6 +17,11 @@ class ErrorHandler: ObservableObject {
             message = SupabaseErrorFormatter.format(err)
         } else if let err = error as? EventError {
             message = err.description
+        } else if (error as NSError).domain == "io.realm" {
+            message = error.localizedDescription
+        } else {
+            print("Execution error: \(error)")
+            message = error.localizedDescription
         }
     }
 
