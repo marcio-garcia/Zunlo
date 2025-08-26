@@ -71,7 +71,7 @@ public class AIToolRouter: ToolRouter {
             )
             let res = try await tools.createTask(p)
             if let t = res.task { try await repo.apply(task: t) }
-            return ToolDispatchResult(note: "✅ Task created")
+            return ToolDispatchResult(note: "Task created")
         }
 
         case "updateTask": do {
@@ -88,7 +88,7 @@ public class AIToolRouter: ToolRouter {
             )
             let res = try await tools.updateTask(p)
             if let t = res.task { try await repo.apply(task: t) }
-            return ToolDispatchResult(note: "✅ Task updated")
+            return ToolDispatchResult(note: "Task updated")
         }
 
         case "deleteTask": do {
@@ -104,7 +104,7 @@ public class AIToolRouter: ToolRouter {
             )
             let res = try await tools.deleteTask(p)
             if let t = res.task { try await repo.apply(task: t) }
-            return ToolDispatchResult(note: "🗑️ Task deleted")
+            return ToolDispatchResult(note: "Task deleted")
         }
 
         case "createEvent": do {
@@ -117,7 +117,7 @@ public class AIToolRouter: ToolRouter {
             let res = try await tools.createEvent(p)
             if let e = res.event { try await repo.apply(event: e) }
             if let r = res.recurrenceRule { try await repo.apply(recurrence: r) }
-            return ToolDispatchResult(note: "📅 Event created")
+            return ToolDispatchResult(note: "Event created")
         }
 
         case "updateEvent": do {
@@ -143,10 +143,10 @@ public class AIToolRouter: ToolRouter {
             if let o = res.override { try await repo.apply(override: o) }
             
             switch args.editScope {
-            case .single: return ToolDispatchResult(note: "✏️ Event updated")
-            case .override: return ToolDispatchResult(note: "✏️ Occurrence updated")
-            case .this_and_future: return ToolDispatchResult(note: "✂️ Series split & updated")
-            case .entire_series: return ToolDispatchResult(note: "✏️ Series updated")
+            case .single: return ToolDispatchResult(note: "Event updated")
+            case .override: return ToolDispatchResult(note: "Occurrence updated")
+            case .this_and_future: return ToolDispatchResult(note: "Series split & updated")
+            case .entire_series: return ToolDispatchResult(note: "Series updated")
             }
         }
 
@@ -171,10 +171,10 @@ public class AIToolRouter: ToolRouter {
             if let o = res.override { try await repo.apply(override: o) }
             
             switch args.editScope {
-            case .single: return ToolDispatchResult(note: "🗑️ Event deleted")
-            case .override: return ToolDispatchResult(note: "🚫 Occurrence cancelled")
-            case .this_and_future: return ToolDispatchResult(note: "✂️ Future series deleted")
-            case .entire_series: return ToolDispatchResult(note: "🗑️ Series deleted")
+            case .single: return ToolDispatchResult(note: "Event deleted")
+            case .override: return ToolDispatchResult(note: "Occurrence cancelled")
+            case .this_and_future: return ToolDispatchResult(note: "Future series deleted")
+            case .entire_series: return ToolDispatchResult(note: "Series deleted")
             }
         }
 
@@ -205,7 +205,7 @@ public class AIToolRouter: ToolRouter {
                     .sendAttachmentToAI(attachment.id)
                 ]
             )
-            return ToolDispatchResult(note: "📋 Agenda ready", ui: ui)
+            return ToolDispatchResult(note: "Agenda ready", ui: ui)
 
         case "planWeek":
             var args = try? JSONDecoder.makeDecoder().decode(PlanWeekArgs.self, from: Data(normalizedArgsJSON.utf8))
@@ -236,7 +236,7 @@ public class AIToolRouter: ToolRouter {
 //            return "🧭 Proposed plan ready."
 
         default:
-            return ToolDispatchResult(note: "ℹ️ Unrecognized tool: \(env.name)")
+            return ToolDispatchResult(note: "Unrecognized tool: \(env.name)")
         }
     }
 }

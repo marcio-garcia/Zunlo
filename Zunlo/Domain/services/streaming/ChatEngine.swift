@@ -329,7 +329,7 @@ public actor ChatEngine {
             let toolMsg = ChatMessage(
                 conversationId: conversationId,
                 role: .tool,
-                plain: "⚠️ Tool error: \(error.localizedDescription)",
+                plain: "Tool error: \(error.localizedDescription)",
                 createdAt: Date(),
                 status: .sent
             )
@@ -352,7 +352,7 @@ public actor ChatEngine {
                 outputs.append(ToolOutput(
                     previous_response_id: c.responseId,
                     tool_call_id: c.callId,
-                    output: String((result.ui?.text ?? AttributedString(stringLiteral: "")).characters)
+                    output: result.note
                 ))
             } catch {
                 let fail = "• \(c.name) failed: \(error.localizedDescription)"
