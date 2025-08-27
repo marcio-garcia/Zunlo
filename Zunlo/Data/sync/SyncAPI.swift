@@ -13,7 +13,9 @@ public protocol SyncAPI: Sendable {
     func updateEventIfVersionMatches(_ dto: EventRemote) async throws -> EventRemote?
     func fetchEvent(id: UUID) async throws -> EventRemote?
     func fetchEventsToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [EventRemote]
-
+    func insertEventsPayloadReturning(_ batch: [EventInsertPayload]) async throws -> [EventRemote]
+    func updateEventIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: EventUpdatePayload) async throws -> EventRemote?
+    
     // RECURRENCE RULES
     func insertRecurrenceRulesReturning(_ batch: [RecurrenceRuleRemote]) async throws -> [RecurrenceRuleRemote]
     func updateRecurrenceRuleIfVersionMatches(_ dto: RecurrenceRuleRemote) async throws -> RecurrenceRuleRemote?

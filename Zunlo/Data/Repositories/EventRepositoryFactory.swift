@@ -23,7 +23,7 @@ final class EventRepositoryFactory {
         let eventOverrideLocalStore: EventOverrideLocalStore
         
         eventRemoteStore = SupabaseEventRemoteStore(supabase: supabase, auth: auth)
-        eventLocalStore = RealmEventLocalStore(db: localDB, auth: auth)
+        eventLocalStore = RealmEventLocalStore(db: localDB)
 
         recurrenceRuleRemoteStore = SupabaseRecurrenceRuleRemoteStore(supabase: supabase, auth: auth)
         recurrenceRuleLocalStore = RealmRecurrenceRuleLocalStore(db: localDB)

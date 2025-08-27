@@ -14,6 +14,10 @@ struct HTTPStatusError: Error {
     let body: Data?
 }
 
+enum SyncError: Error {
+    case message(String)
+}
+
 // High-level categories for sync decisions.
 enum FailureKind {
     case conflict              // 409/412, or guarded update returned 0 rows

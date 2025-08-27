@@ -25,7 +25,7 @@ struct AddEditEventView: View {
     ]
     
     var body: some View {
-        let eventFactory = EventViewFactory(viewID: viewID, nav: nav)
+        let eventFactory = EventViewFactory(viewID: viewID, nav: nav, userId: viewModel.userId)
         let factory = NavigationViewFactory(event: eventFactory)
         
         NavigationStack {

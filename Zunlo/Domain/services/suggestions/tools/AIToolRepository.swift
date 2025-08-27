@@ -50,6 +50,7 @@ class AIToolRepository: AIToolAPI {
         }
         return EventDraft(
             id: event.id,
+            userId: event.userId,
             title: event.title,
             start: event.startDate,
             end: event.endDate,
@@ -130,7 +131,7 @@ class AIToolRepository: AIToolAPI {
     func toDomain(draft: EventDraft) -> Event {
         Event(
             id: UUID(),
-            userId: nil,
+            userId: draft.userId,
             title: draft.title,
             notes: draft.notes,
             startDate: draft.start,

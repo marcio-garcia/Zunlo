@@ -11,6 +11,7 @@ import Foundation
 
 public struct EventDraft: Sendable {
     public var id: UUID?
+    public var userId: UUID
     public var title: String
     public var start: Date
     public var end: Date?

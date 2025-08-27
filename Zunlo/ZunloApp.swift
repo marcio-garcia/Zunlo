@@ -77,6 +77,7 @@ struct ZunloApp: App {
         let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(db: localDB))
         
         let eventSuggestionEngine = DefaultEventSuggestionEngine(
+            auth: authManager,
             calendar: Calendar.appDefault,
             eventFetcher: EventFetcher(repo: eventRepo),
             policy: SuggestionPolicyProvider().policy

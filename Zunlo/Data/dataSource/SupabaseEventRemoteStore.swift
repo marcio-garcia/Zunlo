@@ -53,18 +53,11 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
     }
 
     func save(_ event: EventRemote) async throws -> [EventRemote] {
-        // Only nil the ID if creating a new record and let Supabase/DB handle it
-        var ev = event
-        ev.user_id = nil
-        ev.created_at = nil
-        return try await database.insert(ev, into: tableName)
+        return try await database.insert(event, into: tableName)
     }
 
     func update(_ event: EventRemote) async throws -> [EventRemote] {
-        var ev = event
-        ev.user_id = nil
-        ev.created_at = nil
-        return try await database.update(ev, in: tableName, filter: ["id": "eq.\(event.id.uuidString)"])
+        return try await database.update(event, in: tableName, filter: ["id": "eq.\(event.id.uuidString)"])
     }
 
     func delete(id: UUID) async throws -> [EventRemote] {
@@ -80,13 +73,8 @@ final class SupabaseEventRemoteStore: EventRemoteStore {
         splitDate: Date,
         newEvent: Event
     ) async throws -> SplitRecurringEventResponse {
-        
-        guard let userId = newEvent.userId else {
-            throw StoreError.invalidData("userId")
-        }
-        
         let data = SplitRecurringEventRemote.NewEventData(
-            userId: userId,
+            userId: newEvent.userId,
             title: newEvent.title,
             description: newEvent.notes,
             startDatetime: newEvent.startDate,

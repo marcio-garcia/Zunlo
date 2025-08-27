@@ -15,7 +15,7 @@ final class FakeEventFetcher: EventFetcherService {
         self.events = events
     }
     
-    func fetchOccurrences(for userId: UUID?) async throws -> [Zunlo.EventOccurrence] {
+    func fetchOccurrences(for userId: UUID) async throws -> [Zunlo.EventOccurrence] {
         return events
     }
 }

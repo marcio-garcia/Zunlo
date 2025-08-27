@@ -40,7 +40,11 @@ final class DefaultViewFactory: ViewFactory {
         let aiChatService = SupabaseEdgeAIClient(supabase: appState.supabaseClient!)
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
                                                  eventRepo: appState.eventRepository!)
-        let aiToolService = AIToolService(toolRepo: aiToolRepo, client: appState.supabaseClient!)
+        let aiToolService = AIToolService(
+            userId: appState.authManager!.userId!,
+            toolRepo: aiToolRepo,
+            client: appState.supabaseClient!
+        )
         let aiToolRouter = AIToolRouter(
             userId: appState.authManager!.userId!,
             tools: aiToolService,

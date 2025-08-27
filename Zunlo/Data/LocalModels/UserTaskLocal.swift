@@ -54,7 +54,7 @@ class UserTaskLocal: Object {
         self.title = remote.title
         self.notes = remote.notes
         self.isCompleted = remote.isCompleted
-        self.createdAt = remote.createdAt ?? Date()
+        self.createdAt = remote.createdAt
         self.updatedAt = remote.updatedAt
         self.dueDate = remote.dueDate
         self.priority = UserTaskPriorityLocal.fromDomain(domain: remote.priority)

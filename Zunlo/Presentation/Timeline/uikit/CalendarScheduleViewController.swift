@@ -421,7 +421,11 @@ extension CalendarScheduleViewController: UICollectionViewDelegate {
 
 extension CalendarScheduleViewController {
     private func showAddEventView(mode: AddEditEventViewMode) {
-        let vm = AddEditEventViewModel(mode: mode, editor: EventEditor(repo: AppState.shared.eventRepository!))
+        let vm = AddEditEventViewModel(
+            userId: viewModel.userId,
+            mode: mode,
+            editor: EventEditor(repo: AppState.shared.eventRepository!)
+        )
         let addView = AddEditEventView(
             viewModel: vm,
             onDismiss: { [weak self] in

@@ -10,7 +10,7 @@ import RealmSwift
 
 class EventLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
-    @Persisted(indexed: true) var userId: UUID?
+    @Persisted(indexed: true) var userId: UUID
     @Persisted var title: String = ""
     @Persisted var notes: String?
     @Persisted var startDate: Date = Date()
@@ -39,7 +39,7 @@ class EventLocal: Object {
     
     convenience init(
         id: UUID,
-        userId: UUID? = nil,
+        userId: UUID,
         title: String = "",
         notes: String? = nil,
         startDate: Date = Date(),
@@ -93,9 +93,6 @@ extension EventLocal {
     }
     
     convenience init(remote: EventRemote) {
-        guard let created_at = remote.created_at else {
-            fatalError("Error mapping remote to local: created_at.")
-        }
         self.init(
             id: remote.id,
             userId: remote.user_id,
@@ -105,29 +102,29 @@ extension EventLocal {
             endDate: remote.end_datetime,
             isRecurring: remote.is_recurring,
             location: remote.location,
-            createdAt: created_at,
-            updatedAt: remote.updated_at,
+            createdAt: remote.createdAt,
+            updatedAt: remote.updatedAt,
             color: remote.color ?? .yellow,
             reminderTriggers: remote.reminder_triggers ?? [],
             version: remote.version
         )
     }
     
-    func getUpdateFields(_ event: EventRemote) {
-        self.userId = event.user_id
-        self.title = event.title
-        self.notes = event.notes
-        self.startDate = event.start_datetime
-        self.endDate = event.end_datetime
-        self.location = event.location
-        self.isRecurring = event.is_recurring
-        self.createdAt = event.created_at ?? Date()
-        self.updatedAt = event.updated_at
-        self.color = event.color ?? .yellow
-        self.reminderTriggersArray = event.reminder_triggers ?? []
-        self.deletedAt = event.deleted_at
+    func getUpdateFields(remote: EventRemote) {
+        self.userId = remote.user_id
+        self.title = remote.title
+        self.notes = remote.notes
+        self.startDate = remote.start_datetime
+        self.endDate = remote.end_datetime
+        self.location = remote.location
+        self.isRecurring = remote.is_recurring
+        self.createdAt = remote.createdAt
+        self.updatedAt = remote.updatedAt
+        self.color = remote.color ?? .yellow
+        self.reminderTriggersArray = remote.reminder_triggers ?? []
+        self.deletedAt = remote.deletedAt
         self.needsSync = false
-        self.version = event.version
+        self.version = remote.version
     }
     
     func getUpdateFields(_ event: Event) {

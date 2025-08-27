@@ -7,6 +7,17 @@
 
 import Foundation
 
+// You already have classify(_:), maybeBackoff(_:) in your codebase:
+func maybeBackoff(_ kind: FailureKind) async {
+    switch kind {
+    case .rateLimited(let retryAfter):
+        try? await Task.sleep(nanoseconds: UInt64((retryAfter ?? 2.0) * 1_000_000_000))
+    case .transient:
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+    default: break
+    }
+}
+
 public struct SyncSpec<R: RemoteEntity, InsertPayload, UpdatePayload> {
     public let entityKey: String              // e.g. "tasks", "events"
     public let pageSize: Int                  // e.g. 500
@@ -159,16 +170,5 @@ public final class SyncRunner<R: RemoteEntity, InsertPayload, UpdatePayload> {
         }
 
         return stats
-    }
-
-    // You already have classify(_:), maybeBackoff(_:) in your codebase:
-    private func maybeBackoff(_ kind: FailureKind) async {
-        switch kind {
-        case .rateLimited(let retryAfter):
-            try? await Task.sleep(nanoseconds: UInt64((retryAfter ?? 2.0) * 1_000_000_000))
-        case .transient:
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-        default: break
-        }
     }
 }

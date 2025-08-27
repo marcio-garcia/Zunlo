@@ -19,6 +19,7 @@ protocol EventEditorService {
 
 // DTOs decouple UI from domain defaults/validation
 struct AddEventInput {
+    var userId: UUID
     var title: String
     var notes: String?
     var startDate: Date

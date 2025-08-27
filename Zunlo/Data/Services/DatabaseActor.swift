@@ -69,16 +69,13 @@ public actor DatabaseActor {
         let realm = try Realm()
         try realm.write {
             for r in rows {
-//                if let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id),
-//                   existing.needsSync == true { continue } // v1 trade-off
-                let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id)
-                ?? EventLocal(value: ["id": r.id])
-                obj.getUpdateFields(r)
+                let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id) ?? EventLocal(remote: r)
+                obj.getUpdateFields(remote: r)
                 realm.add(obj, update: .modified)
             }
         }
     }
-
+    
     // ===== RecurrenceRules =====
 
     func readDirtyRecurrenceRules() throws -> ([RecurrenceRuleRemote], [UUID]) {
@@ -192,46 +189,35 @@ public actor DatabaseActor {
         return results.map { $0 }
     }
 
-    func upsertEvent(from remote: EventRemote, userId: UUID?) throws {
+    func upsertEvent(from remote: EventRemote) throws {
         let realm = try openRealm()
         try realm.write {
             let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: remote.id) ?? EventLocal(remote: remote)
-            obj.getUpdateFields(remote)
-            if obj.userId == nil { obj.userId = userId } // keep local queryability
-            obj.deletedAt = remote.deleted_at
-            obj.needsSync = false
+            obj.getUpdateFields(remote: remote)
             realm.add(obj, update: .modified)
         }
     }
 
-    func upsertEvent(from local: EventLocal, userId: UUID?) throws {
+    func upsertEvent(from local: EventLocal) throws {
         let realm = try openRealm()
         try realm.write {
             let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: local.id) ?? local
             obj.getUpdateFields(local)
-            if obj.userId == nil { obj.userId = userId }
-            obj.updatedAt = Date()         // local stamp (server will overwrite)
-            obj.needsSync = true
             realm.add(obj, update: .modified)
         }
     }
     
-    func upsertEvent(local: EventLocal, rule: RecurrenceRule, userId: UUID?) throws {
+    func upsertEvent(local: EventLocal, rule: RecurrenceRule) throws {
         let realm = try openRealm()
         realm.beginWrite()
         do {
             let localEvent = realm.object(ofType: EventLocal.self, forPrimaryKey: local.id) ?? local
             localEvent.getUpdateFields(local)
-            if localEvent.userId == nil { localEvent.userId = userId }
-            localEvent.updatedAt = Date()         // local stamp (server will overwrite)
-            localEvent.needsSync = true
             realm.add(localEvent, update: .modified)
             
             let localRule = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: rule.id)
                 ?? RecurrenceRuleLocal(domain: rule)
             localRule.getUpdateFields(rule)
-            localRule.updatedAt = Date()
-            localRule.needsSync = true
             realm.add(localRule, update: .modified)
             
             try realm.commitWrite()
@@ -559,17 +545,13 @@ extension DatabaseActor {
     func splitRecurringEventFrom(
         originalEventId: UUID,
         splitDate: Date,
-        newEvent: EventLocal,
-        userId: UUID
+        newEvent: EventLocal
     ) throws -> UUID {
         let realm = try openRealm()
 
         // Validate ownership (read-only)
         guard let original = realm.object(ofType: EventLocal.self, forPrimaryKey: originalEventId) else {
             throw SplitSeriesError.eventNotFound
-        }
-        guard original.userId == userId else {
-            throw SplitSeriesError.unauthorized
         }
 
         let newEventId = newEvent.id
@@ -672,8 +654,7 @@ extension DatabaseActor {
     ///   - userId: Current user (ownership check).
     func undoSplitRecurringEvent(
         originalEventId: UUID,
-        newEventId: UUID,
-        userId: UUID
+        newEventId: UUID
     ) throws {
         let realm = try openRealm()
 
@@ -683,9 +664,6 @@ extension DatabaseActor {
         }
         guard let newEvent = realm.object(ofType: EventLocal.self, forPrimaryKey: newEventId) else {
             throw UndoSplitError.newEventNotFound
-        }
-        guard original.userId == userId, newEvent.userId == userId else {
-            throw UndoSplitError.unauthorized
         }
 
         let now = Date()
@@ -841,16 +819,13 @@ extension DatabaseActor {
 extension DatabaseActor {
     /// Soft-delete an event and all of its children (rules, overrides).
     /// Marks every changed row `needsSync = true` so push will upsert tombstones.
-    func softDeleteEvent(id: UUID, userId: UUID?) throws {
+    func softDeleteEvent(id: UUID) throws {
         let realm = try openRealm()
 
         guard let existing = realm.object(ofType: EventLocal.self, forPrimaryKey: id) else {
             throw LocalDBError.notFound
         }
-        guard existing.userId == userId else {
-            throw LocalDBError.unauthorized
-        }
-
+        
         let now = Date()
 
         realm.beginWrite()
@@ -885,10 +860,9 @@ extension DatabaseActor {
         }
     }
     
-    func undeleteEvent(id: UUID, userId: UUID) throws {
+    func undeleteEvent(id: UUID) throws {
         let realm = try openRealm()
-        guard let ev = realm.object(ofType: EventLocal.self, forPrimaryKey: id),
-              ev.userId == userId else { throw LocalDBError.notFound }
+        guard let ev = realm.object(ofType: EventLocal.self, forPrimaryKey: id) else { throw LocalDBError.notFound }
         let now = Date()
         try realm.write {
             ev.deletedAt = nil; ev.updatedAt = now; ev.needsSync = true

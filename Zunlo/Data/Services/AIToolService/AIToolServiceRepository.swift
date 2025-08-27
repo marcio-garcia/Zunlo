@@ -50,8 +50,8 @@ class AIToolServiceRepository: DomainRepositories, @unchecked Sendable {
         return try await eventRepo.fetchEvent(filteredBy: filter)
     }
     
-    func fetchOccurrences() async throws -> [EventOccurrence] {
-        return try await eventRepo.fetchOccurrences(for: nil)
+    func fetchOccurrences(userId: UUID) async throws -> [EventOccurrence] {
+        return try await eventRepo.fetchOccurrences(for: userId)
     }
     
     func fetchTasks(range: Range<Date>) async throws -> [UserTask] {

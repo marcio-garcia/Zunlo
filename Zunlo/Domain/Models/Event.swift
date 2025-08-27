@@ -9,7 +9,7 @@ import Foundation
 
 struct Event: Identifiable, Codable, Hashable {
     var id: UUID
-    var userId: UUID?
+    var userId: UUID
     var title: String
     var notes: String?
     var startDate: Date
@@ -32,9 +32,6 @@ extension Event: SchedulableReminderItem {
 
 extension Event {
     init(remote: EventRemote) {
-        guard let created_at = remote.created_at else {
-            fatalError("Error mapping remote to local: invalid id or created_at.")
-        }
         self.id = remote.id
         self.userId = remote.user_id
         self.title = remote.title
@@ -43,12 +40,12 @@ extension Event {
         self.endDate = remote.end_datetime
         self.isRecurring = remote.is_recurring
         self.location = remote.location
-        self.createdAt = created_at
-        self.updatedAt = remote.updated_at
+        self.createdAt = remote.createdAt
+        self.updatedAt = remote.updatedAt
         self.color = remote.color ?? .yellow
         self.reminderTriggers = remote.reminder_triggers
         
-        self.deletedAt = remote.deleted_at
+        self.deletedAt = remote.deletedAt
         self.needsSync = false
         self.version = remote.version
     }

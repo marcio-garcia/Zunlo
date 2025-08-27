@@ -10,10 +10,12 @@ import Supabase
 
 /// Single responsibility: call /functions/v1/tools/* endpoints with typed payloads.
 final public class AIToolService: AIToolServiceAPI {
+    private let userId: UUID
     private let client: SupabaseClient
     private let toolRepo: DomainRepositories
     
-    init(toolRepo: DomainRepositories, client: SupabaseClient) {
+    init(userId: UUID, toolRepo: DomainRepositories, client: SupabaseClient) {
+        self.userId = userId
         self.client = client
         self.toolRepo = toolRepo
     }
@@ -58,7 +60,7 @@ final public class AIToolService: AIToolServiceAPI {
     
     @discardableResult
     public func getAgenda(args: GetAgendaArgs, calculatedRange: Range<Date>, timezone: TimeZone) async throws -> AgendaRenderParts {
-        let agendaComputer = LocalAgendaComputer(toolRepo: toolRepo)
+        let agendaComputer = LocalAgendaComputer(userId: userId, toolRepo: toolRepo)
         let result = try await agendaComputer.computeAgenda(range: calculatedRange, timezone: timezone)
         let formatted = AgendaRenderer.renderParts(result, agendaRange: args.dateRange)
         return formatted
@@ -73,7 +75,7 @@ final public class AIToolService: AIToolServiceAPI {
         objectives: [String],
         constraints: Constraints?
     ) async throws -> ProposedPlan {
-        let agendaComputer = LocalAgendaComputer(toolRepo: toolRepo)
+        let agendaComputer = LocalAgendaComputer(userId: userId, toolRepo: toolRepo)
         let weekPlanner = LocalWeekPlanner(userId: userId, agenda: agendaComputer, toolRepo: toolRepo)
         return try await weekPlanner.proposePlan(
             start: start,

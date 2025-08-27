@@ -145,17 +145,6 @@ extension UserTaskRemote {
     }
 }
 
-// MARK: - Telemetry hook + migration toggle
-private enum _DecodePolicy {
-    /// Turn on temporarily during migration to allow fallback for invalid created_at.
-    static var allowCreatedAtFallbackDuringMigration: Bool { false }
-
-    static func reportDecodeIssue(entity: String, id: UUID?, field: String, raw: String) {
-        // Replace with your logger/telemetry sink
-        print("[DECODE] \(entity)#\(id?.uuidString ?? "?").\(field) invalid: \(raw)")
-    }
-}
-
 extension UserTaskRemote {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

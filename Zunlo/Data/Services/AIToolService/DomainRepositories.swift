@@ -16,6 +16,6 @@ protocol DomainRepositories: Sendable {
     func apply(recurrence: RecurrenceRuleRemote) async throws
     func apply(override: EventOverrideRemote) async throws
     func fetchEvents(start: Date, end: Date) async throws -> [Event]
-    func fetchOccurrences() async throws -> [EventOccurrence]
+    func fetchOccurrences(userId: UUID) async throws -> [EventOccurrence]
     func fetchTasks(range: Range<Date>) async throws -> [UserTask]
 }

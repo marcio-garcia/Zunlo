@@ -8,7 +8,7 @@
 import Foundation
 
 protocol EventFetcherService {
-    func fetchOccurrences(for userId: UUID?) async throws -> [EventOccurrence]
+    func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrence]
 }
 
 final class EventFetcher: EventFetcherService {
@@ -20,7 +20,7 @@ final class EventFetcher: EventFetcherService {
         self.clock = clock
     }
     
-    func fetchOccurrences(for userId: UUID? = nil) async throws -> [EventOccurrence] {
+    func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrence] {
         return try await repo.fetchOccurrences(for: userId)
     }
 }

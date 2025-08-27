@@ -49,15 +49,18 @@ final class AddEditEventViewModel: ObservableObject {
     /// calendarByWeekday maps to Calendar's 1=Sunday...7=Saturday.
     @Published var byWeekday: Set<Int> = []
     
+    let userId: UUID
     let mode: AddEditEventViewMode
     private let editor: EventEditorService
     
     @MainActor let errorHandler = ErrorHandler()
     
     init(
+        userId: UUID,
         mode: AddEditEventViewMode,
         editor: EventEditorService
     ) {
+        self.userId = userId
         self.mode = mode
         self.editor = editor
         loadFields()
@@ -227,6 +230,7 @@ final class AddEditEventViewModel: ObservableObject {
     
     private func makeInput() -> AddEventInput {
         AddEventInput(
+            userId: userId,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             notes: notes,
             startDate: startDate,

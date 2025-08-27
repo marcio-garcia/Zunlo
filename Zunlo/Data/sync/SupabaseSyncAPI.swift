@@ -220,4 +220,28 @@ public extension SupabaseSyncAPI {
         let rows: [UserTaskRemote] = try r.data.decodeSupabase()
         return rows.first
     }
+    
+    // Insert with payloads
+    func insertEventsPayloadReturning(_ batch: [EventInsertPayload]) async throws -> [EventRemote] {
+        let r = try await client
+            .from("events")
+            .insert(batch)
+            .select()
+            .executeTransformWithStatus()
+        return try r.data.decodeSupabase()
+    }
+
+    // Guarded update with payload patch
+    func updateEventIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: EventUpdatePayload) async throws -> EventRemote? {
+        let r = try await client
+            .from("events")
+            .update(patch)
+            .eq("id", value: id)
+            .eq("version", value: expectedVersion)
+            .select()
+            .executeTransformWithStatus()
+        let rows: [EventRemote] = try r.data.decodeSupabase()
+        return rows.first
+    }
+
 }

@@ -8,14 +8,11 @@
 import Foundation
 import Supabase
 
-enum SyncError: Error {
-    case message(String)
-}
-
 final class UserTaskSyncEngine {
     private let db: DatabaseActor
     private let api: SyncAPI
     private let pageSize = 100
+    private let tableName = "tasks"
     
     init(db: DatabaseActor, api: SyncAPI) {
         self.db = db
@@ -39,38 +36,9 @@ final class UserTaskSyncEngine {
         }
         return SyncReport.from(push: push, pull: pull)
     }
-//    
-//    private func pullSinceCursor() async throws -> PullStats {
-//        var (sinceTs, sinceTsRaw, sinceId) = try await db.readCursor(for: "tasks")
-//        var stats = PullStats.zero
-//                
-//        while true {
-//            let rows = try await api.fetchUserTasksToSync(
-//                sinceTimestamp: sinceTsRaw ?? RFC3339MicrosUTC.string(sinceTs),
-//                sinceID: sinceId, // nil on first page => uses only updated_at > ts
-//                pageSize: pageSize
-//            )
-//            guard !rows.isEmpty else { break }
-//
-//            // atomically upsert + advance DB cursor
-//            try await db.applyTaskSync(rows: rows)
-//            
-//            // advance local cursor too, so the next page request moves forward
-//            if let last = rows.last {
-//                sinceTs = last.updatedAt
-//                sinceTsRaw = last.updatedAtRaw
-//                sinceId = last.id
-//            }
-//            
-//            stats.pulled += rows.count
-//            stats.pages += 1
-//        }
-//
-//        return stats
-//    }
 
     private func pullSinceCursor() async throws -> PullStats {
-        var (sinceTs, sinceTsRaw, sinceId) = try await db.readCursor(for: "tasks")
+        var (sinceTs, sinceTsRaw, sinceId) = try await db.readCursor(for: tableName)
         var stats = PullStats.zero
 
         while true {
@@ -83,7 +51,7 @@ final class UserTaskSyncEngine {
             guard !rows.isEmpty else { break }
 
             // Atomically upsert the page and advance the DB cursor.
-            try await db.applyPage(for: "tasks", rows: rows) { realm, rows in
+            try await db.applyPage(for: tableName, rows: rows) { realm, rows in
                 for r in rows {
                     if let tomb = r.deletedAt {
                         if let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: r.id) {
@@ -234,25 +202,13 @@ final class UserTaskSyncEngine {
         return stats
     }
     
-    // Call await maybeBackoff(classify(error)) where you want pacing.
-    private func maybeBackoff(_ kind: FailureKind) async {
-        switch kind {
-        case .rateLimited(let retryAfter):
-            try? await Task.sleep(nanoseconds: UInt64((retryAfter ?? 2.0) * 1_000_000_000))
-        case .transient:
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1s
-        default:
-            break
-        }
-    }
-    
     // Mappers (using your insert/update payloads)
     func taskInsert(_ r: UserTaskRemote) -> TaskInsertPayload { TaskInsertPayload(remote: r) }
     func taskUpdate(_ r: UserTaskRemote) -> TaskUpdatePayload { TaskUpdatePayload.full(from: r) }
 
     func makeTaskRunner(db: DatabaseActor, api: SupabaseSyncAPI) -> SyncRunner<UserTaskRemote, TaskInsertPayload, TaskUpdatePayload> {
         let spec = SyncSpec<UserTaskRemote, TaskInsertPayload, TaskUpdatePayload>(
-            entityKey: "tasks",
+            entityKey: self.tableName,
             pageSize: 100,
 
             // API
@@ -266,7 +222,7 @@ final class UserTaskSyncEngine {
 
             // DB
             readDirty: { try await db.readDirtyUserTasks().0 }, // your existing return
-            applyPage: { rows in try await db.applyPage(for: "tasks", rows: rows) { realm, rows in
+            applyPage: { rows in try await db.applyPage(for: self.tableName, rows: rows) { realm, rows in
                 for r in rows {
                     if let tomb = r.deletedAt {
                         if let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: r.id) {
@@ -283,7 +239,7 @@ final class UserTaskSyncEngine {
             recordConflicts: { items in
                 try await db.recordConflicts(.tasks, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
             },
-            readCursor: { try await db.readCursor(for: "tasks") },
+            readCursor: { try await db.readCursor(for: self.tableName) },
 
             // Mappers
             isInsert: { $0.isInsertCandidate },

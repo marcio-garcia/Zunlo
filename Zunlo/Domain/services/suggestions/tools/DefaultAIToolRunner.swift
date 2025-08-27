@@ -9,15 +9,18 @@ import Foundation
 import FlowNavigator
 
 public final class DefaultAIToolRunner: AIToolRunner {
+    private let userId: UUID
     private let toolRepo: AIToolAPI
     private let calendar: Calendar
     private weak var nav: AppNav?
 
     init(
+        userId: UUID,
         toolRepo: AIToolAPI,
         calendar: Calendar,
         nav: AppNav? = nil
     ) {
+        self.userId = userId
         self.toolRepo = toolRepo
         self.calendar = calendar
         self.nav = nav
@@ -45,9 +48,16 @@ public final class DefaultAIToolRunner: AIToolRunner {
         let notes = suggestedTask.map { "Suggested by AI for task \($0.title)" }
 
         do {
-            let eventId = try await toolRepo.createEvent(from: .init(
-                title: title, start: start, end: end, notes: notes, linkedTaskId: suggestedTask?.id
-            ))
+            let eventId = try await toolRepo.createEvent(
+                from: EventDraft(
+                    userId: userId,
+                    title: title,
+                    start: start,
+                    end: end,
+                    notes: notes,
+                    linkedTaskId: suggestedTask?.id
+                )
+            )
 
             if var t = suggestedTask {
                 // If your model is a struct, mutate a copy
@@ -69,9 +79,13 @@ public final class DefaultAIToolRunner: AIToolRunner {
         let end = start.addingTimeInterval(TimeInterval(minutes * 60))
         do {
             // 1) create a calendar block
-            let eventId = try await toolRepo.createEvent(from: .init(
-                title: "Focus: \(task.title)", start: start, end: end,
-                notes: "Linked to task \(task.id.uuidString)", linkedTaskId: task.id
+            let eventId = try await toolRepo.createEvent(from: EventDraft(
+                userId: userId,
+                title: "Focus: \(task.title)",
+                start: start,
+                end: end,
+                notes: "Linked to task \(task.id.uuidString)",
+                linkedTaskId: task.id
             ))
             // 2) update the task’s scheduling fields
             var updated = task
@@ -88,8 +102,13 @@ public final class DefaultAIToolRunner: AIToolRunner {
     public func bookSlot(at start: Date, minutes: Int, title: String?) async throws {
         let end = start.addingTimeInterval(TimeInterval(minutes * 60))
         do {
-            _ = try await toolRepo.createEvent(from: .init(
-                title: title ?? "Focus", start: start, end: end, notes: nil, linkedTaskId: nil
+            _ = try await toolRepo.createEvent(from: EventDraft(
+                userId: userId,
+                title: title ?? "Focus",
+                start: start,
+                end: end,
+                notes: nil,
+                linkedTaskId: nil
             ))
 //            await nav?.toast("Booked \(minutes) min at \(start.formatted(time: .shortened)).")
         } catch {

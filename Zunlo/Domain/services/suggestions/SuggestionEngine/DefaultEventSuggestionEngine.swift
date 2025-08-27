@@ -8,17 +8,21 @@
 import Foundation
 
 final class DefaultEventSuggestionEngine: EventSuggestionEngine {
+    let auth: AuthProviding
     let calendar: Calendar
     let eventFetcher: EventFetcherService
     let adjacencyMerges: Bool
     
     var policy: SuggestionPolicy
     
-    init(calendar: Calendar,
-         eventFetcher: EventFetcherService,
-         policy: SuggestionPolicy,
-         adjacencyMerges: Bool = true
+    init(
+        auth: AuthProviding,
+        calendar: Calendar,
+        eventFetcher: EventFetcherService,
+        policy: SuggestionPolicy,
+        adjacencyMerges: Bool = true
     ) {
+        self.auth = auth
         self.calendar = calendar
         self.eventFetcher = eventFetcher
         self.policy = policy
@@ -131,11 +135,12 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
 
     // Build RAW busy intervals *clamped to the policy's availability windows for that day*.
     private func dayRawBusyIntervals(on date: Date, policy: SuggestionPolicy) async -> [BusyInterval] {
+        guard await auth.isAuthorized(), let userId = auth.userId else { return [] }
         let ranges = utcAvailabilityRanges(for: date)
         guard !ranges.isEmpty else { return [] }
 
         // TODO: replace with a ranged fetch. For now, fetchAll + clamp.
-        let events = (try? await eventFetcher.fetchOccurrences(for: nil)) ?? []
+        let events = (try? await eventFetcher.fetchOccurrences(for: userId)) ?? []
         
         let today = Date().startOfDay
         let tomorrow = today.startOfNextDay()

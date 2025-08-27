@@ -82,12 +82,15 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     
     func fetchData() async {
         do {
+            guard let auth = appState.authManager, await auth.isAuthorized(), let userId = appState.authManager?.userId else {
+                return
+            }
             let taskFetcher = UserTaskFetcher(repo: taskRepo)
             let tasks = try await taskFetcher.fetchTasks()
             handleTasks(tasks)
             
             let eventFetcher = EventFetcher(repo: eventRepo)
-            let _ = try await eventFetcher.fetchOccurrences()
+            let _ = try await eventFetcher.fetchOccurrences(for: userId)
             
         } catch {
             await errorHandler.handle(error)

@@ -91,6 +91,7 @@ struct TodayView: View {
                                         vm: AIWelcomeCardViewModel(
                                             context: ctx,
                                             aiToolRunner: DefaultAIToolRunner(
+                                                userId: ctx.userId,
                                                 toolRepo: AIToolRepository(
                                                     eventRepo: appState.eventRepository!,
                                                     taskRepo: appState.userTaskRepository!,
@@ -436,6 +437,9 @@ struct TodayView: View {
     }
     
     private func getNavViewFactory() async -> NavigationViewFactory {
+        guard await authManager.isAuthorized(), let userId = authManager.userId else {
+            return NavigationViewFactory()
+        }
         let taskFactory = TaskViewFactory(
             viewID: viewID,
             nav: nav,
@@ -451,6 +455,7 @@ struct TodayView: View {
         let eventFactory = EventViewFactory(
             viewID: viewID,
             nav: nav,
+            userId: userId,
             onAddEditEventDismiss: {
                 Task { await viewModel.fetchData() }
             })

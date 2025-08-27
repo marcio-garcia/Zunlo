@@ -23,7 +23,7 @@ final class EventEditor: EventEditorService {
         let now = clock()
         let newEvent = Event(
             id: UUID(),
-            userId: nil,
+            userId: input.userId,
             title: input.title,
             notes: input.notes?.nilIfEmpty,
             startDate: input.startDate,

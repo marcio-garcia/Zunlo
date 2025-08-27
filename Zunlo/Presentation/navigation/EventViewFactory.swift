@@ -18,11 +18,18 @@ enum EditEventDialogOption: String {
 struct EventViewFactory: EventViews {
     let viewID: UUID
     let nav: AppNav
+    let userId: UUID
     let onAddEditEventDismiss: (() -> Void)?
     
-    internal init(viewID: UUID, nav: AppNav, onAddEditEventDismiss: (() -> Void)? = nil) {
+    internal init(
+        viewID: UUID,
+        nav: AppNav,
+        userId: UUID,
+        onAddEditEventDismiss: (() -> Void)? = nil
+    ) {
         self.viewID = viewID
         self.nav = nav
+        self.userId = userId
         self.onAddEditEventDismiss = onAddEditEventDismiss
     }
     
@@ -30,6 +37,7 @@ struct EventViewFactory: EventViews {
         AnyView(
             CalendarScheduleContainer(
                 viewModel: CalendarScheduleViewModel(
+                    userId: userId,
                     eventFetcher: EventFetcher(repo: AppState.shared.eventRepository!),
                     locationService: AppState.shared.locationService!
                 ), onTapClose: {
@@ -48,7 +56,10 @@ struct EventViewFactory: EventViews {
     func buildAddEventView() -> AnyView {
         AnyView(
             AddEditEventView(
-                viewModel: AddEditEventViewModel(mode: .add, editor: EventEditor(repo: AppState.shared.eventRepository!)),
+                viewModel: AddEditEventViewModel(
+                    userId: userId,
+                    mode: .add,
+                    editor: EventEditor(repo: AppState.shared.eventRepository!)),
                 onDismiss: onAddEditEventDismiss
             )
             .environmentObject(nav)
@@ -58,7 +69,10 @@ struct EventViewFactory: EventViews {
     func buildEditEventView(editMode: AddEditEventViewMode) -> AnyView {
         AnyView(
             AddEditEventView(
-                viewModel: AddEditEventViewModel(mode: editMode, editor: EventEditor(repo: AppState.shared.eventRepository!)),
+                viewModel: AddEditEventViewModel(
+                    userId: userId,
+                    mode: editMode,
+                    editor: EventEditor(repo: AppState.shared.eventRepository!)),
                 onDismiss: onAddEditEventDismiss
             )
             .environmentObject(nav)

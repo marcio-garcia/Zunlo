@@ -8,16 +8,18 @@
 import Foundation
 
 final class LocalAgendaComputer: AgendaComputing {
+    private let userId: UUID
     private let toolRepo: DomainRepositories
     private let cal: Calendar
     
-    init(toolRepo: DomainRepositories, calendar: Calendar = .appDefault) {
+    init(userId: UUID, toolRepo: DomainRepositories, calendar: Calendar = .appDefault) {
+        self.userId = userId
         self.toolRepo = toolRepo
         self.cal = calendar
     }
 
     func computeAgenda(range: Range<Date>, timezone: TimeZone) async throws -> GetAgendaResult {
-        let events = try await toolRepo.fetchOccurrences()
+        let events = try await toolRepo.fetchOccurrences(userId: userId)
         let occs = try EventOccurrenceService.generate(rawOccurrences: events, in: range, addFakeToday: false)
         let tasks = try await toolRepo.fetchTasks(range: range)
 
