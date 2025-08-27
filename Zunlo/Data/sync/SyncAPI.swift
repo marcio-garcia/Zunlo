@@ -21,13 +21,17 @@ public protocol SyncAPI: Sendable {
     func updateRecurrenceRuleIfVersionMatches(_ dto: RecurrenceRuleRemote) async throws -> RecurrenceRuleRemote?
     func fetchRecurrenceRule(id: UUID) async throws -> RecurrenceRuleRemote?
     func fetchRecurrenceRulesToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [RecurrenceRuleRemote]
-    
+    func insertRecRulesPayloadReturning(_ batch: [RecRuleInsertPayload]) async throws -> [RecurrenceRuleRemote]
+    func updateRecRuleIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: RecRuleUpdatePayload) async throws -> RecurrenceRuleRemote?
+
     // EVENT OVERRIDES
     func insertEventOverridesReturning(_ batch: [EventOverrideRemote]) async throws -> [EventOverrideRemote]
     func updateEventOverrideIfVersionMatches(_ dto: EventOverrideRemote) async throws -> EventOverrideRemote?
     func fetchEventOverride(id: UUID) async throws -> EventOverrideRemote?
     func fetchEventOverridesToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [EventOverrideRemote]
-    
+    func insertOverridesPayloadReturning(_ batch: [EventOverrideInsertPayload]) async throws -> [EventOverrideRemote]
+    func updateOverrideIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: EventOverrideUpdatePayload) async throws -> EventOverrideRemote?
+
     // TASKS
     func insertUserTasksReturning(_ batch: [UserTaskRemote]) async throws -> [UserTaskRemote]
     func updateUserTaskIfVersionMatches(_ dto: UserTaskRemote) async throws -> UserTaskRemote?

@@ -92,16 +92,16 @@ extension EventOverrideLocal {
                   overriddenLocation: remote.overridden_location,
                   isCancelled: remote.is_cancelled,
                   notes: remote.notes,
-                  createdAt: remote.created_at,
-                  updatedAt: remote.updated_at,
+                  createdAt: remote.createdAt,
+                  updatedAt: remote.updatedAt,
                   color: remote.color ?? .yellow,
-                  deletedAt: remote.deleted_at,
+                  deletedAt: remote.deletedAt,
                   needsSync: false,
                   version: remote.version
         )
     }
     
-    func getUpdateFields(_ remote: EventOverrideRemote) {
+    func getUpdateFields(remote: EventOverrideRemote) {
         self.occurrenceDate = remote.occurrence_date
         self.overriddenTitle = remote.overridden_title
         self.overriddenStartDate = remote.overridden_start_datetime
@@ -109,14 +109,15 @@ extension EventOverrideLocal {
         self.overriddenLocation = remote.overridden_location
         self.isCancelled = remote.is_cancelled
         self.notes = remote.notes
-        self.updatedAt = remote.updated_at
+        self.createdAt = remote.createdAt
+        self.updatedAt = remote.updatedAt
         self.color = remote.color ?? .yellow
-        self.deletedAt = remote.deleted_at
+        self.deletedAt = remote.deletedAt
         self.needsSync = false
         self.version = remote.version
     }
     
-    func getUpdateFields(_ domain: EventOverride) {
+    func getUpdateFields(domain: EventOverride) {
         self.occurrenceDate = domain.occurrenceDate
         self.overriddenTitle = domain.overriddenTitle
         self.overriddenStartDate = domain.overriddenStartDate
@@ -124,7 +125,8 @@ extension EventOverrideLocal {
         self.overriddenLocation = domain.overriddenLocation
         self.isCancelled = domain.isCancelled
         self.notes = domain.notes
-        self.updatedAt = Date()
+        self.createdAt = domain.createdAt
+        self.updatedAt = domain.updatedAt
         self.color = domain.color
         self.deletedAt = domain.deletedAt
         self.needsSync = true

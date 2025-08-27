@@ -28,7 +28,7 @@ struct RecurrenceRule: Identifiable, Codable, Hashable {
 extension RecurrenceRule {
     init(remote: RecurrenceRuleRemote) {
         self.id = remote.id
-        self.eventId = remote.event_id
+        self.eventId = remote.eventId
         self.freq = RecurrenceFrequesncy(rawValue: remote.freq) ?? .daily
         self.interval = remote.interval
         self.byWeekday = remote.byweekday
@@ -36,9 +36,9 @@ extension RecurrenceRule {
         self.byMonth = remote.bymonth
         self.until = remote.until
         self.count = remote.count
-        self.createdAt = remote.created_at
-        self.updatedAt = remote.updated_at
-        self.deletedAt = remote.deleted_at
+        self.createdAt = remote.createdAt
+        self.updatedAt = remote.updatedAt
+        self.deletedAt = remote.deletedAt
         self.needsSync = false
     }
 

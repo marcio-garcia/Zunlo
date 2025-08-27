@@ -107,7 +107,7 @@ extension RecurrenceRuleLocal {
     
     convenience init(remote: RecurrenceRuleRemote) {
         self.init(id: remote.id,
-                  eventId: remote.event_id,
+                  eventId: remote.eventId,
                   freq: remote.freq,
                   interval: remote.interval,
                   byWeekday: remote.byweekday,
@@ -115,15 +115,15 @@ extension RecurrenceRuleLocal {
                   byMonth: remote.bymonth,
                   until: remote.until,
                   count: remote.count,
-                  createdAt: remote.created_at,
-                  updatedAt: remote.updated_at,
-                  deletedAt: remote.deleted_at,
+                  createdAt: remote.createdAt,
+                  updatedAt: remote.updatedAt,
+                  deletedAt: remote.deletedAt,
                   needsSync: false,
                   version: remote.version
         )
     }
     
-    func getUpdateFields(_ remote: RecurrenceRuleRemote) {
+    func getUpdateFields(remote: RecurrenceRuleRemote) {
         self.freq = remote.freq
         self.interval = remote.interval
         self.byWeekdayArray = remote.byweekday ?? []
@@ -131,14 +131,14 @@ extension RecurrenceRuleLocal {
         self.byMonthArray = remote.bymonth ?? []
         self.until = remote.until
         self.count = remote.count
-        self.createdAt = remote.created_at
-        self.updatedAt = remote.updated_at
-        self.deletedAt = remote.deleted_at
+        self.createdAt = remote.createdAt
+        self.updatedAt = remote.updatedAt
+        self.deletedAt = remote.deletedAt
         self.needsSync = false
         self.version = remote.version
     }
     
-    func getUpdateFields(_ domain: RecurrenceRule) {
+    func getUpdateFields(domain: RecurrenceRule) {
         self.freq = domain.freq.rawValue
         self.interval = domain.interval
         self.byWeekdayArray = domain.byWeekday ?? []

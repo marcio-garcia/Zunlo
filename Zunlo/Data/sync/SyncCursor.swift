@@ -1,5 +1,5 @@
 //
-//  TaskSyncCursor.swift
+//  SyncCursor.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 8/26/25.

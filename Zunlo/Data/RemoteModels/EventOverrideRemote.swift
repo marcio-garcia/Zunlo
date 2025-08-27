@@ -7,7 +7,11 @@
 
 import Foundation
 
-public struct EventOverrideRemote: Codable, Identifiable {
+extension EventOverrideRemote {
+    var isInsertCandidate: Bool { version == nil }
+}
+
+public struct EventOverrideRemote: RemoteEntity, Codable, Identifiable {
     public var id: UUID
     public var event_id: UUID
     public var occurrence_date: Date
@@ -17,10 +21,11 @@ public struct EventOverrideRemote: Codable, Identifiable {
     public var overridden_location: String?
     public var is_cancelled: Bool
     public var notes: String?
-    public var created_at: Date
-    public var updated_at: Date
+    public var createdAt: Date
+    public var updatedAt: Date
+    public var updatedAtRaw: String?
     public var color: EventColor?
-    public var deleted_at: Date?
+    public var deletedAt: Date?
     public var version: Int?
 }
 
@@ -35,10 +40,10 @@ extension EventOverrideRemote {
         self.overridden_location = domain.overriddenLocation
         self.is_cancelled = domain.isCancelled
         self.notes = domain.notes
-        self.created_at = domain.createdAt
-        self.updated_at = domain.updatedAt
+        self.createdAt = domain.createdAt
+        self.updatedAt = domain.updatedAt
         self.color = domain.color
-        self.deleted_at = domain.deletedAt
+        self.deletedAt = domain.deletedAt
         self.version = domain.version
     }
     
@@ -52,10 +57,10 @@ extension EventOverrideRemote {
         self.overridden_location = local.overriddenLocation
         self.is_cancelled = local.isCancelled
         self.notes = local.notes
-        self.created_at = local.createdAt
-        self.updated_at = local.updatedAt
+        self.createdAt = local.createdAt
+        self.updatedAt = local.updatedAt
         self.color = local.color
-        self.deleted_at = local.deletedAt
+        self.deletedAt = local.deletedAt
         self.version = local.version
     }
 }

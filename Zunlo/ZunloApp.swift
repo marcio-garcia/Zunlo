@@ -146,7 +146,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 19, // <- increment this every time you change schema!
+        schemaVersion: 20, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,
@@ -205,6 +205,11 @@ func setupRealm() {
 //                migration.enumerateObjects(ofType: SyncCursor.className()) { oldObject, newObject in
 //                    newObject?["lastTsRaw"] = nil
 //                }
+            }
+            if oldSchemaVersion < 20 {
+                migration.enumerateObjects(ofType: EventLocal.className()) { oldObject, newObject in
+                    newObject?["userId"] = UUID(uuidString: "2d2c47af-3923-4524-8e85-be91371483f5")!
+                }
             }
         }
     )

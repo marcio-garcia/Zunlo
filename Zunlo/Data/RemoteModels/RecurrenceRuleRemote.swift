@@ -7,9 +7,13 @@
 
 import Foundation
 
-public struct RecurrenceRuleRemote: Codable, Identifiable {
+extension RecurrenceRuleRemote {
+    var isInsertCandidate: Bool { version == nil }
+}
+
+public struct RecurrenceRuleRemote: RemoteEntity, Codable, Identifiable {
     public var id: UUID
-    public var event_id: UUID
+    public var eventId: UUID
     public var freq: String
     public var interval: Int
     public var byweekday: [Int]?
@@ -17,16 +21,17 @@ public struct RecurrenceRuleRemote: Codable, Identifiable {
     public var bymonth: [Int]?
     public var until: Date?
     public var count: Int?
-    public var created_at: Date
-    public var updated_at: Date
-    public var deleted_at: Date? = nil
+    public var createdAt: Date
+    public var updatedAt: Date
+    public var updatedAtRaw: String?
+    public var deletedAt: Date? = nil
     public var version: Int?
 }
 
 extension RecurrenceRuleRemote {
     internal init(local: RecurrenceRuleLocal) {
         self.id = local.id
-        self.event_id = local.eventId
+        self.eventId = local.eventId
         self.freq = local.freq
         self.interval = local.interval
         self.byweekday = local.byWeekdayArray
@@ -34,15 +39,15 @@ extension RecurrenceRuleRemote {
         self.bymonth = local.byMonthArray
         self.until = local.until
         self.count = local.count
-        self.created_at = local.createdAt
-        self.updated_at = local.updatedAt
-        self.deleted_at = local.deletedAt
+        self.createdAt = local.createdAt
+        self.updatedAt = local.updatedAt
+        self.deletedAt = local.deletedAt
         self.version = local.version
     }
     
     init(domain: RecurrenceRule) {
         self.id = domain.id
-        self.event_id = domain.eventId
+        self.eventId = domain.eventId
         self.freq = domain.freq.rawValue
         self.interval = domain.interval
         self.byweekday = domain.byWeekday
@@ -50,9 +55,9 @@ extension RecurrenceRuleRemote {
         self.bymonth = domain.byMonth
         self.until = domain.until
         self.count = domain.count
-        self.created_at = domain.createdAt
-        self.updated_at = domain.updatedAt
-        self.deleted_at = domain.deletedAt
+        self.createdAt = domain.createdAt
+        self.updatedAt = domain.updatedAt
+        self.deletedAt = domain.deletedAt
         self.version = domain.version
     }
 }

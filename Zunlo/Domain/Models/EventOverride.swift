@@ -37,10 +37,10 @@ extension EventOverride {
         self.overriddenLocation = remote.overridden_location
         self.isCancelled = remote.is_cancelled
         self.notes = remote.notes
-        self.createdAt = remote.created_at
-        self.updatedAt = remote.updated_at
+        self.createdAt = remote.createdAt
+        self.updatedAt = remote.updatedAt
         self.color = remote.color ?? .yellow
-        self.deletedAt = remote.deleted_at
+        self.deletedAt = remote.deletedAt
         self.needsSync = false
         self.version = remote.version
     }

@@ -99,7 +99,7 @@ public actor DatabaseActor {
 //                   existing.needsSync == true { continue }
                 let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id)
                     ?? RecurrenceRuleLocal(remote: r)
-                obj.getUpdateFields(r)
+                obj.getUpdateFields(remote: r)
                 realm.add(obj, update: .modified)
             }
         }
@@ -124,11 +124,9 @@ public actor DatabaseActor {
         let realm = try Realm()
         try realm.write {
             for r in rows {
-//                if let existing = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: id),
-//                   existing.needsSync == true { continue }
                 let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: r.id)
                     ?? EventOverrideLocal(remote: r)
-                obj.getUpdateFields(r)
+                obj.getUpdateFields(remote: r)
                 realm.add(obj, update: .modified)
             }
         }
@@ -217,7 +215,7 @@ public actor DatabaseActor {
             
             let localRule = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: rule.id)
                 ?? RecurrenceRuleLocal(domain: rule)
-            localRule.getUpdateFields(rule)
+            localRule.getUpdateFields(domain: rule)
             realm.add(localRule, update: .modified)
             
             try realm.commitWrite()
@@ -298,7 +296,7 @@ public actor DatabaseActor {
         try realm.write {
             let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: remote.id)
                 ?? EventOverrideLocal(remote: remote)
-            obj.getUpdateFields(remote)
+            obj.getUpdateFields(remote: remote)
             realm.add(obj, update: .modified)
         }
     }
@@ -308,7 +306,7 @@ public actor DatabaseActor {
         try realm.write {
             let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: domain.id)
                 ?? EventOverrideLocal(domain: domain)
-            obj.getUpdateFields(domain)
+            obj.getUpdateFields(domain: domain)
             obj.updatedAt = Date()
             obj.needsSync = true
             realm.add(obj, update: .modified)
@@ -352,7 +350,7 @@ public actor DatabaseActor {
         try realm.write {
             let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: remote.id)
                 ?? RecurrenceRuleLocal(remote: remote)
-            obj.getUpdateFields(remote)
+            obj.getUpdateFields(remote: remote)
             realm.add(obj, update: .modified)
         }
     }
@@ -362,7 +360,7 @@ public actor DatabaseActor {
         try realm.write {
             let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: domain.id)
                 ?? RecurrenceRuleLocal(domain: domain)
-            obj.getUpdateFields(domain)
+            obj.getUpdateFields(domain: domain)
             obj.updatedAt = Date()
             obj.needsSync = true
             realm.add(obj, update: .modified)

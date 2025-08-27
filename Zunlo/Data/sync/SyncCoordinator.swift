@@ -9,9 +9,20 @@ import Foundation
 import Supabase
 
 struct SyncSummary {
+    let eventReport: SyncReport
+    let overrideReport: SyncReport
+    let ruleReport: SyncReport
     let taskReport: SyncReport
     
-    internal init(taskReport: SyncReport = .zero) {
+    internal init(
+        eventReport: SyncReport = .zero,
+        ruleReport: SyncReport = .zero,
+        overrideReport: SyncReport = .zero,
+        taskReport: SyncReport = .zero
+    ) {
+        self.eventReport = eventReport
+        self.ruleReport = ruleReport
+        self.overrideReport = overrideReport
         self.taskReport = taskReport
     }
 }
@@ -41,11 +52,6 @@ final class SyncCoordinator {
         self.userTasks = UserTaskSyncEngine(db: db, api: syncApi)
         
         Task {
-//            try await db.markEventDirty(UUID(uuidString: "C74A7FDA-8EB0-4E18-B958-D7E9AF279C3B")!)
-//            try await db.markEventsClean(UUID(uuidString: "C74A7FDA-8EB0-4E18-B958-D7E9AF279C3B")!)
-//            try await db.markAllEventsDirty()
-//            try await db.undeleteEvent(id: UUID(uuidString: "27c828d2-8d0f-4ae7-a616-c43adb4d65b5")!, userId: UUID(uuidString: "2d2c47af-3923-4524-8e85-be91371483f5")!)
-            
             await supabase.auth.onAuthStateChange { event, session in
                 print("Auth event:", event)
                 if let token = session?.accessToken {
@@ -69,10 +75,21 @@ final class SyncCoordinator {
             return SyncSummary()
         }
         
-//        (eventsPushed, eventsPulled) = await events.syncNow()
-//        (rulesPushed, rulesPulled)  = await rules.syncNow()       // depends on events
-//        (overridesPushed, overridesPulled) = await overrides.syncNow()   // depends on events, optional after rules
-        taskReport = try await userTasks.syncNow()
-        return SyncSummary(taskReport: taskReport)
+        let eventRunner = events.makeRunner()
+        let ruleRunner = rules.makeRunner()
+        let overrideRunner = overrides.makeRunner()
+        let taskRunner  = userTasks.makeRunner()
+        
+        let eventReport = await eventRunner.syncNow()
+        let ruleReport  = await ruleRunner.syncNow()
+        let overrideReport = await overrideRunner.syncNow()
+        let taskReport = await taskRunner.syncNow()
+        
+        return SyncSummary(
+            eventReport: eventReport,
+            ruleReport: ruleReport,
+            overrideReport: overrideReport,
+            taskReport: taskReport
+        )
     }
 }

@@ -131,7 +131,8 @@ class UserTaskLocal: Object {
         self.title = domain.title
         self.notes = domain.notes
         self.isCompleted = domain.isCompleted
-        self.updatedAt = Date()
+        self.createdAt = domain.createdAt
+        self.updatedAt = domain.updatedAt
         self.dueDate = domain.dueDate
         self.priority = UserTaskPriorityLocal.fromDomain(domain: domain.priority)
         self.parentEventId = domain.parentEventId

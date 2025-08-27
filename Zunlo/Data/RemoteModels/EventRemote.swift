@@ -18,6 +18,10 @@ public enum _DecodePolicy {
     }
 }
 
+extension EventRemote {
+    var isInsertCandidate: Bool { version == nil }
+}
+
 public struct EventRemote: RemoteEntity, Codable, Identifiable {
     public var id: UUID
     public var user_id: UUID

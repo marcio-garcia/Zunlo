@@ -29,13 +29,20 @@ extension PostgrestFilterBuilder {
 
 extension PostgrestTransformBuilder {
     func executeTransformWithStatus() async throws -> (status: Int, data: Data) {
-        let resp = try await self.execute()
-        // If your library already throws for non-2xx, adapt to capture status.
-        // Here we pass through and raise our own error for non-2xx:
-        guard (200..<300).contains(resp.status) else {
-            throw HTTPStatusError(status: resp.status, body: resp.data)
+        do {
+            let resp = try await self.execute()
+            // If your library already throws for non-2xx, adapt to capture status.
+            // Here we pass through and raise our own error for non-2xx:
+            guard (200..<300).contains(resp.status) else {
+                throw HTTPStatusError(status: resp.status, body: resp.data)
+            }
+            return (resp.status, resp.data)
+        } catch let error as PostgrestError {
+            if error.code == "23505" { //duplicate key value violates unique constraint
+                throw HTTPStatusError(status: 409, body: nil)
+            }
+            return (0, Data())
         }
-        return (resp.status, resp.data)
     }
 }
 
@@ -207,7 +214,7 @@ public extension SupabaseSyncAPI {
             .executeTransformWithStatus()
         return try r.data.decodeSupabase()
     }
-
+    
     // Guarded update with payload patch
     func updateUserTaskIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: TaskUpdatePayload) async throws -> UserTaskRemote? {
         let r = try await client
@@ -230,7 +237,7 @@ public extension SupabaseSyncAPI {
             .executeTransformWithStatus()
         return try r.data.decodeSupabase()
     }
-
+    
     // Guarded update with payload patch
     func updateEventIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: EventUpdatePayload) async throws -> EventRemote? {
         let r = try await client
@@ -243,5 +250,50 @@ public extension SupabaseSyncAPI {
         let rows: [EventRemote] = try r.data.decodeSupabase()
         return rows.first
     }
+    
+    // Insert with payloads
+    func insertOverridesPayloadReturning(_ batch: [EventOverrideInsertPayload]) async throws -> [EventOverrideRemote] {
+        let r = try await client
+            .from("event_overrides")
+            .insert(batch)
+            .select()
+            .executeTransformWithStatus()
+        return try r.data.decodeSupabase()
+    }
+    
+    // Guarded update with payload patch
+    func updateOverrideIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: EventOverrideUpdatePayload) async throws -> EventOverrideRemote? {
+        let r = try await client
+            .from("event_overrides")
+            .update(patch)
+            .eq("id", value: id)
+            .eq("version", value: expectedVersion)
+            .select()
+            .executeTransformWithStatus()
+        let rows: [EventOverrideRemote] = try r.data.decodeSupabase()
+        return rows.first
+    }
 
+    // Insert with payloads
+    func insertRecRulesPayloadReturning(_ batch: [RecRuleInsertPayload]) async throws -> [RecurrenceRuleRemote] {
+        let r = try await client
+            .from("recurrence_rules")
+            .insert(batch)
+            .select()
+            .executeTransformWithStatus()
+        return try r.data.decodeSupabase()
+    }
+
+    // Guarded update with payload patch
+    func updateRecRuleIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: RecRuleUpdatePayload) async throws -> RecurrenceRuleRemote? {
+        let r = try await client
+            .from("recurrence_rules")
+            .update(patch)
+            .eq("id", value: id)
+            .eq("version", value: expectedVersion)
+            .select()
+            .executeTransformWithStatus()
+        let rows: [RecurrenceRuleRemote] = try r.data.decodeSupabase()
+        return rows.first
+    }
 }

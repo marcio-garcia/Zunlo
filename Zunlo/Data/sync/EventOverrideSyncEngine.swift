@@ -12,129 +12,62 @@ import RealmSwift
 final class EventOverrideSyncEngine {
     private let db: DatabaseActor
     private let api: SyncAPI
-    private let pageSize = 500
-    private let lastTsKey = "event_overrides.lastTimestampAt"
-    private let lastIdKey = "event_overrides.lastIdAt"
+    private let pageSize = 100
+    private let tableName = "event_overrides"
 
     init(db: DatabaseActor, api: SyncAPI) {
         self.db = db
         self.api = api
     }
 
-    func syncNow() async -> (Int, Int) {
-        do {
-            let pushed = try await pushDirty()
-            let pulled = try await pullSinceCursor()
-            return (pushed, pulled)
-        } catch {
-            print("EventOverride sync error:", error)
-            return (0, 0)
-        }
-    }
-
-//    private func pushDirty() async throws -> Int {
-//        let (batch, ids) = try await db.readDirtyEventOverrides()
-//        guard !batch.isEmpty else { return 0 }
-//        _ = try await supabase.from("event_overrides").upsert(batch, onConflict: "id").execute()
-//        try await db.markEventOverridesClean(ids)
-//        return batch.count
-//    }
-
-    private func pullSinceCursor() async throws -> Int {
-        var sinceTs = UserDefaults.standard.string(forKey: lastTsKey) ?? CursorDefaults.zero
-        var sinceId = UserDefaults.standard.string(forKey: lastIdKey).flatMap(UUID.init)
-        var lastServerUpdatedAt: Date?
-
-        var rowsAffected = 0
-        
-        while true {
-            let rows = try await api.fetchEventOverridesToSync(
-                sinceTimestamp: sinceTs,
-                sinceID: sinceId,
-                pageSize: pageSize
-            )
-            
-            rowsAffected += rows.count
-            
-            guard !rows.isEmpty else { break }
-            try await db.applyRemoteEventOverrides(rows)
-            if let last = rows.last {
-                lastServerUpdatedAt = last.updated_at
-                sinceTs = last.updated_at.nextMillisecondCursor()
-                sinceId = last.id
-            }
-        }
-
-        if let last = lastServerUpdatedAt {
-            UserDefaults.standard.set(last.nextMillisecondCursor(), forKey: lastTsKey)
-            UserDefaults.standard.set(sinceId?.uuidString, forKey: lastIdKey)
-        }
-        
-        return rowsAffected
+    func makeRunner() -> SyncRunner<EventOverrideRemote, EventOverrideInsertPayload, EventOverrideUpdatePayload> {
+        return makeOverrideRunner(db: db, api: api)
     }
     
-    private func pushDirty() async throws -> Int {
-        let (batch, _) = try await db.readDirtyEventOverrides()
-        guard !batch.isEmpty else { return 0 }
+    // Mappers (using your insert/update payloads)
+    func overrideInsert(_ r: EventOverrideRemote) -> EventOverrideInsertPayload { EventOverrideInsertPayload(remote: r) }
+    func overrideUpdate(_ r: EventOverrideRemote) -> EventOverrideUpdatePayload { EventOverrideUpdatePayload.full(from: r) }
 
-        var pushed: [UUID] = []
-        var conflicts: [(EventOverrideRemote, EventOverrideRemote?)] = []
+    func makeOverrideRunner(db: DatabaseActor, api: SyncAPI) -> SyncRunner<EventOverrideRemote, EventOverrideInsertPayload, EventOverrideUpdatePayload> {
+        let spec = SyncSpec<EventOverrideRemote, EventOverrideInsertPayload, EventOverrideUpdatePayload>(
+            entityKey: self.tableName,
+            pageSize: 100,
 
-        let inserts = batch.filter { $0.version == nil }
-        let updates = batch.filter { $0.version != nil }
+            // API
+            fetchSince: { ts, id, size in try await api.fetchEventOverridesToSync(sinceTimestamp: ts, sinceID: id, pageSize: size) },
+            fetchOne: { id in try await api.fetchEventOverride(id: id) },
+            insertReturning: { payloads in try await api.insertOverridesPayloadReturning(payloads) }, // see note below
+            updateIfVersionMatches: { row, patch in
+                let expected = row.version ?? -1
+                return try await api.updateOverrideIfVersionMatchesPatch(id: row.id, expectedVersion: expected, patch: patch)
+            },
 
-        // INSERT
-        if !inserts.isEmpty {
-            do {
-                let inserted = try await api.insertEventOverridesReturning(inserts)
-                try await db.applyRemoteEventOverrides(inserted)
-                pushed.append(contentsOf: inserted.map(\.id))
-            } catch {
-                for dto in inserts {
-                    do {
-                        let rows = try await api.insertEventOverridesReturning([dto])
-                        if let row = rows.first {
-                            try await db.applyRemoteEventOverrides([row])
-                            pushed.append(row.id)
+            // DB
+            readDirty: { try await db.readDirtyEventOverrides().0 }, // your existing return
+            applyPage: { rows in try await db.applyPage(for: self.tableName, rows: rows) { realm, rows in
+                for r in rows {
+                    if let tomb = r.deletedAt {
+                        if let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: r.id) {
+                            obj.deletedAt = tomb; obj.needsSync = false; obj.version = r.version
                         }
-                    } catch {
-                        let server = try? await api.fetchEventOverride(id: dto.id)
-                        conflicts.append((dto, server))
+                        continue
                     }
+                    let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: r.id) ?? { let o = EventOverrideLocal(); o.id = r.id; return o }()
+                    obj.getUpdateFields(remote: r)
+                    realm.add(obj, update: .modified)
                 }
-            }
-        }
+            }},
+            markClean: { ids in try await db.markEventOverridesClean(ids) },
+            recordConflicts: { items in
+                try await db.recordConflicts(.tasks, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
+            },
+            readCursor: { try await db.readCursor(for: self.tableName) },
 
-        // Guarded UPDATE
-        for dto in updates {
-            do {
-                if let updated = try await api.updateEventOverrideIfVersionMatches(dto) {
-                    try await db.applyRemoteEventOverrides([updated])
-                    pushed.append(updated.id)
-                } else {
-                    let server = try? await api.fetchEventOverride(id: dto.id)
-                    conflicts.append((dto, server))
-                }
-            } catch {
-                let server = try? await api.fetchEventOverride(id: dto.id)
-                conflicts.append((dto, server))
-            }
-        }
-
-        try await db.markEventOverridesClean(pushed)
-        
-        // conflicts: [(local: EventOverrideRemote, server: EventOverrideRemote?)]
-        if !conflicts.isEmpty {
-            try await db.recordConflicts(
-                .event_overrides,
-                items: conflicts,
-                idOf: { $0.id },
-                localVersion: { $0.version },
-                remoteVersion: { $0?.version }
-            )
-        }
-        
-        return pushed.count
+            // Mappers
+            isInsert: { $0.isInsertCandidate },
+            makeInsertPayload: overrideInsert,
+            makeUpdatePayload: overrideUpdate
+        )
+        return SyncRunner(spec: spec)
     }
-
 }

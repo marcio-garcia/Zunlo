@@ -12,130 +12,62 @@ import RealmSwift
 final class RecurrenceRuleSyncEngine {
     private let db: DatabaseActor
     private let api: SyncAPI
-    private let pageSize = 500
-    private let lastTsKey = "recurrence_rules.lastTimestampAt"
-    private let lastIdKey = "recurrence_rules.lastIdAt"
+    private let pageSize = 100
+    private let tableName = "recurrence_rules"
     
     init(db: DatabaseActor, api: SyncAPI) {
         self.db = db
         self.api = api
     }
-
-    func syncNow() async -> (Int, Int) {
-        do {            
-            let pushed = try await pushDirty()
-            let pulled = try await pullSinceCursor()
-            return (pushed, pulled)
-        } catch {
-            print("RecurrenceRule sync error:", error)
-            return (0, 0)
-        }
-    }
-
-//    private func pushDirty() async throws -> Int {
-//        let (batch, ids) = try await db.readDirtyRecurrenceRules()
-//        guard !batch.isEmpty else { return 0 }
-//        _ = try await supabase.from("recurrence_rules").upsert(batch, onConflict: "id").execute()
-//        try await db.markRecurrenceRulesClean(ids)
-//        return batch.count
-//    }
-
-    private func pullSinceCursor() async throws -> Int {
-        var sinceTs = UserDefaults.standard.string(forKey: lastTsKey) ?? CursorDefaults.zero
-        var sinceId = UserDefaults.standard.string(forKey: lastIdKey).flatMap(UUID.init)
-        var lastServerUpdatedAt: Date?
-
-        var rowsAffected = 0
-        
-        while true {
-            let rows = try await api.fetchRecurrenceRulesToSync(
-                sinceTimestamp: sinceTs,
-                sinceID: sinceId,
-                pageSize: pageSize
-            )
-            
-            rowsAffected += rows.count
-            
-            guard !rows.isEmpty else { break }
-            try await db.applyRemoteRecurrenceRules(rows)
-            if let last = rows.last {
-                lastServerUpdatedAt = last.updated_at
-                sinceTs = last.updated_at.nextMillisecondCursor()
-                sinceId = last.id
-            }
-        }
-
-        if let last = lastServerUpdatedAt {
-            UserDefaults.standard.set(last.nextMillisecondCursor(), forKey: lastTsKey)
-            UserDefaults.standard.set(sinceId?.uuidString, forKey: lastIdKey)
-        }
-        
-        return rowsAffected
+    
+    func makeRunner() -> SyncRunner<RecurrenceRuleRemote, RecRuleInsertPayload, RecRuleUpdatePayload> {
+        return makeRuleRunner(db: db, api: api)
     }
     
-    private func pushDirty() async throws -> Int {
-        let (batch, _) = try await db.readDirtyRecurrenceRules()
-        guard !batch.isEmpty else { return 0 }
+    // Mappers (using your insert/update payloads)
+    func rulesInsert(_ r: RecurrenceRuleRemote) -> RecRuleInsertPayload { RecRuleInsertPayload(remote: r) }
+    func rulesUpdate(_ r: RecurrenceRuleRemote) -> RecRuleUpdatePayload { RecRuleUpdatePayload.full(from: r) }
 
-        var pushed: [UUID] = []
-        var conflicts: [(RecurrenceRuleRemote, RecurrenceRuleRemote?)] = []
+    func makeRuleRunner(db: DatabaseActor, api: SyncAPI) -> SyncRunner<RecurrenceRuleRemote, RecRuleInsertPayload, RecRuleUpdatePayload> {
+        let spec = SyncSpec<RecurrenceRuleRemote, RecRuleInsertPayload, RecRuleUpdatePayload>(
+            entityKey: self.tableName,
+            pageSize: 100,
 
-        let inserts = batch.filter { $0.version == nil }
-        let updates = batch.filter { $0.version != nil }
+            // API
+            fetchSince: { ts, id, size in try await api.fetchRecurrenceRulesToSync(sinceTimestamp: ts, sinceID: id, pageSize: size) },
+            fetchOne: { id in try await api.fetchRecurrenceRule(id: id) },
+            insertReturning: { payloads in try await api.insertRecRulesPayloadReturning(payloads) }, // see note below
+            updateIfVersionMatches: { row, patch in
+                let expected = row.version ?? -1
+                return try await api.updateRecRuleIfVersionMatchesPatch(id: row.id, expectedVersion: expected, patch: patch)
+            },
 
-        // INSERT
-        if !inserts.isEmpty {
-            do {
-                let inserted = try await api.insertRecurrenceRulesReturning(inserts)
-                try await db.applyRemoteRecurrenceRules(inserted)
-                pushed.append(contentsOf: inserted.map(\.id))
-            } catch {
-                // fallback row-by-row
-                for dto in inserts {
-                    do {
-                        let rows = try await api.insertRecurrenceRulesReturning([dto])
-                        if let row = rows.first {
-                            try await db.applyRemoteRecurrenceRules([row])
-                            pushed.append(row.id)
+            // DB
+            readDirty: { try await db.readDirtyRecurrenceRules().0 }, // your existing return
+            applyPage: { rows in try await db.applyPage(for: self.tableName, rows: rows) { realm, rows in
+                for r in rows {
+                    if let tomb = r.deletedAt {
+                        if let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id) {
+                            obj.deletedAt = tomb; obj.needsSync = false; obj.version = r.version
                         }
-                    } catch {
-                        let server = try? await api.fetchRecurrenceRule(id: dto.id)
-                        conflicts.append((dto, server))
+                        continue
                     }
+                    let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id) ?? { let o = RecurrenceRuleLocal(); o.id = r.id; return o }()
+                    obj.getUpdateFields(remote: r)
+                    realm.add(obj, update: .modified)
                 }
-            }
-        }
+            }},
+            markClean: { ids in try await db.markRecurrenceRulesClean(ids) },
+            recordConflicts: { items in
+                try await db.recordConflicts(.tasks, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
+            },
+            readCursor: { try await db.readCursor(for: self.tableName) },
 
-        // Guarded UPDATE
-        for dto in updates {
-            do {
-                if let updated = try await api.updateRecurrenceRuleIfVersionMatches(dto) {
-                    try await db.applyRemoteRecurrenceRules([updated])
-                    pushed.append(updated.id)
-                } else {
-                    let server = try? await api.fetchRecurrenceRule(id: dto.id)
-                    conflicts.append((dto, server))
-                }
-            } catch {
-                let server = try? await api.fetchRecurrenceRule(id: dto.id)
-                conflicts.append((dto, server))
-            }
-        }
-
-        try await db.markRecurrenceRulesClean(pushed)
-        
-        // conflicts: [(local: RecurrenceRuleRemote, server: RecurrenceRuleRemote?)]
-        if !conflicts.isEmpty {
-            try await db.recordConflicts(
-                .recurrence_rules,
-                items: conflicts,
-                idOf: { $0.id },
-                localVersion: { $0.version },
-                remoteVersion: { $0?.version }
-            )
-        }
-        
-        return pushed.count
+            // Mappers
+            isInsert: { $0.isInsertCandidate },
+            makeInsertPayload: rulesInsert,
+            makeUpdatePayload: rulesUpdate
+        )
+        return SyncRunner(spec: spec)
     }
-
 }
