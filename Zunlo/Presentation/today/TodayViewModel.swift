@@ -70,7 +70,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
         eventRepo.lastEventAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
             switch action {
             case .fetch(let occ):
-                let today = Date().startOfDay
+                let today = Date().startOfDay()
                 let tomorrow = today.startOfNextDay()
                 self?.handleOccurrences(occ, in: today..<tomorrow)
             case .error(let error):

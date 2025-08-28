@@ -99,7 +99,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
 
         // Local start-of-day for the *target* date
         let localStartOfDay = localCal.startOfDay(for: date)
-        let nextLocalMidnight = localStartOfDay.startOfNextDay()
+        let nextLocalMidnight = localStartOfDay.startOfNextDay(calendar: localCal)
 
         let startLocal = localCal.date(
             bySettingHour: policy.availabilityStartHour,
@@ -107,17 +107,21 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
             second: 0,
             of: localStartOfDay
         )!
-        let endLocal = localCal.date(
+        var endLocal = localCal.date(
             bySettingHour: policy.availabilityEndHour,
             minute: policy.availabilityEndMinute,
             second: 0,
             of: localStartOfDay
         )!
 
+        if endLocal == startLocal {
+            endLocal = endLocal.startOfNextDay(calendar: localCal)
+        }
+        
         if endLocal > startLocal {
             // Single daytime window (e.g., 08:00–20:00 local)
             // adjust to current time
-            let start = max(startLocal, Date())
+            let start = max(startLocal, date)
             // these Date values are absolute UTC instants
             return start > endLocal ? [] : [start..<endLocal]
         } else {
@@ -139,11 +143,14 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
         let ranges = utcAvailabilityRanges(for: date)
         guard !ranges.isEmpty else { return [] }
 
+        var calendar = Calendar.appDefault
+        calendar.timeZone = policy.availabilityTimeZone
+        
         // TODO: replace with a ranged fetch. For now, fetchAll + clamp.
         let events = (try? await eventFetcher.fetchOccurrences(for: userId)) ?? []
         
-        let today = Date().startOfDay
-        let tomorrow = today.startOfNextDay()
+        let today = date.startOfDay(calendar: calendar)
+        let tomorrow = today.startOfNextDay(calendar: calendar)
         
         let occurrences = (try? EventOccurrenceService.generate(rawOccurrences: events, in: today..<tomorrow)) ?? []
 

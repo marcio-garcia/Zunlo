@@ -149,7 +149,7 @@ struct EventOccurrenceService {
             }
         }
 
-        let occ = addFakeToday ? RecurrenceHelper.addTodayIfNeeded(occurrences: occurrences) : occurrences
+        let occ = addFakeToday ? RecurrenceHelper.addTodayIfNeeded(occurrences: occurrences, range: range) : occurrences
         return occ.sorted { $0.startDate < $1.startDate }
     }
 }

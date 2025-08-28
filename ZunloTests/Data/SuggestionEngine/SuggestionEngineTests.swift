@@ -62,6 +62,10 @@ final class SuggestionEngineTests: XCTestCase {
     func testFreeWindows_fullDay_min60() async throws {
         let engine = makeEngine(with: sampleEvents())
         engine.policy = fullDayUTC
+        engine.policy.absorbGapsBelow = 60
+        
+        var sampleDate: Date { DT.d("2025-08-12 00:00") }
+        
         let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 60)
 
         // Expect [01:00–06:30] and [11:00–22:00]
@@ -92,6 +96,7 @@ final class SuggestionEngineTests: XCTestCase {
     func testConflictingItemsCount_fullDay_isTwo() async throws {
         let engine = makeEngine(with: sampleEvents())
         engine.policy = fullDayUTC
+        var sampleDate: Date { DT.d("2025-08-12 01:00") }
         let count = await engine.conflictingItemsCount(on: sampleDate)
         XCTAssertEqual(count, 2, "B∩C and E∩G")
     }
@@ -113,11 +118,11 @@ final class SuggestionEngineTests: XCTestCase {
 
     // MARK: - Availability: São Paulo local 08:00–20:00 (UTC−3) clamps “night”
 
-    func testAvailability_SaoPaulo_daytimeOnly() async throws {
+    func testAvailability_SaoPaulo_daytimeOnly_currentDateEarlyMorning() async throws {
         let engine = makeEngine(with: sampleEvents())
         let spTZ = TimeZone(identifier: "America/Sao_Paulo")!
 
-        var policy = SuggestionPolicy(
+        let policy = SuggestionPolicy(
             absorbGapsBelow: 0,
             availabilityStartHour: 8, availabilityStartMinute: 0,
             availabilityEndHour: 20, availabilityEndMinute: 0,
@@ -126,11 +131,44 @@ final class SuggestionEngineTests: XCTestCase {
 
         engine.policy = policy
         
+        var sampleDate: Date { DT.d("2025-08-12 08:00") }
+        
         // Free windows should only appear inside local 08–20, which is 11:00–23:00 UTC.
         // Given our events, busy inside availability becomes [22:00–23:00], so free is [11:00–22:00].
         let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0)
         XCTAssertEqual(free.count, 1)
         XCTAssertEqual(free[0].start, DT.d("2025-08-12 11:00"))
+        XCTAssertEqual(free[0].end,   DT.d("2025-08-12 22:00"))
+
+        // Next event start respects availability window (returns 22:00 UTC).
+        let next = await engine.nextEventStart(after: DT.d("2025-08-12 10:00"), on: sampleDate)
+        XCTAssertEqual(next, DT.d("2025-08-12 22:00"))
+
+        // No conflicts inside availability in this dataset
+        let conflicts = await engine.conflictingItemsCount(on: sampleDate)
+        XCTAssertEqual(conflicts, 0)
+    }
+    
+    func testAvailability_SaoPaulo_daytimeOnly_currentDateMidday() async throws {
+        let engine = makeEngine(with: sampleEvents())
+        let spTZ = TimeZone(identifier: "America/Sao_Paulo")!
+
+        let policy = SuggestionPolicy(
+            absorbGapsBelow: 0,
+            availabilityStartHour: 8, availabilityStartMinute: 0,
+            availabilityEndHour: 20, availabilityEndMinute: 0,
+            availabilityTimeZone: spTZ
+        )
+
+        engine.policy = policy
+        
+        var sampleDate: Date { DT.d("2025-08-12 12:00") }
+        
+        // Free windows should only appear inside local 08–20, which is 11:00–23:00 UTC.
+        // Given our events, busy inside availability becomes [22:00–23:00], so free is [11:00–22:00].
+        let free = await engine.freeWindows(on: sampleDate, minimumMinutes: 0)
+        XCTAssertEqual(free.count, 1)
+        XCTAssertEqual(free[0].start, DT.d("2025-08-12 12:00"))
         XCTAssertEqual(free[0].end,   DT.d("2025-08-12 22:00"))
 
         // Next event start respects availability window (returns 22:00 UTC).

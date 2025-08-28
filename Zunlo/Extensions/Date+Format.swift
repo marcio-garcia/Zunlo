@@ -137,21 +137,19 @@ extension Date {
 }
 
 extension Date {
-    func isSameDay(as other: Date) -> Bool {
-        let calendar = Calendar.appDefault
+    func isSameDay(as other: Date, calendar: Calendar = .appDefault) -> Bool {
         return calendar.isDate(self, inSameDayAs: other)
     }
     
-    var startOfDay: Date {
-        return Calendar.appDefault.startOfDay(for: self)
+    func startOfDay(calendar: Calendar = .appDefault) -> Date {
+        return calendar.startOfDay(for: self)
     }
 }
 
 extension Date {
-    func settingTimeFrom(_ source: Date) -> Date {
-        let cal = Calendar.appDefault
-        let components = cal.dateComponents([.hour, .minute, .second], from: source)
-        return cal.date(
+    func settingTimeFrom(_ source: Date, calendar: Calendar = .appDefault) -> Date {
+        let components = calendar.dateComponents([.hour, .minute, .second], from: source)
+        return calendar.date(
             bySettingHour: components.hour ?? 0,
             minute: components.minute ?? 0,
             second: components.second ?? 0,
@@ -159,7 +157,7 @@ extension Date {
         ) ?? self
     }
     
-    func stripTime(calendar: Calendar = .current) -> Date {
+    func stripTime(calendar: Calendar = .appDefault) -> Date {
         let comps = calendar.dateComponents([.year, .month, .day], from: self)
         return calendar.date(from: comps)!
     }

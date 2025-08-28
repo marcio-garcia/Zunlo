@@ -44,8 +44,8 @@ class AIToolServiceRepository: DomainRepositories, @unchecked Sendable {
     }
     
     func fetchEvents(start: Date, end: Date) async throws -> [Event] {
-        let startRange = start.startOfDay...start.startOfNextDay()
-        let endRange = end.startOfDay...end.startOfNextDay()
+        let startRange = start.startOfDay()...start.startOfNextDay()
+        let endRange = end.startOfDay()...end.startOfNextDay()
         let filter = EventFilter(userId: nil, startDateRange: startRange, endDateRange: endRange)
         return try await eventRepo.fetchEvent(filteredBy: filter)
     }

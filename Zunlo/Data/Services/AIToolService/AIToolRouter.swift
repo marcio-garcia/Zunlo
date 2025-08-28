@@ -214,7 +214,7 @@ public class AIToolRouter: ToolRouter {
             if args == nil {
                 args = PlanWeekArgs(startDate: Date(), objectives: [], constraints: nil, horizon: "7")
             }
-            let start = args!.startDate.startOfDay
+            let start = args!.startDate.startOfDay()
             let horizonDays = (args!.horizon == "day") ? 1 : 7
 //            let agendaComputer = LocalAgendaComputer(toolRepo: repo)
 //            let weekPlanner = LocalWeekPlanner(agenda: agendaComputer, toolRepo: repo)

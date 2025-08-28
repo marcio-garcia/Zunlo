@@ -85,9 +85,9 @@ class CalendarScheduleViewModel: ObservableObject {
 
 //        let allDays = Self.allDays(in: visibleRange, calendar: calendar)
         let grouped = Dictionary(grouping: eventOccurrences) { occurrence in
-            calendar.date(from: calendar.dateComponents([.year, .month], from: occurrence.startDate.startOfDay))!
+            calendar.date(from: calendar.dateComponents([.year, .month], from: occurrence.startDate.startOfDay()))!
         }.mapValues { monthEvents in
-            Dictionary(grouping: monthEvents) { $0.startDate.startOfDay }
+            Dictionary(grouping: monthEvents) { $0.startDate.startOfDay() }
         }
 
         return grouped

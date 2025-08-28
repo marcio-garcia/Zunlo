@@ -479,9 +479,13 @@ class RecurrenceHelper {
         return dates
     }
 
-    static func addTodayIfNeeded(occurrences: [EventOccurrence]) -> [EventOccurrence] {
-        let today = Date().startOfDay
+    static func addTodayIfNeeded(occurrences: [EventOccurrence], range: Range<Date>) -> [EventOccurrence] {
+        let today = Date().startOfDay()
         var hasToday = false
+        
+        if !range.contains(today) {
+            return occurrences
+        }
         
         for occ in occurrences where occ.startDate.isSameDay(as: today) {
             hasToday = true

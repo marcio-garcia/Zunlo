@@ -161,7 +161,32 @@ public final class SyncRunner<R: RemoteEntity, InsertPayload, UpdatePayload> {
         return stats
     }
     
-    // You already have classify(_:), maybeBackoff(_:) in your codebase:
+    // Turn any Error into a FailureKind.
+    private func classify(_ error: Error) -> FailureKind {
+        if let http = error as? HTTPStatusError {
+            switch http.status {
+            case 409, 412: return .conflict
+            case 404:      return .missing
+            case 408, 429: return .rateLimited(retryAfter: nil)
+            case 500..<600:return .transient
+            default:       return .permanent
+            }
+        }
+        if let urlErr = error as? URLError {
+            switch urlErr.code {
+            case .timedOut, .cannotFindHost, .cannotConnectToHost,
+                 .networkConnectionLost, .dnsLookupFailed, .notConnectedToInternet:
+                return .transient
+            default:
+                return .transient
+            }
+        }
+        if error is DecodingError {
+            return .permanent
+        }
+        return .permanent
+    }
+
     private func maybeBackoff(_ kind: FailureKind) async {
         switch kind {
         case .rateLimited(let retryAfter):
