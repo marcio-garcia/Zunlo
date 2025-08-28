@@ -59,7 +59,7 @@ final class EventSyncEngine {
             }},
             markClean: { ids in try await db.markEventsClean(ids) },
             recordConflicts: { items in
-                try await db.recordConflicts(.tasks, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
+                try await db.recordConflicts(.events, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
             },
             readCursor: { try await db.readCursor(for: self.tableName) },
 

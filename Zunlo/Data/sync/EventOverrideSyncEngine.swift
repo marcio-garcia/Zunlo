@@ -59,7 +59,7 @@ final class EventOverrideSyncEngine {
             }},
             markClean: { ids in try await db.markEventOverridesClean(ids) },
             recordConflicts: { items in
-                try await db.recordConflicts(.tasks, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
+                try await db.recordConflicts(.event_overrides, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
             },
             readCursor: { try await db.readCursor(for: self.tableName) },
 
