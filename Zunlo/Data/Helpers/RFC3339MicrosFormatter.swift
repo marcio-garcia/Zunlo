@@ -52,7 +52,7 @@ enum RFC3339MicrosUTC {
         let enc = threadFormatter(key: "fmt.rfc3339micros.enc", build: makeEncoder)
         return enc.string(from: date)
     }
-
+    
     static func parse(_ s: String) -> Date? {
         // Cache each decoder per-thread too
         for (i, fmt) in decoderFormats.enumerated() {

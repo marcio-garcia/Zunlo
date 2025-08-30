@@ -85,12 +85,13 @@ extension JSONEncoder {
     }
     
     /// Always write 6 fractional digits
-    static func supabaseMicro() -> JSONEncoder {
+    static func supabaseMicro(serverOwnedEncodingStrategy: ServerOwnedEncoding = .exclude) -> JSONEncoder {
         let e = JSONEncoder()
         e.dateEncodingStrategy = .custom { date, enc in
             var c = enc.singleValueContainer()
             try c.encode(date.rfc3339MicroString())
         }
+        e.userInfo[.serverOwnedEncodingStrategy] = serverOwnedEncodingStrategy
         return e
     }
     

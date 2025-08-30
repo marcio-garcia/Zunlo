@@ -12,23 +12,25 @@ import RealmSwift
 final class RecurrenceRuleSyncEngine {
     private let db: DatabaseActor
     private let api: SyncAPI
+    private let center: ConflictResolutionCenter?
     private let pageSize = 100
     private let tableName = "recurrence_rules"
     
-    init(db: DatabaseActor, api: SyncAPI) {
+    init(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) {
         self.db = db
         self.api = api
+        self.center = center
     }
     
     func makeRunner() -> SyncRunner<RecurrenceRuleRemote, RecRuleInsertPayload, RecRuleUpdatePayload> {
-        return makeRuleRunner(db: db, api: api)
+        return makeRuleRunner(db: db, api: api, center: center)
     }
     
     // Mappers (using your insert/update payloads)
     func rulesInsert(_ r: RecurrenceRuleRemote) -> RecRuleInsertPayload { RecRuleInsertPayload(remote: r) }
     func rulesUpdate(_ r: RecurrenceRuleRemote) -> RecRuleUpdatePayload { RecRuleUpdatePayload.full(from: r) }
 
-    func makeRuleRunner(db: DatabaseActor, api: SyncAPI) -> SyncRunner<RecurrenceRuleRemote, RecRuleInsertPayload, RecRuleUpdatePayload> {
+    func makeRuleRunner(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) -> SyncRunner<RecurrenceRuleRemote, RecRuleInsertPayload, RecRuleUpdatePayload> {
         let spec = SyncSpec<RecurrenceRuleRemote, RecRuleInsertPayload, RecRuleUpdatePayload>(
             entityKey: self.tableName,
             pageSize: 100,
@@ -68,6 +70,6 @@ final class RecurrenceRuleSyncEngine {
             makeInsertPayload: rulesInsert,
             makeUpdatePayload: rulesUpdate
         )
-        return SyncRunner(spec: spec)
+        return SyncRunner(spec: spec, conflictCenter: center)
     }
 }

@@ -19,6 +19,29 @@ public struct ReminderTrigger: Equatable, Hashable, Codable {
     public var timeBeforeDue: TimeInterval // seconds before dueDate
     @NullCodable public var message: String?
     
+    enum CodingKeys: String, CodingKey {
+        case timeBeforeDue
+        case message
+    }
+    
+    public init(timeBeforeDue: TimeInterval, message: String?) {
+        self.timeBeforeDue = timeBeforeDue
+        self._message = NullCodable(wrappedValue: message)
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.timeBeforeDue = try c.decode(TimeInterval.self, forKey: .timeBeforeDue)
+        self._message = try c.decodeIfPresent(NullCodable<String>.self, forKey: .message)
+                      ?? NullCodable(wrappedValue: nil)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(timeBeforeDue, forKey: .timeBeforeDue)
+        try c.encode(_message, forKey: .message) // preserves explicit null
+    }
+    
     public func toLocal() -> ReminderTriggerLocal {
         ReminderTriggerLocal(timeBeforeDue: timeBeforeDue, message: message)
     }

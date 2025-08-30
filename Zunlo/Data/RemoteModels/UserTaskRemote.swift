@@ -204,6 +204,7 @@ extension UserTaskRemote {
     }
 
     public func encode(to encoder: Encoder) throws {
+        let strategy = (encoder.userInfo[.serverOwnedEncodingStrategy] as? ServerOwnedEncoding) ?? .exclude
         var c = encoder.container(keyedBy: CodingKeys.self)
 
         try c.encode(id, forKey: .id)
@@ -212,9 +213,15 @@ extension UserTaskRemote {
         try c.encodeIfPresent(notes, forKey: .notes)
         try c.encode(isCompleted, forKey: .isCompleted)
 
-        // 🚫 Do NOT encode created_at nor updated_at — server owns it
-        // try c.encode(RFC3339MicrosUTC.string(createdAt), forKey: .createdAt)
-        // try c.encode(RFC3339MicrosUTC.string(updatedAt), forKey: .updatedAt)
+        // Do NOT encode created_at nor updated_at
+        // when sending to server — server owns it
+        switch strategy {
+        case .include:
+            try c.encode(RFC3339MicrosUTC.string(updatedAt), forKey: .updatedAt)
+            try c.encode(RFC3339MicrosUTC.string(createdAt), forKey: .createdAt)
+        case .exclude:
+            break
+        }
 
         if let dueDate {
             try c.encode(RFC3339MicrosUTC.string(dueDate), forKey: .dueDate)

@@ -116,4 +116,14 @@ final class MockDB<R: RemoteEntity> {
 }
 
 // Helpers to make RFC3339 micros (string compare friendly)
-func ts(_ s: String) -> String { s } // already in RFC3339 micros like "2025-08-26T14:41:09.167235Z"
+
+@inline(__always)
+func ts(_ d: Date) -> String {
+    RFC3339MicrosUTC.string(d) // make it RFC3339 micros like "2025-08-26T14:41:09.167235Z"
+}
+
+@inline(__always)
+func addSecToTS(_ d: Date, sec: TimeInterval) -> String {
+//    return ""
+    RFC3339MicrosUTC.string(d.addingTimeInterval(sec))
+}

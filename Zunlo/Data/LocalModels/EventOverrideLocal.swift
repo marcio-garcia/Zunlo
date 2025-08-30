@@ -84,13 +84,13 @@ extension EventOverrideLocal {
     
     convenience init(remote: EventOverrideRemote) {
         self.init(id: remote.id,
-                  eventId: remote.event_id,
-                  occurrenceDate: remote.occurrence_date,
-                  overriddenTitle: remote.overridden_title,
-                  overriddenStartDate: remote.overridden_start_datetime,
-                  overriddenEndDate: remote.overridden_end_datetime,
-                  overriddenLocation: remote.overridden_location,
-                  isCancelled: remote.is_cancelled,
+                  eventId: remote.eventId,
+                  occurrenceDate: remote.occurrenceDate,
+                  overriddenTitle: remote.overriddenTitle,
+                  overriddenStartDate: remote.overriddenStartDate,
+                  overriddenEndDate: remote.overriddenEndDate,
+                  overriddenLocation: remote.overriddenLocation,
+                  isCancelled: remote.isCancelled,
                   notes: remote.notes,
                   createdAt: remote.createdAt,
                   updatedAt: remote.updatedAt,
@@ -102,12 +102,12 @@ extension EventOverrideLocal {
     }
     
     func getUpdateFields(remote: EventOverrideRemote) {
-        self.occurrenceDate = remote.occurrence_date
-        self.overriddenTitle = remote.overridden_title
-        self.overriddenStartDate = remote.overridden_start_datetime
-        self.overriddenEndDate = remote.overridden_end_datetime
-        self.overriddenLocation = remote.overridden_location
-        self.isCancelled = remote.is_cancelled
+        self.occurrenceDate = remote.occurrenceDate
+        self.overriddenTitle = remote.overriddenTitle
+        self.overriddenStartDate = remote.overriddenStartDate
+        self.overriddenEndDate = remote.overriddenEndDate
+        self.overriddenLocation = remote.overriddenLocation
+        self.isCancelled = remote.isCancelled
         self.notes = remote.notes
         self.createdAt = remote.createdAt
         self.updatedAt = remote.updatedAt

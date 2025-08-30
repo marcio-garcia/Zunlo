@@ -13,7 +13,22 @@ enum LocalDBError: Error {
     case unauthorized
 }
 
-public actor DatabaseActor {
+public protocol ConflictDB {
+    // Fetch & bookkeeping
+    func fetchPendingConflict(_ conflictId: String) async throws -> ConflictData?
+    func bumpConflictAttempt(_ conflictId: String) async throws
+    func resolveConflict(conflictId: String, strategy: ResolutionStrategy) async throws
+    func setConflictNeedsUser(conflictId: String, reason: String) async throws
+    func failConflict(conflictId: String, error: Error) async throws
+
+    // Apply merged rows (what resolvers call after a successful PATCH)
+    func applyRemoteUserTasks(_ rows: [UserTaskRemote]) async throws
+    func applyRemoteEvents(_ rows: [EventRemote]) async throws
+    func applyRemoteRecurrenceRules(_ rows: [RecurrenceRuleRemote]) async throws
+    func applyRemoteEventOverrides(_ rows: [EventOverrideRemote]) async throws
+}
+
+public actor DatabaseActor: ConflictDB {
     private let config: Realm.Configuration
     // Keeps the in-memory realm alive for the test's lifetime
     private var anchorRealm: Realm?
@@ -65,7 +80,7 @@ public actor DatabaseActor {
         try realm.write { for obj in objs { obj.needsSync = false } }
     }
 
-    func applyRemoteEvents(_ rows: [EventRemote]) throws {
+    public func applyRemoteEvents(_ rows: [EventRemote]) throws {
         let realm = try Realm()
         try realm.write {
             for r in rows {
@@ -91,7 +106,7 @@ public actor DatabaseActor {
         try realm.write { for obj in objs { obj.needsSync = false } }
     }
 
-    func applyRemoteRecurrenceRules(_ rows: [RecurrenceRuleRemote]) throws {
+    public func applyRemoteRecurrenceRules(_ rows: [RecurrenceRuleRemote]) throws {
         let realm = try Realm()
         try realm.write {
             for r in rows {
@@ -120,7 +135,7 @@ public actor DatabaseActor {
         try realm.write { for obj in objs { obj.needsSync = false } }
     }
 
-    func applyRemoteEventOverrides(_ rows: [EventOverrideRemote]) throws {
+    public func applyRemoteEventOverrides(_ rows: [EventOverrideRemote]) throws {
         let realm = try Realm()
         try realm.write {
             for r in rows {
@@ -401,7 +416,7 @@ public actor DatabaseActor {
         try realm.write { for obj in objs { obj.needsSync = false } }
     }
 
-    func applyRemoteUserTasks(_ rows: [UserTaskRemote]) throws {
+    public func applyRemoteUserTasks(_ rows: [UserTaskRemote]) throws {
         let realm = try openRealm()
         try realm.write {
             for r in rows {
@@ -1103,22 +1118,65 @@ extension DatabaseActor {
 enum ConflictTable: String { case events, recurrence_rules, event_overrides, tasks }
 
 extension DatabaseActor {
-    func recordConflicts<T: Codable>(_ table: ConflictTable, items: [(local: T, server: T?)], idOf: (T) -> UUID, localVersion: (T) -> Int?, remoteVersion: (T?) -> Int?) throws {
+    /// Record one or more conflicts. If a conflict already exists, we update local/remote snapshots and versions,
+    /// but we do NOT overwrite createdAt/status/attempts/resolvedAt.
+    func recordConflicts<T: Codable>(
+        _ table: ConflictTable,
+        items: [(local: T, server: T?)],
+        idOf: (T) -> UUID,
+        localVersion: (T) -> Int?,
+        remoteVersion: (T?) -> Int?,
+        // Optional providers for base snapshot. If nil, we fall back to the server snapshot.
+        baseSnapshot: ((UUID) throws -> (version: Int?, json: String?)?)? = nil,
+        // Optional for telemetry/heuristics (e.g., newer-wins): when did the user edit locally?
+        localEditedAt: ((T) -> Date?)? = nil
+    ) throws {
         let realm = try openRealm()
-        let enc = JSONEncoder()
+        let enc = JSONEncoder.supabaseMicro(serverOwnedEncodingStrategy: .include)   // preserves 6-fraction RFC3339 where relevant
+
         try realm.write {
             for (loc, srv) in items {
                 let rowId = idOf(loc)
                 let key = "\(table.rawValue):\(rowId.uuidString)"
-                let c = SyncConflictLocal()
-                c.id = key
-                c.table = table.rawValue
-                c.rowId = rowId
+
+                // Serialize local/server snapshots
+                let localJSON = String(data: (try? enc.encode(loc)) ?? Data("{}".utf8), encoding: .utf8) ?? "{}"
+                let remoteJSON = srv.flatMap { String(data: (try? enc.encode($0)) ?? Data(), encoding: .utf8) } ?? nil
+
+                // Get base snapshot (from shadow if available; else fallback to server)
+                let baseFromProvider = try? baseSnapshot?(rowId)
+                let baseVersionValue = baseFromProvider?.version ?? remoteVersion(srv)
+                let baseJSONValue: String? = {
+                    if let j = baseFromProvider?.json { return j }
+                    return remoteJSON // fallback: use server as base if you don't have a shadow yet
+                }()
+
+                // Upsert conflict
+                let existing = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: key)
+                let c = existing ?? SyncConflictLocal()
+                if existing == nil {
+                    c.id = key
+                    c.createdAt = Date()
+                    c.table = table.rawValue
+                    c.rowId = rowId
+                    c.statusRaw = ConflictStatus.pending.rawValue
+                    c.attempts = 0
+                    c.resolutionRaw = nil
+                }
+
+                // Always refresh these fields
                 c.localVersion = localVersion(loc)
                 c.remoteVersion = remoteVersion(srv)
-                c.localJSON = String(data: try! enc.encode(loc), encoding: .utf8) ?? "{}"
-                c.remoteJSON = srv.flatMap { String(data: try! enc.encode($0), encoding: .utf8) }
-                c.createdAt = Date()
+                c.localJSON = localJSON
+                c.remoteJSON = remoteJSON
+
+                // Only set base* if they’re not already captured (first time wins)
+                if c.baseVersion == nil { c.baseVersion = baseVersionValue }
+                if c.baseJSON == nil { c.baseJSON = baseJSONValue }
+
+                // Optional telemetry
+                if let le = localEditedAt?(loc) { c.localEditedAt = le }
+
                 realm.add(c, update: .modified)
             }
         }
@@ -1136,6 +1194,13 @@ extension DatabaseActor {
         if let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: key) {
             try realm.write { c.resolvedAt = Date(); realm.delete(c) }
         }
+    }
+    
+    // Stub — implement to read your own shadow storage.
+    func fetchShadowFor(table: ConflictTable, id: UUID) throws -> (version: Int?, json: String?)? {
+        // e.g., read SyncShadowLocal(primaryKey: "\(table.rawValue):\(id)")
+        // return (shadow.version, shadow.json)
+        return nil
     }
 }
 
@@ -1201,4 +1266,103 @@ extension DatabaseActor {
 //            }
 //        }
 //    }
+}
+
+extension DatabaseActor {
+    func createOrUpdateConflict(
+        table: String,
+        rowId: UUID,
+        baseVersion: Int?,
+        localVersion: Int?,
+        remoteVersion: Int?,
+        baseJSON: String?,
+        localJSON: String,
+        remoteJSON: String?
+    ) throws -> SyncConflictLocal {
+        let realm = try openRealm()
+        var conflict: SyncConflictLocal!
+        try realm.write {
+            let key = "\(table):\(rowId.uuidString)"
+            conflict = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: key) ?? {
+                let c = SyncConflictLocal()
+                c.id = key
+                c.createdAt = Date()
+                c.table = table
+                c.rowId = rowId
+                realm.add(c)
+                return c
+            }()
+            conflict.baseVersion = baseVersion
+            conflict.localVersion = localVersion
+            conflict.remoteVersion = remoteVersion
+            conflict.baseJSON = baseJSON
+            conflict.localJSON = localJSON
+            conflict.remoteJSON = remoteJSON
+            conflict.statusRaw = ConflictStatus.pending.rawValue
+            conflict.resolutionRaw = nil
+            conflict.lastError = nil
+        }
+        return conflict
+    }
+
+    public func resolveConflict(conflictId: String, strategy: ResolutionStrategy) throws {
+        let realm = try openRealm()
+        try realm.write {
+            guard let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: conflictId) else { return }
+            c.statusRaw = ConflictStatus.autoResolved.rawValue
+            c.resolutionRaw = strategy.rawValue
+            c.resolvedAt = Date()
+        }
+    }
+
+    public func setConflictNeedsUser(conflictId: String, reason: String) throws {
+        let realm = try openRealm()
+        try realm.write {
+            guard let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: conflictId) else { return }
+            c.statusRaw = ConflictStatus.needsUser.rawValue
+            c.lastError = reason
+        }
+    }
+
+    public func failConflict(conflictId: String, error: Error) throws {
+        let realm = try openRealm()
+        try realm.write {
+            guard let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: conflictId) else { return }
+            c.statusRaw = ConflictStatus.failed.rawValue
+            c.lastError = String(describing: error)
+        }
+    }
+    
+    /// Returns a snapshot iff the conflict exists and is still `.pending`.
+    public func fetchPendingConflict(_ conflictId: String) throws -> ConflictData? {
+        let realm = try openRealm()
+        guard let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: conflictId),
+              c.statusRaw == ConflictStatus.pending.rawValue
+        else { return nil }
+
+        return ConflictData(
+            id: c.id,
+            table: c.table,
+            rowId: c.rowId,
+            baseVersion: c.baseVersion,
+            localVersion: c.localVersion,
+            remoteVersion: c.remoteVersion,
+            baseJSON: c.baseJSON,
+            localJSON: c.localJSON,
+            remoteJSON: c.remoteJSON,
+            createdAt: c.createdAt,
+            resolvedAt: c.resolvedAt,
+            attempts: c.attempts,
+            status: ConflictStatus(rawValue: c.statusRaw) ?? .pending
+        )
+    }
+
+    /// Increments attempts (separate small write).
+    public func bumpConflictAttempt(_ conflictId: String) throws {
+        let realm = try openRealm()
+        try realm.write {
+            guard let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: conflictId) else { return }
+            c.attempts += 1
+        }
+    }
 }

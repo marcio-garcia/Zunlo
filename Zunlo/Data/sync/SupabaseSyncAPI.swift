@@ -10,7 +10,13 @@ import Supabase
 
 extension Data {
     func decodeSupabase<T: Decodable>() throws -> T {
-        return try JSONDecoder.supabaseMicroFirst().decode(T.self, from: self)
+        do {
+            return try JSONDecoder.supabaseMicroFirst().decode(T.self, from: self)
+        } catch {
+            print(error)
+            print(String(data: self, encoding: .utf8))
+            throw error
+        }
     }
 }
 

@@ -29,13 +29,13 @@ struct EventOverride: Identifiable, Codable, Hashable {
 extension EventOverride {
     init(remote: EventOverrideRemote) {
         self.id = remote.id
-        self.eventId = remote.event_id
-        self.occurrenceDate = remote.occurrence_date
-        self.overriddenTitle = remote.overridden_title
-        self.overriddenStartDate = remote.overridden_start_datetime
-        self.overriddenEndDate = remote.overridden_end_datetime
-        self.overriddenLocation = remote.overridden_location
-        self.isCancelled = remote.is_cancelled
+        self.eventId = remote.eventId
+        self.occurrenceDate = remote.occurrenceDate
+        self.overriddenTitle = remote.overriddenTitle
+        self.overriddenStartDate = remote.overriddenStartDate
+        self.overriddenEndDate = remote.overriddenEndDate
+        self.overriddenLocation = remote.overriddenLocation
+        self.isCancelled = remote.isCancelled
         self.notes = remote.notes
         self.createdAt = remote.createdAt
         self.updatedAt = remote.updatedAt

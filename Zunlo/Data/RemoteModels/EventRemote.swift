@@ -102,7 +102,7 @@ extension EventRemote {
         title = try c.decode(String.self, forKey: .title)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         is_recurring = try c.decode(Bool.self, forKey: .is_recurring)
-        location = try c.decode(String.self, forKey: .location)
+        location = try c.decodeIfPresent(String.self, forKey: .location)
         color = try c.decodeIfPresent(EventColor.self, forKey: .color)
         reminder_triggers = try c.decodeIfPresent([ReminderTrigger].self, forKey: .reminder_triggers)
         version = try c.decodeIfPresent(Int.self, forKey: .version)
@@ -156,8 +156,9 @@ extension EventRemote {
             deletedAt = nil
         }
     }
-
+    
     public func encode(to encoder: Encoder) throws {
+        let strategy = (encoder.userInfo[.serverOwnedEncodingStrategy] as? ServerOwnedEncoding) ?? .exclude
         var c = encoder.container(keyedBy: CodingKeys.self)
 
         try c.encode(id, forKey: .id)
@@ -166,9 +167,16 @@ extension EventRemote {
         try c.encodeIfPresent(notes, forKey: .notes)
         try c.encode(is_recurring, forKey: .is_recurring)
 
-        // 🚫 Do NOT encode created_at nor updated_at — server owns it
-        // try c.encode(RFC3339MicrosUTC.string(createdAt), forKey: .createdAt)
-        // try c.encode(RFC3339MicrosUTC.string(updatedAt), forKey: .updatedAt)
+        // Do NOT encode created_at nor updated_at
+        // when sending to server — server owns it
+        switch strategy {
+        case .include:
+            try c.encode(RFC3339MicrosUTC.string(updatedAt), forKey: .updatedAt)
+            try c.encode(RFC3339MicrosUTC.string(createdAt), forKey: .createdAt)
+        case .exclude:
+            break
+        }
+         
 
         try c.encode(RFC3339MicrosUTC.string(start_datetime), forKey: .start_datetime)
         

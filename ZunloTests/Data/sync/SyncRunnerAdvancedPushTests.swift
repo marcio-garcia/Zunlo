@@ -14,8 +14,9 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         // Arrange: two local inserts; server rate-limits per-item
         let server = MockServer<Row>()
         let db = MockDB<Row>()
-        let r1 = Row(updatedAtRaw: ts("2025-08-26T11:00:00.000001Z"), version: nil, title: "insert-1")
-        let r2 = Row(updatedAtRaw: ts("2025-08-26T11:00:00.000002Z"), version: nil, title: "insert-2")
+        let now = Date()
+        let r1 = Row(updatedAtRaw: addSecToTS(now, sec: 0.000001), version: nil, title: "insert-1")
+        let r2 = Row(updatedAtRaw: addSecToTS(now, sec: 0.000002), version: nil, title: "insert-2")
         var dirty = [r1, r2]
 
         // Bulk path fails so we exercise per-item path; each item 429
@@ -53,7 +54,8 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         // Arrange: one update that fails with 503
         let server = MockServer<Row>()
         let db = MockDB<Row>()
-        let stale = Row(updatedAtRaw: ts("2025-08-26T12:00:00.000100Z"), version: 1, title: "stale")
+        let now = Date()
+        let stale = Row(updatedAtRaw: addSecToTS(now, sec: 0.0001), version: 1, title: "stale")
         var dirty = [stale]
 
         let spec = SyncSpec<Row, Row, Row>(
@@ -86,7 +88,8 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         // Arrange: one update that yields 404 (server row deleted)
         let server = MockServer<Row>()
         let db = MockDB<Row>()
-        let stale = Row(updatedAtRaw: ts("2025-08-26T12:30:00.000000Z"), version: 2, title: "stale")
+        let now = Date()
+        let stale = Row(updatedAtRaw: ts(now), version: 2, title: "stale")
         var dirty = [stale]
 
         let spec = SyncSpec<Row, Row, Row>(
@@ -119,7 +122,7 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         // Arrange: server returns 200 with [] (version mismatch) → our closure returns nil
         let server = MockServer<Row>()
         let db = MockDB<Row>()
-        let stale = Row(updatedAtRaw: ts("2025-08-26T12:45:00.000000Z"), version: 1, title: "stale")
+        let stale = Row(updatedAtRaw: ts(Date()), version: 1, title: "stale")
         var dirty = [stale]
 
         let spec = SyncSpec<Row, Row, Row>(

@@ -46,10 +46,21 @@ final class SyncCoordinator {
     init(db: DatabaseActor, supabase: SupabaseClient) {
         self.supabase = supabase
         let syncApi = SupabaseSyncAPI(client: supabase)
-        self.events = EventSyncEngine(db: db, api: syncApi)
-        self.rules = RecurrenceRuleSyncEngine(db: db, api: syncApi)
-        self.overrides = EventOverrideSyncEngine(db: db, api: syncApi)
-        self.userTasks = UserTaskSyncEngine(db: db, api: syncApi)
+        
+        let center = ConflictResolutionCenter(
+            db: db,
+            resolvers: [
+                TaskConflictResolver(api: syncApi),
+                EventConflictResolver(api: syncApi),
+                RecurrenceRuleConflictResolver(api: syncApi),
+                EventOverrideConflictResolver(api: syncApi)
+            ]
+        )
+        
+        self.events = EventSyncEngine(db: db, api: syncApi, center: center)
+        self.rules = RecurrenceRuleSyncEngine(db: db, api: syncApi, center: center)
+        self.overrides = EventOverrideSyncEngine(db: db, api: syncApi, center: center)
+        self.userTasks = UserTaskSyncEngine(db: db, api: syncApi, center: center)
         
         Task {
             await supabase.auth.onAuthStateChange { event, session in

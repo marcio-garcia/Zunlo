@@ -13,7 +13,7 @@ final class SyncRunnerAdvancedPullTests: XCTestCase {
     func testInterleavedEqualTimestampsAcrossPages_noDuplicates() async {
         // Arrange: interleaved equal timestamps that cross a page boundary
         let server = MockServer<Row>()
-        let t = ts("2025-08-26T10:00:00.123456Z")
+        let t = ts(Date())
         // Stable ascending order by (ts, id)
         let a = Row(id: UUID(uuidString: "00000000-0000-0000-0000-00000000000A")!, updatedAtRaw: t, title: "A")
         let b = Row(id: UUID(uuidString: "00000000-0000-0000-0000-00000000000B")!, updatedAtRaw: t, title: "B")

@@ -12,23 +12,25 @@ import Supabase
 final class EventSyncEngine {
     private let db: DatabaseActor
     private let api: SyncAPI
+    private let center: ConflictResolutionCenter?
     private let pageSize = 100
     private let tableName = "events"
     
-    init(db: DatabaseActor, api: SyncAPI) {
+    init(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) {
         self.db = db
         self.api = api
+        self.center = center
     }
     
     func makeRunner() -> SyncRunner<EventRemote, EventInsertPayload, EventUpdatePayload> {
-        return makeEventRunner(db: db, api: api)
+        return makeEventRunner(db: db, api: api, center: center)
     }
     
     // Mappers (using your insert/update payloads)
     func eventInsert(_ r: EventRemote) -> EventInsertPayload { EventInsertPayload(remote: r) }
     func eventUpdate(_ r: EventRemote) -> EventUpdatePayload { EventUpdatePayload.full(from: r) }
 
-    func makeEventRunner(db: DatabaseActor, api: SyncAPI) -> SyncRunner<EventRemote, EventInsertPayload, EventUpdatePayload> {
+    func makeEventRunner(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) -> SyncRunner<EventRemote, EventInsertPayload, EventUpdatePayload> {
         let spec = SyncSpec<EventRemote, EventInsertPayload, EventUpdatePayload>(
             entityKey: self.tableName,
             pageSize: 100,
@@ -68,6 +70,6 @@ final class EventSyncEngine {
             makeInsertPayload: eventInsert,
             makeUpdatePayload: eventUpdate
         )
-        return SyncRunner(spec: spec)
+        return SyncRunner(spec: spec, conflictCenter: center)
     }
 }

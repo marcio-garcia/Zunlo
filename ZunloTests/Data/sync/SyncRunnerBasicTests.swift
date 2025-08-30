@@ -13,7 +13,7 @@ final class SyncRunnerBasicTests: XCTestCase {
     func testCursorAdvances_withEqualTimestamps_noDuplicates() async {
         // Arrange
         let server = MockServer<Row>()
-        let t = ts("2025-08-26T14:41:09.167235Z")
+        let t = ts(Date())
         let a = Row(id: UUID(uuidString: "CA4E0E79-B086-44A0-95BB-F45B5B866B75")!, updatedAtRaw: t, title: "A")
         let b = Row(id: UUID(uuidString: "56539C0A-4EB3-4FDA-9F21-3A2B4AE33B40")!, updatedAtRaw: t, title: "B")
         let c = Row(id: UUID(uuidString: "39826302-F229-41A0-951A-F8793232F089")!, updatedAtRaw: t, title: "C")
@@ -53,8 +53,9 @@ final class SyncRunnerBasicTests: XCTestCase {
 
     func testTombstone_softDelete_applied_and_not_retried() async {
         let server = MockServer<Row>()
-        let t1 = ts("2025-08-26T10:00:00.000001Z")
-        let t2 = ts("2025-08-26T11:00:00.000001Z")
+        let now = Date()
+        let t1 = ts(now)
+        let t2 = addSecToTS(now, sec: 3600)
         let live = Row(updatedAtRaw: t1, title: "Live")
         let tomb = Row(updatedAtRaw: t2, deletedAt: Date(), version: 2, title: "Deleted")
         server.seed([live, tomb])
@@ -84,7 +85,7 @@ final class SyncRunnerBasicTests: XCTestCase {
 
     func testGuardedUpdate_conflict_counted_and_no_update_applied() async {
         let server = MockServer<Row>()
-        let t = ts("2025-08-26T12:00:00.000100Z")
+        let t = ts(Date())
         let existing = Row(updatedAtRaw: t, version: 2, title: "Existing")
         server.seed([existing])
 
@@ -119,10 +120,11 @@ final class SyncRunnerBasicTests: XCTestCase {
     func testInsert_duplicate_conflict_recorded() async {
         let server = MockServer<Row>()
         let db = MockDB<Row>()
-        let existing = Row(updatedAtRaw: ts("2025-08-26T13:00:00.000001Z"), title: "on server")
+        let now = Date()
+        let existing = Row(updatedAtRaw: addSecToTS(now, sec: 0.000001), title: "on server")
         server.seed([existing])
 
-        let duplicate = Row(id: existing.id, updatedAtRaw: ts("2025-08-26T12:59:59.999999Z"), title: "duplicate local")
+        let duplicate = Row(id: existing.id, updatedAtRaw: ts(now), title: "duplicate local")
 
         let dirty = [duplicate]
 

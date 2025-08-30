@@ -23,13 +23,13 @@ public struct EventOverrideInsertPayload: Encodable {
     
     init(remote r: EventOverrideRemote) {
         id = r.id
-        event_id = r.event_id
-        occurrence_date = RFC3339MicrosUTC.string(r.occurrence_date)
-        overridden_title = r.overridden_title
-        overridden_start_datetime = r.overridden_start_datetime.map(RFC3339MicrosUTC.string)
-        overridden_end_datetime = r.overridden_end_datetime.map(RFC3339MicrosUTC.string)
-        overridden_location = r.overridden_location
-        is_cancelled = r.is_cancelled
+        event_id = r.eventId
+        occurrence_date = RFC3339MicrosUTC.string(r.occurrenceDate)
+        overridden_title = r.overriddenTitle
+        overridden_start_datetime = r.overriddenStartDate.map(RFC3339MicrosUTC.string)
+        overridden_end_datetime = r.overriddenEndDate.map(RFC3339MicrosUTC.string)
+        overridden_location = r.overriddenLocation
+        is_cancelled = r.isCancelled
         notes = r.notes
         color = r.color
         deletedAt = r.deletedAt.map(RFC3339MicrosUTC.string)
@@ -51,13 +51,13 @@ public struct EventOverrideUpdatePayload: Encodable {
 
     static func full(from r: EventOverrideRemote) -> EventOverrideUpdatePayload {
         .init(
-            event_id: r.event_id,
-            occurrence_date: RFC3339MicrosUTC.string(r.occurrence_date),
-            overridden_title: r.overridden_title,
-            overridden_start_datetime: r.overridden_start_datetime.map(RFC3339MicrosUTC.string),
-            overridden_end_datetime: r.overridden_end_datetime.map(RFC3339MicrosUTC.string),
-            overridden_location: r.overridden_location,
-            is_cancelled: r.is_cancelled,
+            event_id: r.eventId,
+            occurrence_date: RFC3339MicrosUTC.string(r.occurrenceDate),
+            overridden_title: r.overriddenTitle,
+            overridden_start_datetime: r.overriddenStartDate.map(RFC3339MicrosUTC.string),
+            overridden_end_datetime: r.overriddenEndDate.map(RFC3339MicrosUTC.string),
+            overridden_location: r.overriddenLocation,
+            is_cancelled: r.isCancelled,
             notes: r.notes,
             color: r.color,
             deletedAt: r.deletedAt.map(RFC3339MicrosUTC.string)

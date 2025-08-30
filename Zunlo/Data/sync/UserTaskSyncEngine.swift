@@ -11,23 +11,25 @@ import Supabase
 final class UserTaskSyncEngine {
     private let db: DatabaseActor
     private let api: SyncAPI
+    private let center: ConflictResolutionCenter?
     private let pageSize = 100
     private let tableName = "tasks"
     
-    init(db: DatabaseActor, api: SyncAPI) {
+    init(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) {
         self.db = db
         self.api = api
+        self.center = center
     }
     
     func makeRunner() -> SyncRunner<UserTaskRemote, TaskInsertPayload, TaskUpdatePayload> {
-        return makeTaskRunner(db: db, api: api)
+        return makeTaskRunner(db: db, api: api, center: center)
     }
     
     // Mappers (using your insert/update payloads)
     func taskInsert(_ r: UserTaskRemote) -> TaskInsertPayload { TaskInsertPayload(remote: r) }
     func taskUpdate(_ r: UserTaskRemote) -> TaskUpdatePayload { TaskUpdatePayload.full(from: r) }
 
-    func makeTaskRunner(db: DatabaseActor, api: SyncAPI) -> SyncRunner<UserTaskRemote, TaskInsertPayload, TaskUpdatePayload> {
+    func makeTaskRunner(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) -> SyncRunner<UserTaskRemote, TaskInsertPayload, TaskUpdatePayload> {
         let spec = SyncSpec<UserTaskRemote, TaskInsertPayload, TaskUpdatePayload>(
             entityKey: self.tableName,
             pageSize: 100,
@@ -58,7 +60,14 @@ final class UserTaskSyncEngine {
             }},
             markClean: { ids in try await db.markUserTasksClean(ids) },
             recordConflicts: { items in
-                try await db.recordConflicts(.tasks, items: items, idOf: { $0.id }, localVersion: { $0.version }, remoteVersion: { $0?.version })
+                try await db.recordConflicts(
+                    .tasks,
+                    items: items,           // [(local: UserTaskRemote, server: UserTaskRemote?)]
+                    idOf: { $0.id },
+                    localVersion: { $0.version },
+                    remoteVersion: { $0?.version }
+                    // baseSnapshot: nil   // fallback: use server as base
+                )
             },
             readCursor: { try await db.readCursor(for: self.tableName) },
 
@@ -67,6 +76,6 @@ final class UserTaskSyncEngine {
             makeInsertPayload: taskInsert,
             makeUpdatePayload: taskUpdate
         )
-        return SyncRunner(spec: spec)
+        return SyncRunner(spec: spec, conflictCenter: center)
     }
 }

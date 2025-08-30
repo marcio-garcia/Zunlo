@@ -25,21 +25,22 @@ final class SyncRunnerEventSplitTests: XCTestCase {
 
         // ---- Server snapshots AFTER split ----
         // Events
-        let e1_truncated = Row(id: e1ID, updatedAtRaw: ts("2025-08-26T09:00:00.000100Z"),
+        let now = Date()
+        let e1_truncated = Row(id: e1ID, updatedAtRaw: addSecToTS(now, sec: 0.0001),
                                version: 2, title: "Event E1 (truncated)", parentId: nil)
-        let e2_new      = Row(id: e2ID, updatedAtRaw: ts("2025-08-26T09:00:00.000101Z"),
+        let e2_new      = Row(id: e2ID, updatedAtRaw: addSecToTS(now, sec: 0.000101),
                                version: 1, title: "Event E2 (new series)", parentId: nil)
 
         // Recurrence rules (parentId == owning event)
-        let rr1_truncated = Row(id: rr1ID, updatedAtRaw: ts("2025-08-26T09:00:00.000200Z"),
+        let rr1_truncated = Row(id: rr1ID, updatedAtRaw: addSecToTS(now, sec: 0.0002),
                                 version: 2, title: "Rule E1 (truncated)", parentId: e1ID)
-        let rr2_new       = Row(id: rr2ID, updatedAtRaw: ts("2025-08-26T09:00:00.000201Z"),
+        let rr2_new       = Row(id: rr2ID, updatedAtRaw: addSecToTS(now, sec: 0.000201),
                                 version: 1, title: "Rule E2 (new)", parentId: e2ID)
 
         // Overrides moved to E2
-        let ov1_moved   = Row(id: ov1ID, updatedAtRaw: ts("2025-08-26T09:00:00.000300Z"),
+        let ov1_moved   = Row(id: ov1ID, updatedAtRaw: addSecToTS(now, sec: 0.0003),
                               version: 2, title: "Override A@new", parentId: e2ID)
-        let ov2_moved   = Row(id: ov2ID, updatedAtRaw: ts("2025-08-26T09:00:00.000301Z"),
+        let ov2_moved   = Row(id: ov2ID, updatedAtRaw: addSecToTS(now, sec: 0.000301),
                               version: 2, title: "Override B@new", parentId: e2ID)
 
         // ---- Servers ----

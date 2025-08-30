@@ -12,23 +12,25 @@ import RealmSwift
 final class EventOverrideSyncEngine {
     private let db: DatabaseActor
     private let api: SyncAPI
+    private let center: ConflictResolutionCenter?
     private let pageSize = 100
     private let tableName = "event_overrides"
 
-    init(db: DatabaseActor, api: SyncAPI) {
+    init(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) {
         self.db = db
         self.api = api
+        self.center = center
     }
 
     func makeRunner() -> SyncRunner<EventOverrideRemote, EventOverrideInsertPayload, EventOverrideUpdatePayload> {
-        return makeOverrideRunner(db: db, api: api)
+        return makeOverrideRunner(db: db, api: api, center: center)
     }
     
     // Mappers (using your insert/update payloads)
     func overrideInsert(_ r: EventOverrideRemote) -> EventOverrideInsertPayload { EventOverrideInsertPayload(remote: r) }
     func overrideUpdate(_ r: EventOverrideRemote) -> EventOverrideUpdatePayload { EventOverrideUpdatePayload.full(from: r) }
 
-    func makeOverrideRunner(db: DatabaseActor, api: SyncAPI) -> SyncRunner<EventOverrideRemote, EventOverrideInsertPayload, EventOverrideUpdatePayload> {
+    func makeOverrideRunner(db: DatabaseActor, api: SyncAPI, center: ConflictResolutionCenter?) -> SyncRunner<EventOverrideRemote, EventOverrideInsertPayload, EventOverrideUpdatePayload> {
         let spec = SyncSpec<EventOverrideRemote, EventOverrideInsertPayload, EventOverrideUpdatePayload>(
             entityKey: self.tableName,
             pageSize: 100,
@@ -68,6 +70,6 @@ final class EventOverrideSyncEngine {
             makeInsertPayload: overrideInsert,
             makeUpdatePayload: overrideUpdate
         )
-        return SyncRunner(spec: spec)
+        return SyncRunner(spec: spec, conflictCenter: center)
     }
 }

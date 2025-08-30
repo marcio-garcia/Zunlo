@@ -33,7 +33,15 @@ public struct SyncSpec<R: RemoteEntity, InsertPayload, UpdatePayload> {
 
 public final class SyncRunner<R: RemoteEntity, InsertPayload, UpdatePayload> {
     private let spec: SyncSpec<R, InsertPayload, UpdatePayload>
-    public init(spec: SyncSpec<R, InsertPayload, UpdatePayload>) { self.spec = spec }
+    private let conflictCenter: ConflictResolutionCenter?
+    
+    public init(
+        spec: SyncSpec<R, InsertPayload, UpdatePayload>,
+        conflictCenter: ConflictResolutionCenter? = nil
+    ) {
+        self.spec = spec
+        self.conflictCenter = conflictCenter
+    }
 
     public func syncNow() async -> SyncReport {
         var push = PushStats.zero
@@ -156,6 +164,12 @@ public final class SyncRunner<R: RemoteEntity, InsertPayload, UpdatePayload> {
 
         if !conflicts.isEmpty {
             try await spec.recordConflicts(conflicts)
+            // trigger auto-resolve for each conflict id
+            if let center = conflictCenter {
+                for (local, _) in conflicts {
+                    await center.attemptAutoResolve(conflictId: "\(spec.entityKey):\(local.id.uuidString)")
+                }
+            }
         }
 
         return stats
