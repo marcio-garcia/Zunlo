@@ -207,7 +207,7 @@ public class AIToolRouter: ToolRouter {
                     .sendAttachmentToAI(attachment.id)
                 ]
             )
-            return ToolDispatchResult(note: "Agenda ready", ui: ui)
+            return ToolDispatchResult(note: result.text, ui: ui)
 
         case "planWeek":
             var args = try? JSONDecoder.makeDecoder().decode(PlanWeekArgs.self, from: Data(normalizedArgsJSON.utf8))

@@ -13,29 +13,6 @@ import {
   eventColorSchema as EventColor,
 } from "./schemas.ts";
 
-/** Guardrails & style guide (short, enforceable) */
-export const PROMPT_INSTRUCTIONS = `
-Zunlo is an app to help people with ADHD manage their tasks and events.
-You are Zunlo's assistant for tasks and events.
-Never mention ADHD unless the user specifically asks about it.
-Always be kind and encouraging, without overdoing it.
-
-Guardrail policy:
-- Model talks, tools act.
-- Never mutate data via free-form text. Only call the provided tools.
-- Ask for confirmation before any destructive or sweeping change (delete, series-wide edits),
-  unless the user clearly asked for it (e.g., "delete it now").
-- Before retrying a tool call, ask the user to confirm whether the action was successful.
-
-Conventions:
-- Current date time: ${Date()}
-- If unsure, ask one clarifying question.
-- Prefer getting context (“getAgenda”) before proposing changes.
-- For recurring edits: single vs this_and_future vs entire_series — choose carefully and explain.
-- Apple weekdays: 1=Sun … 7=Sat for recurrence.
-- Use editScope=override to change/cancel a single occurrence of a recurring event; use single only for non-recurring events.
-`.trim().replace("\n", "");
-
 /* -----------------------------
  * Small local schema primitives
  * ----------------------------- */
@@ -372,19 +349,20 @@ Time handling policy (UTC-first):
 - When speaking to the user, present times in ${tzId} and mention the zone if helpful.
 - For recurrences, treat the wall-clock time in ${tzId} as authoritative (e.g., “every Monday 9:00 in ${tzId}”),
   but pass individual occurrences to tools in UTC.
-- For all-day items, treat the local day in ${tzId} as authoritative (00:00–24:00 local),
+- For all-day items, treat the local day in ${tzId} as authoritative (00:00 - 24:00 local),
   but persist UTC boundaries.
 
 ### Examples (for reference only — do not execute)
 User (${tzId}): create "Call mom" tomorrow at 3pm
 Assistant → tools.createTask args: {"title":"Call mom","dueDate":"2025-08-25T18:00:00Z"}
-Assistant → Okay! I’ll schedule it for Mon, Aug 25 at 3:00 PM (${tzId}).
+Assistant → Okay! I'll schedule it for Mon, Aug 25 at 3:00 PM (${tzId}).
 
 Conventions:
 - Prefer getting context (“getAgenda”) before proposing changes.
 - For recurring edits: single vs this_and_future vs entire_series — choose carefully and explain.
 - Apple weekdays: 1=Sun … 7=Sat for recurrence.
 - Use editScope=override to change/cancel a single occurrence of a recurring event; use single only for non-recurring events.
+- Default user requests to 'today' if no date/period is explicitly provided.
 `.trim().replace(/\s*\n\s*/g, ' ').replace(/\s{2,}/g, ' ');
   return s;
 }
