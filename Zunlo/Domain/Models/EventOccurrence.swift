@@ -28,6 +28,7 @@ struct EventOccurrence: Identifiable, Hashable {
     let deletedAt: Date?
     let needsSync: Bool
     let isFakeOccForEmptyToday: Bool
+    let version: Int?
     
     init(
         id: UUID = UUID(),
@@ -49,7 +50,8 @@ struct EventOccurrence: Identifiable, Hashable {
         recurrence_rules: [RecurrenceRule],
         deletedAt: Date?,
         needsSync: Bool,
-        isFakeOccForEmptyToday: Bool
+        isFakeOccForEmptyToday: Bool,
+        version: Int?
     ) {
         self.id = id
         self.userId = userId
@@ -71,6 +73,7 @@ struct EventOccurrence: Identifiable, Hashable {
         self.deletedAt = deletedAt
         self.needsSync = needsSync
         self.isFakeOccForEmptyToday = isFakeOccForEmptyToday
+        self.version = version
     }
 }
 
@@ -96,5 +99,6 @@ extension EventOccurrence {
         self.deletedAt = occ.deletedAt
         self.needsSync = occ.needsSync
         self.isFakeOccForEmptyToday = false
+        self.version = occ.version
     }
 }

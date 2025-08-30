@@ -44,6 +44,7 @@ final class AddEditEventViewModel: ObservableObject {
     @Published var isCancelled: Bool = false
     @Published var isProcessing: Bool = false
     @Published var reminderTriggers: [ReminderTrigger]?
+    @Published var showUntil: Bool = false
     
     /// UI uses 0=Sunday...6=Saturday.
     /// calendarByWeekday maps to Calendar's 1=Sunday...7=Saturday.
@@ -100,6 +101,10 @@ final class AddEditEventViewModel: ObservableObject {
         return byWeekday.map { $0 + 1 }
     }
     
+    var isSaveDisabled: Bool {
+        return title.isEmpty || isProcessing || (showUntil && until == nil)
+    }
+    
     func uiByWeekday(from calendarWeekdays: Set<Int>) -> Set<Int> {
         return Set(calendarWeekdays.map { ($0 + 6) % 7 })
     }
@@ -137,6 +142,9 @@ final class AddEditEventViewModel: ObservableObject {
                 byWeekday = uiByWeekday(from: Set(rule.byWeekday ?? []))
                 rule.byMonthday?.forEach({ byMonthday.insert($0) })
                 until = rule.until
+                if until != nil {
+                    showUntil = true
+                }
                 count = rule.count.map { String($0) } ?? ""
             } else {
                 recurrenceType = RecurrenceFrequesncy.daily.rawValue
@@ -229,7 +237,8 @@ final class AddEditEventViewModel: ObservableObject {
     }
     
     private func makeInput() -> AddEventInput {
-        AddEventInput(
+        var untilDate = showUntil ? until : nil
+        return AddEventInput(
             userId: userId,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             notes: notes,
@@ -243,7 +252,7 @@ final class AddEditEventViewModel: ObservableObject {
             recurrenceInterval: recurrenceInterval,
             byWeekday: byWeekday.isEmpty ? nil : calendarByWeekday,
             byMonthday: byMonthday.isEmpty ? nil : Array(byMonthday),
-            until: until,
+            until: untilDate,
             count: Int(count),
             isCancelled: isCancelled
         )

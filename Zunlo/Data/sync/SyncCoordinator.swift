@@ -25,6 +25,26 @@ struct SyncSummary {
         self.overrideReport = overrideReport
         self.taskReport = taskReport
     }
+    
+    var eventRowsAffected: Int {
+        eventReport.pulled + eventReport.pushed + eventReport.conflicts
+    }
+    
+    var overrideRowsAffected: Int {
+        overrideReport.pulled + overrideReport.pushed + overrideReport.conflicts
+    }
+    
+    var ruleRowsAffected: Int {
+        ruleReport.pulled + ruleReport.pushed + ruleReport.conflicts
+    }
+    
+    var taskRowsAffected: Int {
+        taskReport.pulled + taskReport.pushed + taskReport.conflicts
+    }
+    
+    var totalRowsAffected: Int {
+        eventRowsAffected + overrideRowsAffected + ruleRowsAffected + taskRowsAffected
+    }
 }
 
 final class SyncCoordinator {

@@ -13,7 +13,6 @@ struct AddEditEventView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject var viewModel: AddEditEventViewModel
     @EnvironmentObject var nav: AppNav
-    @State private var showUntil: Bool = false
     
     var onDismiss: (() -> Void)?
     
@@ -91,7 +90,7 @@ struct AddEditEventView: View {
                             }
                         }
                     }
-                    .disabled(viewModel.title.isEmpty || viewModel.isProcessing)
+                    .disabled(viewModel.isSaveDisabled)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -187,9 +186,9 @@ struct AddEditEventView: View {
                         .themedCaption()
                 }
 
-                Toggle(isOn: $showUntil) { Text("Set End Date") .themedBody() }
+                Toggle(isOn: $viewModel.showUntil) { Text("Set End Date") .themedBody() }
 
-                if showUntil {
+                if viewModel.showUntil {
                     DatePicker("Repeat until", selection: Binding(
                         get: { viewModel.until ?? Date() },
                         set: { viewModel.until = $0 }
@@ -198,7 +197,7 @@ struct AddEditEventView: View {
                 }
             }
         }
-        .onChange(of: showUntil) { oldValue, newValue in
+        .onChange(of: viewModel.showUntil) { oldValue, newValue in
             if !newValue {
                 viewModel.until = nil
             } else if viewModel.until == nil {

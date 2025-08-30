@@ -24,6 +24,7 @@ struct EventOccurrenceResponse: Codable, Identifiable {
     let recurrence_rules: [RecurrenceRuleRemote]
     let deletedAt: Date?
     let needsSync: Bool
+    let version: Int?
 }
 
 extension EventOccurrenceResponse {
@@ -32,7 +33,7 @@ extension EventOccurrenceResponse {
          rules rrs: [RecurrenceRuleLocal]) {
 
         self.id = e.id
-        self.user_id = e.userId ?? UUID()
+        self.user_id = e.userId
         self.title = e.title
         self.notes = e.notes
         self.start_datetime = e.startDate
@@ -45,6 +46,7 @@ extension EventOccurrenceResponse {
         self.reminderTriggers = e.reminderTriggersArray
         self.deletedAt = e.deletedAt
         self.needsSync = e.needsSync
+        self.version = e.version
 
         // Map children → Remote DTOs; keep deterministic order by id to match SQL
         self.overrides = ovs

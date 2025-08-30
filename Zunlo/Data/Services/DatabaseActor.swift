@@ -570,7 +570,7 @@ extension DatabaseActor {
         let newEventId = newEvent.id
         
         let now = Date()
-        guard let cutoff = Calendar(identifier: .gregorian).date(byAdding: .day, value: -1, to: splitDate) else {
+        guard let cutoff = Calendar.appDefault.date(byAdding: .day, value: -1, to: splitDate) else {
             throw SplitSeriesError.invalidSplitDate
         }
 

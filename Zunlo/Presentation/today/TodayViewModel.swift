@@ -246,7 +246,7 @@ extension TodayViewModel {
             let report = try await sync.syncAllOnLaunch()
             await MainActor.run { self.isSyncingDB = false }
             
-            if report.taskReport.pulled > 0 {
+            if report.totalRowsAffected > 0 {
                 await fetchData()
             }
         } catch {

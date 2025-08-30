@@ -30,7 +30,8 @@ extension EventOccurrence {
             recurrence_rules: [],
             deletedAt: nil,
             needsSync: false,
-            isFakeOccForEmptyToday: false
+            isFakeOccForEmptyToday: false,
+            version: nil
         )
     }
 }

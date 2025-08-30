@@ -513,8 +513,9 @@ class RecurrenceHelper {
                 recurrence_rules: [],
                 deletedAt: nil,
                 needsSync: false,
-                isFakeOccForEmptyToday: true)
-            )
+                isFakeOccForEmptyToday: true,
+                version: nil
+            ))
             return occ
         }
         

@@ -102,6 +102,7 @@ extension EventOverrideLocal {
     }
     
     func getUpdateFields(remote: EventOverrideRemote) {
+        self.eventId = remote.eventId
         self.occurrenceDate = remote.occurrenceDate
         self.overriddenTitle = remote.overriddenTitle
         self.overriddenStartDate = remote.overriddenStartDate
@@ -118,6 +119,7 @@ extension EventOverrideLocal {
     }
     
     func getUpdateFields(domain: EventOverride) {
+        self.eventId = domain.eventId
         self.occurrenceDate = domain.occurrenceDate
         self.overriddenTitle = domain.overriddenTitle
         self.overriddenStartDate = domain.overriddenStartDate

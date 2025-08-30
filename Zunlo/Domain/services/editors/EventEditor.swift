@@ -34,7 +34,8 @@ final class EventEditor: EventEditorService {
             updatedAt: now,
             color: input.color,
             reminderTriggers: input.reminderTriggers,
-            needsSync: false
+            needsSync: true,
+            version: nil
         )
 
         if input.isRecurring {
@@ -49,7 +50,8 @@ final class EventEditor: EventEditorService {
                 until: input.until,
                 count: input.count,
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
+                version: nil
             )
             try await repo.upsert(event: newEvent, rule: rule)
             
@@ -73,7 +75,8 @@ final class EventEditor: EventEditorService {
             updatedAt: now,
             color: input.color,
             reminderTriggers: input.reminderTriggers,
-            needsSync: true
+            needsSync: true,
+            version: event.version
         )
 
         if input.isRecurring {
@@ -88,7 +91,8 @@ final class EventEditor: EventEditorService {
                 until: input.until,
                 count: input.count,
                 createdAt: oldRule?.createdAt ?? now,
-                updatedAt: now
+                updatedAt: now,
+                version: oldRule?.version
             )
             try await repo.upsert(event: updated, rule: rule)
             
@@ -115,7 +119,8 @@ final class EventEditor: EventEditorService {
             notes: input.notes?.nilIfEmpty,
             createdAt: now,
             updatedAt: now,
-            color: input.color
+            color: input.color,
+            version: occurrence.version
         )
         try await repo.upsertOverride(override)
     }
@@ -135,7 +140,8 @@ final class EventEditor: EventEditorService {
             notes: input.notes?.nilIfEmpty,
             createdAt: override.createdAt,
             updatedAt: now,
-            color: input.color
+            color: input.color,
+            version: override.version
         )
         try await repo.upsertOverride(updated)
     }
@@ -155,7 +161,8 @@ final class EventEditor: EventEditorService {
             color: input.color,
             reminderTriggers: input.reminderTriggers,
             deletedAt: nil,
-            needsSync: true
+            needsSync: true,
+            version: nil
         )
         try await repo.splitRecurringEvent(
             originalEventId: parent.id,

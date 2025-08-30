@@ -60,7 +60,8 @@ struct EventOccurrenceService {
                             recurrence_rules: [rule],
                             deletedAt: ov.deletedAt,
                             needsSync: ov.needsSync,
-                            isFakeOccForEmptyToday: false
+                            isFakeOccForEmptyToday: false,
+                            version: ov.version
                         )
                         occurrences.append(occu)
                     } else {
@@ -85,7 +86,8 @@ struct EventOccurrenceService {
                             recurrence_rules: [rule],
                             deletedAt: rawOcc.deletedAt,
                             needsSync: rawOcc.needsSync,
-                            isFakeOccForEmptyToday: false
+                            isFakeOccForEmptyToday: false,
+                            version: rawOcc.version
                         )
                         occurrences.append(occu)
                     }
@@ -117,7 +119,8 @@ struct EventOccurrenceService {
                             recurrence_rules: [],
                             deletedAt: ov.deletedAt,
                             needsSync: ov.needsSync,
-                            isFakeOccForEmptyToday: false
+                            isFakeOccForEmptyToday: false,
+                            version: ov.version
                         )
                         occurrences.append(occu)
                     } else {
@@ -141,7 +144,8 @@ struct EventOccurrenceService {
                             recurrence_rules: [],
                             deletedAt: rawOcc.deletedAt,
                             needsSync: rawOcc.needsSync,
-                            isFakeOccForEmptyToday: false
+                            isFakeOccForEmptyToday: false,
+                            version: rawOcc.version
                         )
                         occurrences.append(occu)
                     }

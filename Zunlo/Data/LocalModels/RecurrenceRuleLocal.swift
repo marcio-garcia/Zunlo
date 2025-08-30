@@ -13,17 +13,16 @@ class RecurrenceRuleLocal: Object {
     @Persisted(indexed: true) var eventId: UUID
     @Persisted var freq: String
     @Persisted var interval: Int
-    @Persisted var byWeekday = List<Int>()   // No need for optional; can be empty
+    @Persisted var byWeekday = List<Int>()
     @Persisted var byMonthday = List<Int>()
     @Persisted var byMonth = List<Int>()
     @Persisted var until: Date?
     @Persisted var count: Int?
     @Persisted var createdAt: Date
     @Persisted var updatedAt: Date
-    
-    @Persisted var deletedAt: Date? = nil      // NEW
-    @Persisted var needsSync: Bool = false     // NEW
-    @Persisted var version: Int?          // <-- NEW (nil means “unknown / never synced”)
+    @Persisted var deletedAt: Date? = nil
+    @Persisted var needsSync: Bool = false
+    @Persisted var version: Int?
 
     var byWeekdayArray: [Int] {
         get { Array(byWeekday) }
@@ -124,6 +123,7 @@ extension RecurrenceRuleLocal {
     }
     
     func getUpdateFields(remote: RecurrenceRuleRemote) {
+        self.eventId = remote.eventId
         self.freq = remote.freq
         self.interval = remote.interval
         self.byWeekdayArray = remote.byweekday ?? []
@@ -139,6 +139,7 @@ extension RecurrenceRuleLocal {
     }
     
     func getUpdateFields(domain: RecurrenceRule) {
+        self.eventId = domain.eventId
         self.freq = domain.freq.rawValue
         self.interval = domain.interval
         self.byWeekdayArray = domain.byWeekday ?? []

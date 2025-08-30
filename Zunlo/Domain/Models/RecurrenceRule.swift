@@ -19,7 +19,6 @@ struct RecurrenceRule: Identifiable, Codable, Hashable {
     let count: Int?
     let createdAt: Date
     let updatedAt: Date
-    
     var deletedAt: Date? = nil
     var needsSync: Bool = false
     var version: Int?          // <-- NEW (nil means “unknown / never synced”)
@@ -40,6 +39,7 @@ extension RecurrenceRule {
         self.updatedAt = remote.updatedAt
         self.deletedAt = remote.deletedAt
         self.needsSync = false
+        self.version = remote.version
     }
 
     init(local: RecurrenceRuleLocal) {
@@ -54,5 +54,8 @@ extension RecurrenceRule {
         self.count = local.count
         self.createdAt = local.createdAt
         self.updatedAt = local.updatedAt
+        self.needsSync = local.needsSync
+        self.deletedAt = local.deletedAt
+        self.version = local.version
     }
 }
