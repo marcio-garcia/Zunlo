@@ -37,6 +37,9 @@ final class DefaultViewFactory: ViewFactory {
         // Ensure the Conversation row exists without blocking init
         Task { try? await appState.localDB!.ensureConversationExists(id: cid) }
 
+        var calendar = Calendar.appDefault
+        calendar.timeZone = TimeZone.current
+        
         let aiChatService = SupabaseEdgeAIClient(supabase: appState.supabaseClient!)
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
                                                  eventRepo: appState.eventRepository!)
@@ -48,7 +51,8 @@ final class DefaultViewFactory: ViewFactory {
         let aiToolRouter = AIToolRouter(
             userId: appState.authManager!.userId!,
             tools: aiToolService,
-            repo: aiToolRepo
+            repo: aiToolRepo,
+            calendar: calendar
         )
         
 //        Task {
@@ -81,7 +85,7 @@ final class DefaultViewFactory: ViewFactory {
             conversationId: cid,
             engine: aiChatEngine,
             repo: appState.chatRepository!,
-            timeZone: TimeZone.current
+            calendar: calendar
         )
     }
 }

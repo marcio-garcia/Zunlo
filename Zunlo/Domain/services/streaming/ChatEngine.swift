@@ -22,9 +22,48 @@ import SwiftUI
 
 public enum ChatStreamState: Equatable {
     case idle
-    case streaming(assistantId: UUID)
+    case streaming(assistantId: UUID, continuation: AsyncStream<ChatEngineEvent>.Continuation?)
     case awaitingTools(responseId: String, assistantId: UUID?)
     case failed(String)
+    case stopped(assistantId: UUID?)
+    
+    public static func == (lhs: ChatStreamState, rhs: ChatStreamState) -> Bool {
+        switch lhs {
+        case .idle:
+            if rhs == .idle {
+                return true
+            } else {
+                return false
+            }
+        case .streaming(let assistantId, _):
+            if case .streaming(let id, _) = rhs, assistantId == id {
+                return true
+            } else {
+                return false
+            }
+        case .awaitingTools(let responseId, let assistantId):
+            if case .awaitingTools(let respId, let assistId) = rhs,
+                responseId == respId,
+                assistId == assistantId {
+                return true
+            } else {
+                return false
+            }
+        case .failed(let msg):
+            if case .failed(let string) = rhs, msg == string {
+                return true
+            } else {
+                return false
+            }
+        case .stopped(assistantId: let assistantId):
+            if case .stopped(let assistId) = rhs, assistId == assistantId {
+                return true
+            } else {
+                return false
+            }
+        }
+    }
+    
 }
 
 public enum ChatEngineEvent {
@@ -92,15 +131,23 @@ public actor ChatEngine {
     }
 
     public func stop() async {
-        cancelCurrentStreamIfAny()
-        ai.cancelCurrentGeneration()
         // Best-effort: mark last streaming assistant as sent (if we can infer it)
-        if case .streaming(let assistantId) = state {
+        if case .streaming(let assistantId, let continuation) = state {
             // Flush any pending deltas and mark as sent
             await flushDeltaNow(assistantId)
-            try? await repo.setStatus(messageId: assistantId, status: .sent, error: nil)
+            if emittedText.contains(assistantId) {
+                try? await repo.setStatus(messageId: assistantId, status: .sent, error: nil)
+            } else {
+                try? await repo.delete(messageId: assistantId)
+            }
+            emittedText.remove(assistantId)
+            if toolingAssistantId == assistantId { toolingAssistantId = nil }
+            await setState(.stopped(assistantId: assistantId), continuation: continuation)
+        } else {
+            state = .idle
         }
-        state = .idle
+        cancelCurrentStreamIfAny()
+        ai.cancelCurrentGeneration()
     }
 
     // MARK: - Internals
@@ -184,7 +231,7 @@ public actor ChatEngine {
             
             try? await repo.upsert(assistant)
             continuation.yield(.messageAppended(assistant))
-            await setState(.streaming(assistantId: id), continuation: continuation)
+            await setState(.streaming(assistantId: id, continuation: continuation), continuation: continuation)
 
         case .delta(let id, let delta):
             // Yield to UI and debounce persistence
@@ -192,8 +239,8 @@ public actor ChatEngine {
             emittedText.insert(id)
             await bufferDelta(id: id, delta: delta)
 
-            if var det = mdDetectors[id], det.feed(delta) {
-//                mdDetectors[id] = det
+            if let det = mdDetectors[id], det.feed(delta) {
+                mdDetectors[id] = det
                 continuation.yield(.messageFormatUpdated(messageId: id, format: .markdown))
                 try? await repo.setFormat(messageId: id, format: .markdown)
             }
@@ -268,18 +315,20 @@ public actor ChatEngine {
         switch state {
         case .idle:
             return nil
-        case .streaming(let assistantId):
+        case .streaming(let assistantId, _):
             return assistantId
-        case .awaitingTools(let responseId, let assistantId):
+        case .awaitingTools(_, let assistantId):
             return assistantId
-        case .failed(let string):
+        case .stopped(let assistantId):
+            return assistantId
+        case .failed:
             return nil
         }
     }
 
-    private func setState(_ new: ChatStreamState, continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
+    private func setState(_ new: ChatStreamState, continuation: AsyncStream<ChatEngineEvent>.Continuation?) async {
         state = new
-        continuation.yield(.stateChanged(new))
+        continuation?.yield(.stateChanged(new))
     }
     
     private func setCurrentStreamTask(_ task: Task<Void, Never>?) {

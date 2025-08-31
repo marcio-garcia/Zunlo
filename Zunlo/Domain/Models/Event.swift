@@ -20,10 +20,9 @@ struct Event: Identifiable, Codable, Hashable {
     var updatedAt: Date
     var color: EventColor
     var reminderTriggers: [ReminderTrigger]?
-    
     var deletedAt: Date?
     var needsSync: Bool
-    var version: Int?          // <-- NEW (nil means “unknown / never synced”)
+    var version: Int?
 }
 
 extension Event: SchedulableReminderItem {
@@ -44,7 +43,6 @@ extension Event {
         self.updatedAt = remote.updatedAt
         self.color = remote.color ?? .yellow
         self.reminderTriggers = remote.reminder_triggers
-        
         self.deletedAt = remote.deletedAt
         self.needsSync = false
         self.version = remote.version

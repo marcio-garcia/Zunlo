@@ -45,21 +45,28 @@ public class AIToolRouter: ToolRouter {
     private let userId: UUID
     private let tools: AIToolService
     private let repo: DomainRepositories
+    private let calendar: Calendar
     private let reason = "from tool call"
     
-    init(userId: UUID, tools: AIToolService, repo: DomainRepositories) {
+    init(
+        userId: UUID,
+        tools: AIToolService,
+        repo: DomainRepositories,
+        calendar: Calendar = .appDefault
+    ) {
         self.userId = userId
         self.tools = tools
         self.repo = repo
+        self.calendar = calendar
     }
 
     /// Dispatch one tool call. Returns a short user-facing note for the chat.
     public func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult {
-        let timezone =  TimeZone.current.identifier
+        let timezone = calendar.timeZone.identifier
         let normalizedArgsJSON = try ToolTimeNormalizer.normalize(
             json: env.argsJSON,
             tzId: timezone,
-            onlyKeys: ["startSate","endDate","dueDate"]
+            onlyKeys: ["startDate","endDate","dueDate"]
         )
         
         switch env.name {

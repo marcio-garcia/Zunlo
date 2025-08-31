@@ -44,21 +44,16 @@ public final class ChatViewModel: ObservableObject {
         linkColor: Color.theme.accent
     )
 
-    public init(conversationId: UUID, engine: ChatEngine, repo: ChatRepository, timeZone: TimeZone = TimeZone(secondsFromGMT: 0)!) {
+    public init(
+        conversationId: UUID,
+        engine: ChatEngine,
+        repo: ChatRepository,
+        calendar: Calendar
+    ) {
         self.conversationId = conversationId
         self.engine = engine
         self.repo = repo
-
-        var cal = Calendar.appDefault
-        cal.timeZone = timeZone
-        self.calendar = cal
-
-//        let df = DateFormatter()
-//        df.calendar = cal
-//        df.dateFormat = "yyyy-MM-dd"
-//        df.timeZone = timeZone
-//        self.dayIdFormatter = df
-
+        self.calendar = calendar
     }
 
     // MARK: Loading / Display
@@ -199,6 +194,12 @@ public final class ChatViewModel: ObservableObject {
             case .awaitingTools(let responseId, let assistantId):
                 print("AWAITINGTOOLS - response id: \(responseId) -  assistent id: \(assistantId?.uuidString ?? "nil")")
                 isGenerating = true
+            case .stopped(let assistantId):
+                isGenerating = false
+                if let id = assistantId, let idx = messages.firstIndex(where: { $0.id == id }) {
+                    messages.remove(at: idx)
+                    rebuildSections()
+                }
             case .failed(let msg):
                 isGenerating = false
                 print("Stream failed: \(msg)")
