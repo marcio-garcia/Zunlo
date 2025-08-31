@@ -76,6 +76,7 @@ extension Date {
         case dayMonth = "dd MMM"
         case monthName = "LLLL"
         case weekAndDay = "E d"
+        case inverted = "yyyy-MM-dd"
     }
     
     static var format = DateFormat.regular
@@ -87,28 +88,42 @@ extension Date {
     
     func formattedDate(
         dateFormat: DateFormat,
-        locale: Locale = Locale(identifier: "en_US_POSIX")
+        calendar: Calendar = Calendar.appDefault,
+        locale: Locale = Locale(identifier: "en_US_POSIX"),
+        timeZone: TimeZone? = TimeZone(secondsFromGMT: 0)
     ) -> String {
-        return formattedDate(format: dateFormat.rawValue, locale: locale)
+        return formattedDate(
+            format: dateFormat.rawValue,
+            calendar: calendar,
+            locale: locale,
+            timeZone: timeZone
+        )
     }
     
     func formattedDate(
         format: String,
-        locale: Locale = Locale(identifier: "en_US_POSIX")
+        calendar: Calendar = Calendar.appDefault,
+        locale: Locale = Locale(identifier: "en_US_POSIX"),
+        timeZone: TimeZone? = TimeZone(secondsFromGMT: 0)
     ) -> String {
         Date.formatter.dateFormat = format
+        Date.formatter.calendar = calendar
         Date.formatter.locale = locale
+        Date.formatter.timeZone = timeZone
         return Date.formatter.string(from: self)
     }
     
     static func formattedDate(
         from string: String,
         format: String,
-        locale: Locale = Locale(identifier: "en_US_POSIX")
+        calendar: Calendar = Calendar.appDefault,
+        locale: Locale = Locale(identifier: "en_US_POSIX"),
+        timeZone: TimeZone? = TimeZone(secondsFromGMT: 0)
     ) -> Date? {
         Date.formatter.dateFormat = format
+        Date.formatter.calendar = calendar
         Date.formatter.locale = locale
-        Date.formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        Date.formatter.timeZone = timeZone
         return Date.formatter.date(from: string)
     }
     

@@ -30,7 +30,6 @@ public final class ChatViewModel: ObservableObject {
 
     // Deterministic calendar/formatting for stable section ids
     private let calendar: Calendar
-    private let dayIdFormatter: DateFormatter
 
     private let rebuildDebouncer = Debouncer()
     
@@ -50,15 +49,16 @@ public final class ChatViewModel: ObservableObject {
         self.engine = engine
         self.repo = repo
 
-        var cal = Calendar(identifier: .iso8601)
+        var cal = Calendar.appDefault
         cal.timeZone = timeZone
         self.calendar = cal
 
-        let df = DateFormatter()
-        df.calendar = cal
-        df.dateFormat = "yyyy-MM-dd"
-        df.timeZone = timeZone
-        self.dayIdFormatter = df
+//        let df = DateFormatter()
+//        df.calendar = cal
+//        df.dateFormat = "yyyy-MM-dd"
+//        df.timeZone = timeZone
+//        self.dayIdFormatter = df
+
     }
 
     // MARK: Loading / Display
@@ -225,7 +225,7 @@ public final class ChatViewModel: ObservableObject {
         let sortedDays = groups.keys.sorted()
         daySections = sortedDays.map { day in
             let items = (groups[day] ?? []).sorted { $0.createdAt < $1.createdAt }
-            return DaySection(id: dayIdFormatter.string(from: day), date: day, items: items)
+            return DaySection(id: day.formattedDate(dateFormat: .inverted, calendar: calendar), date: day, items: items)
         }
         lastMessageAnchor = messages.last?.id
     }

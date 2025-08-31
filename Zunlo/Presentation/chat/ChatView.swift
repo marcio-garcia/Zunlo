@@ -107,20 +107,11 @@ struct ChatView: View {
                         DaySeparator(title: dayTitle(for: section.date))
                             .id("separator-\(section.id)")
 
-                        ForEach(section.items) { msg in
-                            VStack(alignment: msg.role == .user ? .trailing : .leading, spacing: 4) {
-                                MessageBubble(viewID: viewID, message: msg) { action, message in
-                                    viewModel.handleBubbleAction(action, message: message)
-                                }
-                                .environmentObject(viewModel)
-                                Text(timeString(for: msg.createdAt))
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .frame(maxWidth: .infinity, alignment: msg.role == .user ? .trailing : .leading)
-                                    .padding(.horizontal, 6)
-                            }
-                            .id(msg.id)
-                        }
+                        DayMessagesList(
+                            viewID: viewID,
+                            dayMessages: section.items,
+                            viewModel: viewModel
+                        )
                     }
 
                     if viewModel.isGenerating {
@@ -135,6 +126,30 @@ struct ChatView: View {
                 withAnimation(.easeOut(duration: 0.25)) {
                     proxy.scrollTo(id, anchor: .bottom)
                 }
+            }
+        }
+    }
+    
+    private struct DayMessagesList: View {
+        let viewID: UUID
+        let dayMessages: [ChatMessage]
+        let viewModel: ChatViewModel
+        
+        var body: some View {
+            ForEach(dayMessages) { msg in
+                VStack(alignment: msg.role == .user ? .trailing : .leading, spacing: 4) {
+                    MessageBubble(viewID: viewID, message: msg) { action, message in
+                        viewModel.handleBubbleAction(action, message: message)
+                    }
+                    .environmentObject(viewModel)
+                    Text(msg.createdAt.formattedDate(dateFormat: .time))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: msg.role == .user ? .trailing : .leading)
+                        .padding(.horizontal, 6)
+                }
+                HStack(spacing: 0, content: {})
+                    .id(msg.id)
             }
         }
     }

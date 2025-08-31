@@ -340,14 +340,12 @@ public actor ChatEngine {
 
     private func runToolBatch(_ calls: [ToolCallRequest], continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
         var outputs: [ToolOutput] = []
-        var notes: [String] = []
         var inserts: [ChatInsert] = []
 
         for c in calls {
             do {
                 let env = AIToolEnvelope(name: c.name, argsJSON: c.argumentsJSON)
                 let result = try await tools.dispatch(env)
-                notes.append("• \(result.note)")
                 if let ui = result.ui { inserts.append(ui) }
                 outputs.append(ToolOutput(
                     previous_response_id: c.responseId,
@@ -356,7 +354,6 @@ public actor ChatEngine {
                 ))
             } catch {
                 let fail = "• \(c.name) failed: \(error.localizedDescription)"
-                notes.append(fail)
                 outputs.append(ToolOutput(
                     previous_response_id: c.responseId,
                     tool_call_id: c.callId,
