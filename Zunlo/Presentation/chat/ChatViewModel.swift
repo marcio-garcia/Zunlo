@@ -71,13 +71,10 @@ public final class ChatViewModel: ObservableObject {
     public func displayMessageText(_ msg: ChatMessage) -> AttributedString {
         switch msg.format {
         case .plain:
-            print("\(msg.id) - rawText")
             return AttributedString(msg.rawText)
         case .markdown:
-            print("\(msg.id) - markdown")
             return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
         case .rich:
-            print("\(msg.id) - rich")
             return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
         }
     }
