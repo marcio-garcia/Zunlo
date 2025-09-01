@@ -1,0 +1,94 @@
+text,label
+"agendar daily amanhã às 10h",create_event
+"create calendar entry team lunch tomorrow 07:00",create_event
+"agendar café com Ana sexta que vem às 14h",create_event
+"novo evento plantão de dúvidas na terça às 09:00",create_event
+"marcar plantão de dúvidas sexta que vem às 19h",create_event
+"set up review tomorrow at 14:00",create_event
+"set up standup tomorrow at 4pm",create_event
+"agendar daily sexta que vem às 11h",create_event
+"adicionar evento reunião de produto sexta que vem às 19h",create_event
+"set up review next Friday at 10am",create_event
+"novo evento reunião de produto sexta que vem às 11h",create_event
+"schedule office hours on Friday at 09:30",create_event
+"log task buy cat food on the 5th",create_task
+"criar tarefa comprar ração hoje à noite",create_task
+"adicionar tarefa enviar relatório hoje à noite",create_task
+"adicionar tarefa regar as plantas amanhã",create_task
+"adicionar tarefa ligar para o João hoje à noite",create_task
+"create a task update resume on Sunday morning",create_task
+"lembre-me de comprar ração dia 10",create_task
+"remind me to update resume this weekend",create_task
+"tarefa: limpar a cozinha neste fim de semana",create_task
+"create task call mom tonight",create_task
+"tarefa: limpar a cozinha no domingo de manhã",create_task
+"lembre-me de enviar relatório dia 10",create_task
+"push sprint planning to 09:30",reschedule_event
+"adiar café com Ana para amanhã 10h",reschedule_event
+"adiar daily para sexta 14h",reschedule_event
+"adiar reunião de hoje para amanhã 14h",reschedule_event
+"postpone coffee with Ana to today 2:30pm",reschedule_event
+"adiar café com Ana para sexta 10h",reschedule_event
+"mudar daily para amanhã 20h",reschedule_event
+"remarcar 1:1 de qui 9h para segunda que vem 20h",reschedule_event
+"shift sprint planning to next Friday 09:30",reschedule_event
+"change team lunch to tomorrow 2:30pm",reschedule_event
+"change coffee with Ana to today 5pm",reschedule_event
+"mudar almoço do time para sexta 20h",reschedule_event
+"delay the water plants task by two hours",reschedule_task
+"mover a tarefa ligar para a mãe para sábado de manhã",reschedule_task
+"reschedule call mom to tomorrow afternoon",reschedule_task
+"reschedule the pay rent task to next Friday",reschedule_task
+"delay the clean kitchen task to tonight",reschedule_task
+"change the water plants task to Saturday morning 10am",reschedule_task
+"mudar a tarefa escrever relatório para amanhã de manhã 20h",reschedule_task
+"delay the clean kitchen task to next Friday",reschedule_task
+"mover a tarefa lição de casa para sábado de manhã",reschedule_task
+"change the write report task to tonight",reschedule_task
+"push the grocery shopping task to 20:00",reschedule_task
+"remarcar a tarefa escrever relatório para amanhã de manhã",reschedule_task
+"definir local do evento para HQ cafeteria",update_event
+"renomear o evento para Team All-Hands",update_event
+"change event color to roxo",update_event
+"call this event Team All-Hands",update_event
+"update event title to Quarterly Review",update_event
+"definir local do evento para Sala 12",update_event
+"mudar cor do evento para azul",update_event
+"update event notes: bring printed copies",update_event
+"adicionar tag prioridade ao evento",update_event
+"add tag pessoal to the event",update_event
+"atualizar título do evento para Design Review",update_event
+"definir título do evento como Quarterly Review",update_event
+"add tag home to the read book task",update_task
+"definir título da tarefa como buy dog food",update_task
+"definir prioridade da tarefa como média",update_task
+"definir título da tarefa como pay electricity bill",update_task
+"change task color to gray",update_task
+"rename task read book to read 20 pages",update_task
+"call this task buy dog food",update_task
+"renomear tarefa buy cat food para buy dog food",update_task
+"mudar título da tarefa para pay electricity bill",update_task
+"atualizar título da tarefa para read 20 pages",update_task
+"atualizar título da tarefa para read 20 pages",update_task
+"update task notes: verificar prazos",update_task
+"planejar semana de trabalho",plan_week
+"como planejar a semana com estudos",plan_week
+"make a weekly plan including workouts",plan_week
+"me ajude a montar minha semana",plan_week
+"como planejar meu dia com estudos",plan_day
+"faça um plano diário com exercícios",plan_day
+"plan my day with focus blocks",plan_day
+"organize my day",plan_day
+"mostrar agenda de quinta de manhã",show_agenda
+"what's my agenda this afternoon",show_agenda
+"agenda de quinta à tarde",show_agenda
+"calendar for the 24th",show_agenda
+"mostrar agenda de amanhã",show_agenda
+"hello there",unknown
+"oi",unknown
+"obrigado",unknown
+"bom dia",unknown
+"great",unknown
+"hi",unknown
+"thanks",unknown
+"thanks",unknown

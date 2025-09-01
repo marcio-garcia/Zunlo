@@ -1,0 +1,368 @@
+text,label
+"agendar daily amanhã às 09:00",create_event
+"novo evento revisão sexta que vem às 16h",create_event
+"schedule team lunch tomorrow at 1pm",create_event
+"schedule office hours next Friday at 08:00",create_event
+"schedule yoga class next Monday at 8am",create_event
+"adicionar evento café com Ana sábado que vem às 20h",create_event
+"adicionar evento café com Ana na sexta às 11h",create_event
+"marcar daily na sexta às 12h",create_event
+"agendar revisão sábado que vem às 10h",create_event
+"criar evento aula de yoga na sábado às 19h",create_event
+"adicionar evento revisão amanhã às 16h",create_event
+"book review on on Saturday at 14:30",create_event
+"marcar almoço com o time sexta que vem às 19h",create_event
+"agendar aula de yoga quinta que vem às 10h",create_event
+"adicionar evento aula de yoga na sexta às 14h",create_event
+"schedule demo next Friday at 1pm",create_event
+"create calendar entry yoga class next week Wednesday 7am",create_event
+"add event standup next Friday 7am",create_event
+"create calendar entry demo tomorrow 12:00",create_event
+"add event team lunch on Sunday 08:00",create_event
+"schedule review on tomorrow at 1pm",create_event
+"novo evento reunião de produto sexta que vem às 09:00",create_event
+"agendar reunião de produto na sexta às 19h",create_event
+"marcar plantão de dúvidas amanhã às 10h",create_event
+"agendar aula de yoga amanhã às 11h",create_event
+"marcar plantão de dúvidas sexta que vem às 12h",create_event
+"add event demo on Wednesday 12:00",create_event
+"criar evento aula de yoga amanhã às 12h",create_event
+"agendar café com Ana sexta que vem às 12h",create_event
+"add event coffee with Ana tomorrow 08:00",create_event
+"adicionar evento almoço com o time sexta que vem às 19h",create_event
+"marcar reunião de produto amanhã às 14h",create_event
+"marcar café com Ana sexta que vem às 10h",create_event
+"marcar aula de yoga sexta que vem às 16h",create_event
+"create event yoga class tomorrow 10:00",create_event
+"novo evento reunião de produto na quarta às 20h",create_event
+"book office hours on next Thursday at 4pm",create_event
+"marcar daily amanhã às 09:00",create_event
+"criar evento revisão amanhã às 16h",create_event
+"agendar almoço com o time na quinta às 20h",create_event
+"add event yoga class on Thursday 14:30",create_event
+"novo evento revisão amanhã às 10h",create_event
+"create event coffee with Ana tomorrow 16:00",create_event
+"marcar café com Ana sexta que vem às 19h",create_event
+"criar evento aula de yoga na próxima domingo às 16h",create_event
+"create event demo tomorrow 14:30",create_event
+"agendar almoço com o time na quinta às 19h",create_event
+"create calendar entry yoga class tomorrow 07:00",create_event
+"adicionar tarefa pagar contas amanhã",create_task
+"new task call mom tonight",create_task
+"adicionar tarefa regar as plantas dia 10",create_task
+"adicionar tarefa pagar contas no domingo de manhã",create_task
+"new task clean kitchen tonight",create_task
+"remind me to buy cat food tonight",create_task
+"lembre-me de regar as plantas amanhã",create_task
+"create a task clean kitchen on Sunday morning",create_task
+"lembre-me de atualizar currículo neste fim de semana",create_task
+"adicionar tarefa enviar relatório hoje à noite",create_task
+"new task call mom on the 5th",create_task
+"lembre-me de comprar ração amanhã",create_task
+"adicionar tarefa regar as plantas dia 10",create_task
+"adicionar tarefa enviar relatório amanhã",create_task
+"adicionar tarefa comprar ração no domingo de manhã",create_task
+"remind me to update resume on the 5th",create_task
+"add task update resume on Sunday morning",create_task
+"remind me to submit report this weekend",create_task
+"add task submit report tomorrow",create_task
+"new task water the plants on Sunday morning",create_task
+"create a task water the plants this weekend",create_task
+"lembre-me de regar as plantas no domingo de manhã",create_task
+"lembre-me de limpar a cozinha neste fim de semana",create_task
+"add task update resume tomorrow",create_task
+"new task pay rent on the 5th",create_task
+"adicionar tarefa regar as plantas no domingo de manhã",create_task
+"log task submit report tonight",create_task
+"log task buy cat food on the 5th",create_task
+"add task call mom this weekend",create_task
+"add task call mom on the 5th",create_task
+"log task call mom on Sunday morning",create_task
+"lembre-me de regar as plantas neste fim de semana",create_task
+"add task update resume on the 5th",create_task
+"add task submit report on Sunday morning",create_task
+"new task buy cat food on the 5th",create_task
+"tarefa: atualizar currículo hoje à noite",create_task
+"create a task pay rent on the 5th",create_task
+"create task water the plants this weekend",create_task
+"tarefa: ligar para o João hoje à noite",create_task
+"criar tarefa atualizar currículo amanhã",create_task
+"add task submit report on Sunday morning",create_task
+"tarefa: atualizar currículo hoje à noite",create_task
+"lembre-me de comprar ração neste fim de semana",create_task
+"create a task update resume tonight",create_task
+"add task pay rent on the 5th",create_task
+"adicionar tarefa regar as plantas no domingo de manhã",create_task
+"criar tarefa ligar para o João hoje à noite",create_task
+"create task pay rent on Sunday morning",create_task
+"postpone client meeting to next Sunday 08:00",reschedule_event
+"adiar reunião de hoje para hoje 9h",reschedule_event
+"remarcar reunião de hoje de qui 14h para hoje 20h",reschedule_event
+"remarcar reunião de hoje para hoje 16h",reschedule_event
+"postpone 1:1 to tomorrow 1pm",reschedule_event
+"shift board review from Tue 14:00 to Friday 10:00",reschedule_event
+"shift team lunch to today 07:00",reschedule_event
+"remarcar revisão do projeto de qui 14h para amanhã 14h",reschedule_event
+"change today's standup to Friday 14:00",reschedule_event
+"push today's standup to next Wednesday 10:00",reschedule_event
+"push coffee with Ana to today 5pm",reschedule_event
+"remarcar 1:1 para amanhã 16h",reschedule_event
+"push coffee with Ana to 2:30pm",reschedule_event
+"remarcar 1:1 de qua 14h para segunda que vem 9h",reschedule_event
+"reagendar café com Ana para segunda que vem 16h",reschedule_event
+"remarcar 1:1 de qui 9h para hoje 9h",reschedule_event
+"reagendar 1:1 para amanhã 14h",reschedule_event
+"reschedule client meeting to today 17:00",reschedule_event
+"push sprint planning to 07:00",reschedule_event
+"remarcar café com Ana de ter 10h para terça que vem 14h",reschedule_event
+"push board review to 5pm",reschedule_event
+"mover café com Ana para sexta 14h",reschedule_event
+"change today's standup to today 07:00",reschedule_event
+"reagendar daily para hoje 9h",reschedule_event
+"change client meeting to next Thursday 10:00",reschedule_event
+"reagendar 1:1 para sexta 9h",reschedule_event
+"remarcar reunião de hoje de qui 9h para quinta que vem 10h",reschedule_event
+"adiar almoço do time para sexta que vem 9h",reschedule_event
+"mover revisão do projeto para hoje 10h",reschedule_event
+"shift 1:1 from Thu 9am to next Tuesday 7am",reschedule_event
+"postpone sprint planning to tomorrow 4pm",reschedule_event
+"reschedule client meeting to tomorrow 11:00",reschedule_event
+"change sprint planning to today 9:30am",reschedule_event
+"reschedule client meeting to tomorrow 17:00",reschedule_event
+"shift team lunch to tomorrow 8pm",reschedule_event
+"adiar reunião de hoje para terça que vem 14h",reschedule_event
+"shift board review from Wed 14:00 to Friday 12:00",reschedule_event
+"mover reunião de hoje para hoje 14h",reschedule_event
+"shift sprint planning to today 09:30",reschedule_event
+"mudar reunião de hoje para amanhã 14h",reschedule_event
+"shift client meeting to tomorrow 1pm",reschedule_event
+"push team lunch to tomorrow 11:00",reschedule_event
+"mudar 1:1 para hoje 16h",reschedule_event
+"mudar café com Ana para hoje 9h",reschedule_event
+"reagendar revisão do projeto para sexta 16h",reschedule_event
+"push sprint planning to Friday 4pm",reschedule_event
+"adiar revisão do projeto para amanhã 14h",reschedule_event
+"remarcar revisão do projeto de ter 14h para sexta 16h",reschedule_event
+"remarcar a tarefa ligar para a mãe para domingo",reschedule_task
+"remarcar a tarefa limpar a cozinha para domingo",reschedule_task
+"adiar a tarefa comprar ração para domingo",reschedule_task
+"push the pay rent task to 9:30am",reschedule_task
+"remarcar a tarefa pagar contas para sábado de manhã",reschedule_task
+"adiar a tarefa lição de casa para 20h",reschedule_task
+"delay the call mom task by two hours",reschedule_task
+"remarcar a tarefa regar plantas para domingo",reschedule_task
+"move write report task to next Friday",reschedule_task
+"adiar a tarefa escrever relatório para amanhã de manhã",reschedule_task
+"mudar a tarefa comprar ração para domingo 17h",reschedule_task
+"adiar a tarefa regar plantas para 17h",reschedule_task
+"remarcar a tarefa ligar para a mãe para amanhã de manhã",reschedule_task
+"adiar a tarefa comprar ração para 18h",reschedule_task
+"adiar a tarefa limpar a cozinha para 21h",reschedule_task
+"adiar a tarefa comprar ração para sábado de manhã",reschedule_task
+"shift call mom to Saturday morning",reschedule_task
+"mover a tarefa escrever relatório para domingo",reschedule_task
+"mover a tarefa escrever relatório para amanhã de manhã",reschedule_task
+"adiar a tarefa regar plantas para 18h",reschedule_task
+"adiar a tarefa lição de casa para 17h",reschedule_task
+"shift clean kitchen to tomorrow afternoon",reschedule_task
+"push the grocery shopping task to 7am",reschedule_task
+"change the clean kitchen task to tomorrow afternoon",reschedule_task
+"change the clean kitchen task to Saturday morning 10am",reschedule_task
+"change the clean kitchen task to Saturday morning 08:00",reschedule_task
+"push the pay rent task to 8pm",reschedule_task
+"change the homework task to tonight",reschedule_task
+"delay the pay rent task by two hours",reschedule_task
+"remarcar a tarefa regar plantas para amanhã de manhã",reschedule_task
+"reschedule write report to Saturday morning",reschedule_task
+"move clean kitchen task to tomorrow afternoon",reschedule_task
+"mudar a tarefa pagar contas para sexta 18h",reschedule_task
+"delay the grocery shopping task by two hours",reschedule_task
+"adiar a tarefa lição de casa para 20h",reschedule_task
+"mudar a tarefa regar plantas para hoje à noite 20h",reschedule_task
+"reschedule the call mom task to next Friday",reschedule_task
+"mudar a tarefa limpar a cozinha para sábado de manhã 20h",reschedule_task
+"delay the homework task to next Friday",reschedule_task
+"delay the write report task to next Friday",reschedule_task
+"mudar a tarefa pagar contas para hoje à noite 20h",reschedule_task
+"delay the call mom task to tomorrow afternoon",reschedule_task
+"remarcar a tarefa regar plantas para sexta",reschedule_task
+"adiar a tarefa escrever relatório para sábado de manhã",reschedule_task
+"mover a tarefa regar plantas para sexta",reschedule_task
+"mover a tarefa comprar ração para sexta",reschedule_task
+"reschedule the grocery shopping task to tonight",reschedule_task
+"delay the call mom task to Saturday morning",reschedule_task
+"set event title to Quarterly Review",update_event
+"call this event Product Sync",update_event
+"rename event as Quarterly Review",update_event
+"rename event as Product Sync",update_event
+"mudar título do evento para Quarterly Review",update_event
+"definir título do evento como Product Sync",update_event
+"adicionar tag pessoal ao evento",update_event
+"definir título do evento como Team All-Hands",update_event
+"adicionar tag finance ao evento",update_event
+"renomear o evento para Quarterly Review",update_event
+"remove tag pessoal from the event",update_event
+"update event notes: bring printed copies",update_event
+"mudar título do evento para Product Sync",update_event
+"mudar título do evento para Design Review",update_event
+"add tag prioridade to the event",update_event
+"rename the event to Quarterly Review",update_event
+"mudar cor do evento para green",update_event
+"adicionar tag q3 ao evento",update_event
+"remove tag urgent from the event",update_event
+"remove tag prioridade from the event",update_event
+"renomear o evento para Team All-Hands",update_event
+"call this event Quarterly Review",update_event
+"remove tag prioridade from the event",update_event
+"adicionar tag urgent ao evento",update_event
+"atualizar título do evento para Product Sync",update_event
+"update event notes: bring printed copies",update_event
+"call this event Design Review",update_event
+"call this event Team All-Hands",update_event
+"definir título do evento como Product Sync",update_event
+"remover tag finance do evento",update_event
+"call this event Product Sync",update_event
+"definir local do evento para auditório",update_event
+"remove tag q3 from the event",update_event
+"mudar cor do evento para green",update_event
+"atualizar notas do evento: confirm attendance",update_event
+"add tag q3 to the event",update_event
+"call this event Product Sync",update_event
+"call this event Team All-Hands",update_event
+"mudar cor do evento para verde",update_event
+"renomear o evento para Product Sync",update_event
+"call this event Team All-Hands",update_event
+"call this event Product Sync",update_event
+"call this event Product Sync",update_event
+"set event title to Quarterly Review",update_event
+"adicionar tag pessoal ao evento",update_event
+"definir título do evento como Design Review",update_event
+"remover tag finance do evento",update_event
+"mudar título do evento para Team All-Hands",update_event
+"renomear tarefa read book para read 20 pages",update_task
+"definir prioridade da tarefa como baixa",update_task
+"update task title to read 20 pages",update_task
+"renomear tarefa pay bill para pay electricity bill",update_task
+"call this task buy dog food",update_task
+"atualizar título da tarefa para buy dog food",update_task
+"adicionar tag finance à tarefa pay rent",update_task
+"update task notes: include address",update_task
+"definir título da tarefa como read 20 pages",update_task
+"atualizar notas da tarefa: check coupon code",update_task
+"adicionar tag home à tarefa call mom",update_task
+"rename the task from pay bill to pay electricity bill",update_task
+"change task color to purple",update_task
+"add tag home to the call mom task",update_task
+"mudar cor da tarefa para laranja",update_task
+"rename the task from pay bill to pay electricity bill",update_task
+"remove tag finance from the read book task",update_task
+"atualizar título da tarefa para read 20 pages",update_task
+"change task color to gray",update_task
+"set task priority to medium",update_task
+"call this task pay electricity bill",update_task
+"atualizar título da tarefa para read 20 pages",update_task
+"atualizar notas da tarefa: include address",update_task
+"mudar cor da tarefa para cinza",update_task
+"adicionar tag pessoal à tarefa read book",update_task
+"adicionar tag home à tarefa call mom",update_task
+"rename the task from read book to read 20 pages",update_task
+"adicionar tag health à tarefa write report",update_task
+"adicionar tag work à tarefa pay rent",update_task
+"remove tag finance from the write report task",update_task
+"rename the task from read book to read 20 pages",update_task
+"definir título da tarefa como pay electricity bill",update_task
+"renomear tarefa read book para read 20 pages",update_task
+"atualizar título da tarefa para buy dog food",update_task
+"update task title to buy dog food",update_task
+"rename task read book to read 20 pages",update_task
+"rename the task from read book to read 20 pages",update_task
+"renomear tarefa read book para read 20 pages",update_task
+"atualizar título da tarefa para pay electricity bill",update_task
+"definir prioridade da tarefa como baixa",update_task
+"remove tag finance from the pay rent task",update_task
+"rename the task from pay bill to pay electricity bill",update_task
+"atualizar título da tarefa para read 20 pages",update_task
+"call this task pay electricity bill",update_task
+"call this task pay electricity bill",update_task
+"update task title to buy dog food",update_task
+"definir prioridade da tarefa como média",update_task
+"rename task read book to read 20 pages",update_task
+"planeje minha semana",plan_week
+"plan next week",plan_week
+"what should my week look like",plan_week
+"planejar semana priorizando manhãs",plan_week
+"organize my week",plan_week
+"organizar minha semana",plan_week
+"plan my week with focus blocks",plan_week
+"me ajude a planejar minha semana",plan_week
+"faça um plano semanal com exercícios",plan_week
+"help me plan my week",plan_week
+"ajudar a planejar minha semana",plan_week
+"how should I structure my week",plan_week
+"organizar minha semana com blocos de foco",plan_week
+"organize my week around mornings",plan_week
+"prepare week schedule",plan_week
+"ajudar a planejar meu dia",plan_day
+"planeje meu dia",plan_day
+"help me plan my day",plan_day
+"plan tomorrow",plan_day
+"me ajude a planejar meu dia",plan_day
+"organizar meu dia com blocos de foco",plan_day
+"what should my day look like",plan_day
+"planejar dia priorizando manhãs",plan_day
+"prepare day schedule",plan_day
+"planejar dia de trabalho",plan_day
+"me ajude a montar meu dia",plan_day
+"organize my day around mornings",plan_day
+"how should I structure my day",plan_day
+"organizar meu dia",plan_day
+"agenda do fim de semana",show_agenda
+"show agenda for tomorrow",show_agenda
+"what do I have scheduled on Saturday",show_agenda
+"qual é minha agenda à tarde",show_agenda
+"show agenda for next Thursday morning",show_agenda
+"exibir minha agenda de segunda",show_agenda
+"agenda do fim de semana",show_agenda
+"schedule on the 5th",show_agenda
+"agenda de sexta que vem",show_agenda
+"events on Wednesday night",show_agenda
+"meeting list for Tuesday",show_agenda
+"appointments on Tuesday",show_agenda
+"my schedule for next weekend",show_agenda
+"what’s planned for next Thursday morning",show_agenda
+"agenda for next Friday",show_agenda
+"agenda for today afternoon",show_agenda
+"agenda for the weekend",show_agenda
+"display my schedule for Monday",show_agenda
+"👏",unknown
+"nevermind",unknown
+"okay",unknown
+"just checking",unknown
+"beleza",unknown
+"forget it",unknown
+"boa tarde",unknown
+"kk",unknown
+"cool",unknown
+"good morning",unknown
+"valeu",unknown
+"beleza",unknown
+"thank you",unknown
+"valeu",unknown
+"are you there",unknown
+"cool",unknown
+"??",unknown
+"e aí",unknown
+"okay",unknown
+"olá",unknown
+"help",unknown
+"🙏",unknown
+"how does this work",unknown
+"…",unknown
+"¯\_(ツ)_/¯",unknown
+"boa noite",unknown
+"nice",unknown
+"👎",unknown
+"tudo bem",unknown
+"boa tarde",unknown
+"lol",unknown
+"👍",unknown

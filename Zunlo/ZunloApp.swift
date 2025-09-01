@@ -12,6 +12,7 @@ import Firebase
 import FlowNavigator
 import AdStack
 import Supabase
+import SmartParseKit
 
 typealias AppNav = AppNavigationManager<SheetRoute, FullScreenRoute, DialogRoute, StackRoute>
 
@@ -33,6 +34,10 @@ struct ZunloApp: App {
     
     init() {
         setupRealm()
+        
+//        let engine = IntentEngine.bundled() // IntentEngine(modelURL: Bundle.main.url(forResource: "ZunloIntents", withExtension: "mlmodelc"))
+//        let label = engine.classify("create task to buy cat food tomorrow")
+//        assert(label == .createTask || label == .createEvent || label == .updateReschedule) // whatever you expect
         
         let supabaseClient = SupabaseClient(
             supabaseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,

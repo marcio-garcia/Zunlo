@@ -1,0 +1,384 @@
+text,label
+"move tomorrow's sync to 16:00",reschedule_event
+"rebook standup from 9 to 9:30",reschedule_event
+"remarcar o kickoff para terça às 11h",reschedule_event
+"change Friday's demo to next week",reschedule_event
+
+"reschedule pay taxes task to Monday morning",reschedule_task
+"push the laundry task to tonight 20:00",reschedule_task
+"adiar a tarefa comprar frutas para sábado",reschedule_task
+"move study task to the weekend",reschedule_task
+
+"rename event to Quarterly Review",update_event
+"set event tags to finance, q3",update_event
+"atualizar local do evento para Zoom",update_event
+"change event color to purple",update_event
+
+"update task title to Buy cat litter",update_task
+"add tag health to the dentist task",update_task
+"remover tag pessoal da tarefa reunião",update_task
+"set task priority to low",update_task
+
+"schedule retro next Wed at 10am",create_event
+"criar evento revisão de produto quinta 14h",create_event
+"book dinner with team Friday 19:30",create_event
+"add event yoga class tomorrow 7am",create_event
+
+"add task renew passport this month",create_task
+"criar tarefa enviar faturas na terça",create_task
+"record task fix the leaky tap on Saturday",create_task
+"add task read 20 pages tonight",create_task
+
+"help me organize my week",plan_week
+"preciso planejar minha semana",plan_week
+
+"what do I have today",plan_day
+"mostrar compromissos de hoje",plan_day
+
+"agenda for next Thursday",show_agenda
+"mostrar agenda de amanhã de manhã",show_agenda
+
+"move the product sync to tomorrow at 10am",reschedule_event
+"rename the product sync to Product Review",update_event
+"schedule a product sync for tomorrow at 10am",create_event
+
+"reschedule team standup to 9:30",reschedule_event
+"update standup title to Engineering Standup",update_event
+"create event team standup at 9:30",create_event
+
+"shift client meeting from Tue 3pm to Wed 4pm",reschedule_event
+"change client meeting location to Zoom Room A",update_event
+"book client meeting on Wed at 4pm",create_event
+
+"postpone board review by one hour",reschedule_event
+"add tag finance to the board review",update_event
+"create event board review Friday 2pm",create_event
+
+"rebook coffee with Ana for next Friday 10:00",reschedule_event
+"update coffee with Ana notes: bring slides",update_event
+"add event coffee with Ana next Friday at 10:00",create_event
+
+"move kickoff to next Monday 14:00",reschedule_event
+"rename kickoff to Project Alpha Kickoff",update_event
+"schedule kickoff next Monday at 14:00",create_event
+
+"reschedule demo to today at 5pm",reschedule_event
+"set demo location to HQ cafeteria",update_event
+"create demo today at 5pm",create_event
+
+"change all-hands from 11am to noon",reschedule_event
+"update all-hands color to blue",update_event
+"create all-hands on Thursday at noon",create_event
+
+"push retro to Friday afternoon",reschedule_event
+"remove tag optional from retro",update_event
+"schedule retro on Friday 3pm",create_event
+
+"move 1:1 with Lucas to 16:00",reschedule_event
+"update 1:1 with Lucas title to Career Check-in",update_event
+"create event 1:1 with Lucas at 16:00",create_event
+
+"rebook design review for next Wed 11:30",reschedule_event
+"update design review description to 'final pass'",update_event
+"book design review next Wed at 11:30",create_event
+
+"shift office hours to tomorrow morning",reschedule_event
+"add tag support to office hours",update_event
+"create office hours tomorrow 10:00",create_event
+
+"adiar a reunião de produto para amanhã às 10h",reschedule_event
+"renomear a reunião de produto para Revisão de Produto",update_event
+"agendar reunião de produto para amanhã às 10h",create_event
+
+"remarcar o daily para 9h30",reschedule_event
+"atualizar título do daily para Daily Eng",update_event
+"criar evento daily às 9h30",create_event
+
+"mover o kickoff de terça 15h para quarta 16h",reschedule_event
+"mudar local do kickoff para Sala 12",update_event
+"marcar kickoff quarta às 16h",create_event
+
+"reagendar o café com Ana para sexta às 10h",reschedule_event
+"atualizar notas do café com Ana: levar pauta",update_event
+"criar evento café com Ana sexta às 10h",create_event
+
+"adiar a revisão trimestral em uma hora",reschedule_event
+"adicionar tag finanças à revisão trimestral",update_event
+"agendar revisão trimestral quinta 11h",create_event
+
+"remarcar a demo para hoje às 17h",reschedule_event
+"mudar cor da demo para azul",update_event
+"marcar demo hoje às 17h",create_event
+
+"mover o all-hands para meio-dia",reschedule_event
+"definir descrição do all-hands: alinhar OKRs",update_event
+"agendar all-hands quinta ao meio-dia",create_event
+
+"passar o 1:1 com Lucas para 16h",reschedule_event
+"renomear 1:1 com Lucas para Check-in de Carreira",update_event
+"criar evento 1:1 com Lucas às 16h",create_event
+
+"move planning meeting to next Tuesday 14:00",reschedule_event
+"set planning meeting tags to planning,q3",update_event
+"create planning meeting next Tuesday at 14:00",create_event
+
+"reschedule sprint review to 15:30",reschedule_event
+"update sprint review location to Auditorium",update_event
+"schedule sprint review Friday 15:30",create_event
+
+"push marketing sync to next week",reschedule_event
+"update marketing sync notes: focus on launch",update_event
+"create marketing sync next week Tuesday 10:00",create_event
+
+"rebook architecture chat for Monday 11:00",reschedule_event
+"change architecture chat color to purple",update_event
+"add event architecture chat Monday at 11:00",create_event
+
+"shift team lunch to 13:00",reschedule_event
+"update team lunch location to Restaurant X",update_event
+"book team lunch Friday 13:00",create_event
+
+"move quarterly review to next Thursday 10am",reschedule_event
+"rename quarterly review to Q3 Review",update_event
+"schedule quarterly review next Thursday 10am",create_event
+
+"remarcar a retrospectiva para sexta 15h",reschedule_event
+"remover tag opcional da retrospectiva",update_event
+"agendar retrospectiva sexta às 15h",create_event
+
+"mudar a revisão de design para quarta 11h30",reschedule_event
+"atualizar descrição da revisão de design: última rodada",update_event
+"marcar revisão de design quarta às 11h30",create_event
+
+"reagendar plantão de dúvidas para amanhã 10h",reschedule_event
+"adicionar tag suporte ao plantão de dúvidas",update_event
+"criar plantão de dúvidas amanhã às 10h",create_event
+
+"change meeting to 2pm",reschedule_event
+"change meeting to Product Sync",update_event
+"schedule meeting at 2pm",create_event
+
+"change kickoff to Wednesday 14:00",reschedule_event
+"change kickoff title to Project Alpha",update_event
+"create kickoff Wednesday 14:00",create_event
+
+"change team lunch to 1pm",reschedule_event
+"change team lunch location to Restaurant B",update_event
+"create team lunch at 1pm",create_event
+
+"change review to tomorrow 11h",reschedule_event
+"change review notes to include budget",update_event
+"create review tomorrow 11h",create_event
+
+"change demo to Friday at 3pm",reschedule_event
+"change demo color to green",update_event
+"schedule demo Friday 3pm",create_event
+
+"mudar reunião para terça às 10h",reschedule_event
+"mudar título da reunião para Revisão",update_event
+"agendar reunião terça às 10h",create_event
+
+"mudar daily para 9h30",reschedule_event
+"mudar local do daily para sala 12",update_event
+"criar daily às 9h30",create_event
+
+"mudar kickoff para quarta às 15h",reschedule_event
+"mudar descrição do kickoff: fase 2",update_event
+"marcar kickoff quarta às 15h",create_event
+
+"mudar retro para sexta às 16h",reschedule_event
+"mudar cor da retro para azul",update_event
+"agendar retro sexta às 16h",create_event
+
+"mudar call com cliente para amanhã 14h",reschedule_event
+"mudar notas do call com cliente: enviar contrato",update_event
+"criar call com cliente amanhã 14h",create_event
+
+"change event to Monday 10am",reschedule_event
+"change event tag to urgent",update_event
+"create event Monday 10am",create_event
+
+"change sync to Thursday afternoon",reschedule_event
+"change sync description to 'review backlog'",update_event
+"schedule sync Thursday afternoon",create_event
+
+"change standup to 8:30",reschedule_event
+"change standup title to Morning Standup",update_event
+"create standup 8:30",create_event
+
+"change product review to 5pm",reschedule_event
+"change product review notes: finalize slides",update_event
+"create product review 5pm",create_event
+
+"mudar demo para amanhã às 15h",reschedule_event
+"mudar tag da demo para urgente",update_event
+"criar demo amanhã às 15h",create_event
+
+"mudar almoço do time para sexta 12h",reschedule_event
+"mudar local do almoço do time para restaurante X",update_event
+"marcar almoço do time sexta 12h",create_event
+
+"ok",unknown
+"thanks a lot",unknown
+"beleza",unknown
+"e aí",unknown
+"hi",unknown
+"hey",unknown
+"hello",unknown
+"good morning",unknown
+"good night",unknown
+"yo",unknown
+"sup",unknown
+"hola",unknown
+"olá",unknown
+"oi",unknown
+"e aí",unknown
+"beleza",unknown
+"bom dia",unknown
+"boa tarde",unknown
+"boa noite",unknown
+
+"ok",unknown
+"okay",unknown
+"kk",unknown
+"k",unknown
+"ok ok",unknown
+"alright",unknown
+"beleza!",unknown
+"show",unknown
+"fechou",unknown
+"tá bom",unknown
+"tá",unknown
+"tá certo",unknown
+"pode ser",unknown
+"blz",unknown
+
+"thanks",unknown
+"thank you",unknown
+"thx",unknown
+"ty",unknown
+"much appreciated",unknown
+"valeu",unknown
+"obrigado",unknown
+"brigado",unknown
+"obg",unknown
+"muito obrigado",unknown
+
+"yes",unknown
+"yeah",unknown
+"yep",unknown
+"sure",unknown
+"affirmative",unknown
+"sim",unknown
+"isso",unknown
+"claro",unknown
+"pode",unknown
+"com certeza",unknown
+
+"no",unknown
+"nope",unknown
+"nah",unknown
+"negative",unknown
+"não",unknown
+"nem",unknown
+"deixa",unknown
+"agora não",unknown
+
+"maybe",unknown
+"not sure",unknown
+"i don't know",unknown
+"idk",unknown
+"talvez",unknown
+"não sei",unknown
+"acho que sim",unknown
+"acho que não",unknown
+
+"great",unknown
+"nice",unknown
+"cool",unknown
+"awesome",unknown
+"perfeito",unknown
+"ótimo",unknown
+"massa",unknown
+"top",unknown
+"show de bola",unknown
+
+"please",unknown
+"por favor",unknown
+"pf",unknown
+"pls",unknown
+"thanks please",unknown
+
+"lol",unknown
+"lmao",unknown
+"haha",unknown
+"hehe",unknown
+"kkk",unknown
+"rs",unknown
+
+":)",unknown
+":D",unknown
+";)",unknown
+":P",unknown
+":(",unknown
+"¯\\_(ツ)_/¯",unknown
+"👍",unknown
+"👎",unknown
+"🙏",unknown
+"👏",unknown
+"✅",unknown
+"❌",unknown
+"🤷‍♂️",unknown
+"🤷‍♀️",unknown
+"👌",unknown
+"🙂",unknown
+"🙃",unknown
+"😅",unknown
+"😐",unknown
+"😴",unknown
+
+"hi there",unknown
+"just checking",unknown
+"are you there",unknown
+"vc tá aí",unknown
+"tem alguém aí",unknown
+"tá me ouvindo",unknown
+"ping",unknown
+"pong",unknown
+
+"what do you do",unknown
+"who are you",unknown
+"help",unknown
+"ajuda",unknown
+"como funciona",unknown
+"how does this work",unknown
+"test",unknown
+"teste",unknown
+"testing",unknown
+
+"nevermind",unknown
+"forget it",unknown
+"deixa pra lá",unknown
+"tanto faz",unknown
+"não importa",unknown
+
+"one sec",unknown
+"hold on",unknown
+"pera",unknown
+"só um minuto",unknown
+"brb",unknown
+"já volto",unknown
+
+"cool, thanks",unknown
+"beleza, valeu",unknown
+"ok thanks",unknown
+"obrigado!",unknown
+"valeu!",unknown
+
+"?",unknown
+"...",unknown
+"!!!",unknown
+"??",unknown
+"???",unknown
+"!!!??",unknown
+
