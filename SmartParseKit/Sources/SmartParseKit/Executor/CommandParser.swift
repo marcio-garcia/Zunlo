@@ -29,7 +29,7 @@ public final class CommandParser {
         
         // Dates & ranges
         let dateResult = extractDates(raw, locale: Locale(identifier: language.rawValue))
-        var when: Date? = dateResult.dates.first
+        let when: Date? = dateResult.dates.first
         var end: Date?
         var dateRange: Range<Date>?
         
@@ -51,7 +51,7 @@ public final class CommandParser {
         
         // Reschedule destination time (usually the last time mentioned)
         var newTime: Date?
-        if intent == .updateReschedule {
+        if intent == .rescheduleEvent {
             newTime = dateResult.dates.last ?? when
         }
         

@@ -42,7 +42,9 @@ public final class IntentEngine {
         
         if lower.contains("new event") || lower.starts(with: "create event") || lower.starts(with: "criar evento") || lower.starts(with: "agendar") { return .createEvent }
         
-        if lower.contains("reschedule") || lower.contains("move") || lower.contains("postpone") || lower.contains("remarcar") || lower.contains("mover") || lower.contains("adiar") { return .updateReschedule }
+        if lower.contains("reschedule task") || lower.contains("move task") || lower.contains("postpone task") || lower.contains("remarcar tarefa") || lower.contains("mover tarefa") || lower.contains("adiar tarefa") { return .rescheduleTask }
+        
+        if lower.contains("reschedule event") || lower.contains("move event") || lower.contains("postpone event") || lower.contains("remarcar evento") || lower.contains("mover evento") || lower.contains("adiar evento") { return .rescheduleEvent }
         
         if lower.contains("agenda") { return .showAgenda }
         return .unknown

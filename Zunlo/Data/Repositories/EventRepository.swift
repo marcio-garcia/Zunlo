@@ -71,6 +71,11 @@ final public class EventRepository {
         }
     }
     
+    func fetchOccurrences(id: UUID) async throws -> EventOccurrence? {
+        let occResp = try await eventLocalStore.fetchOccurrences(id: id)
+        return occResp.map { EventOccurrence(occ: $0) }
+    }
+    
     func fetchEvent(by id: UUID) async throws -> Event? {
         if let event = try await eventLocalStore.fetch(id: id) {
             return Event(local: event)
@@ -99,11 +104,11 @@ final public class EventRepository {
     }
     
     private func fetchLocalRules() async throws -> [RecurrenceRule] {
-        try await recurrenceRuleLocalStore.fetchAll()
+        try await recurrenceRuleLocalStore.fetchAll().map { RecurrenceRule(local: $0) }
     }
     
     private func fetchLocalOverrides() async throws -> [EventOverride] {
-        try await eventOverrideLocalStore.fetchAll()
+        try await eventOverrideLocalStore.fetchAll().map { EventOverride(local: $0) }
     }
 
     // MARK: - CRUD for Events

@@ -14,15 +14,13 @@ public struct RescheduleHints {
     public var keywords: [String]
 }
 
-
-public func selectEventToReschedule<E: EventLike>(events: [E], hints: RescheduleHints, calendar: Calendar = .current) -> E? {
+public func selectEventToReschedule<E: EventType>(events: [E], hints: RescheduleHints, calendar: Calendar = .current) -> E? {
     guard !events.isEmpty else { return nil }
     let ranked = events.map { ($0, score(event: $0, hints: hints, calendar: calendar)) }.sorted { $0.1 > $1.1 }
     return ranked.first?.0
 }
 
-
-private func score<E: EventLike>(event: E, hints: RescheduleHints, calendar: Calendar) -> Double {
+private func score<E: EventType>(event: E, hints: RescheduleHints, calendar: Calendar) -> Double {
     var score: Double = 0
     let title = event.title.lowercased()
     for kw in hints.keywords { if title.contains(kw) { score += 0.6 } }

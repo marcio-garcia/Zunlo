@@ -20,6 +20,10 @@ final class TaskEditor: TaskEditorService {
     func upsert(input: AddTaskInput) async throws {
         try await repo.upsert(makeUserTask(input))
     }
+    
+    func upsert(task: UserTask) async throws {
+        try await repo.upsert(task)
+    }
 
     func delete(task: UserTask) async throws {
         try await repo.delete(task)

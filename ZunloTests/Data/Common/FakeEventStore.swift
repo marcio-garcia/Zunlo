@@ -18,4 +18,8 @@ final class FakeEventFetcher: EventFetcherService {
     func fetchOccurrences(for userId: UUID) async throws -> [Zunlo.EventOccurrence] {
         return events
     }
+    
+    func fetchOccurrences(id: UUID) async throws -> Zunlo.EventOccurrence? {
+        return events.first { $0.id == id }
+    }
 }

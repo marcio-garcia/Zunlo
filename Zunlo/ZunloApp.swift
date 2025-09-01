@@ -35,10 +35,6 @@ struct ZunloApp: App {
     init() {
         setupRealm()
         
-//        let engine = IntentEngine.bundled() // IntentEngine(modelURL: Bundle.main.url(forResource: "ZunloIntents", withExtension: "mlmodelc"))
-//        let label = engine.classify("create task to buy cat food tomorrow")
-//        assert(label == .createTask || label == .createEvent || label == .updateReschedule) // whatever you expect
-        
         let supabaseClient = SupabaseClient(
             supabaseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
             supabaseKey: EnvConfig.shared.apiKey
@@ -92,17 +88,6 @@ struct ZunloApp: App {
             calendar: Calendar.appDefault,
             taskFetcher: UserTaskFetcher(repo: taskRepo)
         )
-        
-//        let state = AppState(
-//            authManager: authManager,
-//            supabase: supabase,
-//            locationService: locationService,
-//            pushNotificationService: pushService,
-//            adManager: adManager,
-//            eventRepository: eventRepo,
-//            userTaskRepository: taskRepo,
-//            chatRepository: chatRepo
-//        )
         
         self.appState = AppState.shared
         

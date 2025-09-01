@@ -12,11 +12,11 @@ final class RealmEventOverrideLocalStore: EventOverrideLocalStore {
     private let db: DatabaseActor
     init(db: DatabaseActor) { self.db = db }
 
-    func fetchAll() async throws -> [EventOverride] {
+    func fetchAll() async throws -> [EventOverrideLocal] {
         try await db.fetchAllEventOverrides()
     }
 
-    func fetch(for eventId: UUID) async throws -> [EventOverride] {
+    func fetch(for eventId: UUID) async throws -> [EventOverrideLocal] {
         try await db.fetchOverrides(for: eventId)
     }
 

@@ -39,7 +39,7 @@ extension EventOccurrenceResponse {
         self.start_datetime = e.startDate
         self.end_datetime = e.endDate
         self.is_recurring = e.isRecurring
-        self.location = (e.location ?? "") + (e.deletedAt?.description ?? "")
+        self.location = e.location
         self.created_at = e.createdAt
         self.updated_at = e.updatedAt
         self.color = e.color?.rawValue

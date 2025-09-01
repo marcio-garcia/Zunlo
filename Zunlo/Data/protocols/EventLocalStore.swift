@@ -20,6 +20,7 @@ protocol EventLocalStore {
     func deleteAll() async throws
     func apply(rows: [EventRemote]) async throws
     func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrenceResponse]
+    func fetchOccurrences(id: UUID) async throws -> EventOccurrenceResponse?
     func splitRecurringEvent(
         originalEventId: UUID,
         splitDate: Date,

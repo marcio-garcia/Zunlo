@@ -8,8 +8,8 @@
 import Foundation
 
 protocol RecurrenceRuleLocalStore {
-    func fetchAll() async throws -> [RecurrenceRule]
-    func fetch(for eventId: UUID) async throws -> [RecurrenceRule]
+    func fetchAll() async throws -> [RecurrenceRuleLocal]
+    func fetch(for eventId: UUID) async throws -> [RecurrenceRuleLocal]
     func save(_ rule: RecurrenceRuleRemote) async throws
     func save(_ domain: RecurrenceRule) async throws
     func upsert(_ remote: RecurrenceRuleRemote) async throws

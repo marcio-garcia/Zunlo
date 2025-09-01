@@ -239,6 +239,7 @@ final class AddEditEventViewModel: ObservableObject {
     private func makeInput() -> AddEventInput {
         var untilDate = showUntil ? until : nil
         return AddEventInput(
+            id: UUID(), // Not used by EventEditor
             userId: userId,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             notes: notes,

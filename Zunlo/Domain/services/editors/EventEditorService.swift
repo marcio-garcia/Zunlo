@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SmartParseKit
 
 // Use cases your VM and Quick Add can both call.
 protocol EventEditorService {
@@ -19,6 +20,7 @@ protocol EventEditorService {
 
 // DTOs decouple UI from domain defaults/validation
 struct AddEventInput {
+    var id: UUID
     var userId: UUID
     var title: String
     var notes: String?
@@ -37,5 +39,7 @@ struct AddEventInput {
     var count: Int?
     var isCancelled: Bool
 }
+
+extension AddEventInput: EventType {}
 
 typealias EditEventInput = AddEventInput

@@ -69,6 +69,10 @@ extension RealmEventLocalStore {
         return try await db.fetchOccurrences(userId: userId)
     }
     
+    func fetchOccurrences(id: UUID) async throws -> EventOccurrenceResponse? {
+        return try await db.fetchOccurrences(id: id)
+    }
+    
     func splitRecurringEvent(
         originalEventId: UUID,
         splitDate: Date,

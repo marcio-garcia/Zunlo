@@ -9,6 +9,7 @@ import Foundation
 
 protocol TaskEditorService {
     func upsert(input: AddTaskInput) async throws
+    func upsert(task: UserTask) async throws
     func delete(task: UserTask) async throws
 }
 

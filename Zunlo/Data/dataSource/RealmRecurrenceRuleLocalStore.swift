@@ -12,11 +12,11 @@ final class RealmRecurrenceRuleLocalStore: RecurrenceRuleLocalStore {
     private let db: DatabaseActor
     init(db: DatabaseActor) { self.db = db }
 
-    func fetchAll() async throws -> [RecurrenceRule] {
+    func fetchAll() async throws -> [RecurrenceRuleLocal] {
         try await db.fetchAllRecurrenceRules()
     }
 
-    func fetch(for eventId: UUID) async throws -> [RecurrenceRule] {
+    func fetch(for eventId: UUID) async throws -> [RecurrenceRuleLocal] {
         try await db.fetchRecurrenceRules(for: eventId)
     }
 

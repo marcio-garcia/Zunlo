@@ -8,6 +8,7 @@
 import SwiftUI
 import GlowUI
 import ZunloHelpers
+import SmartParseKit
 
 // MARK: - ViewModel (UI-focused)
 
@@ -32,6 +33,7 @@ public final class ChatViewModel: ObservableObject {
     private let calendar: Calendar
 
     private let rebuildDebouncer = Debouncer()
+    private let nlpService: NLService
     
     let markdownConverterConfig = MarkdownConverterConfig(
         heading1Font: AppFontStyle.title.font(),
@@ -48,11 +50,13 @@ public final class ChatViewModel: ObservableObject {
         conversationId: UUID,
         engine: ChatEngine,
         repo: ChatRepository,
+        nlpService: NLService,
         calendar: Calendar
     ) {
         self.conversationId = conversationId
         self.engine = engine
         self.repo = repo
+        self.nlpService = nlpService
         self.calendar = calendar
     }
 
@@ -104,12 +108,18 @@ public final class ChatViewModel: ObservableObject {
         rebuildSections()
 
         // 2) Start engine stream and react to events
-        let historySnapshot = messages // pass snapshot to engine
-        Task { [weak self] in
-            guard let self else { return }
-            let stream = await engine.startStream(history: historySnapshot, userMessage: userMessage)
-            for await ev in stream { await self.consume(ev) }
-        }
+//        let historySnapshot = messages // pass snapshot to engine
+//        Task { [weak self] in
+//            guard let self else { return }
+//            let stream = await engine.startStream(history: historySnapshot, userMessage: userMessage)
+//            for await ev in stream { await self.consume(ev) }
+//        }
+        
+        // Call NLP
+        
+        let result = await nlpService.process(text: trimmed)
+        print(result)
+        isGenerating = false
     }
 
     public func stopGeneration() {
@@ -185,7 +195,7 @@ public final class ChatViewModel: ObservableObject {
             case .idle:
                 print("IDLE:")
                 isGenerating = false
-            case .streaming(let assistantId):
+            case .streaming(let assistantId, _):
                 print("STREAMING - assistent id: \(assistantId)")
                 isGenerating = true
             case .awaitingTools(let responseId, let assistantId):

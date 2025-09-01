@@ -7,6 +7,7 @@
 
 import SwiftUI
 import RealmSwift
+import SmartParseKit
 
 public enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertible {
     case low = 0, medium = 1, high = 2
@@ -156,6 +157,8 @@ extension UserTask: SchedulableReminderItem {
     var dueDateForReminder: Date? { dueDate }
 }
 
+extension UserTask: TaskType {}
+
 extension UserTask {
     init(local: UserTaskLocal) {
         self.id = local.id
@@ -183,7 +186,7 @@ extension UserTask {
         self.title = remote.title
         self.notes = remote.notes
         self.isCompleted = remote.isCompleted
-        self.createdAt = remote.createdAt ?? Date()
+        self.createdAt = remote.createdAt
         self.updatedAt = remote.updatedAt
         self.dueDate = remote.dueDate
         self.priority = remote.priority

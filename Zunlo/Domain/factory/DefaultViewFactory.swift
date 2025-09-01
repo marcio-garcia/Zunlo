@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SmartParseKit
 
 protocol ViewFactory {
     func makeMainViewModel() -> MainViewModel
@@ -81,10 +82,20 @@ final class DefaultViewFactory: ViewFactory {
             ai: aiChatService,
             tools: aiToolRouter,
             repo: appState.chatRepository!)
+        
+        let engine = IntentEngine.bundled()
+        let parser = CommandParser(engine: engine)
+        let taskStore = SPTaskStore(taskRepo: appState.userTaskRepository!, auth: appState.authManager!)
+        let eventStore = SPEventStore(fetcher: EventFetcher(repo: appState.eventRepository!),
+                                      editor: EventEditor(repo: appState.eventRepository!),
+                                      auth: appState.authManager!)
+        let executor = AnyCommandExecutor(tasks: taskStore, events: eventStore)
+        let nlpService = NLService(parser: parser, executor: executor, engine: engine)
         return ChatViewModel(
             conversationId: cid,
             engine: aiChatEngine,
             repo: appState.chatRepository!,
+            nlpService: nlpService,
             calendar: calendar
         )
     }

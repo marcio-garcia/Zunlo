@@ -290,20 +290,36 @@ public actor DatabaseActor: ConflictDB {
                                     rules: rrsByEvent[e.id] ?? [])
         }
     }
+    
+    func fetchOccurrences(id: UUID) throws -> EventOccurrenceResponse? {
+        let realm = try openRealm()
+        
+        // 1) Events for user, ordered deterministically
+        guard let event = realm.object(ofType: EventLocal.self, forPrimaryKey: id) else {
+            return nil
+        }
+        
+        let overrides = try fetchOverrides(for: id)
+        let rules = try fetchRecurrenceRules(for: id)
+        
+        return EventOccurrenceResponse(local: event,
+                                       overrides: overrides,
+                                       rules: rules)
+    }
 
     // --------------------------------------------------------
     // MARK: Event Overrides
     // --------------------------------------------------------
 
-    func fetchAllEventOverrides() throws -> [EventOverride] {
+    func fetchAllEventOverrides() throws -> [EventOverrideLocal] {
         let realm = try openRealm()
-        return realm.objects(EventOverrideLocal.self).map { EventOverride(local: $0) }
+        return realm.objects(EventOverrideLocal.self).map { $0 }
     }
 
-    func fetchOverrides(for eventId: UUID) throws -> [EventOverride] {
+    func fetchOverrides(for eventId: UUID) throws -> [EventOverrideLocal] {
         let realm = try openRealm()
         let results = realm.objects(EventOverrideLocal.self).where { $0.eventId == eventId }
-        return results.map { EventOverride(local: $0) }
+        return results.map { $0 }
     }
 
     func upsertOverride(from remote: EventOverrideRemote) throws {
@@ -349,15 +365,15 @@ public actor DatabaseActor: ConflictDB {
     // MARK: Recurrence Rules
     // --------------------------------------------------------
 
-    func fetchAllRecurrenceRules() throws -> [RecurrenceRule] {
+    func fetchAllRecurrenceRules() throws -> [RecurrenceRuleLocal] {
         let realm = try openRealm()
-        return realm.objects(RecurrenceRuleLocal.self).map { RecurrenceRule(local: $0) }
+        return realm.objects(RecurrenceRuleLocal.self).map { $0 }
     }
 
-    func fetchRecurrenceRules(for eventId: UUID) throws -> [RecurrenceRule] {
+    func fetchRecurrenceRules(for eventId: UUID) throws -> [RecurrenceRuleLocal] {
         let realm = try openRealm()
         let results = realm.objects(RecurrenceRuleLocal.self).where { $0.eventId == eventId }
-        return results.map { RecurrenceRule(local: $0) }
+        return results.map { $0 }
     }
 
     func upsertRecurrenceRule(from remote: RecurrenceRuleRemote) throws {

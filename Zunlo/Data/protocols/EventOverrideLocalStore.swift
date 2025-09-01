@@ -8,8 +8,8 @@
 import Foundation
 
 protocol EventOverrideLocalStore {
-    func fetchAll() async throws -> [EventOverride]
-    func fetch(for eventId: UUID) async throws -> [EventOverride]
+    func fetchAll() async throws -> [EventOverrideLocal]
+    func fetch(for eventId: UUID) async throws -> [EventOverrideLocal]
     func save(_ overrideRemote: EventOverrideRemote) async throws
     func save(_ override: EventOverride) async throws
     func upsert(_ remote: EventOverrideRemote) async throws
