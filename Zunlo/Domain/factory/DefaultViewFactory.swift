@@ -88,7 +88,8 @@ final class DefaultViewFactory: ViewFactory {
         let taskStore = SPTaskStore(taskRepo: appState.userTaskRepository!, auth: appState.authManager!)
         let eventStore = SPEventStore(fetcher: EventFetcher(repo: appState.eventRepository!),
                                       editor: EventEditor(repo: appState.eventRepository!),
-                                      auth: appState.authManager!)
+                                      auth: appState.authManager!,
+                                      aiToolRouter: aiToolRouter)
         let executor = AnyCommandExecutor(tasks: taskStore, events: eventStore)
         let nlpService = NLService(parser: parser, executor: executor, engine: engine)
         return ChatViewModel(

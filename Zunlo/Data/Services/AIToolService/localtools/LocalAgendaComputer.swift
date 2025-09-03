@@ -21,7 +21,21 @@ final class LocalAgendaComputer: AgendaComputing {
     func computeAgenda(range: Range<Date>, timezone: TimeZone) async throws -> GetAgendaResult {
         let events = try await toolRepo.fetchOccurrences(userId: userId)
         let occs = try EventOccurrenceService.generate(rawOccurrences: events, in: range, addFakeToday: false)
-        let tasks = try await toolRepo.fetchTasks(range: range)
+        
+        var tasks: [UserTask]
+        let today = Date().startOfDay()
+        let tomorrow = today.startOfNextDay()
+        let afterTomorrow = tomorrow.startOfNextDay()
+        
+        let isToday = today == range.lowerBound && tomorrow == range.upperBound
+        let isTomorrow = tomorrow == range.lowerBound && afterTomorrow == range.upperBound
+        
+        if isToday || isTomorrow {
+            let filter = TaskFilter(isCompleted: false, untilDueDate: range.upperBound, deleted: false)
+            tasks = try await toolRepo.fetchTasks(filter: filter)
+        } else {
+            tasks = try await toolRepo.fetchTasks(range: range)
+        }
 
         // 5) map → Agenda items; sort
         var items: [AgendaItem] = []

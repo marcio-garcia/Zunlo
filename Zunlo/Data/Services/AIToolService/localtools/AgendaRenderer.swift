@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import GlowUI
 
 // MARK: - Agenda Rendering
 
@@ -47,11 +48,11 @@ public struct AgendaRenderer {
             }
 
         // -------- Styles
-        var hdr  = AttributeContainer(); hdr.font  = .system(.title3, design: .rounded).weight(.semibold)
-        var sec  = AttributeContainer(); sec.font  = .system(.headline, design: .rounded)
-        var time = AttributeContainer(); time.font = .system(.subheadline); time.foregroundColor = .secondary
-        var ttl  = AttributeContainer(); ttl.font  = .system(.body).weight(.semibold)
-        var meta = AttributeContainer(); meta.font = .system(.footnote);   meta.foregroundColor = .secondary
+        var hdr  = AttributeContainer(); hdr.font  = AppFontStyle.subtitle.uiFont() // .system(.title3, design: .rounded).weight(.semibold)
+        var sec  = AttributeContainer(); sec.font  = AppFontStyle.heading.uiFont() // .system(.headline, design: .rounded)
+        var time = AttributeContainer(); time.font = AppFontStyle.body.uiFont() // .system(.subheadline); time.foregroundColor = .secondary
+        var ttl  = AttributeContainer(); ttl.font  = AppFontStyle.strongBody.uiFont() // .system(.body).weight(.semibold)
+        var meta = AttributeContainer(); meta.font = AppFontStyle.callout.uiFont() // .system(.footnote);   meta.foregroundColor = .secondary
 
         // Helper
         @inline(__always)
@@ -122,17 +123,21 @@ public struct AgendaRenderer {
                 var title = AttributedString(tsk.title)
                 title.setAttributes(ttl)
 
-                var due = AttributedString(" — due \(dueStr)")
-                due.setAttributes(time)
+                var due = AttributedString("   • due \(dueStr)")
+                due.setAttributes(meta)
 
-                out += num + pri + title + due
+                out += num + pri + title
                 out += line("")
+                out += due
+                out += line("") + line("")
             }
         }
 
         if events.isEmpty && tasks.isEmpty {
             var empty = AttributedString("No items in this range.")
-            var emptyStyle = AttributeContainer(); emptyStyle.font = .system(.body); emptyStyle.foregroundColor = .secondary
+            var emptyStyle = AttributeContainer()
+            emptyStyle.font = AppFontStyle.body.uiFont() // .system(.body)
+            emptyStyle.foregroundColor = .secondary
             empty.setAttributes(emptyStyle)
             out += empty
             out += line("")

@@ -11,19 +11,23 @@ import SmartParseKit
 final class SPEventStore: EventStore {
 
     typealias E = AddEventInput
+    typealias A = ToolDispatchResult
     
     private let fetcher: EventFetcherService
     private let editor: EventEditorService
     private let auth: AuthProviding
+    private let aiToolRouter: AIToolRouter
     
     init(
         fetcher: EventFetcherService,
         editor: EventEditorService,
-        auth: AuthProviding
+        auth: AuthProviding,
+        aiToolRouter: AIToolRouter
     ) {
         self.fetcher = fetcher
         self.editor = editor
         self.auth = auth
+        self.aiToolRouter = aiToolRouter
     }
 
     @discardableResult
@@ -79,6 +83,48 @@ final class SPEventStore: EventStore {
     }
     
     func events(in range: Range<Date>) async throws -> [AddEventInput] {
-        []
+        guard await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        let rawOcc = try await fetcher.fetchOccurrences(for: userId)
+        let occ = try EventOccurrenceService.generate(rawOccurrences: rawOcc, in: range, addFakeToday: false)
+        return []
+    }
+    
+    func agenda(in range: Range<Date>) async throws -> A {
+        var agendaRange: GetAgendaArgs.DateRange = .custom
+        let today = Date().startOfDay()
+        let tomorrow = today.startOfNextDay()
+        let afterTomorrow = tomorrow.startOfNextDay()
+        
+        if range == today..<tomorrow {
+            agendaRange = .today
+        } else if range == tomorrow..<afterTomorrow {
+            agendaRange = .tomorrow
+        } else if range.lowerBound.daysInterval(to: range.upperBound) == 7 {
+            agendaRange = .week
+        }
+        
+        let agendaArgs = GetAgendaArgs(dateRange: agendaRange, start: range.lowerBound, end: range.upperBound)
+        
+        do {
+            let args = try JSONEncoder.makeEncoder().encode(agendaArgs)
+            if let argsJSON = String(data: args, encoding: .utf8) {
+                let toolEnvelope = AIToolEnvelope(name: "getAgenda", argsJSON: argsJSON)
+                let result = try await aiToolRouter.dispatch(toolEnvelope)
+                return result
+            }
+        } catch {
+            print(error)
+        }
+        return ToolDispatchResult(note: "")
+    }
+}
+
+extension ToolDispatchResult: AgendaType {
+    public var attributedAgenda: AttributedString? {
+        return self.attributedText
+    }
+    
+    public var agenda: String {
+        return self.note
     }
 }

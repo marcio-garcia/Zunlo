@@ -27,10 +27,12 @@ public struct ChatInsert {
 
 public struct ToolDispatchResult {
     public let note: String            // short note that the model sees
+    public let attributedText: AttributedString?
     public let ui: ChatInsert?         // optional chat bubble to insert
     
-    public init(note: String, ui: ChatInsert? = nil) {
+    public init(note: String, attributedText: AttributedString? = nil,  ui: ChatInsert? = nil) {
         self.note = note
+        self.attributedText = attributedText
         self.ui = ui
     }
 }
@@ -214,7 +216,7 @@ public class AIToolRouter: ToolRouter {
                     .sendAttachmentToAI(attachment.id)
                 ]
             )
-            return ToolDispatchResult(note: result.text, ui: ui)
+            return ToolDispatchResult(note: result.text, attributedText: result.attributed, ui: ui)
 
         case "planWeek":
             var args = try? JSONDecoder.makeDecoder().decode(PlanWeekArgs.self, from: Data(normalizedArgsJSON.utf8))

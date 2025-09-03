@@ -516,6 +516,18 @@ public actor DatabaseActor: ConflictDB {
         if let range = filter?.dueDateRange {
             predicates.append(NSPredicate(format: "dueDate >= %@ AND dueDate <= %@", range.lowerBound as NSDate, range.upperBound as NSDate))
         }
+        if let untilDueDate = filter?.untilDueDate {
+            predicates.append(NSPredicate(format: "dueDate <= %@", untilDueDate as NSDate))
+        }
+        if let deleted = filter?.deleted {
+            if deleted {
+                // Fetch only deleted rows
+                predicates.append(NSPredicate(format: "deletedAt != nil"))
+            } else {
+                // Fetch only non-deleted rows
+                predicates.append(NSPredicate(format: "deletedAt == nil"))
+            }
+        }
 
         var query = realm.objects(UserTaskLocal.self)
         if !predicates.isEmpty {
@@ -1089,19 +1101,20 @@ extension DatabaseActor {
 
 extension DatabaseActor {
     private static func apply(domain: ChatMessage, to obj: ChatMessageLocal, in realm: Realm) {
-        let local = ChatMessageLocal(from: domain)
-        obj.conversationId = local.conversationId
-        obj.roleRaw = local.roleRaw
-        obj.rawText = local.rawText
-        obj.createdAt = local.createdAt
-        obj.statusRaw = local.statusRaw
-        obj.format = local.format
-        obj.userId = local.userId
-        obj.parentId = local.parentId
-        obj.errorDescription = local.errorDescription
+        let temp = ChatMessageLocal(from: domain)
+        obj.conversationId = temp.conversationId
+        obj.roleRaw = temp.roleRaw
+        obj.rawText = temp.rawText
+        obj.richText = temp.richText
+        obj.createdAt = temp.createdAt
+        obj.statusRaw = temp.statusRaw
+        obj.format = temp.format
+        obj.userId = temp.userId
+        obj.parentId = temp.parentId
+        obj.errorDescription = temp.errorDescription
         obj.attachments.removeAll()
-        obj.attachments = local.attachments
-        obj.actions = local.actions
+        obj.attachments = temp.attachments
+        obj.actions = temp.actions
     }
 
     /// Update conversation `updatedAt`, `lastMessageAt`, and `lastMessagePreview`.

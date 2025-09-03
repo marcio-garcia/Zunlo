@@ -27,13 +27,15 @@ public final class IntentEngine {
     }
 
     public func classify(_ text: String) -> UserIntent {
-        if let possibleLabels = model?.predictedLabelHypotheses(for: text, maximumCount: 3) {
-            let sorted = possibleLabels.sorted { $0.value > $1.value }
-            for label in sorted {
-                if label.value > 0.6 {
-                    return UserIntent(rawValue: label.key) ?? .unknown
-                }
-                // ask for clarification
+        if let possibleLabels = model?.predictedLabelHypotheses(for: text, maximumCount: 3), possibleLabels.count > 0 {
+            var sorted = possibleLabels.sorted { $0.value > $1.value }
+            let firstLabel = sorted.removeFirst()
+            if firstLabel.value > 0.6 {
+                return UserIntent(rawValue: firstLabel.key) ?? .unknown
+            }
+            let secondLabel = sorted.removeFirst()
+            if ((firstLabel.value - secondLabel.value) / firstLabel.value) > 0.50 {
+                return UserIntent(rawValue: firstLabel.key) ?? .unknown
             }
         }
         // fallback heuristics
@@ -50,10 +52,8 @@ public final class IntentEngine {
     }
     
     private func fallbackPlanWeek(text: String) -> UserIntent? {
-        if text.contains("plan") && text.contains("week") {
-            return .planWeek
-        }
-        if text.contains("week") || text.contains("semana") {
+        if (text.contains("plan") || text.contains("planejar") || text.contains("planeje") || text.contains("arrumar"))
+            && (text.contains("week") || text.contains("semana")) {
             return .planWeek
         }
         return nil
@@ -110,7 +110,9 @@ public final class IntentEngine {
     }
     
     private func fallbackShowAgenda(text: String) -> UserIntent? {
-        if text.contains("agenda") { return .showAgenda }
+        if text.contains("agenda") {
+            return .showAgenda
+        }
         return nil
     }
 }

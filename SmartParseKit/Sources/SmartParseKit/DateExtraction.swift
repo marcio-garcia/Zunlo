@@ -14,66 +14,38 @@ public struct DateParseResult {
     public var duration: TimeInterval = 0
 }
 
-public func extractDates(_ text: String, locale: Locale = .current) -> DateParseResult {
+public func extractDates(_ text: String, base: Date = Date(), locale: Locale = .current) -> DateParseResult {
     let detector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue)
     var out = DateParseResult()
     let ns = text as NSString
-//    detector.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: ns.length)) { match, _, _ in
-//        guard let m = match, m.resultType == .date else { return }
-//        out.duration = m.duration
-//        if let d = m.date {
-//            out.dates.append(d)
-//        }
-//    }
+
     let matches = detector.matches(in: text, range: NSRange(location: 0, length: ns.length)).filter { $0.resultType == .date }
     for match in matches {
         out.duration = match.duration
-    }
-    
-    let patchedDate = patchedDetectedDate(from: text, base: Date(), tz: .current, locale: locale)
-    return out
-}
-
-/// Use this instead of the raw NSDataDetector date when you want
-/// “next Friday” = strictly the next occurrence after `base`.
-func patchedDetectedDate(from text: String,
-                         base: Date = Date(),
-                         tz: TimeZone = .current,
-                         locale: Locale = .current) -> Date? {
-    // 1) Let NSDataDetector try first.
-    let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue)
-    let matches = detector?.matches(in: text, options: [], range: NSRange(text.startIndex..., in: text)) ?? []
-    var detected = matches.first(where: { $0.resultType == .date })?.date
-
-    // If it clearly says “next week”, don’t override semantics.
-    let low = text.lowercased()
-    let saysNextWeek = low.contains("next week") || low.contains("próxima semana") || low.contains("proxima semana")
-
-    // 2) If it’s the bare “next <weekday>” flavor, override to strictly upcoming.
-    if !saysNextWeek {
-        if let wd = captureWeekdayEn(text) ?? captureWeekdayPt(text) {
-            detected = strictlyNext(weekday: wd, after: base, tz: tz)
+        if let date = match.date {
+            out.dates.append(date)
         }
     }
-    return detected
-}
+    
+    // Calculate “next Friday” = strictly the next occurrence after `base`.
+    // This is because NSDataDetector returns "next Friday" as the real next Friday + 7
+    if out.dates.count == 1 {
+        // If it clearly says “next week”, don’t override semantics.
+        let low = text.lowercased()
+        let saysNextWeek = low.contains("next week") || low.contains("próxima semana") || low.contains("proxima semana")
 
-//struct DateSpan { var start: Date; var end: Date?; var timeZone: TimeZone }
-//
-//func parseDates(_ text: String, tz: TimeZone, policy: Policy) throws -> [DateSpan] {
-//    let detector = try NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue)
-//    let matches = withTimeZone(tz) { detector.matches(in: text, options: [], range: NSRange(text.startIndex..., in: text)) }
-//    var out: [DateSpan] = []
-//
-//    for m in matches where m.resultType == .date {
-//        let detectedTZ = m.timeZone ?? tz
-//        let base = m.date
-//        let adjustedStart = policy.rewriteRelativeIfNeeded(match: m, base: base, tz: detectedTZ) // e.g., strict “next Friday”
-//        let span = policy.coerceRangeIfNeeded(match: m, start: adjustedStart, tz: detectedTZ)     // ensure end > start, roll to next day, etc.
-//        out.append(span)
-//    }
-//    return out
-//}
+        // 2) If it’s the bare “next <weekday>” flavor, override to strictly upcoming.
+        if !saysNextWeek {
+            if let wd = captureWeekdayEn(text) ?? captureWeekdayPt(text) {
+                let detected = strictlyNext(weekday: wd, after: base, tz: TimeZone.gmt)
+                out.dates.removeAll()
+                out.dates.append(detected)
+            }
+        }
+    }
+    
+    return out
+}
 
 private let reNextWeekdayEn = try! NSRegularExpression(
   pattern: #"(?i)\bnext\s+(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b"#

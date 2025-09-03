@@ -18,6 +18,7 @@ public final class ChatMessageLocal: Object {
     @Persisted(indexed: true) var conversationId: UUID
     @Persisted var roleRaw: String = "assistant"    // ChatRole.rawValue
     @Persisted var rawText: String = ""
+    @Persisted var textData: Data?
     @Persisted var formatRaw: String  // "plain" | "markdown" | "rich"
     @Persisted(indexed: true) var createdAt: Date = Date()
     @Persisted var statusRaw: String = "sent"       // MessageStatus.rawValue
@@ -30,6 +31,28 @@ public final class ChatMessageLocal: Object {
     var format: ChatMessageFormat {
         get { ChatMessageFormat(rawValue: formatRaw) ?? .plain }
         set { formatRaw = newValue.rawValue }
+    }
+    
+    var attributedText: NSAttributedString? {
+        get { textData.flatMap { NSAttributedString.fromData($0) } }
+        set { textData = newValue?.toData() }
+    }
+    
+    var richText: AttributedString? {
+        get {
+            if let attr = attributedText {
+                return AttributedString(attr)
+            } else {
+                return nil
+            }
+        }
+        set {
+            if let attr = newValue {
+                attributedText = NSAttributedString(attr)
+            } else {
+                attributedText = nil
+            }
+        }
     }
 }
 
@@ -54,6 +77,7 @@ extension ChatMessageLocal {
         self.conversationId = m.conversationId
         self.roleRaw = m.role.rawValue
         self.rawText = m.rawText
+        self.richText = m.richText
         self.format = m.format
         self.createdAt = m.createdAt
         self.statusRaw = m.status.rawValue

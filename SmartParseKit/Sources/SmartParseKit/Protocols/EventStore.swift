@@ -24,8 +24,14 @@ public protocol EventType {
     var count: Int? { get }
 }
 
+public protocol AgendaType {
+    var agenda: String { get }
+    var attributedAgenda: AttributedString? { get }
+}
+
 public protocol EventStore {
     associatedtype E: EventType
+    associatedtype A: AgendaType
     @discardableResult
     func createEvent(
         title: String,
@@ -42,6 +48,7 @@ public protocol EventStore {
     func events(in range: Range<Date>) async throws -> [E]
     func updateEvent(id: UUID, start: Date, end: Date) async throws
     func updateEventMetadata(id: UUID, newTitle: String?) async throws
+    func agenda(in range: Range<Date>) async throws -> A
 }
 
 public extension EventStore {

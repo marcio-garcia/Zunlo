@@ -842,6 +842,7 @@ func genPlanDay() -> [Row] {
 
 func genShowAgenda() -> [Row] {
     let en = [
+        "my agenda",
         "show agenda for tomorrow",
         "agenda for next Friday",
         "what's my agenda this afternoon",
@@ -899,6 +900,7 @@ func genShowAgenda() -> [Row] {
     ]
 
     let pt = [
+        "minha agenda",
         "mostrar agenda de amanhã",
         "agenda de sexta que vem",
         "qual é minha agenda à tarde",

@@ -17,4 +17,13 @@ extension Date {
         let nextDay = calendar.date(byAdding: .day, value: 1, to: dayStart)!
         return nextDay
     }
+    
+    func daysInterval(to date2: Date) -> Int {
+        let cal = Calendar.appDefault
+        let components = cal.dateComponents([.day], from: self, to: date2)
+        if let days = components.day {
+            return days
+        }
+        return 0
+    }
 }

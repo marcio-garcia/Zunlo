@@ -113,10 +113,6 @@ struct ChatView: View {
                             viewModel: viewModel
                         )
                     }
-
-                    if viewModel.isGenerating {
-                        TypingIndicator().accessibilityLabel("Assistant is typing")
-                    }
                 }
                 .padding(.horizontal).padding(.vertical, 8)
             }
@@ -305,7 +301,8 @@ private struct MessageBubble: View {
             if message.status == .failed, let err = message.errorDescription {
                 Text(err).font(AppFontStyle.caption.font()).foregroundStyle(.red)
             } else if message.status == .streaming {
-                ProgressView().scaleEffect(0.6)
+                TypingIndicator().accessibilityLabel("Assistant is typing")
+//                ProgressView().scaleEffect(0.6)
             }
         }
         .padding(12)

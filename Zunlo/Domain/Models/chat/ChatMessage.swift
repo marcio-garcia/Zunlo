@@ -246,7 +246,7 @@ extension ChatMessage {
         self.role = ChatRole(rawValue: r.roleRaw) ?? .assistant
         self.rawText = r.rawText
         self.format = r.format
-        self.richText = nil
+        self.richText = r.richText
         self.createdAt = r.createdAt
         self.status = ChatMessageStatus(rawValue: r.statusRaw) ?? .sent
         self.userId = r.userId

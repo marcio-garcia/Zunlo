@@ -79,7 +79,7 @@ public final class ChatViewModel: ObservableObject {
         case .markdown:
             return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
         case .rich:
-            return MarkdownConverter.convertToAttributedString(msg.rawText, config: markdownConverterConfig)
+            return msg.richText ?? AttributedString(msg.rawText)
         }
     }
     
@@ -107,20 +107,60 @@ public final class ChatViewModel: ObservableObject {
         messages.append(userMessage)
         rebuildSections()
 
-        // 2) Start engine stream and react to events
-//        let historySnapshot = messages // pass snapshot to engine
-//        Task { [weak self] in
-//            guard let self else { return }
-//            let stream = await engine.startStream(history: historySnapshot, userMessage: userMessage)
-//            for await ev in stream { await self.consume(ev) }
-//        }
-        
         // Call NLP
         
+        // Create assistant placeholder
+        let messageId = UUID()
+        var assistant = ChatMessage(
+            id: messageId,
+            conversationId: conversationId,
+            role: .assistant,
+            plain: "",
+            createdAt: Date(),
+            status: .streaming
+        )
+        messages.append(assistant)
+        rebuildSections()
+        
         let lower = trimmed.lowercased()
-        let result = await nlpService.process(text: lower)
-        print(result)
-        isGenerating = false
+        do {
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+            
+            let result = try await nlpService.process(text: lower)
+            switch result.outcome {
+            case .agenda:
+                if let idx = messages.firstIndex(where: { $0.id == messageId }) {
+                    if let attr = result.attributedString {
+                        messages[idx].format = .rich
+                        messages[idx].richText = attr
+                    }
+                    messages[idx].status = .sent
+                    try await repo.upsert(messages[idx])
+                    rebuildSections()
+                }
+                isGenerating = false
+            case .createdTask: break
+                
+            case .createdEvent: break
+                
+            case .rescheduled: break
+                
+            case .updated: break
+                
+            case .planSuggestion: break
+                
+            case .unknown: break
+                // Start engine stream and react to events
+                //        let historySnapshot = messages // pass snapshot to engine
+                //        Task { [weak self] in
+                //            guard let self else { return }
+                //            let stream = await engine.startStream(history: historySnapshot, userMessage: userMessage)
+                //            for await ev in stream { await self.consume(ev) }
+                //        }
+            }
+        } catch {
+            print(error)
+        }
     }
 
     public func stopGeneration() {

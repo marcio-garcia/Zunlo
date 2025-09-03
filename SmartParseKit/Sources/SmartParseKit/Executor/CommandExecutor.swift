@@ -26,10 +26,12 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
         case .rescheduleTask:   return try await handleRescheduleTask(cmd)
         case .updateEvent:      return try await handleUpdateEvent(cmd)
         case .updateTask:       return try await handleUpdateTask(cmd)
-        case .planWeek, .planDay, .showAgenda:
+        case .planWeek, .planDay:
             return try await handlePlanning(cmd, now: now, calendar: calendar)
+        case .showAgenda:
+            return try await handleShowAgenda(cmd, now: now, calendar: calendar)
         case .unknown:
-            return .init(outcome: .unknown, message: "I couldn’t understand. Try ‘create task …’, ‘create event …’, or ‘reschedule …’.")
+            return CommandResult(outcome: .unknown, message: "I couldn’t understand. Try ‘create task …’, ‘create event …’, or ‘reschedule …’.")
         }
     }
     
@@ -37,7 +39,7 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
         let title = c.title ?? "Untitled task"
         _ = try await tasks.createTask(title: title, due: c.when, userInfo: nil)
         let whenStr = c.when.map { DateFormatter.short(date: $0) } ?? nil
-        return .init(outcome: .createdTask, message: whenStr == nil ? "Task ‘\(title)’ created." : "Task ‘\(title)’ created for \(whenStr!).")
+        return CommandResult(outcome: .createdTask, message: whenStr == nil ? "Task ‘\(title)’ created." : "Task ‘\(title)’ created for \(whenStr!).")
     }
     
     private func handleCreateEvent(_ c: ParsedCommand) async throws -> CommandResult {
@@ -45,7 +47,7 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
         let start = c.when ?? Date()
         let end = c.end ?? start.addingTimeInterval(30*60)
         _ = try await events.createEvent(title: title, start: start, end: end, isRecurring: false)
-        return .init(outcome: .createdEvent, message: "Event ‘\(title)’ scheduled at \(DateFormatter.short(dateTime: start)).")
+        return CommandResult(outcome: .createdEvent, message: "Event ‘\(title)’ scheduled at \(DateFormatter.short(dateTime: start)).")
     }
     
     private func handleRescheduleEvent(_ c: ParsedCommand) async throws -> CommandResult {
@@ -68,26 +70,26 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
         }
         let duration = event.endDate.timeIntervalSince(event.startDate)
         try await events.updateEvent(id: event.id, start: newTime, end: newTime.addingTimeInterval(duration))
-        return .init(outcome: .rescheduled, message: "‘\(event.title)’ moved to \(DateFormatter.short(dateTime: newTime)).")
+        return CommandResult(outcome: .rescheduled, message: "‘\(event.title)’ moved to \(DateFormatter.short(dateTime: newTime)).")
     }
 
     private func handleRescheduleTask(_ c: ParsedCommand) async throws -> CommandResult {
         guard let newDue = c.newTime ?? c.when else {
-            return .init(outcome: .unknown, message: "Tell me the new due date/time, e.g., ‘reschedule the pay rent task to Friday’")
+            return CommandResult(outcome: .unknown, message: "Tell me the new due date/time, e.g., ‘reschedule the pay rent task to Friday’")
         }
         let hintWords = tokenizeKeywords(c.title ?? "")
         let all = try await tasks.allTasks()
         guard let target = selectTaskToUpdate(all, keywords: hintWords) else {
-            return .init(outcome: .unknown, message: "I couldn’t find a matching task to move.")
+            return CommandResult(outcome: .unknown, message: "I couldn’t find a matching task to move.")
         }
         try await tasks.rescheduleTask(id: target.id, due: newDue)
-        return .init(outcome: .rescheduled, message: "Task ‘\(target.title)’ due \(DateFormatter.short(date: newDue)).")
+        return CommandResult(outcome: .rescheduled, message: "Task ‘\(target.title)’ due \(DateFormatter.short(date: newDue)).")
     }
 
     private func handleUpdateTask(_ c: ParsedCommand) async throws -> CommandResult {
         let (oldHint, newTitle) = parseRenameHints(c.raw)
         guard let newTitle = newTitle ?? c.title else {
-            return .init(outcome: .unknown, message: "Tell me the new task title, e.g., ‘rename task buy cat food to buy dog food’.")
+            return CommandResult(outcome: .unknown, message: "Tell me the new task title, e.g., ‘rename task buy cat food to buy dog food’.")
         }
 
         let candidates = try await tasks.allTasks()
@@ -95,13 +97,13 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
         guard let t = target else { return .init(outcome: .unknown, message: "I couldn’t find which task to update.") }
 
         try await tasks.updateTask(id: t.id, title: newTitle)
-        return .init(outcome: .updated, message: "Task ‘\(t.title)’ renamed to ‘\(newTitle)’.")
+        return CommandResult(outcome: .updated, message: "Task ‘\(t.title)’ renamed to ‘\(newTitle)’.")
     }
 
     private func handleUpdateEvent(_ c: ParsedCommand) async throws -> CommandResult {
         let (oldHint, newTitle) = parseRenameHints(c.raw)
         guard let newTitle = newTitle ?? c.title else {
-            return .init(outcome: .unknown, message: "Tell me the new event title, e.g., ‘rename the meeting to Product Sync’.")
+            return CommandResult(outcome: .unknown, message: "Tell me the new event title, e.g., ‘rename the meeting to Product Sync’.")
         }
 
         // Find a candidate event around today (or use c.when if present for better narrowing)
@@ -113,7 +115,7 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
         guard let e = target else { return .init(outcome: .unknown, message: "I couldn’t find which event to update.") }
 
         try await events.updateEventMetadata(id: e.id, newTitle: newTitle)
-        return .init(outcome: .updated, message: "Event ‘\(e.title)’ renamed to ‘\(newTitle)’.")
+        return CommandResult(outcome: .updated, message: "Event ‘\(e.title)’ renamed to ‘\(newTitle)’.")
     }
 
     private func handlePlanning(_ c: ParsedCommand, now: Date, calendar: Calendar) async throws -> CommandResult {
@@ -127,9 +129,23 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
         }()
         let es = try await events.events(in: range)
         let msg = "Here’s your plan for \(DateFormatter.compact(date: range.lowerBound))–\(DateFormatter.compact(date: range.upperBound.addingTimeInterval(-60))): • \(es.count) events"
-        return .init(outcome: .planSuggestion, message: msg)
+        return CommandResult(outcome: .planSuggestion, message: msg)
     }
 
+    private func handleShowAgenda(_ c: ParsedCommand, now: Date, calendar: Calendar) async throws -> CommandResult {
+        let range: Range<Date> = {
+            if let r = c.dateRange { return r }
+            if c.intent == .planDay || c.intent == .showAgenda {
+                let start = calendar.startOfDay(for: now)
+                return start..<(calendar.date(byAdding: .day, value: 1, to: start)!)
+            }
+            return weekRange(containing: now, calendar: calendar)
+        }()
+        let agenda = try await events.agenda(in: range)
+//        let msg = "Here’s your plan for \(DateFormatter.compact(date: range.lowerBound))–\(DateFormatter.compact(date: range.upperBound.addingTimeInterval(-60))): • \(es.count) events"
+        return CommandResult(outcome: .agenda, message: agenda.agenda, attributedString: agenda.attributedAgenda)
+    }
+    
     // MARK: Helpers
     
     // Simple task scorer mirroring your event ranking

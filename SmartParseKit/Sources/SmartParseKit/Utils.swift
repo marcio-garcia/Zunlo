@@ -2,10 +2,8 @@
 //  Utils.swift
 //  SmartParseKit
 //
-//  Created by Marcio Garcia on 8/31/25.
+//  Created by Marcio Garcia on 9/3/25.
 //
-
-// MARK: - Utilities
 
 import Foundation
 

@@ -19,19 +19,11 @@ public final class NLService {
         self.engine = engine
     }
     
-    public func process(text: String) async -> CommandResult? {
+    public func process(text: String) async throws -> CommandResult {
         var cal = Calendar.appDefault
         cal.timeZone = .current
-        
-        do {
-            let parsed = parser.parse(text, now: Date(), calendar: cal)
-//            let result = try await executor.execute(parsed, now: Date(), calendar: cal)
-//            return result
-            print(parsed)
-            return nil
-        } catch {
-            print(error)
-            return nil
-        }
+        let parsed = parser.parse(text, now: Date(), calendar: cal)
+        let result = try await executor.execute(parsed, now: Date(), calendar: cal)
+        return result
     }
 }
