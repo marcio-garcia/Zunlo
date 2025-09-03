@@ -25,8 +25,10 @@ public final class NLService {
         
         do {
             let parsed = parser.parse(text, now: Date(), calendar: cal)
-            let result = try await executor.execute(parsed, now: Date(), calendar: cal)
-            return result
+//            let result = try await executor.execute(parsed, now: Date(), calendar: cal)
+//            return result
+            print(parsed)
+            return nil
         } catch {
             print(error)
             return nil

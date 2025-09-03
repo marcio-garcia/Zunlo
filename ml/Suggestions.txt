@@ -1,0 +1,226 @@
+# Edge Cases, Ambiguous Examples & Informal Language Templates
+
+## **Ambiguous Examples** (Could be multiple intents)
+
+### Context-Dependent (needs previous conversation)
+```
+# Could be create_event, reschedule_event, or update_event
+"add {obj} to it"
+"put {obj} there too"
+"change it to {when}"
+"move it to {time}"
+"update it with {loc}"
+
+# Could be create_task or reschedule_task
+"add {task} to that"
+"put {task} there"
+"change the deadline"
+"move it to {when}"
+```
+
+### Multi-Intent Phrases
+```
+# create_event + create_task
+"schedule {obj} {when} and remind me to {task}"
+"book {obj} {when} and add {task} to my list"
+"create event {obj} {when} and task {task}"
+
+# reschedule_event + update_event
+"move {obj} to {when} and add {loc}"
+"reschedule {obj} to {when} with {attendees}"
+"shift {obj} to {when} and change location"
+
+# show_agenda + plan_day
+"what's my schedule and how should I plan today"
+"show me today's agenda and help organize my day"
+"display my calendar and plan my priorities"
+```
+
+### Vague Intent Boundaries
+```
+# Could be update_event or reschedule_event
+"change {obj} to {when}"
+"modify {obj} for {when}"
+"adjust {obj} to {time}"
+
+# Could be create_event or update_event (if event exists)
+"add {obj} {when}"
+"set {obj} for {when}"
+"put {obj} on {when}"
+
+# Could be show_agenda or plan_day/plan_week
+"what should I do {when}"
+"how's my {when} looking"
+"what do I have {when}"
+```
+
+## **Missing Edge Cases**
+
+### Negations & Cancellations
+```
+"don't schedule {obj} {when}"
+"cancel {obj} for {when}"
+"não marque {obj} {when}"
+"remove {obj} from {when}"
+"delete {obj} {when}"
+"não quero {obj} {when}"
+"cancel the {obj}"
+"remove {task} from my list"
+"delete {task} task"
+```
+
+### Questions & Conditional Statements
+```
+"can I schedule {obj} {when}?"
+"is {when} free for {obj}?"
+"posso marcar {obj} {when}?"
+"do I have time for {obj} {when}?"
+"when can I fit {obj}?"
+"onde posso encaixar {obj}?"
+"if {person} confirms, schedule {obj} {when}"
+"should I reschedule {obj} to {when}?"
+"devo reagendar {obj} para {when}?"
+```
+
+### Partial/Incomplete Information
+```
+"schedule something {when}"
+"add a meeting sometime"
+"marcar alguma coisa {when}"
+"create task for later"
+"book something for {person}"
+"adicionar tarefa para depois"
+"schedule {obj} whenever"
+"reschedule everything to {when}"
+"move all meetings to {when}"
+```
+
+### Time Zone & Duration Edge Cases
+```
+"schedule {obj} {when} at {time} EST"
+"book {obj} for 30 minutes {when}"
+"create 2-hour {obj} {when}"
+"marcar {obj} de 1 hora {when}"
+"schedule {obj} {when} from {time1} to {time2}"
+"book all-day {obj} {when}"
+```
+
+## **Typos & Informal Language**
+
+### Common Typos
+```
+# create_event
+"schdule {obj} {when}"
+"creat event {obj} {when}" 
+"bokk {obj} {when}"
+"agendar {obj} {when}" // missing accents
+"marcar {obj} amanha" // missing tilde
+
+# create_task
+"crate task {task} {when}"
+"ad task {task} {when}"
+"tarfa {task} {when}"
+"lembrme de {task}"
+"crair tarefa {task}"
+
+# reschedule_event  
+"reschedul {obj} to {when}"
+"mov {obj} to {when}"
+"reagendr {obj} para {when}"
+"mudr {obj} para {when}"
+
+# reschedule_task
+"reschedul the {task} task"
+"mov {task} task to {when}"
+"adir a tarefa {task}"
+
+# update_event
+"updat event title to {title}"
+"chang event location to {loc}"
+"mudra titulo do evento para {title}"
+
+# update_task
+"updat task title to {new}"
+"chang task priority to {prio}"
+"atualiza titulo da tarefa para {new}"
+```
+
+### Informal/Abbreviated Language
+```
+# create_event
+"sched {obj} {when}"
+"mk event {obj} {when}"
+"+ {obj} {when}"
+"marcar {obj} {when} pf" // por favor abbreviated
+
+# create_task
+"mk task {task} {when}"
+"+ task {task} {when}"  
+"task: {task} {when}"
+"TODO: {task} {when}"
+"lembrar: {task}"
+
+# reschedule_event
+"move {obj} 2 {when}" // "to" as "2"
+"shift {obj} -> {when}" // arrow notation
+"{obj} >> {when}"
+
+# General informal
+"gotta {verb} {obj}"
+"need 2 {verb} {obj}"
+"wanna {verb} {obj}"
+"preciso {verb} {obj} tlg" // "tá ligado" abbreviated
+"vou {verb} {obj} ok?"
+```
+
+### Casual/Slang Expressions
+```
+# create_event
+"throw {obj} on the calendar {when}"
+"slap {obj} in my schedule {when}"
+"squeeze in {obj} {when}"
+"fit {obj} into {when}"
+"enfiar {obj} na agenda {when}"
+"jogar {obj} no calendário {when}"
+
+# create_task
+"jot down {task} {when}"
+"stick {task} on my list"
+"throw {task} in there"
+"anotar {task} aí"
+"botar {task} na lista"
+
+# Mixed language (common in multilingual contexts)
+"schedule {obj} para {when}"
+"create evento {obj} {when}"
+"marcar {obj} on {when}"
+"agendar {obj} at {time}"
+```
+
+### Very Short/Minimal Input
+```
+"meeting {when}"
+"{obj} {when}"
+"task {task}"
+"{task} {when}"
+"agenda {when}"
+"calendar {when}"
+"plan {when}"
+"schedule {when}"
+"update {obj}"
+"change {task}"
+"move {obj}"
+"add {obj}"
+```
+
+### Emotional/Stressed Language
+```
+"URGENT: schedule {obj} {when}"
+"asap: create task {task}"
+"help!! need to reschedule {obj}"
+"omg forgot to {verb} {obj}"
+"SOCORRO preciso marcar {obj}" // "help" in Portuguese
+"urgente: {task} {when}"
+"please please schedule {obj} {when}"
+"por favor marcar {obj} {when}"
+```

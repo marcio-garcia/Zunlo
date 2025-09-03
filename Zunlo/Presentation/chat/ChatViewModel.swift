@@ -117,7 +117,8 @@ public final class ChatViewModel: ObservableObject {
         
         // Call NLP
         
-        let result = await nlpService.process(text: trimmed)
+        let lower = trimmed.lowercased()
+        let result = await nlpService.process(text: lower)
         print(result)
         isGenerating = false
     }

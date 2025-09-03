@@ -33,9 +33,11 @@ public final class CommandParser {
         var end: Date?
         var dateRange: Range<Date>?
         
-        if let r = dateResult.ranges.first {
-            dateRange = r
-        } else if dateResult.dates.count >= 2 {
+        if let stat = when {
+            dateRange = stat..<stat.addingTimeInterval(dateResult.duration)
+        }
+        
+        if dateResult.dates.count >= 2 {
             end = dateResult.dates[1]
         }
         
@@ -57,13 +59,15 @@ public final class CommandParser {
         
         let title = extractTitle(raw)
         
-        return ParsedCommand(intent: intent,
-                             title: title,
-                             when: when,
-                             end: end,
-                             dateRange: dateRange,
-                             newTime: newTime,
-                             language: language,
-                             raw: raw)
+        return ParsedCommand(
+            intent: intent,
+            title: title,
+            when: when,
+            end: end,
+            dateRange: dateRange,
+            newTime: newTime,
+            language: language,
+            raw: raw
+        )
     }
 }

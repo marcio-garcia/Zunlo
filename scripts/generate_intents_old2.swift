@@ -3,13 +3,13 @@
 // xcrun swift generate_intents.swift \
 //   --train zunlo_intents.csv \
 //   --test zunlo_intents_test.csv \
-//   --per-label 60
+//   --per-label 60 
 
 import Foundation
 
 struct Row { let text: String; let label: String }
 
-// === labels (reschedule merged into update; includes cancel_*) ===
+// === CHANGED: merged reschedule_* into update_*, added cancel_* ===
 enum Label: String, CaseIterable {
     case create_event, create_task
     case update_event, update_task
@@ -21,8 +21,6 @@ func rnd<T>(_ arr: [T]) -> T { arr[Int.random(in: 0..<arr.count)] }
 func num() -> String { [
     "4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19"
     ].randomElement()! }
-
-// --- months/days/times (basic) ---
 func monthEn() -> String { [
     "january","february","march","april","may","june","july","august","september","october","november","december","jan","feb","mar","apr","jun","jul","aug","sep","oct","nov","dec"
     ].randomElement()! }
@@ -37,170 +35,18 @@ func dayEn() -> String { [
     "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","Mon","Tue","Wed","Thu","Fri","Sat","Sun"
     ].randomElement()! }
 func dayPt() -> String { [
-    "segunda","terça","quarta","quinta","sexta","sábado","domingo","seg","ter","qua","qui","sex","sáb","dom"
+    "segunda","terça","quarta","quinta","sexta","sábado","domingo","seg","ter","qua","qui","sex","sáb","dom","15 de julho","mais tarde",
+    "amanhã","dia 10","neste fim de semana","hoje à noite","domingo de manhã","próxima semana","próxima terça","essa quarta","daqui a um mês"
     ].randomElement()! }
-func whenEn() -> String { [
-    "next \(dayEn())","tomorrow","this \(dayEn())","next week","next week \(dayEn())","\(monthEn()) \(num())th","\(num())th",
-    "this weekend","tonight","\(dayEn()) morning","a month from now"
+func nextDayPhraseEn() -> String { [
+    "next \(dayEn())","tomorrow","this \(dayEn())","next week","next week \(dayEn())","\(monthEn()) \(num())th","on the \(num())th",
+    "this weekend","tonight","on \(dayEn()) morning","a month from now"
     ].randomElement()! }
-func whenPt() -> String { [
-    "\(dayPt()) que vem","amanhã","próxima semana","próxima \(dayPt())","\(monthPt()) \(num())","dia \(num())","essa semana",
-    "\(dayPt()) de noite","\(dayPt()) de manhã","15 de julho","fim de semana","à noite","próxima semana","essa quarta","daqui a um mês"
+func nextDayPhrasePt() -> String { [
+    "\(dayPt()) que vem","amanhã","próxima semana","na próxima \(dayPt())","\(monthPt()) \(num())","no dia \(num())","essa semana",
+    "de noite","\(dayPt()) de manhã","mes que vem"
     ].randomElement()! }
 
-// --- Time buckets so “morning/afternoon/tonight” pick sensible times ---
-let timeMorningEn12 = ["7am","8am","9:30am","10am","11am"]
-let timeAfternoonEn12 = ["noon","1pm","2:30pm","4pm","5pm"]
-let timeEveningEn12 = ["7pm","8pm"]
-
-let timeMorningEn24 = ["07:00","08:00","09:30","10:00","11:00"]
-let timeAfternoonEn24 = ["12:00","14:00","14:30","16:00","17:00"]
-let timeEveningEn24 = ["19:00","20:00"]
-
-let timeMorningPt12 = ["7h","8h","9:30","10hs","11hs"]
-let timeAfternoonPt12 = ["meio-dia","1h","2:30","4h","5"]
-let timeEveningPt12 = ["8"]
-
-let timeMorningPt24 = ["07:00","08:00","09:30","10h","11:00"]
-let timeAfternoonPt24 = ["12:00","14hs","14:30","16:00","17:00"]
-let timeEveningPt24 = ["19:00","20h"]
-
-// MARK: - Time parsing helpers
-
-/// Normalize all the time strings your generators produce into something DateFormatter can parse.
-/// Handles:
-/// - "noon" / "meio-dia"  -> "12:00"
-/// - "10h", "10hs", "20h" -> "10:00", "20:00"
-/// - bare hours "5", "8"  -> "05:00", "08:00"
-/// Leaves "7am", "2:30pm", "09:30", "14:30" intact.
-private func normalizeTimeString(_ raw: String) -> String {
-    var t = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-
-    // words → clock
-    if t == "noon" || t == "midday" || t == "meio-dia" {
-        return "12:00"
-    }
-
-    // "10hs" / "10h" → "10:00"
-    t = t.replacingOccurrences(of: #"^\s*(\d{1,2})h(?:s)?\s*$"#,
-                               with: "$1:00",
-                               options: .regularExpression)
-
-    // bare "5" → "5:00"
-    t = t.replacingOccurrences(of: #"^\s*(\d{1,2})\s*$"#,
-                               with: "$1:00",
-                               options: .regularExpression)
-
-    return t
-}
-
-/// Parse a time string into a Date (time-of-day only; date portion is arbitrary, TZ is UTC for consistency).
-/// Tries multiple formats that cover all your examples.
-private func parseTime(_ s: String) -> Date? {
-    let t = normalizeTimeString(s)
-
-    let df = DateFormatter()
-    df.locale = Locale(identifier: "en_US_POSIX")
-    df.timeZone = TimeZone(secondsFromGMT: 0)
-    df.amSymbol = "am"
-    df.pmSymbol = "pm"
-
-    // Order matters: try specific → general
-    let formats = [
-        "h:mma",   // "2:30pm"
-        "h:mm a",  // "2:30 pm"
-        "ha",      // "7am"
-        "HH:mm",   // "07:00"
-        "H:mm"     // "9:30"
-    ]
-
-    for f in formats {
-        df.dateFormat = f
-        if let d = df.date(from: t) { return d }
-    }
-    return nil
-}
-
-/// Returns true iff `time` is strictly greater than `minValue`. Unparsable inputs return false (so they get filtered out).
-func compareTime(time: String, minValue: String) -> Bool {
-    guard let dt = parseTime(time), let dv = parseTime(minValue) else { return false }
-    return dt > dv
-}
-
-// MARK: - Fixed pickTime
-
-func pickTime(for when: String, isPt: Bool, prefer24: Bool, minValue: String? = nil) -> String {
-    let w = when.lowercased()
-    let isMorning = w.contains("morning") || w.contains("manhã")
-    let isAfternoon = w.contains("afternoon") || w.contains("tarde")
-    let isEvening = w.contains("tonight") || w.contains("evening") || w.contains("noite")
-
-    // Convenience banks (ensure these arrays exist in your code)
-    let bankEn24 = timeMorningEn24 + timeAfternoonEn24 + timeEveningEn24
-    let bankEn12 = timeMorningEn12 + timeAfternoonEn12 + timeEveningEn12
-    let bankPt24 = timeMorningPt24 + timeAfternoonPt24 + timeEveningPt24
-    let bankPt12 = timeMorningPt12 + timeAfternoonPt12 + timeEveningPt12
-
-    var candidates: [String]
-
-    if isPt {
-        if prefer24 {
-            candidates = isMorning ? timeMorningPt24 :
-                         isAfternoon ? timeAfternoonPt24 :
-                         isEvening ? timeEveningPt24 : bankPt24
-        } else {
-            candidates = isMorning ? timeMorningPt12 :
-                         isAfternoon ? timeAfternoonPt12 :
-                         isEvening ? timeEveningPt12 : bankPt12
-        }
-    } else {
-        if prefer24 {
-            candidates = isMorning ? timeMorningEn24 :
-                         isAfternoon ? timeAfternoonEn24 :
-                         isEvening ? timeEveningEn24 : bankEn24
-        } else {
-            candidates = isMorning ? timeMorningEn12 :
-                         isAfternoon ? timeAfternoonEn12 :
-                         isEvening ? timeEveningEn12 : bankEn12
-        }
-    }
-
-    if let min = minValue {
-        let filtered = candidates.filter { compareTime(time: $0, minValue: min) }
-        if !filtered.isEmpty {
-            candidates = filtered
-        }
-        // If filtered is empty, fall back to the unfiltered candidates to avoid crashes.
-    }
-
-    return candidates.randomElement()!
-}
-
-
-func replaceFirst(_ s: inout String, target: String, with value: String) {
-    if let r = s.range(of: target) { s.replaceSubrange(r, with: value) }
-}
-
-// Fill one or two {time} placeholders, matching dayparts; ensures t2 != t1
-func fillTimes(_ template: String, when: String, isPt: Bool) -> String {
-    var out = template
-    let prefer24 = Bool.random()
-    let count = out.components(separatedBy: "{time}").count - 1
-    if count >= 2 {
-        let t1 = pickTime(for: when, isPt: isPt, prefer24: prefer24)
-        var t2 = pickTime(for: when, isPt: isPt, prefer24: prefer24)
-        var tries = 0
-        while t2 == t1 && tries < 5 { t2 = pickTime(for: when, isPt: isPt, prefer24: prefer24); tries += 1 }
-        replaceFirst(&out, target: "{time}", with: t1)
-        replaceFirst(&out, target: "{time}", with: t2)
-    } else if count == 1 {
-        let t = pickTime(for: when, isPt: isPt, prefer24: prefer24)
-        replaceFirst(&out, target: "{time}", with: t)
-    }
-    return out
-}
-
-// --- objects & tasks ---
 let objsEn = [
     "coffee with Ana","demo session","team lunch","project review call","standup","office hours","yoga class","see mom",
     "meeting with John","doctor appointment","lunch with Sarah","dinner reservation","call with the team","dentist appointment","birthday party",
@@ -208,37 +54,32 @@ let objsEn = [
     "meeting about budget planning","interview with candidate",
     "today's standup","sprint planning","client meeting","coffee with Ana","board review","team lunch","1:1",
     "my 3pm meeting","doctor appointment","dentist visit","team meeting","dinner with parents","conference call","birthday party",
-    "presentation meeting","lunch meeting","interview","wedding planning meeting","vet appointment","oil change","client meeting","yoga class"
-]
+    "presentation meeting","lunch meeting","interview","wedding planning meeting","vet appointment","oil change","client meeting","yoga class"]
 let objsPt = [
     "café com Ana","reunião de produto","almoço com o time","call de revisão de projeto","daily","plantão de dúvidas","aula de yoga","visitar mãe",
-    "reunião com John","consulta médica","almoço com Sarah","reserva para jantar","ligação com a equipe","consulta com o dentista","festa de aniversário",
-    "teleconferência","reunião da equipe","aniversário de casamento","cerimônia de formatura","consulta para corte de cabelo","revisão de projeto",
-    "reunião sobre planejamento orçamentário","entrevista com o candidato",
+    "reunião com John","consulta médica","almoço com Sarah","reserva para jantar","ligação com a equipe","consulta com o dentista", "festa de aniversário",
+    "teleconferência", "reunião da equipe", "aniversário de casamento", "cerimônia de formatura", "consulta para corte de cabelo", "revisão de projeto",
+    "reunião sobre planejamento orçamentário", "entrevista com o candidato",
     "reunião de hoje","daily","revisão do projeto","café com Ana","almoço do time","1:1",
-    "minha reunião das 15h","consulta médica","consulta ao dentista","reunião de equipe","jantar com os pais","conferência telefônica","festa de aniversário",
-    "apresentação do projeto","reunião para almoço","entrevista","reunião de planejamento do casamento","consulta ao veterinário","troca de óleo","reunião com cliente","aula de ioga"
-]
+    "minha reunião das 15h", "consulta médica", "consulta ao dentista", "reunião de equipe", "jantar com os pais", "conferência telefônica", "festa de aniversário",
+    "apresentação do projeto", "reunião para almoço", "entrevista", "reunião de planejamento do casamento", "consulta ao veterinário", "troca de óleo", "reunião com cliente", "aula de ioga"]
 
 let tasksEn = [
-    "buy cat food","pay rent","submit report","call mom","update resume","clean kitchen","water the plants",
+    "buy cat food","pay rent","submit report","call mom","update resume","clean kitchen","water the plants","grocery",
     "buy groceries","finish the report","call mom later","pick up dry cleaning","review quarterly numbers","pay bills","submit timesheet",
     "booking vacation","update website content","water the plants","prepare presentation","renew passport","clean garage","annual physical","organize photo albums",
-    "pay rent","do grocery shopping","write report","clean kitchen","call mom","homework","water plants",
-    "report","cleaning","bill payment","workout","car maintenance","do laundry","home repairs",
-    "tax preparation","garden work","website update","dentist call","deep cleaning","passport renewal","presentation prep"
-]
+    "pay rent","grocery shopping","write report","clean kitchen","call mom","homework","water plants",
+    "grocery shopping","report","cleaning","bill payment","workout","car maintenance","laundry","home repairs",
+    "tax preparation","garden work","website update","dentist call","deep cleaning","passport renewal","presentation prep"]
 let tasksPt = [
     "comprar ração","pagar contas","enviar relatório","ligar para o João","atualizar currículo","limpar a cozinha","regar as plantas","mercado",
-    "comprar mantimentos","terminar o relatório","ligar para a mãe mais tarde","pegar a roupa na lavanderia","revisar os números trimestrais","pagar contas","enviar o quadro de horários",
-    "reservar férias","atualizar o conteúdo do site","regar as plantas","preparar a apresentação","renovar o passaporte","limpar a garagem","exame físico anual","organizar álbuns de fotos",
+    "comprar mantimentos", "terminar o relatório", "ligar para a mãe mais tarde", "pegar a roupa na lavanderia", "revisar os números trimestrais", "pagar contas", "enviar o quadro de horários",
+    "reservar férias", "atualizar o conteúdo do site", "regar as plantas", "preparar a apresentação", "renovar o passaporte", "limpar a garagem", "exame físico anual", "organizar álbuns de fotos",
     "pagar contas","comprar ração","escrever relatório","limpar a cozinha","ligar para a mãe","lição de casa","regar plantas",
-    "compras de supermercado","relatório","limpeza","pagamento de contas","treino","manutenção do carro","lavanderia","consertos domésticos",
-    "preparação de impostos","trabalho de jardim","atualização de site","visita ao dentista","limpeza profunda","renovação de passaporte","preparação para apresentação"
-]
+    "compras de supermercado", "relatório", "limpeza", "pagamento de contas", "treino", "manutenção do carro", "lavanderia", "consertos domésticos",
+    "preparação de impostos", "trabalho de jardim", "atualização de site", "visita ao dentista", "limpeza profunda", "renovação de passaporte", "preparação para apresentação"]
 
-// === generators ===
-
+// === existing generators unchanged ===
 func genCreateEvent() -> [Row] {
     let en = [
         "schedule {obj} {when} at {time}",
@@ -300,21 +141,22 @@ func genCreateEvent() -> [Row] {
         "configurar {obj} {when}",
     ]
 
+
     var out: [Row] = []
     for _ in 0..<500 {
         if Bool.random() {
-            let when = whenEn()
-            var t = rnd(en)
+            let t = rnd(en)
                 .replacingOccurrences(of: "{obj}", with: rnd(objsEn))
-                .replacingOccurrences(of: "{when}", with: when)
-            t = fillTimes(t, when: when, isPt: false)
+                .replacingOccurrences(of: "{when}", with: rnd(["\(nextDayPhraseEn())","on \(dayEn())"]))
+                .replacingOccurrences(of: "{time}", with: Bool.random() ? time12En() : time24En())
+                .replacingOccurrences(of: "{task}", with: rnd(tasksEn))
             out.append(.init(text: t, label: Label.create_event.rawValue))
         } else {
-            let when = whenPt()
-            var t = rnd(pt)
+            let t = rnd(pt)
                 .replacingOccurrences(of: "{obj}", with: rnd(objsPt))
-                .replacingOccurrences(of: "{when}", with: when)
-            t = fillTimes(t, when: when, isPt: true)
+                .replacingOccurrences(of: "{when}", with: rnd([nextDayPhrasePt(),"na \(dayPt())"]))
+                .replacingOccurrences(of: "{time}", with: Bool.random() ? time12Pt() : time24Pt())
+                .replacingOccurrences(of: "{task}", with: rnd(tasksPt))
             out.append(.init(text: t, label: Label.create_event.rawValue))
         }
     }
@@ -340,8 +182,8 @@ func genCreateTask() -> [Row] {
         "add task: {task}",
         "create reminder to {task}",
         "put {task} on my task list",
-        "add todo item {task}",
-        "create task {task}",
+        "add todo item for {task}",
+        "create task to {task}",
         "i need to remember to {task}",
         "add {task} to my tasks",
         "create reminder: {task}",
@@ -362,8 +204,8 @@ func genCreateTask() -> [Row] {
         "adicionar tarefa: {task}",
         "criar lembrete para {task}",
         "colocar {task} na minha lista de tarefas",
-        "adicionar item de tarefa {task}",
-        "criar tarefa {task}",
+        "adicionar item de tarefa para {task}",
+        "criar tarefa para {task}",
         "preciso lembrar de {task}",
         "adicionar {task} às minhas tarefas",
         "criar lembrete: {task}",
@@ -377,13 +219,13 @@ func genCreateTask() -> [Row] {
         if Bool.random() {
             let t = rnd(en)
                 .replacingOccurrences(of: "{task}", with: rnd(tasksEn))
-                .replacingOccurrences(of: "{when}", with: whenEn())
+                .replacingOccurrences(of: "{when}", with: rnd(["\(nextDayPhraseEn())","on \(dayEn())"]))
                 .replacingOccurrences(of: "{obj}", with: rnd(objsEn))
             out.append(.init(text: t, label: Label.create_task.rawValue))
         } else {
             let t = rnd(pt)
                 .replacingOccurrences(of: "{task}", with: rnd(tasksPt))
-                .replacingOccurrences(of: "{when}", with: whenPt())
+                .replacingOccurrences(of: "{when}", with: rnd(["\(nextDayPhrasePt())","on \(dayPt())"]))
                 .replacingOccurrences(of: "{obj}", with: rnd(objsPt))
             out.append(.init(text: t, label: Label.create_task.rawValue))
         }
@@ -391,10 +233,112 @@ func genCreateTask() -> [Row] {
     return out
 }
 
-// === unified update_event (metadata + reschedule) ===
+// === CHANGED: reschedule generators now emit update_* labels ===
+func genRescheduleEvent() -> [Row] {
+    let en = [
+        "reschedule {obj} to {when} {time}",
+        "move {obj} to {when} {time}",
+        "shift {obj} from {when1} {time1} to {when} {time}",
+        "shift {obj} to {when} {time}",
+        "postpone {obj} by one hour",
+        "postpone {obj} to {when} {time}",
+        "rebook {obj} for {when} {time}",
+        "push {obj} to {time}",
+        "push {obj} to {when} {time}",
+        "change {obj} to {when} {time}",
+        "Push back the team meeting by an hour",
+    ]
+    let pt = [
+        "remarcar {obj} para {when} {time}",
+        "mover {obj} para {when} {time}",
+        "adiar {obj} para {when} {time}",
+        "remarcar {obj} de {when1} {time1} para {when} {time}",
+        "reagendar {obj} para {when} {time}",
+        "mudar {obj} para {when} {time}",
+        "Adie a reunião da equipe em uma hora",
+    ]
+
+    var out: [Row] = []
+    for _ in 0..<500 {
+        if Bool.random() {
+            let t = rnd(en)
+                .replacingOccurrences(of: "{obj}", with: rnd(objsEn))
+                .replacingOccurrences(of: "{when}", with: rnd(["\(nextDayPhraseEn())","on \(dayEn())"]))
+                .replacingOccurrences(of: "{time}", with: Bool.random() ? time12En() : time24En())
+                .replacingOccurrences(of: "{when1}", with: rnd(["\(nextDayPhraseEn())","on \(dayEn())"]))
+                .replacingOccurrences(of: "{time1}", with: Bool.random() ? time12En() : time24En())
+                .replacingOccurrences(of: "{task}", with: rnd(tasksEn))
+            // merged label:
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_event.rawValue))
+            }
+        } else {
+            let t = rnd(pt)
+                .replacingOccurrences(of: "{obj}", with: rnd(objsPt))
+                .replacingOccurrences(of: "{when}", with: rnd(["\(nextDayPhrasePt())","on \(dayPt())"]))
+                .replacingOccurrences(of: "{time}", with: Bool.random() ? time12Pt() : time24Pt())
+                .replacingOccurrences(of: "{when1}", with: rnd(["\(nextDayPhrasePt())","on \(dayPt())"]))
+                .replacingOccurrences(of: "{time1}", with: Bool.random() ? time12Pt() : time24Pt())
+                .replacingOccurrences(of: "{task}", with: rnd(tasksPt))
+            // merged label:
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_event.rawValue))
+            }
+        }
+    }
+    return out
+}
+
+func genRescheduleTask() -> [Row] {
+    let en = [
+        "reschedule the {task} task to {when}",
+        "move {task} task to {when}",
+        "push the {task} task to {when}",
+        "delay the {task} task by two hours",
+        "delay the {task} task to {when}",
+        "change the {task} task to {when}",
+        "change the {task} task to {when}",
+        "reschedule {task} to {when}",
+        "shift {task} to {when}",
+        "change deadline for report to next {when}",
+        "push back cleaning task to weekend",
+    ]
+    let pt = [
+        "remarcar a tarefa {task} para {when}",
+        "mover a tarefa {task} para {when}",
+        "adiar a tarefa {task} para {when}",
+        "adiar a tarefa {task} para {when}",
+        "mudar a tarefa {task} para {when}",
+        "alterar prazo para entrega do relatório para o próximo {when}",
+    ]
+
+    var out: [Row] = []
+    for _ in 0..<500 {
+        if Bool.random() {
+            let t = rnd(en)
+                .replacingOccurrences(of: "{task}", with: rnd(tasksEn))
+                .replacingOccurrences(of: "{when}", with: rnd(["\(nextDayPhraseEn())","on \(dayEn())"]))
+                .replacingOccurrences(of: "{obj}", with: rnd(objsEn))
+            // merged label:
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_task.rawValue))
+            }
+        } else {
+            let t = rnd(pt)
+                .replacingOccurrences(of: "{task}", with: rnd(tasksPt))
+                .replacingOccurrences(of: "{when}", with: rnd(["\(nextDayPhrasePt())","on \(dayPt())"]))
+                .replacingOccurrences(of: "{obj}", with: rnd(objsPt))
+            // merged label:
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_task.rawValue))
+            }
+        }
+    }
+    return out
+}
+
 func genUpdateEvent() -> [Row] {
-    // metadata-only
-    let metaEn = [
+    let en = [
         "rename the event to {title}",
         "update event title to {title}",
         "change event title to {title}",
@@ -422,7 +366,7 @@ func genUpdateEvent() -> [Row] {
         "update event with new phone number",
         "add preparation notes to the interview",
     ]
-    let metaPt = [
+    let pt = [
         "renomear o evento para {title}",
         "atualizar título do evento para {title}",
         "mudar título do evento para {title}",
@@ -447,31 +391,6 @@ func genUpdateEvent() -> [Row] {
         "atualizar o evento com o novo número de telefone",
         "adicionar notas de preparação para a entrevista",
     ]
-
-    // reschedule/move
-    let moveEn = [
-        "reschedule {obj} to {when} {time}",
-        "move {obj} to {when} {time}",
-        "shift {obj} from {when1} {time1} to {when} {time}",
-        "shift {obj} to {when} {time}",
-        "postpone {obj} by one hour",
-        "postpone {obj} to {when} {time}",
-        "rebook {obj} for {when} {time}",
-        "push {obj} to {time}",
-        "push {obj} to {when} {time}",
-        "change {obj} to {when} {time}",
-        "Push back the team meeting by an hour",
-    ]
-    let movePt = [
-        "remarcar {obj} para {when} {time}",
-        "mover {obj} para {when} {time}",
-        "adiar {obj} para {when} {time}",
-        "remarcar {obj} de {when1} {time1} para {when} {time}",
-        "reagendar {obj} para {when} {time}",
-        "mudar {obj} para {when} {time}",
-        "Adie a reunião da equipe em uma hora",
-    ]
-
     let titles = ["Product Sync","Team All-Hands","Quarterly Review","Design Review"]
     let locs = ["HQ cafeteria","Zoom A","Sala 12","escritório Paulista","auditório"]
     let tags = ["urgent","finance","q3","prioridade","pessoal"]
@@ -480,136 +399,114 @@ func genUpdateEvent() -> [Row] {
 
     var out: [Row] = []
     for _ in 0..<500 {
-        if Bool.random() { // EN
-            if Bool.random() { // metadata
-                var t = rnd(metaEn)
-                t = t.replacingOccurrences(of: "{title}", with: rnd(titles))
-                    .replacingOccurrences(of: "{loc}", with: rnd(locs))
-                    .replacingOccurrences(of: "{tag}", with: rnd(tags))
-                    .replacingOccurrences(of: "{notes}", with: rnd(notes))
-                    .replacingOccurrences(of: "{color}", with: rnd(colors))
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_event.rawValue))
-                }
-            } else { // move
-                let when1 = whenEn()
-                let when = whenEn()
-                var t = rnd(moveEn)
-                    .replacingOccurrences(of: "{obj}", with: rnd(objsEn))
-                    .replacingOccurrences(of: "{when1}", with: when1)
-                    .replacingOccurrences(of: "{when}", with: when)
-                t = t.replacingOccurrences(of: "{time1}", with: pickTime(for: when1, isPt: false, prefer24: Bool.random()))
-                t = fillTimes(t, when: when, isPt: false)
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_event.rawValue))
-                }
+        if Bool.random() {
+            var t = rnd(en)
+            t = t.replacingOccurrences(of: "{title}", with: rnd(titles))
+                .replacingOccurrences(of: "{loc}", with: rnd(locs))
+                .replacingOccurrences(of: "{tag}", with: rnd(tags))
+                .replacingOccurrences(of: "{notes}", with: rnd(notes))
+                .replacingOccurrences(of: "{color}", with: rnd(colors))
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_event.rawValue))
             }
-        } else { // PT
-            if Bool.random() {
-                var t = rnd(metaPt)
-                t = t.replacingOccurrences(of: "{title}", with: rnd(titles))
-                    .replacingOccurrences(of: "{loc}", with: rnd(locs))
-                    .replacingOccurrences(of: "{tag}", with: rnd(tags))
-                    .replacingOccurrences(of: "{notes}", with: rnd(notes))
-                    .replacingOccurrences(of: "{color}", with: rnd(colors))
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_event.rawValue))
-                }
-            } else {
-                let when1 = whenPt()
-                let when = whenPt()
-                var t = rnd(movePt)
-                    .replacingOccurrences(of: "{obj}", with: rnd(objsPt))
-                    .replacingOccurrences(of: "{when1}", with: when1)
-                    .replacingOccurrences(of: "{when}", with: when)
-                t = t.replacingOccurrences(of: "{time1}", with: pickTime(for: when1, isPt: true, prefer24: Bool.random()))
-                t = fillTimes(t, when: when, isPt: true)
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_event.rawValue))
-                }
+        } else {
+            var t = rnd(pt)
+            t = t.replacingOccurrences(of: "{title}", with: rnd(titles))
+                .replacingOccurrences(of: "{loc}", with: rnd(locs))
+                .replacingOccurrences(of: "{tag}", with: rnd(tags))
+                .replacingOccurrences(of: "{notes}", with: rnd(notes))
+                .replacingOccurrences(of: "{color}", with: rnd(colors))
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_event.rawValue))
             }
         }
     }
     return out
 }
 
-// === unified update_task (metadata + reschedule) ===
 func genUpdateTask() -> [Row] {
-    let metaEn = [
+    let en = [
         "rename task {old} to {new}",
         "update task title to {new}",
         "add tag {tag} to the {task} task",
-        "remove tag {tag} from the {task} task",
         "set task priority to {prio}",
         "update task notes: {notes}",
+        "remove tag {tag} from the {task} task",
         "change task color to {color}",
         "call this task {new}",
         "rename the task from {old} to {new}",
-        "add checklist items to packing task",
-        "add checklist item to {task}: {notes}",
-        "add time estimate to presentation prep",
-        "update cleaning task with specific rooms",
+        "mark grocery shopping as high priority",
+        "add milk and bread to shopping list",
+        "change task deadline to end of week",
+        "update report task with new requirements",
+        "add subtasks to home renovation project",
+        "mark bill payment as completed",
         "update task description with more details",
         "change task category to work projects",
-        "add resources needed to research task",
+        "add time estimate to presentation prep",
+        "update cleaning task with specific rooms",
         "mark task as in progress",
-        "mark {task} complete",
+        "add resources needed to research task",
+        "update task priority to urgent",
+        "change task assignee to team member",
+        "add checklist items to packing task",
+        "mark the {task} task as high priority",
+        "change the deadline of the {task} task to end of week",
+        "update the {task} task notes: {notes}",
+        "set the {task} task priority to {prio}",
+        "rename the {old} task to {new}",
         "mark the {task} task as done",
-        "assign the {task} task to a team member",
+        "mark {task} complete",
+        "reopen the {task} task",
+        "set the {task} task due date to {when}",
+        "change the {task} task due date to {when}",
         "set priority of the {task} task to {prio}",
+        "add checklist item to {task}: {notes}",
+        "remove the {tag} tag from the {task} task",
+        "assign the {task} task to a team member",
         "rename {old} task to {new}",
-        "mark grocery shopping as high priority",
-        "change task assignee to team member"
     ]
-    let metaPt = [
+    let pt = [
         "renomear tarefa {old} para {new}",
         "atualizar título da tarefa para {new}",
         "mudar título da tarefa para {new}",
         "definir título da tarefa como {new}",
         "adicionar tag {tag} à tarefa {task}",
-        "remover tag {tag} da tarefa {task}",
         "definir prioridade da tarefa como {prioPt}",
         "atualizar notas da tarefa: {notes}",
+        "remover tag {tag} da tarefa {task}",
         "mudar cor da tarefa para {colorPt}",
-        "adicionar itens da lista de verificação à tarefa de embalagem",
-        "adicionar item de checklist à tarefa {task}: {notes}",
-        "atualizar a tarefa de limpeza com cômodos específicos",
+        "marcar compras de supermercado como alta prioridade",
+        "adicionar leite e pão à lista de compras",
+        "alterar o prazo da tarefa para o final da semana",
+        "atualizar a tarefa do relatório com novos requisitos",
+        "adicionar subtarefas ao projeto de reforma da casa",
+        "marcar o pagamento da conta como concluído",
         "atualizar a descrição da tarefa com mais detalhes",
         "alterar a categoria da tarefa para projetos de trabalho",
-        "adicionar recursos necessários à tarefa de pesquisa",
+        "adicionar estimativa de tempo à preparação da apresentação",
+        "atualizar a tarefa de limpeza com cômodos específicos",
         "marcar a tarefa como em andamento",
-        "marcar a tarefa {task} como concluída",
-        "reabrir a tarefa {task}",
-        "atribuir a tarefa {task} a um membro da equipe",
+        "adicionar recursos necessários à tarefa de pesquisa",
+        "atualizar a prioridade da tarefa para urgente",
+        "alterar o responsável pela tarefa para membro da equipe",
+        "adicionar itens da lista de verificação à tarefa de embalagem",
+        "marcar a tarefa {task} como alta prioridade",
+        "alterar o prazo da tarefa {task} para o final da semana",
+        "atualizar as notas da tarefa {task}: {notes}",
         "definir a prioridade da tarefa {task} como {prioPt}",
-    ]
-
-    let moveEn = [
-        "reschedule the {task} task to {when}",
-        "move {task} task to {when}",
-        "push the {task} task to {when}",
-        "delay the {task} task by two hours",
-        "delay the {task} task to {when}",
-        "change the {task} task to {when}",
-        "reschedule {task} to {when}",
-        "shift {task} to {when}",
-        "change the deadline of the {task} task to end of week",
-        "set the {task} task due date to {when}",
-        "change the {task} task due date to {when}",
-        "push back cleaning task to weekend",
-    ]
-    let movePt = [
-        "remarcar a tarefa {task} para {when}",
-        "mover a tarefa {task} para {when}",
-        "adiar a tarefa {task} para {when}",
-        "mudar a tarefa {task} para {when}",
-        "alterar o prazo da tarefa para o final da semana",
+        "renomear a tarefa {old} para {new}",
+        "marcar a tarefa {task} como concluída"
+        "reabrir a tarefa {task}",
         "definir data de entrega da tarefa {task} para {when}",
         "alterar a data de entrega da tarefa {task} para {when}",
-        "alterar prazo para entrega do relatório para o próximo {when}",
+        "definir prioridade da tarefa {task} como {prioPt}",
+        "adicionar item de checklist à tarefa {task}: {notes}",
+        "remover a tag {tag} da tarefa {task}",
+        "atribuir a tarefa {task} a um membro da equipe",
+        "renomear a tarefa {old} para {new}",
     ]
-
-    let tasksMini = ["clean kitchen","write report","call mom","pay rent","read book"]
+    let tasks = ["clean kitchen","write report","call mom","pay rent","read book"]
     let tags = ["home","work","pessoal","finance","health"]
     let prio = ["low","medium","high"]; let prioPt = ["baixa","média","alta"]
     let notes = ["check coupon code","verificar prazos","include address"]
@@ -617,54 +514,36 @@ func genUpdateTask() -> [Row] {
 
     var out: [Row] = []
     for _ in 0..<500 {
-        if Bool.random() { // EN
-            if Bool.random() { // metadata
-                var t = rnd(metaEn)
-                t = t.replacingOccurrences(of: "{old}", with: rnd(tasksEn))
-                    .replacingOccurrences(of: "{new}", with: rnd(tasksEn))
-                    .replacingOccurrences(of: "{task}", with: rnd(tasksMini))
-                    .replacingOccurrences(of: "{tag}", with: rnd(tags))
-                    .replacingOccurrences(of: "{prio}", with: rnd(prio))
-                    .replacingOccurrences(of: "{notes}", with: rnd(notes))
-                    .replacingOccurrences(of: "{color}", with: rnd(colors))
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_task.rawValue))
-                }
-            } else { // move
-                var t = rnd(moveEn)
-                t = t.replacingOccurrences(of: "{task}", with: rnd(tasksMini))
-                     .replacingOccurrences(of: "{when}", with: whenEn())
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_task.rawValue))
-                }
+        if Bool.random() {
+            var t = rnd(en)
+            t = t.replacingOccurrences(of: "{old}", with: rnd(tasksEn))
+                .replacingOccurrences(of: "{new}", with: rnd(tasksEn))
+                .replacingOccurrences(of: "{task}", with: rnd(tasks))
+                .replacingOccurrences(of: "{tag}", with: rnd(tags))
+                .replacingOccurrences(of: "{prio}", with: rnd(prio))
+                .replacingOccurrences(of: "{notes}", with: rnd(notes))
+                .replacingOccurrences(of: "{color}", with: rnd(colors))
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_task.rawValue))
             }
-        } else { // PT
-            if Bool.random() {
-                var t = rnd(metaPt)
-                t = t.replacingOccurrences(of: "{old}", with: rnd(tasksPt))
-                    .replacingOccurrences(of: "{new}", with: rnd(tasksPt))
-                    .replacingOccurrences(of: "{task}", with: rnd(tasksMini))
-                    .replacingOccurrences(of: "{tag}", with: rnd(tags))
-                    .replacingOccurrences(of: "{prioPt}", with: rnd(prioPt))
-                    .replacingOccurrences(of: "{notes}", with: rnd(notes))
-                    .replacingOccurrences(of: "{colorPt}", with: rnd(colorsPt))
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_task.rawValue))
-                }
-            } else {
-                var t = rnd(movePt)
-                t = t.replacingOccurrences(of: "{task}", with: rnd(tasksMini))
-                     .replacingOccurrences(of: "{when}", with: whenPt())
-                if !out.contains(where: { $0.text == t }) {
-                    out.append(.init(text: t, label: Label.update_task.rawValue))
-                }
+        } else {
+            var t = rnd(pt)
+            t = t.replacingOccurrences(of: "{old}", with: rnd(tasksPt))
+                .replacingOccurrences(of: "{new}", with: rnd(tasksPt))
+                .replacingOccurrences(of: "{task}", with: rnd(tasks))
+                .replacingOccurrences(of: "{tag}", with: rnd(tags))
+                .replacingOccurrences(of: "{prioPt}", with: rnd(prioPt))
+                .replacingOccurrences(of: "{notes}", with: rnd(notes))
+                .replacingOccurrences(of: "{colorPt}", with: rnd(colorsPt))
+            if !out.contains(where: { $0.text == t }) {
+                out.append(.init(text: t, label: Label.update_task.rawValue))
             }
         }
     }
     return out
 }
 
-// === cancel generators ===
+// === NEW: cancel generators ===
 func genCancelEvent() -> [Row] {
     let en = [
         "cancel {obj} for {when}",
@@ -688,12 +567,12 @@ func genCancelEvent() -> [Row] {
         if Bool.random() {
             let t = rnd(en)
                 .replacingOccurrences(of: "{obj}", with: rnd(objsEn))
-                .replacingOccurrences(of: "{when}", with: whenEn())
+                .replacingOccurrences(of: "{when}", with: rnd(["next Friday","tomorrow afternoon","Saturday morning","tonight","on \(dayEn())","\(nextDayPhraseEn())"]))
             out.append(.init(text: t, label: Label.cancel_event.rawValue))
         } else {
             let t = rnd(pt)
                 .replacingOccurrences(of: "{obj}", with: rnd(objsPt))
-                .replacingOccurrences(of: "{when}", with: whenPt())
+                .replacingOccurrences(of: "{when}", with: rnd(["sexta","amanhã de manhã","sábado de manhã","hoje à noite","domingo","\(nextDayPhrasePt())"]))
             out.append(.init(text: t, label: Label.cancel_event.rawValue))
         }
     }
@@ -872,7 +751,8 @@ func genShowAgenda() -> [Row] {
         "what's on my schedule for the weekend?",
         "show me my tasks and appointments",
         "what do i have planned for today?",
-        // Added
+
+        // ---- Added ----
         "do i have anything on Sunday?",
         "do i have anything scheduled for tomorrow morning?",
         "list my meetings for Thursday",
@@ -922,7 +802,8 @@ func genShowAgenda() -> [Row] {
         "o que está na minha agenda para o fim de semana?",
         "mostrar minhas tarefas e compromissos",
         "o que planejei para hoje?",
-        // Adicionados
+
+        // ---- Adicionados ----
         "tenho algo marcado no domingo?",
         "tenho algo na agenda amanhã de manhã?",
         "listar minhas reuniões de quinta",
@@ -951,35 +832,79 @@ func genShowAgenda() -> [Row] {
     return (en+pt).map { Row(text: $0, label: Label.show_agenda.rawValue) }
 }
 
-// === unknown with hard negatives (non-calendar cancels, etc.) ===
+// === CHANGED: removed cancel-like phrases from unknown ===
 func genUnknown() -> [Row] {
     let en = ["hi","hello there","thanks","okay","cool","good morning",
-              "okay","thanks","thank you","cool","great","nice","lol","kk","👍","👎","🙏","👏","…","??","¯\\_(ツ)_/¯",
-              "just checking","are you there","help","how does this work","nevermind","forget it",
-              "what's the weather like?","how do i cook pasta?","what's the capital of France?","tell me a joke",
-              "how are you doing today?","what's the latest news?","how do i fix my car?","what movies are playing nearby?",
-              "convert dollars to euros","what's the traffic like on i-95?","how do i lose weight?","what's the best restaurant in town?",
-              "how do i learn Spanish?","what's the stock price of Apple?","how do i meditate?",
-              // hard negatives (not calendar/task)
-              "cancel my subscription","cancel spotify","delete my account","cancel my order","cancel uber","cancel amazon order"
+              "okay",
+              "thanks",
+              "thank you",
+              "cool",
+              "great",
+              "nice",
+              "lol",
+              "kk",
+              "👍",
+              "👎",
+              "🙏",
+              "👏",
+              "…",
+              "??",
+              "¯\\_(ツ)_/¯",
+              "just checking",
+              "are you there",
+              "help",
+              "how does this work",
+              "nevermind",
+              "forget it",
+              "what's the weather like?",
+              "how do i cook pasta?",
+              "what's the capital of France?",
+              "tell me a joke",
+              "how are you doing today?",
+              "what's the latest news?",
+              "how do i fix my car?",
+              "what movies are playing nearby?",
+              "convert dollars to euros",
+              "what's the traffic like on i-95?",
+              "how do i lose weight?",
+              "what's the best restaurant in town?",
+              "how do i learn Spanish?",
+              "what's the stock price of Apple?",
+              "how do i meditate?"
     ]
     let pt = ["olá","valeu","boa tarde","beleza","oi","tudo bem",
-              "e aí","beleza","valeu","obrigado","boa noite","bom dia","boa tarde",
-              "como está o tempo?","como faço macarrão?","qual é a capital da França?","conte-me uma piada",
-              "como você está hoje?","quais são as últimas notícias?","como conserto meu carro?",
-              "quais filmes estão passando por aqui?","contar dólares para euros","como está o trânsito na I-95?",
-              "como faço para perder peso?","qual é o melhor restaurante da cidade?","como aprendo espanhol?",
-              "qual é o preço das ações da Apple?","como medito?",
-              // hard negatives
-              "cancelar assinatura","cancelar spotify","excluir conta","cancelar pedido","cancelar corrida do uber","cancelar entrega"
+              "e aí",
+              "beleza",
+              "valeu",
+              "obrigado",
+              "boa noite",
+              "bom dia",
+              "boa tarde",
+              "como está o tempo?",
+              "como faço macarrão?",
+              "qual é a capital da França?",
+              "conte-me uma piada",
+              "como você está hoje?",
+              "quais são as últimas notícias?",
+              "vomo conserto meu carro?",
+              "quais filmes estão passando por aqui?",
+              "contar dólares para euros",
+              "como está o trânsito na I-95?",
+              "como faço para perder peso?",
+              "qual é o melhor restaurante da cidade?",
+              "como aprendo espanhol?",
+              "qual é o preço das ações da Apple?",
+              "como medito?"
     ]
-
+    
     var out: [Row] = []
     for _ in 0..<500 {
         if Bool.random() {
-            out.append(.init(text: rnd(en), label: Label.unknown.rawValue))
+            let t = rnd(en)
+            out.append(.init(text: t, label: Label.unknown.rawValue))
         } else {
-            out.append(.init(text: rnd(pt), label: Label.unknown.rawValue))
+            let t = rnd(pt)
+            out.append(.init(text: t, label: Label.unknown.rawValue))
         }
     }
     return out
@@ -999,14 +924,14 @@ while let a = it.next() {
     default: break
     }
 }
-var rng = SystemRandomNumberGenerator() // if you want determinism, replace with a seeded generator
+var rng = SystemRandomNumberGenerator() // basic; set seed if you prefer deterministic by using a custom RNG
 
-// --- banks (reschedule merged into update; cancels included) ---
+// === CHANGED: banks use merged reschedule->update and add cancels ===
 let banks: [Label: [Row]] = [
     .create_event: genCreateEvent(),
     .create_task: genCreateTask(),
-    .update_event: genUpdateEvent(),   // unified (meta + reschedule)
-    .update_task: genUpdateTask(),     // unified (meta + reschedule)
+    .update_event: genUpdateEvent(), + genRescheduleEvent(), // merged
+    .update_task: genUpdateTask(), + genRescheduleTask(),     // merged
     .cancel_event: genCancelEvent(),
     .cancel_task: genCancelTask(),
     .plan_week: genPlanWeek(),

@@ -1,94 +1,149 @@
 text,label
-"agendar daily amanhã às 10h",create_event
-"create calendar entry team lunch tomorrow 07:00",create_event
-"agendar café com Ana sexta que vem às 14h",create_event
-"novo evento plantão de dúvidas na terça às 09:00",create_event
-"marcar plantão de dúvidas sexta que vem às 19h",create_event
-"set up review tomorrow at 14:00",create_event
-"set up standup tomorrow at 4pm",create_event
-"agendar daily sexta que vem às 11h",create_event
-"adicionar evento reunião de produto sexta que vem às 19h",create_event
-"set up review next Friday at 10am",create_event
-"novo evento reunião de produto sexta que vem às 11h",create_event
-"schedule office hours on Friday at 09:30",create_event
-"log task buy cat food on the 5th",create_task
-"criar tarefa comprar ração hoje à noite",create_task
-"adicionar tarefa enviar relatório hoje à noite",create_task
-"adicionar tarefa regar as plantas amanhã",create_task
-"adicionar tarefa ligar para o João hoje à noite",create_task
-"create a task update resume on Sunday morning",create_task
-"lembre-me de comprar ração dia 10",create_task
-"remind me to update resume this weekend",create_task
-"tarefa: limpar a cozinha neste fim de semana",create_task
-"create task call mom tonight",create_task
-"tarefa: limpar a cozinha no domingo de manhã",create_task
-"lembre-me de enviar relatório dia 10",create_task
-"push sprint planning to 09:30",reschedule_event
-"adiar café com Ana para amanhã 10h",reschedule_event
-"adiar daily para sexta 14h",reschedule_event
-"adiar reunião de hoje para amanhã 14h",reschedule_event
-"postpone coffee with Ana to today 2:30pm",reschedule_event
-"adiar café com Ana para sexta 10h",reschedule_event
-"mudar daily para amanhã 20h",reschedule_event
-"remarcar 1:1 de qui 9h para segunda que vem 20h",reschedule_event
-"shift sprint planning to next Friday 09:30",reschedule_event
-"change team lunch to tomorrow 2:30pm",reschedule_event
-"change coffee with Ana to today 5pm",reschedule_event
-"mudar almoço do time para sexta 20h",reschedule_event
-"delay the water plants task by two hours",reschedule_task
-"mover a tarefa ligar para a mãe para sábado de manhã",reschedule_task
-"reschedule call mom to tomorrow afternoon",reschedule_task
-"reschedule the pay rent task to next Friday",reschedule_task
-"delay the clean kitchen task to tonight",reschedule_task
-"change the water plants task to Saturday morning 10am",reschedule_task
-"mudar a tarefa escrever relatório para amanhã de manhã 20h",reschedule_task
-"delay the clean kitchen task to next Friday",reschedule_task
-"mover a tarefa lição de casa para sábado de manhã",reschedule_task
-"change the write report task to tonight",reschedule_task
-"push the grocery shopping task to 20:00",reschedule_task
-"remarcar a tarefa escrever relatório para amanhã de manhã",reschedule_task
-"definir local do evento para HQ cafeteria",update_event
-"renomear o evento para Team All-Hands",update_event
-"change event color to roxo",update_event
-"call this event Team All-Hands",update_event
-"update event title to Quarterly Review",update_event
-"definir local do evento para Sala 12",update_event
-"mudar cor do evento para azul",update_event
-"update event notes: bring printed copies",update_event
-"adicionar tag prioridade ao evento",update_event
-"add tag pessoal to the event",update_event
+"marcar ligação com a equipe dia 12 2:30",create_event
+"marcar daily próxima semana meio-dia",create_event
+"meeting about budget planning tonight at 20:00",create_event
+"marcar ligação com a equipe amanhã às 11hs",create_event
+"adicionar evento festa de aniversário amanhã às 07:00",create_event
+"agendar teleconferência terça de noite às 19:00",create_event
+"add event team lunch this weekend at 4pm",create_event
+"criar evento: reunião de produto",create_event
+"schedule dentist visit for this Mon",create_event
+"event birthday party next Sunday 20:00",create_event
+"colocar aula de ioga no meu calendário",create_event
+"marcar um consulta ao dentista próxima terça",create_event
+"create a new event for vet appointment",create_event
+"adicionar café com Ana ao meu calendário",create_event
+"adicionar reunião para almoço quarta que vem",create_event
+"create new calendar event for client meeting",create_event
+"preciso lembrar de lavanderia",create_task
+"create todo: workout",create_task
+"put submit report on my todo list",create_task
+"criar tarefa para reservar férias",create_task
+"i need to remember to workout",create_task
+"criar lembrete para limpar a garagem",create_task
+"lembre-me de pagar contas essa semana",create_task
+"tarefa: lavanderia dezembro 12",create_task
+"adicionar revisar os números trimestrais às minhas tarefas",create_task
+"lembrar-me de comprar ração próxima semana",create_task
+"criar tarefa: pagamento de contas",create_task
+"colocar limpeza profunda na minha lista de tarefas",create_task
+"add task to clean kitchen",create_task
+"add todo item do laundry",create_task
+"adicionar limpar a cozinha às minhas tarefas",create_task
+"colocar limpar a cozinha na minha lista de tarefas",create_task
+"shift office hours to next Fri 14:00",update_event
+"remarcar troca de óleo para outubro 18 1h",update_event
+"rebook team lunch for next Wed 9:30am",update_event
+"reschedule demo session to this Tuesday 14:00",update_event
+"push standup to 17:00",update_event
+"rename the event to Quarterly Review",update_event
+"shift dentist appointment from next week 1pm to tonight 20:00",update_event
+"push today's standup to tomorrow 08:00",update_event
+"mover reunião com cliente para dia 5 8",update_event
+"remarcar teleconferência de sábado de noite 20h para próxima semana 10hs",update_event
+"reschedule project review call to tonight 7pm",update_event
+"reschedule demo session to tomorrow 7pm",update_event
 "atualizar título do evento para Design Review",update_event
 "definir título do evento como Quarterly Review",update_event
-"add tag home to the read book task",update_task
-"definir título da tarefa como buy dog food",update_task
-"definir prioridade da tarefa como média",update_task
-"definir título da tarefa como pay electricity bill",update_task
+"push graduation ceremony to this weekend 08:00",update_event
+"atualizar notas do evento: bring printed copies",update_event
+"alterar prazo para entrega do relatório para o próximo 15 de julho",update_task
+"reabrir a tarefa call mom",update_task
+"set the call mom task due date to tonight",update_task
+"change task assignee to team member",update_task
+"mudar cor da tarefa para cinza",update_task
+"marcar a tarefa write report como concluída",update_task
+"adicionar item de checklist à tarefa clean kitchen: check coupon code",update_task
+"adiar a tarefa write report para janeiro 12",update_task
 "change task color to gray",update_task
-"rename task read book to read 20 pages",update_task
-"call this task buy dog food",update_task
-"renomear tarefa buy cat food para buy dog food",update_task
-"mudar título da tarefa para pay electricity bill",update_task
-"atualizar título da tarefa para read 20 pages",update_task
-"atualizar título da tarefa para read 20 pages",update_task
-"update task notes: verificar prazos",update_task
+"move call mom task to tomorrow",update_task
+"delay the clean kitchen task to july 19th",update_task
+"shift pay rent to this weekend",update_task
+"atribuir a tarefa call mom a um membro da equipe",update_task
+"renomear tarefa visita ao dentista para relatório",update_task
+"remover tag health da tarefa read book",update_task
+"push the read book task to march 12th",update_task
+"don't schedule project review call next Monday",cancel_event
+"cancelar 1:1",cancel_event
+"cancelar plantão de dúvidas para dia 15",cancel_event
+"cancel interview with candidate for 4th",cancel_event
+"cancelar reunião de hoje para próxima semana",cancel_event
+"cancelar aula de yoga para essa quarta",cancel_event
+"don't schedule meeting with John a month from now",cancel_event
+"excluir festa de aniversário próxima semana",cancel_event
+"remove doctor appointment from next Thu",cancel_event
+"cancel wedding anniversary for 16th",cancel_event
+"remove project review from next week Sunday",cancel_event
+"excluir plantão de dúvidas próxima terça",cancel_event
+"remove lunch meeting from a month from now",cancel_event
+"delete sprint planning Monday morning",cancel_event
+"não marcar revisão de projeto próxima dom",cancel_event
+"cancel the yoga class",cancel_event
+"don't add bill payment",cancel_task
+"i don't want the tax preparation task anymore",cancel_task
+"i don't want the write report task anymore",cancel_task
+"não adicionar pagar contas",cancel_task
+"excluir tarefa regar as plantas",cancel_task
+"não adicionar pagar contas",cancel_task
+"don't add website update",cancel_task
+"don't add review quarterly numbers",cancel_task
+"não adicionar terminar o relatório",cancel_task
+"delete water the plants task",cancel_task
+"delete deep cleaning task",cancel_task
+"delete renew passport task",cancel_task
+"i don't want the finish the report task anymore",cancel_task
+"excluir tarefa enviar relatório",cancel_task
+"delete homework task",cancel_task
+"i don't want the annual physical task anymore",cancel_task
+"organize my week around mornings",plan_week
+"preciso estruturar minha próxima semana",plan_week
+"prepare week schedule",plan_week
+"plan my upcoming week schedule",plan_week
+"planeje minha agenda para a semana de trabalho",plan_week
+"how should i structure my week",plan_week
+"preciso organizar minha semana com antecedência",plan_week
+"organizar minha semana com blocos de foco",plan_week
 "planejar semana de trabalho",plan_week
-"como planejar a semana com estudos",plan_week
-"make a weekly plan including workouts",plan_week
-"me ajude a montar minha semana",plan_week
-"como planejar meu dia com estudos",plan_day
-"faça um plano diário com exercícios",plan_day
-"plan my day with focus blocks",plan_day
+"i need to organize my week ahead",plan_week
+"organizar meu dia",plan_day
+"help me structure today's tasks",plan_day
+"help me structure my daily routine",plan_day
+"ajude-me a estruturar as tarefas de hoje",plan_day
+"i need to plan my day off",plan_day
+"plan today's work schedule",plan_day
+"planejar dia de trabalho",plan_day
+"plan my daily schedule",plan_day
 "organize my day",plan_day
-"mostrar agenda de quinta de manhã",show_agenda
+"help me plan my day",plan_day
+"ver minha agenda para a próxima segunda",show_agenda
+"show me my daily agenda",show_agenda
+"what meetings are scheduled for Friday?",show_agenda
+"what meetings do i have this week?",show_agenda
+"show me my calendar for tomorrow",show_agenda
+"listar compromissos para a próxima terça",show_agenda
+"exibir calendário do próximo mês",show_agenda
+"agenda de sexta que vem",show_agenda
+"view calendar for next month",show_agenda
+"what do i have planned for today?",show_agenda
+"what's on my calendar this afternoon?",show_agenda
+"mostrar minha agenda para segunda-feira",show_agenda
+"mostrar minha agenda para a próxima semana",show_agenda
+"do i have anything scheduled for tomorrow morning?",show_agenda
+"ver o que está no meu calendário no sábado",show_agenda
 "what's my agenda this afternoon",show_agenda
-"agenda de quinta à tarde",show_agenda
-"calendar for the 24th",show_agenda
-"mostrar agenda de amanhã",show_agenda
-"hello there",unknown
-"oi",unknown
+"tell me a joke",unknown
+"como você está hoje?",unknown
+"lol",unknown
+"cool",unknown
+"are you there",unknown
+"tudo bem",unknown
+"cool",unknown
+"thanks",unknown
 "obrigado",unknown
-"bom dia",unknown
-"great",unknown
-"hi",unknown
-"thanks",unknown
-"thanks",unknown
+"cancel amazon order",unknown
+"good morning",unknown
+"cancelar pedido",unknown
+"como faço macarrão?",unknown
+"cancelar spotify",unknown
+"boa noite",unknown
+"obrigado",unknown
