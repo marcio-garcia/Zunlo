@@ -113,11 +113,14 @@ class DayEventCell: UICollectionViewCell {
     func configure(with date: Date, weather: WeatherInfo?) {
         let isToday = date.isSameDay(as: Date())
         weekLabel.text = date.formattedDate(
-            dateFormat: .week, locale: Locale(identifier: Locale.current.identifier)
+            dateFormat: .week,
+            locale: Locale(identifier: Locale.current.identifier),
+            timeZone: Calendar.appDefault.timeZone
         )
         dayLabel.text = date.formattedDate(
             dateFormat: .day,
-            locale: Locale(identifier: Locale.current.identifier)
+            locale: Locale(identifier: Locale.current.identifier),
+            timeZone: Calendar.appDefault.timeZone
         )
         weekLabel.textColor = isToday ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)
         dayLabel.textColor = isToday ? UIColor(Color.theme.accent) : UIColor(Color.theme.text)

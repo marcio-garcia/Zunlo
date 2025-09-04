@@ -223,7 +223,14 @@ public final class ChatViewModel: ObservableObject {
         let sortedDays = groups.keys.sorted()
         daySections = sortedDays.map { day in
             let items = (groups[day] ?? []).sorted { $0.createdAt < $1.createdAt }
-            return DaySection(id: day.formattedDate(dateFormat: .inverted, calendar: calendar), date: day, items: items)
+            return DaySection(
+                id: day.formattedDate(
+                    dateFormat: .inverted,
+                    calendar: calendar,
+                    timeZone: Calendar.appDefault.timeZone),
+                date: day,
+                items: items
+            )
         }
         lastMessageAnchor = messages.last?.id
     }

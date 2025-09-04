@@ -1,5 +1,5 @@
 //
-//  Calendar+UTC.swift
+//  Calendar+TimeZone.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 8/12/25.
@@ -10,7 +10,9 @@ import Foundation
 extension Calendar {
     
     static var appDefault: Calendar {
-        Calendar(identifier: .gregorian)
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone.current
+        return cal
     }
     
     static func utc() -> Calendar {

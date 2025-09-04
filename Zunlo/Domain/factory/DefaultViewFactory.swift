@@ -39,7 +39,6 @@ final class DefaultViewFactory: ViewFactory {
         Task { try? await appState.localDB!.ensureConversationExists(id: cid) }
 
         var calendar = Calendar.appDefault
-        calendar.timeZone = TimeZone.current
         
         let aiChatService = SupabaseEdgeAIClient(supabase: appState.supabaseClient!)
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,

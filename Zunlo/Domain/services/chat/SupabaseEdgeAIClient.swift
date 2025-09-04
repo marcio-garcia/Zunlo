@@ -195,7 +195,7 @@ public final class SupabaseEdgeAIClient: AIChatService {
             temperature: defaultTemperature,
             metadata: nil,
             localNowISO: Date.localDateToAI(),
-            localTimezone: TimeZone.current.identifier
+            localTimezone: Calendar.appDefault.timeZone.identifier
         )
 
         return AsyncThrowingStream { continuation in

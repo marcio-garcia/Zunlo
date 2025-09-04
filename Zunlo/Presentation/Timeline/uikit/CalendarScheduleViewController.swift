@@ -211,8 +211,12 @@ extension CalendarScheduleViewController {
             switch item {
             case .month(let monthDate):
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MonthHeaderCell", for: indexPath) as! MonthHeaderCell
-                let title = monthDate.formattedDate(dateFormat: .monthName, locale: Locale(identifier: Locale.current.identifier))
-                let subtitle = monthDate.formattedDate(dateFormat: .year)
+                let title = monthDate.formattedDate(
+                    dateFormat: .monthName,
+                    locale: Locale(identifier: Locale.current.identifier),
+                    timeZone: Calendar.appDefault.timeZone
+                )
+                let subtitle = monthDate.formattedDate(dateFormat: .year, timeZone: Calendar.appDefault.timeZone)
                 let image = self.viewModel.monthHeaderImageName(for: monthDate)
                 cell.configure(title: title, subtitle: subtitle, imageName: image)
                 return cell

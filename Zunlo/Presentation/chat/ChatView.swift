@@ -141,7 +141,7 @@ struct ChatView: View {
                         viewModel.handleBubbleAction(action, message: message)
                     }
                     .environmentObject(viewModel)
-                    Text(msg.createdAt.formattedDate(dateFormat: .time))
+                    Text(msg.createdAt.formattedDate(dateFormat: .time, timeZone: Calendar.appDefault.timeZone))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: msg.role == .user ? .trailing : .leading)

@@ -56,7 +56,7 @@ struct TaskRow: View {
                         .clipShape(Capsule())
                     
                     if let due = task.dueDate {
-                        Text(due.formattedDate(dateFormat: .regular))
+                        Text(due.formattedDate(dateFormat: .regular, timeZone: Calendar.appDefault.timeZone))
                             .themedCaption()
                     }
                 }

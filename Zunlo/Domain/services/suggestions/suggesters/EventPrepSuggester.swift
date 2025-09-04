@@ -43,8 +43,10 @@ struct EventPrepSuggester: AICoolDownSuggester {
             now: context.now
         )
         
+        let freeTime = pre.end.timeIntervalSince(pre.start)/60
+        let nextEventTime = next.formattedDate(dateFormat: .time, timeZone: Calendar.appDefault.timeZone)
         let title  = String(localized: "Prep for your next event")
-        let detail = String(localized: "Use \(pre.end.timeIntervalSince(pre.start)/60) min before \(next.formattedDate(dateFormat: .time)).")
+        let detail = String(localized: "Use \(freeTime) min before \(nextEventTime).")
         let reason = String(localized: "A little prep reduces stress.")
 
         return AISuggestion(

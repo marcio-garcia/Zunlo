@@ -19,8 +19,8 @@ struct AvailabilitySettings: View {
             Text("Time Zone").themedBody()
             Spacer()
             Menu(TimeZone.localizedName(for: tz)) {
-                Button("\(TimeZone.current.identifier) (Device)") {
-                    policyProvider.setTimeZone(TimeZone.current)
+                Button("\(Calendar.appDefault.timeZone.identifier) (Device)") {
+                    policyProvider.setTimeZone(Calendar.appDefault.timeZone)
                 }
                 Button("UTC") { policyProvider.setTimeZone(.gmt) }
             }

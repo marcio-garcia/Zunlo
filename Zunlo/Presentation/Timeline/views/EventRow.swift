@@ -43,9 +43,9 @@ struct EventRow: View {
     }
     
     func formatDate(start: Date, end: Date?) -> String {
-        var text = occurrence.startDate.formattedDate(dateFormat: .time)
+        var text = occurrence.startDate.formattedDate(dateFormat: .time, timeZone: Calendar.appDefault.timeZone)
         if let endDate = end {
-            text.append(" - \(endDate.formattedDate(dateFormat: .time))")
+            text.append(" - \(endDate.formattedDate(dateFormat: .time, timeZone: Calendar.appDefault.timeZone))")
         }
         return text
     }

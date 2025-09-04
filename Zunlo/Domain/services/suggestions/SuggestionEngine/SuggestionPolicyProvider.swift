@@ -42,7 +42,7 @@ final class SuggestionPolicyProvider: ObservableObject {
             startMinute: d.object(forKey: kStartMinute) as? Int ?? 0,
             endHour:     d.object(forKey: kEndHour)     as? Int ?? 20,
             endMinute:   d.object(forKey: kEndMinute)   as? Int ?? 0,
-            timeZoneID:  d.string(forKey: kTZ) ?? TimeZone.current.identifier
+            timeZoneID:  d.string(forKey: kTZ) ?? Calendar.appDefault.timeZone.identifier
         )
     }
     

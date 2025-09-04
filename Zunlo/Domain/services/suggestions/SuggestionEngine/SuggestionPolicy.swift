@@ -12,7 +12,7 @@ struct AvailabilityPrefs: Equatable {
     var startMinute: Int = 0
     var endHour: Int = 20
     var endMinute: Int = 0
-    var timeZoneID: String = TimeZone.current.identifier
+    var timeZoneID: String = Calendar.appDefault.timeZone.identifier
 
     var timeZone: TimeZone { TimeZone(identifier: timeZoneID) ?? .gmt }
 }
