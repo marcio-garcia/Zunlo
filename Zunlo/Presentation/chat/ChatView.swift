@@ -147,7 +147,7 @@ struct ChatView: View {
                         .frame(maxWidth: .infinity, alignment: msg.role == .user ? .trailing : .leading)
                         .padding(.horizontal, 6)
                 }
-                HStack(spacing: 0, content: { Text("aaa")})
+                HStack(spacing: 0, content: { EmptyView() })
                     .id(msg.id)
             }
         }

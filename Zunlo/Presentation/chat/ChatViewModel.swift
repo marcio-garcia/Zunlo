@@ -95,7 +95,7 @@ public final class ChatViewModel: ObservableObject {
         let userMessage = ChatMessage(
             conversationId: conversationId,
             role: .user,
-            attributed: AttributedString(stringLiteral: trimmed),
+            plain: trimmed,
             createdAt: Date(),
             status: .sent,
             userId: userId,

@@ -62,6 +62,7 @@ public actor ChatEngine {
     public func run(history: [ChatMessage], userMessage: ChatMessage) async -> AsyncStream<ChatEngineEvent> {
         let lower = userMessage.rawText.lowercased()
         do {
+            // Handle locally with NLP
             let result = try await nlpService.process(text: lower)
 
             switch result.outcome {
@@ -70,7 +71,7 @@ public actor ChatEngine {
                 return startStream(history: history, userMessage: userMessage)
 
             default:
-                // Handle locally and stream ChatEngineEvent's to the ViewModel
+                // Stream ChatEngineEvent's to the ViewModel
                 return AsyncStream<ChatEngineEvent> { continuation in
                     // Run the work on the actor, keep a handle for cancellation symmetry
                     self.setCurrentStreamTask(

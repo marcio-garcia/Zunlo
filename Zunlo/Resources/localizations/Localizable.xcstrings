@@ -64,9 +64,6 @@
         }
       }
     },
-    "aaa" : {
-
-    },
     "Add a quick task" : {
       "localizations" : {
         "pt-BR" : {
@@ -178,10 +175,24 @@
       }
     },
     "Analyzing your day…" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificando..."
+          }
+        }
+      }
     },
     "Assistant is typing" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digitando…"
+          }
+        }
+      }
     },
     "At time of task" : {
       "localizations" : {
@@ -214,16 +225,44 @@
       }
     },
     "Block %lldm" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear %lldm"
+          }
+        }
+      }
     },
     "Block prep" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar preparação"
+          }
+        }
+      }
     },
     "Book it" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear"
+          }
+        }
+      }
     },
     "Calendar conflicts detected" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar conflitos detectados"
+          }
+        }
+      }
     },
     "Cancel" : {
       "localizations" : {
@@ -252,7 +291,14 @@
 
     },
     "Clear all messages" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir todas as mensagens"
+          }
+        }
+      }
     },
     "Clear All Reminders" : {
       "localizations" : {
@@ -295,10 +341,24 @@
       }
     },
     "Conflicts resolved" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflitos resolvidos"
+          }
+        }
+      }
     },
     "Copy" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar"
+          }
+        }
+      }
     },
     "Copy Realm file path" : {
       "localizations" : {
@@ -331,7 +391,14 @@
       }
     },
     "Create plan" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Criar plano"
+          }
+        }
+      }
     },
     "daily" : {
       "extractionState" : "manual",
@@ -378,7 +445,14 @@
       }
     },
     "Day plan created" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plano criado"
+          }
+        }
+      }
     },
     "Debug Menu" : {
 
@@ -404,7 +478,14 @@
       }
     },
     "Delete all messages" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir todas as mensagens"
+          }
+        }
+      }
     },
     "Delete all series" : {
       "localizations" : {
@@ -427,10 +508,24 @@
       }
     },
     "Delete message" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir mensagem"
+          }
+        }
+      }
     },
     "Delete messages" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir mensagens"
+          }
+        }
+      }
     },
     "Delete task" : {
       "localizations" : {
