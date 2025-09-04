@@ -15,11 +15,13 @@ struct ChatView: View {
     @EnvironmentObject var nav: AppNav
     @Binding var showChat: Bool
     @StateObject private var viewModel: ChatViewModel
-
+    
     @FocusState private var focused: Bool
     @State private var scrollProxy: ScrollViewProxy?
     
     private let calendar = Calendar.appDefault
+    private let debouncer = DebouncedExecutor(delay: 0.3)
+    private let scrollID = UUID()
     
     init(namespace: Namespace.ID, showChat: Binding<Bool>, factory: ViewFactory) {
         self.namespace = namespace
@@ -70,7 +72,6 @@ struct ChatView: View {
         .onTapGesture {
             focused = false
         }
-//        .onChange(of: viewModel.messages.count) { _, _ in scrollToBottom(animated: true) }
         .swipeToDismiss(isPresented: $showChat, threshold: 300, predictedThreshold: 300, minOpacity: 0.7)
         .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: showChat)
     }
@@ -119,8 +120,10 @@ struct ChatView: View {
             .onAppear { scrollProxy = proxy }
             .onChange(of: viewModel.lastMessageAnchor) { _, id in
                 guard let id else { return }
-                withAnimation(.easeOut(duration: 0.25)) {
-                    proxy.scrollTo(id, anchor: .bottom)
+                debouncer.execute(id: scrollID) {
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        proxy.scrollTo(id, anchor: .bottom)
+                    }
                 }
             }
         }
@@ -144,7 +147,7 @@ struct ChatView: View {
                         .frame(maxWidth: .infinity, alignment: msg.role == .user ? .trailing : .leading)
                         .padding(.horizontal, 6)
                 }
-                HStack(spacing: 0, content: {})
+                HStack(spacing: 0, content: { Text("aaa")})
                     .id(msg.id)
             }
         }
@@ -220,12 +223,12 @@ struct ChatView: View {
     }
     
     private func scrollToBottom(animated: Bool) {
-        let filtered = viewModel.messages.filter { $0.status != .deleted }
-        if let id = filtered.last?.id {
+        if let id = viewModel.lastMessageAnchor {
             withAnimation(animated ? .easeOut(duration: 0.25) : nil) {
                 scrollProxy?.scrollTo(id, anchor: .bottom)
             }
         }
+
     }
     
     private static let headerFormatter: DateFormatter = {
