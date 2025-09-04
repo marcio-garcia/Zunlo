@@ -33,7 +33,6 @@ public final class ChatViewModel: ObservableObject {
     private let calendar: Calendar
 
     private let rebuildDebouncer = Debouncer()
-    private let nlpService: NLService
     
     let markdownConverterConfig = MarkdownConverterConfig(
         heading1Font: AppFontStyle.title.font(),
@@ -50,13 +49,11 @@ public final class ChatViewModel: ObservableObject {
         conversationId: UUID,
         engine: ChatEngine,
         repo: ChatRepository,
-        nlpService: NLService,
         calendar: Calendar
     ) {
         self.conversationId = conversationId
         self.engine = engine
         self.repo = repo
-        self.nlpService = nlpService
         self.calendar = calendar
     }
 
@@ -107,59 +104,11 @@ public final class ChatViewModel: ObservableObject {
         messages.append(userMessage)
         rebuildSections()
 
-        // Call NLP
-        
-        // Create assistant placeholder
-        let messageId = UUID()
-        var assistant = ChatMessage(
-            id: messageId,
-            conversationId: conversationId,
-            role: .assistant,
-            plain: "",
-            createdAt: Date(),
-            status: .streaming
-        )
-        messages.append(assistant)
-        rebuildSections()
-        
-        let lower = trimmed.lowercased()
-        do {
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-            
-            let result = try await nlpService.process(text: lower)
-            switch result.outcome {
-            case .agenda:
-                if let idx = messages.firstIndex(where: { $0.id == messageId }) {
-                    if let attr = result.attributedString {
-                        messages[idx].format = .rich
-                        messages[idx].richText = attr
-                    }
-                    messages[idx].status = .sent
-                    try await repo.upsert(messages[idx])
-                    rebuildSections()
-                }
-                isGenerating = false
-            case .createdTask: break
-                
-            case .createdEvent: break
-                
-            case .rescheduled: break
-                
-            case .updated: break
-                
-            case .planSuggestion: break
-                
-            case .unknown: break
-                // Start engine stream and react to events
-                //        let historySnapshot = messages // pass snapshot to engine
-                //        Task { [weak self] in
-                //            guard let self else { return }
-                //            let stream = await engine.startStream(history: historySnapshot, userMessage: userMessage)
-                //            for await ev in stream { await self.consume(ev) }
-                //        }
-            }
-        } catch {
-            print(error)
+        // Call chat engine
+        let historySnapshot = messages // pass snapshot to engine
+        let asyncStream = await engine.run(history: historySnapshot, userMessage: userMessage)
+        for await ev in asyncStream {
+            await self.consume(ev)
         }
     }
 

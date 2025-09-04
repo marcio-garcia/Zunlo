@@ -19,4 +19,10 @@ public struct CommandResult: Sendable {
     public var outcome: Outcome
     public var message: String
     public var attributedString: AttributedString?
+    
+    public init(outcome: CommandResult.Outcome, message: String, attributedString: AttributedString? = nil) {
+        self.outcome = outcome
+        self.message = message
+        self.attributedString = attributedString
+    }
 }

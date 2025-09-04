@@ -21,8 +21,14 @@ final class ChatEngineIntegrationTests: XCTestCase {
         let ai = SupabaseEdgeAIClient(streamer: streamer, auth: MockAuthProvider())
         let repo = InMemoryChatRepositoryActor()
         let tools = MockToolRouter()
-        let engine = ChatEngine(conversationId: UUID(), ai: ai, tools: tools, repo: repo)
-        
+        let nlp = MockNLService()
+        let engine = ChatEngine(
+            conversationId: UUID(),
+            ai: ai,
+            nlpService: nlp,
+            tools: tools,
+            repo: repo
+        )
         
         let user = ChatMessage(conversationId: UUID(), role: .user, plain: "Hello", createdAt: Date(), status: .sent)
         let stream = await engine.startStream(history: [], userMessage: user)
@@ -53,8 +59,14 @@ final class ChatEngineIntegrationTests: XCTestCase {
         let ai = SupabaseEdgeAIClient(streamer: streamer, auth: MockAuthProvider())
         let repo = InMemoryChatRepositoryActor()
         let tools = MockToolRouter()
-        let engine = ChatEngine(conversationId: UUID(), ai: ai, tools: tools, repo: repo)
-        
+        let nlp = MockNLService()
+        let engine = ChatEngine(
+            conversationId: UUID(),
+            ai: ai,
+            nlpService: nlp,
+            tools: tools,
+            repo: repo
+        )
         
         let user = ChatMessage(conversationId: UUID(), role: .user, plain: "Hi", createdAt: Date(), status: .sent)
         let stream = await engine.startStream(history: [], userMessage: user)

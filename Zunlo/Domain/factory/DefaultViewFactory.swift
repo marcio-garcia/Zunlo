@@ -77,12 +77,6 @@ final class DefaultViewFactory: ViewFactory {
 //            }
 //        }
         
-        let aiChatEngine = ChatEngine(
-            conversationId: cid,
-            ai: aiChatService,
-            tools: aiToolRouter,
-            repo: appState.chatRepository!)
-        
         let engine = IntentEngine.bundled()
         let parser = CommandParser(engine: engine)
         let taskStore = SPTaskStore(taskRepo: appState.userTaskRepository!, auth: appState.authManager!)
@@ -92,11 +86,18 @@ final class DefaultViewFactory: ViewFactory {
                                       aiToolRouter: aiToolRouter)
         let executor = AnyCommandExecutor(tasks: taskStore, events: eventStore)
         let nlpService = NLService(parser: parser, executor: executor, engine: engine)
+        
+        let aiChatEngine = ChatEngine(
+            conversationId: cid,
+            ai: aiChatService,
+            nlpService: nlpService,
+            tools: aiToolRouter,
+            repo: appState.chatRepository!)
+        
         return ChatViewModel(
             conversationId: cid,
             engine: aiChatEngine,
             repo: appState.chatRepository!,
-            nlpService: nlpService,
             calendar: calendar
         )
     }

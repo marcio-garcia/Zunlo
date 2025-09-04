@@ -18,65 +18,6 @@
 import Foundation
 import SwiftUI
 
-// MARK: - Engine Events & State
-
-public enum ChatStreamState: Equatable {
-    case idle
-    case streaming(assistantId: UUID, continuation: AsyncStream<ChatEngineEvent>.Continuation?)
-    case awaitingTools(responseId: String, assistantId: UUID?)
-    case failed(String)
-    case stopped(assistantId: UUID?)
-    
-    public static func == (lhs: ChatStreamState, rhs: ChatStreamState) -> Bool {
-        switch lhs {
-        case .idle:
-            if rhs == .idle {
-                return true
-            } else {
-                return false
-            }
-        case .streaming(let assistantId, _):
-            if case .streaming(let id, _) = rhs, assistantId == id {
-                return true
-            } else {
-                return false
-            }
-        case .awaitingTools(let responseId, let assistantId):
-            if case .awaitingTools(let respId, let assistId) = rhs,
-                responseId == respId,
-                assistId == assistantId {
-                return true
-            } else {
-                return false
-            }
-        case .failed(let msg):
-            if case .failed(let string) = rhs, msg == string {
-                return true
-            } else {
-                return false
-            }
-        case .stopped(assistantId: let assistantId):
-            if case .stopped(let assistId) = rhs, assistId == assistantId {
-                return true
-            } else {
-                return false
-            }
-        }
-    }
-    
-}
-
-public enum ChatEngineEvent {
-    case messageAppended(ChatMessage)                 // new message persisted/emitted (user/assistant/tool)
-    case messageDelta(messageId: UUID, delta: String) // assistant token delta
-    case messageStatusUpdated(messageId: UUID, status: ChatMessageStatus, error: String?)
-    case messageFormatUpdated(messageId: UUID, format: ChatMessageFormat)
-    case suggestions([String])
-    case responseCreated(String)
-    case stateChanged(ChatStreamState)
-    case completed(messageId: UUID)
-}
-
 // MARK: - ChatEngine (orchestrates streaming/tooling/persistence)
 
 public actor ChatEngine {
@@ -84,7 +25,8 @@ public actor ChatEngine {
     private let ai: AIChatService
     private let tools: ToolRouter
     private let repo: ChatRepository
-
+    private let nlpService: NLProcessing
+    
     private(set) var state: ChatStreamState = .idle
     private var currentStreamTask: Task<Void, Never>? = nil
 
@@ -98,9 +40,16 @@ public actor ChatEngine {
     private var toolingAssistantId: UUID?      // the draft bubble we turned into a "processing" placeholder
     private var mdDetectors: [UUID: MarkdownFormatDetector] = [:]
     
-    public init(conversationId: UUID, ai: AIChatService, tools: ToolRouter, repo: ChatRepository) {
+    public init(
+        conversationId: UUID,
+        ai: AIChatService,
+        nlpService: NLProcessing,
+        tools: ToolRouter,
+        repo: ChatRepository
+    ) {
         self.conversationId = conversationId
         self.ai = ai
+        self.nlpService = nlpService
         self.tools = tools
         self.repo = repo
     }
@@ -109,6 +58,70 @@ public actor ChatEngine {
     public func loadHistory(limit: Int? = 200) async throws -> [ChatMessage] {
         try await repo.loadMessages(conversationId: conversationId, limit: limit)
     }
+    
+    public func run(history: [ChatMessage], userMessage: ChatMessage) async -> AsyncStream<ChatEngineEvent> {
+        let lower = userMessage.rawText.lowercased()
+        do {
+            let result = try await nlpService.process(text: lower)
+
+            switch result.outcome {
+            case .unknown:
+                // No local handling → use regular AI streaming path
+                return startStream(history: history, userMessage: userMessage)
+
+            default:
+                // Handle locally and stream ChatEngineEvent's to the ViewModel
+                return AsyncStream<ChatEngineEvent> { continuation in
+                    // Run the work on the actor, keep a handle for cancellation symmetry
+                    self.setCurrentStreamTask(
+                        Task { [weak self] in
+                            guard let self else { return }
+                            do {
+                                // Persist + echo the user message (keeps repo in sync with UI snapshot)
+                                try await self.repo.upsert(userMessage)
+                                continuation.yield(.messageAppended(userMessage))
+
+                                // Build the assistant message from NLP result
+                                let assistant = await self.createAssistantMessage(
+                                    conversationId: self.conversationId,
+                                    rawText: result.message,
+                                    richText: result.attributedString,
+                                    status: .sent
+                                )
+
+                                // Persist + stream events to the UI
+                                try await self.repo.upsert(assistant)
+                                continuation.yield(.messageAppended(assistant))
+                                continuation.yield(.messageStatusUpdated(messageId: assistant.id, status: .sent, error: nil))
+                                continuation.yield(.completed(messageId: assistant.id))
+
+                                // 4) Return engine to idle so the UI stops the spinner
+                                await self.setState(.idle, continuation: continuation)
+                            } catch is CancellationError {
+                                await self.setState(.failed("Chat cancelled"), continuation: continuation)
+                            } catch {
+                                // If anything goes wrong in local handling, fall back to normal AI streaming
+                                let stream = await self.startStream(history: history, userMessage: userMessage)
+                                for await ev in stream {
+                                    continuation.yield(ev)
+                                }
+                            }
+                            continuation.finish()
+                        }
+                    )
+
+                    // Ensure underlying task is torn down if the consumer stops early
+                    continuation.onTermination = { [weak self] _ in
+                        Task { await self?.cancelCurrentStreamTask() }
+                    }
+                }
+            }
+        } catch {
+            // If NLP fails, just use the normal AI streaming path
+            return startStream(history: history, userMessage: userMessage)
+        }
+    }
+
 
     // Start a new turn: persists the user message, then streams the assistant
     public func startStream(history: [ChatMessage], userMessage: ChatMessage, output: [ToolOutput] = []) -> AsyncStream<ChatEngineEvent> {
@@ -219,12 +232,10 @@ public actor ChatEngine {
             }
             
             // Create assistant placeholder
-            let assistant = ChatMessage(
-                id: id,
+            let assistant = createAssistantMessage(
                 conversationId: conversationId,
-                role: .assistant,
-                plain: "",
-                createdAt: Date(),
+                id: id,
+                rawText: "",
                 status: .streaming
             )
             mdDetectors[id] = MarkdownFormatDetector()
@@ -340,6 +351,34 @@ public actor ChatEngine {
         currentStreamTask = nil
     }
 
+    private func createAssistantMessage(
+        conversationId: UUID,
+        id: UUID? = nil,
+        rawText: String? = nil,
+        richText: AttributedString? = nil,
+        status: ChatMessageStatus
+    ) -> ChatMessage {
+        if let rich = richText {
+            return ChatMessage(
+                id: id ?? UUID(),
+                conversationId: conversationId,
+                role: .assistant,
+                attributed: rich,
+                createdAt: Date(),
+                status: status
+            )
+        } else {
+            return ChatMessage(
+                id: id ?? UUID(),
+                conversationId: conversationId,
+                role: .assistant,
+                plain: rawText ?? "",
+                createdAt: Date(),
+                status: status
+            )
+        }
+    }
+    
     // Debounce persistence of deltas to reduce I/O
     private func bufferDelta(id: UUID, delta: String) async {
         deltaBuffers[id, default: ""].append(delta)

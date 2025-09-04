@@ -8,7 +8,11 @@
 import Foundation
 import SmartParseKit
 
-public final class NLService {
+public protocol NLProcessing {
+    func process(text: String) async throws -> CommandResult
+}
+
+public final class NLService: NLProcessing {
     private let parser: CommandParser
     private let executor: AnyCommandExecutor
     private let engine: IntentEngine
