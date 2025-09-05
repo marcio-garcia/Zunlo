@@ -34,6 +34,13 @@ public struct ResponsesApiTextRequest: Encodable {
     let metadata: [String: String]?
     let localNowISO: String?
     let localTimezone: String?
+    let response_type: ResponseType?
+}
+
+public enum ResponseType: String, Encodable {
+    case plain
+    case tools
+    case structured
 }
 
 public struct InputContent: Encodable {
@@ -71,7 +78,6 @@ public protocol AuthProvider {
     func currentAccessToken() async throws -> String?
 }
 
-
 public final class SupabaseFunctionsStreamer: EdgeFunctionStreamer {
     private let supabase: SupabaseClient
     public init(supabase: SupabaseClient) { self.supabase = supabase }
@@ -83,7 +89,6 @@ public final class SupabaseFunctionsStreamer: EdgeFunctionStreamer {
         try await supabase.functions.invoke(function, options: options) as EmptyResponse
     }
 }
-
 
 public struct SupabaseAuthProvider: AuthProvider {
     private let supabase: SupabaseClient
@@ -195,7 +200,8 @@ public final class SupabaseEdgeAIClient: AIChatService {
             temperature: defaultTemperature,
             metadata: nil,
             localNowISO: Date.localDateToAI(),
-            localTimezone: Calendar.appDefault.timeZone.identifier
+            localTimezone: Calendar.appDefault.timeZone.identifier,
+            response_type: .structured
         )
 
         return AsyncThrowingStream { continuation in

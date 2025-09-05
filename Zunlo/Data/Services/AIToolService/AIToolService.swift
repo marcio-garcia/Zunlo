@@ -86,6 +86,7 @@ final public class AIToolService: AIToolServiceAPI {
         )
     }
     
+    // Receives Encodable to be encoded by the 'invoke' function
     private func invoke<T: Encodable, R: Decodable>(_ payload: T, functionName: String) async throws -> R {
         do {
             let response = try await client.functions
@@ -111,6 +112,7 @@ final public class AIToolService: AIToolServiceAPI {
         }
     }
     
+    // Receives Data, so you have to encode first
     private func invoke<R: Decodable>(body: Data, functionName: String) async throws -> R {
         do {
             let response = try await client.functions

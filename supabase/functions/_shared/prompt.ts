@@ -230,12 +230,149 @@ export const TOOLS: Tool[] = [
   }
 ];
 
+/* -----------------------------
+ * Structured Output (assistant)
+ * -----------------------------
+ * One JSON object the model must return.
+ * Reuses your existing model-facing arg shapes.
+ */
+
+export const ZUNLO_STRUCTURED_SCHEMA = {
+  name: "ZunloAssistantResponse",
+  type: "json_schema",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["displayText", "actions"],
+    properties: {
+      // free text to show the user
+      displayText: { type: "string" },
+
+      // machine-readable actions your app will perform
+      actions: {
+        type: "array",
+        maxItems: 10,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["type", "payload"],
+          properties: {
+            type: {
+              type: "string",
+              enum: [
+                "getAgenda",
+                "planWeek",
+                "createTask",
+                "updateTask",
+                "deleteTask",
+                "createEvent",
+                "updateEvent",
+                "deleteEvent",
+                "openView" // purely client-side; no server write
+              ]
+            },
+
+            // payloads reuse your existing tool arg schemas (camelCase)
+            payload: {
+              anyOf: [
+                // --- Agenda ---
+                {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["dateRange", "start", "end"],
+                  properties: {
+                    dateRange: { type: "string", enum: ["today","tomorrow","week","custom"] },
+                    start: isoDateTime,
+                    end: isoDateTime
+                  }
+                },
+
+                // --- Plan Week ---
+                {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["startDate","objectives","horizon"],
+                  properties: {
+                    startDate: isoDate,
+                    objectives: { type: "array", items: { type: "string" }, maxItems: 20 },
+                    horizon: { type: "string", enum: ["day","week"], default: "week" }
+                  }
+                },
+
+                // --- Tasks ---
+                { // createTask
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["task"],
+                  properties: { task: taskBodyArgs }
+                },
+                { // updateTask
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["taskId","patch"],
+                  properties: {
+                    taskId: { type: "string" },
+                    patch: taskPatchArgs
+                  }
+                },
+                { // deleteTask
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["taskId"],
+                  properties: { taskId: { type: "string" } }
+                },
+
+                // --- Events ---
+                { // createEvent
+                  ...eventBodyArgs
+                },
+                { // updateEvent
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["eventId","editScope","occurrenceDate","patch"],
+                  properties: {
+                    eventId: { type: "string" },
+                    editScope: { type: "string", enum: ["single","override","this_and_future","entire_series"] },
+                    occurrenceDate: isoDateTime,
+                    patch: eventPatchArgs
+                  }
+                },
+                { // deleteEvent
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["eventId","editScope","occurrenceDate"],
+                  properties: {
+                    eventId: { type: "string" },
+                    editScope: { type: "string", enum: ["single","override","this_and_future","entire_series"] },
+                    occurrenceDate: isoDateTime
+                  }
+                },
+
+                // --- Client-only (no server write) ---
+                { // openView
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["view"],
+                  properties: {
+                    view: { type: "string", enum: ["Today","Inbox","Calendar","Settings"] }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
 /* -------------------------------
  * Enricher for Responses API body
  * -------------------------------
  * - Adds a concise system message if one isn’t present.
  * - Attaches the tool specs unless the client already provided them
- *   (or force=true).
+ *   (or addTools=true).
  */
 
 const DEFAULT_TEMPERATURE = Number(Deno.env.get("OPENAI_TEMPERATURE") ?? 0.3);
@@ -257,17 +394,29 @@ export function supportsTemperature(model?: string): boolean {
   return true;
 }
 
-export function enrichResponsesBody(body: any, force = false) {
+function attachStructuredResponseFormat(cloned: any, schema = ZUNLO_STRUCTURED_SCHEMA) {
+  // Responses API expects the schema under text.format
+  cloned.text = cloned.text ?? {};
+  cloned.text.format = schema;
+}
+
+export type EnrichMode = "plain" | "tools" | "structured";
+
+export function coerceEnrichMode(input: unknown, fallback: EnrichMode): EnrichMode {
+  if (typeof input !== "string") return fallback;
+  const m = input.toLowerCase().trim();
+  return (m === "plain" || m === "tools" || m === "structured") ? (m as EnrichMode) : fallback;
+}
+
+export function enrichResponsesBody(body: any, modeInput?: unknown) {
+  const mode: EnrichMode = coerceEnrichMode(modeInput, "plain");
+
   // const cloned = JSON.parse(JSON.stringify(body ?? {}));
   const cloned: any =
     (typeof structuredClone === "function" ? structuredClone(body ?? {}) : JSON.parse(JSON.stringify(body ?? {})));
 
   // Payload "input". Ensure messages array exists
   const input = Array.isArray(cloned.input) ? cloned.input : [];
-  // const hasSystem = input.some((m: any) => m?.role === "system");
-  // if (!hasSystem) {
-  //   input.unshift({ role: "system", content: SYSTEM_PROMPT });
-  // }
   cloned.input = input;
 
   // Payload "model". Default reasonable model if not set
@@ -279,27 +428,19 @@ export function enrichResponsesBody(body: any, force = false) {
   // Remove helper fields from the payload we send to the model
   delete cloned.localTimezone;
   delete cloned.localNowISO;
+  delete cloned.response_type;
 
   // Build your base/system instructions (your buildPromptInstructions should already flatten newlines)
-  const base = buildPromptInstructions(tzId ?? "UTC", nowLocalISO ?? new Date().toISOString());
+  const base = buildPromptInstructionsNoTools(tzId ?? "UTC", nowLocalISO ?? new Date().toISOString());
+  const instructions = typeof cloned.instructions === "string" ? cloned.instructions.trim() : "";
+  const modeHint = (mode === "structured")
+    ? " Always respond as a single JSON object that exactly matches the provided JSON schema."
+    : "";
+  cloned.instructions = [base, instructions, modeHint].filter(Boolean).join(" ");
 
-  // Append/merge logic:
-  // - If force=true: always prepend base.
-  // - If force=false and no instructions, set base.
-  // - If force=false and instructions exist, prepend base unless it already seems present.
-  const hasTimePolicy = typeof cloned.instructions === "string" &&
-                        /Time handling policy/i.test(cloned.instructions);
-
-  if (force || !cloned.instructions) {
-    cloned.instructions = base + (cloned.instructions ? ` ${cloned.instructions}` : "");
-  } else if (!hasTimePolicy) {
-    cloned.instructions = `${base} ${cloned.instructions}`;
-  }
-
-  // Temperature: set only if missing or force=true; clamp to [0,2]
-  // Temperature: only if model supports it (or force)
+  // Temperature: set only if model supports it or missing; clamp to [0,2]
   if (supportsTemperature(cloned.model)) {
-    if (force || cloned.temperature == null) {
+    if (cloned.temperature == null) {
       cloned.temperature = DEFAULT_TEMPERATURE;
     } else {
       cloned.temperature = clampTemp(Number(cloned.temperature));
@@ -312,10 +453,20 @@ export function enrichResponsesBody(body: any, force = false) {
     delete cloned.presence_penalty;
   }
 
-  // Attach tools if none given or force=true
-  if (force || !Array.isArray(cloned.tools) || cloned.tools.length === 0) {
+  // *** NEW: choose the output contract ***
+  if (mode === "tools") {
     cloned.tools = TOOLS;
-    cloned.tool_choice = "auto";
+    cloned.tool_choice = "auto"; // or "none" if you want to force no tool calls sometimes
+    if (cloned.text?.format) delete cloned.text.format; // ensure not both
+  } else if (mode === "structured") {
+    attachStructuredResponseFormat(cloned, ZUNLO_STRUCTURED_SCHEMA);
+    delete cloned.tools;        // don't mix with structured outputs
+    delete cloned.tool_choice;  // ^
+  } else {
+    // "plain": neither tools nor structured; model returns free text
+    delete cloned.tools;
+    delete cloned.tool_choice;
+    if (cloned.text?.format) delete cloned.text.format;
   }
 
   // If callers might pass Chat Completions–style tools, normalize:
@@ -327,7 +478,34 @@ export function enrichResponsesBody(body: any, force = false) {
   return cloned;
 }
 
-export function buildPromptInstructions(tzId: string, nowLocalISO: string) {
+export function buildPromptInstructionsNoTools(tzId: string, nowLocalISO: string) {
+  const s = `
+Zunlo is an app to help people with ADHD manage their tasks and events.
+You are Zunlo's assistant for tasks and events.
+Never mention ADHD unless the user specifically asks about it.
+Always be kind and encouraging, without overdoing it.
+
+Time handling policy (UTC-first):
+- User time zone: ${tzId}
+- Current local time: ${nowLocalISO}
+- Interpret all user-relative times in ${tzId}.
+- Convert all times to UTC before returning. Use RFC3339 with 'Z' (e.g., 2025-08-25T18:00:00Z).
+- When speaking to the user, present times in ${tzId} and mention the zone if helpful.
+- For recurrences, treat the wall-clock time in ${tzId} as authoritative (e.g., “every Monday 9:00 in ${tzId}”),
+  but pass individual occurrences in UTC.
+- For all-day items, treat the local day in ${tzId} as authoritative (00:00 - 24:00 local),
+  but persist UTC boundaries.
+
+  Conventions:
+- For recurring edits: single vs this_and_future vs entire_series — choose carefully and explain.
+- Apple weekdays: 1=Sun … 7=Sat for recurrence.
+- Use editScope=override to change/cancel a single occurrence of a recurring event; use single only for non-recurring events.
+- Default user requests to 'today' if no date/period is explicitly provided.
+`.trim().replace(/\s*\n\s*/g, ' ').replace(/\s{2,}/g, ' ');
+  return s;
+}
+
+export function buildPromptInstructionsForTools(tzId: string, nowLocalISO: string) {
   const s = `
 Zunlo is an app to help people with ADHD manage their tasks and events.
 You are Zunlo's assistant for tasks and events.

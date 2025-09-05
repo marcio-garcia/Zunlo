@@ -4,7 +4,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { teeLogResponsesSSE } from "../_shared/sse_tee.ts";
 import { withAuth } from "../_shared/guard.ts";
 import { postResponsesStream } from "../_shared/openai.ts";
-import { enrichResponsesBody } from "../_shared/prompt.ts";
+import { EnrichMode, enrichResponsesBody } from "../_shared/prompt.ts";
 import {
   assertChatAllowance,
   estimateTokensFromText,
@@ -42,7 +42,9 @@ Deno.serve(async (req) => {
     return jsonErr("Bad JSON", 400);
   }
 
-  const enriched = payload?.__no_enrich ? payload : enrichResponsesBody(payload);
+  const responseType: EnrichMode | undefined = payload.response_type;
+
+  const enriched = payload?.__no_enrich ? payload : enrichResponsesBody(payload, responseType);
 
   // --- Preflight: input token allowance (only if ENFORCE is on) ---
   if (ENFORCE) {
