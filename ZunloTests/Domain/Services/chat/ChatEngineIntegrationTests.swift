@@ -18,7 +18,7 @@ final class ChatEngineIntegrationTests: XCTestCase {
             .init(SSE.textDelta("Hi")),
             .init(SSE.completed())
         ]
-        let ai = SupabaseEdgeAIClient(streamer: streamer, auth: MockAuthProvider())
+        let ai = SupabaseAIChatClient(streamer: streamer, auth: MockAuthProvider())
         let repo = InMemoryChatRepositoryActor()
         let tools = MockToolRouter()
         let nlp = MockNLService()
@@ -56,7 +56,7 @@ final class ChatEngineIntegrationTests: XCTestCase {
             .init(SSE.textDelta("done")),
             .init(SSE.completed())
         ]
-        let ai = SupabaseEdgeAIClient(streamer: streamer, auth: MockAuthProvider())
+        let ai = SupabaseAIChatClient(streamer: streamer, auth: MockAuthProvider())
         let repo = InMemoryChatRepositoryActor()
         let tools = MockToolRouter()
         let nlp = MockNLService()

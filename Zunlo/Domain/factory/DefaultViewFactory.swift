@@ -38,9 +38,12 @@ final class DefaultViewFactory: ViewFactory {
         // Ensure the Conversation row exists without blocking init
         Task { try? await appState.localDB!.ensureConversationExists(id: cid) }
 
-        var calendar = Calendar.appDefault
+        let calendar = Calendar.appDefault
         
-        let aiChatService = SupabaseEdgeAIClient(supabase: appState.supabaseClient!)
+        let aiChatService = SupabaseAIChatClient(
+            supabase: appState.supabaseClient!,
+            config: SupabaseAIChatConfig(responseType: .structured)
+        )
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
                                                  eventRepo: appState.eventRepository!)
         let aiToolService = AIToolService(
