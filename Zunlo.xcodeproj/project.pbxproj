@@ -18,6 +18,7 @@
 		252D73182E2D5E6C002320B8 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73172E2D5E6C002320B8 /* Supabase */; };
 		255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */ = {isa = PBXBuildFile; productRef = 255B93752E1C6FFB00D8CD8A /* MiniSignalEye */; };
 		25820C9E2E651296007EAD3B /* SmartParseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 25820C9D2E651296007EAD3B /* SmartParseKit */; };
+		258212962E6B6651007EAD3B /* LoggingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 258212952E6B6651007EAD3B /* LoggingKit */; };
 		25857B842E1C85C800676F8B /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; };
 		25857E4B2E1DF95700676F8B /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 25857B832E1C85C800676F8B /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 25ACE3452E25F028009F0218 /* FirebaseCore */; };
@@ -74,6 +75,7 @@
 /* Begin PBXFileReference section */
 		251483572E40FB8A00B59FF8 /* FlowNavigator */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = FlowNavigator; sourceTree = "<group>"; };
 		25820C9B2E650AA6007EAD3B /* generate_intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = generate_intents.swift; sourceTree = "<group>"; };
+		258212942E6B5F5B007EAD3B /* LoggingKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = LoggingKit; sourceTree = "<group>"; };
 		25A8286C2E64F76A00384DD1 /* SmartParseKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = SmartParseKit; sourceTree = "<group>"; };
 		25B7BDC32E4241BC004E1C12 /* AdStack */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = AdStack; sourceTree = "<group>"; };
 		25F5BB6C2E5B65A100747955 /* GlowUI */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = GlowUI; sourceTree = "<group>"; };
@@ -134,6 +136,7 @@
 				25B7BDC52E4241CA004E1C12 /* AdStack in Frameworks */,
 				252D73102E2D5E6C002320B8 /* Functions in Frameworks */,
 				251483592E4102A800B59FF8 /* FlowNavigator in Frameworks */,
+				258212962E6B6651007EAD3B /* LoggingKit in Frameworks */,
 				25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */,
 				252D73162E2D5E6C002320B8 /* Storage in Frameworks */,
 				255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */,
@@ -170,6 +173,7 @@
 		25FA19F42E0854F800E740A3 = {
 			isa = PBXGroup;
 			children = (
+				258212942E6B5F5B007EAD3B /* LoggingKit */,
 				25820C9C2E650AA6007EAD3B /* scripts */,
 				25A8286C2E64F76A00384DD1 /* SmartParseKit */,
 				25F5BB712E5BB30C00747955 /* ZunloHelpers */,
@@ -240,6 +244,7 @@
 				25F5BB6D2E5B660200747955 /* GlowUI */,
 				25F5BB722E5BB4B300747955 /* ZunloHelpers */,
 				25820C9D2E651296007EAD3B /* SmartParseKit */,
+				258212952E6B6651007EAD3B /* LoggingKit */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -964,6 +969,10 @@
 		25820C9D2E651296007EAD3B /* SmartParseKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SmartParseKit;
+		};
+		258212952E6B6651007EAD3B /* LoggingKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LoggingKit;
 		};
 		25857B832E1C85C800676F8B /* RealmSwift */ = {
 			isa = XCSwiftPackageProductDependency;
