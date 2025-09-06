@@ -29,7 +29,9 @@ public func extractDates(_ text: String, base: Date = Date(), locale: Locale = .
     
     // Calculate “next Friday” = strictly the next occurrence after `base`.
     // This is because NSDataDetector returns "next Friday" as the real next Friday + 7
-    if out.dates.count == 1 {
+    if out.dates.count == 1
+        && (findWeekdayEn(text) != nil || findWeekdayPt(text) != nil) {
+        
         // If it clearly says “next week”, don’t override semantics.
         let low = text.lowercased()
         let saysNextWeek = low.contains("next week") || low.contains("próxima semana") || low.contains("proxima semana")
@@ -55,15 +57,27 @@ private let reNextWeekdayPt = try! NSRegularExpression(
   pattern: #"(?i)\b(?:próxima|proxima|que\s+vem)\s+(segunda(?:-feira)?|ter[cç]a(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado|domingo)\b|\b(segunda|ter[cç]a|quarta|quinta|sexta)(?:-feira)?\s+(?:próxima|proxima|que\s+vem)\b"#
 )
 
+private func findWeekdayEn(_ text: String) -> NSTextCheckingResult? {
+    guard let m = reNextWeekdayEn.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text))
+    else { return nil }
+    return m
+}
+
+private func findWeekdayPt(_ text: String) -> NSTextCheckingResult? {
+    guard let m = reNextWeekdayPt.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text))
+    else { return nil }
+    return m
+}
+
 private func captureWeekdayEn(_ text: String) -> Int? {
-    guard let m = reNextWeekdayEn.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)),
+    guard let m = findWeekdayEn(text),
           let r = Range(m.range(at: 1), in: text) else { return nil }
     return weekdayIndexEn(String(text[r]))
 }
 
 private func captureWeekdayPt(_ text: String) -> Int? {
     // Try both capturing groups (pattern allows either order)
-    if let m = reNextWeekdayPt.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)) {
+    if let m = findWeekdayPt(text) {
         for i in 1..<m.numberOfRanges {
             if let r = Range(m.range(at: i), in: text) {
                 if let wd = weekdayIndexPt(String(text[r])) { return wd }
@@ -75,7 +89,8 @@ private func captureWeekdayPt(_ text: String) -> Int? {
 
 /// 1=Sun ... 7=Sat (Calendar/Gregorian convention)
 private func weekdayIndexEn(_ s: String) -> Int? {
-    switch s.prefix(3).lowercased() {
+    let t = s.folding(options: .diacriticInsensitive, locale: .current).lowercased()
+    switch t.prefix(3).lowercased() {
     case "sun": return 1
     case "mon": return 2
     case "tue": return 3
@@ -89,14 +104,16 @@ private func weekdayIndexEn(_ s: String) -> Int? {
 
 private func weekdayIndexPt(_ s: String) -> Int? {
     let t = s.folding(options: .diacriticInsensitive, locale: .current).lowercased()
-    if t.hasPrefix("domingo") { return 1 }
-    if t.hasPrefix("segunda") { return 2 }
-    if t.hasPrefix("terca")   { return 3 }
-    if t.hasPrefix("quarta")  { return 4 }
-    if t.hasPrefix("quinta")  { return 5 }
-    if t.hasPrefix("sexta")   { return 6 }
-    if t.hasPrefix("sab")     { return 7 } // sábado
-    return nil
+    switch t.prefix(3).lowercased() {
+    case "dom": return 1
+    case "seg": return 2
+    case "ter": return 3
+    case "qua": return 4
+    case "qui": return 5
+    case "sex": return 6
+    case "sab": return 7
+    default: return nil
+    }
 }
 
 /// Strictly the next occurrence after `base` (never “today”).

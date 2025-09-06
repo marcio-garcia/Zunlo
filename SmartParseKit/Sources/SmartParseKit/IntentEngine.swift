@@ -26,16 +26,16 @@ public final class IntentEngine {
         return r.dominantLanguage ?? .english
     }
 
-    public func classify(_ text: String) -> UserIntent {
+    public func classify(_ text: String) -> CommandIntent {
         if let possibleLabels = model?.predictedLabelHypotheses(for: text, maximumCount: 3), possibleLabels.count > 0 {
             var sorted = possibleLabels.sorted { $0.value > $1.value }
             let firstLabel = sorted.removeFirst()
             if firstLabel.value > 0.6 {
-                return UserIntent(rawValue: firstLabel.key) ?? .unknown
+                return CommandIntent(rawValue: firstLabel.key) ?? .unknown
             }
             let secondLabel = sorted.removeFirst()
             if ((firstLabel.value - secondLabel.value) / firstLabel.value) > 0.50 {
-                return UserIntent(rawValue: firstLabel.key) ?? .unknown
+                return CommandIntent(rawValue: firstLabel.key) ?? .unknown
             }
         }
         // fallback heuristics
@@ -51,7 +51,7 @@ public final class IntentEngine {
         return .unknown
     }
     
-    private func fallbackPlanWeek(text: String) -> UserIntent? {
+    private func fallbackPlanWeek(text: String) -> CommandIntent? {
         if (text.contains("plan") || text.contains("planejar") || text.contains("planeje") || text.contains("arrumar"))
             && (text.contains("week") || text.contains("semana")) {
             return .planWeek
@@ -59,7 +59,7 @@ public final class IntentEngine {
         return nil
     }
     
-    private func fallbackPlanDay(text: String) -> UserIntent? {
+    private func fallbackPlanDay(text: String) -> CommandIntent? {
         if (text.contains("plan") || text.contains("planejar") || text.contains("what's on") || text.contains("show"))
             && (text.contains("today")) {
             return .planDay
@@ -71,7 +71,7 @@ public final class IntentEngine {
         return nil
     }
     
-    private func fallbackCreateTask(text: String) -> UserIntent? {
+    private func fallbackCreateTask(text: String) -> CommandIntent? {
         if text.starts(with: "create") || text.starts(with: "add")
             && text.starts(with: "task") {
             return .createTask
@@ -83,7 +83,7 @@ public final class IntentEngine {
         return nil
     }
     
-    private func fallbackCreateEvent(text: String) -> UserIntent? {
+    private func fallbackCreateEvent(text: String) -> CommandIntent? {
         if (text.contains("new") || text.starts(with: "create"))
             && text.contains("event") {
             return .createEvent
@@ -99,17 +99,17 @@ public final class IntentEngine {
         return nil
     }
     
-    private func fallbackUpdateTask(text: String) -> UserIntent? {
+    private func fallbackUpdateTask(text: String) -> CommandIntent? {
         if text.contains("reschedule task") || text.contains("move task") || text.contains("postpone task") || text.contains("remarcar tarefa") || text.contains("mover tarefa") || text.contains("adiar tarefa") { return .rescheduleTask }
         return nil
     }
     
-    private func fallbackUpdateEvent(text: String) -> UserIntent? {
+    private func fallbackUpdateEvent(text: String) -> CommandIntent? {
         if text.contains("reschedule event") || text.contains("move event") || text.contains("postpone event") || text.contains("remarcar evento") || text.contains("mover evento") || text.contains("adiar evento") { return .rescheduleEvent }
         return nil
     }
     
-    private func fallbackShowAgenda(text: String) -> UserIntent? {
+    private func fallbackShowAgenda(text: String) -> CommandIntent? {
         if text.contains("agenda") {
             return .showAgenda
         }

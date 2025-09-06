@@ -30,6 +30,8 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
             return try await handlePlanning(cmd, now: now, calendar: calendar)
         case .showAgenda:
             return try await handleShowAgenda(cmd, now: now, calendar: calendar)
+        case .moreInfo:
+            return CommandResult(outcome: .moreInfo, message: "Need more info.")
         case .unknown:
             return CommandResult(outcome: .unknown, message: "I couldn’t understand. Try ‘create task …’, ‘create event …’, or ‘reschedule …’.")
         }

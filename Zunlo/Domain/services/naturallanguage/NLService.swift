@@ -7,6 +7,7 @@
 
 import Foundation
 import SmartParseKit
+import LoggingKit
 
 public protocol NLProcessing {
     func process(text: String) async throws -> CommandResult
@@ -26,8 +27,11 @@ public final class NLService: NLProcessing {
     public func process(text: String) async throws -> CommandResult {
         var cal = Calendar.appDefault
         cal.timeZone = .current
+        log("raw text: \(text), calendar: \(cal)")
         let parsed = parser.parse(text, now: Date(), calendar: cal)
+        log("parsed command: \(parsed)")
         let result = try await executor.execute(parsed, now: Date(), calendar: cal)
+        log("command result: \(result)")
         return result
     }
 }

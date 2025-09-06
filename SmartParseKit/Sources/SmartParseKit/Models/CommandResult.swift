@@ -13,6 +13,7 @@ public struct CommandResult: Sendable {
         case rescheduled, updated
         case planSuggestion
         case agenda
+        case moreInfo
         case unknown
     }
     

@@ -17,6 +17,7 @@
 
 import Foundation
 import SwiftUI
+import SmartParseKit
 
 // MARK: - ChatEngine (orchestrates streaming/tooling/persistence)
 
@@ -72,50 +73,7 @@ public actor ChatEngine {
 
             default:
                 // Stream ChatEngineEvent's to the ViewModel
-                return AsyncStream<ChatEngineEvent> { continuation in
-                    // Run the work on the actor, keep a handle for cancellation symmetry
-                    self.setCurrentStreamTask(
-                        Task { [weak self] in
-                            guard let self else { return }
-                            do {
-                                // Persist + echo the user message (keeps repo in sync with UI snapshot)
-                                try await self.repo.upsert(userMessage)
-                                continuation.yield(.messageAppended(userMessage))
-
-                                // Build the assistant message from NLP result
-                                let assistant = await self.createAssistantMessage(
-                                    conversationId: self.conversationId,
-                                    rawText: result.message,
-                                    richText: result.attributedString,
-                                    status: .sent
-                                )
-
-                                // Persist + stream events to the UI
-                                try await self.repo.upsert(assistant)
-                                continuation.yield(.messageAppended(assistant))
-                                continuation.yield(.messageStatusUpdated(messageId: assistant.id, status: .sent, error: nil))
-                                continuation.yield(.completed(messageId: assistant.id))
-
-                                // 4) Return engine to idle so the UI stops the spinner
-                                await self.setState(.idle, continuation: continuation)
-                            } catch is CancellationError {
-                                await self.setState(.failed("Chat cancelled"), continuation: continuation)
-                            } catch {
-                                // If anything goes wrong in local handling, fall back to normal AI streaming
-                                let stream = await self.startStream(history: history, userMessage: userMessage)
-                                for await ev in stream {
-                                    continuation.yield(ev)
-                                }
-                            }
-                            continuation.finish()
-                        }
-                    )
-
-                    // Ensure underlying task is torn down if the consumer stops early
-                    continuation.onTermination = { [weak self] _ in
-                        Task { await self?.cancelCurrentStreamTask() }
-                    }
-                }
+                return processNlpResult(result: result, history: history, userMessage: userMessage)
             }
         } catch {
             // If NLP fails, just use the normal AI streaming path
@@ -123,6 +81,54 @@ public actor ChatEngine {
         }
     }
 
+    public func processNlpResult(result: CommandResult, history: [ChatMessage], userMessage: ChatMessage) -> AsyncStream<ChatEngineEvent> {
+        cancelCurrentStreamIfAny()
+        
+        return AsyncStream<ChatEngineEvent> { continuation in
+            // Run the work on the actor, keep a handle for cancellation symmetry
+            self.setCurrentStreamTask(
+                Task { [weak self] in
+                    guard let self else { return }
+                    do {
+                        // Persist + echo the user message (keeps repo in sync with UI snapshot)
+                        try await self.repo.upsert(userMessage)
+                        continuation.yield(.messageAppended(userMessage))
+
+                        // Build the assistant message from NLP result
+                        let assistant = await self.createAssistantMessage(
+                            conversationId: self.conversationId,
+                            rawText: result.message,
+                            richText: result.attributedString,
+                            status: .sent
+                        )
+
+                        // Persist + stream events to the UI
+                        try await self.repo.upsert(assistant)
+                        continuation.yield(.messageAppended(assistant))
+                        continuation.yield(.messageStatusUpdated(messageId: assistant.id, status: .sent, error: nil))
+                        continuation.yield(.completed(messageId: assistant.id))
+
+                        // 4) Return engine to idle so the UI stops the spinner
+                        await self.setState(.idle, continuation: continuation)
+                    } catch is CancellationError {
+                        await self.setState(.failed("Chat cancelled"), continuation: continuation)
+                    } catch {
+                        // If anything goes wrong in local handling, fall back to normal AI streaming
+                        let stream = await self.startStream(history: history, userMessage: userMessage)
+                        for await ev in stream {
+                            continuation.yield(ev)
+                        }
+                    }
+                    continuation.finish()
+                }
+            )
+
+            // Ensure underlying task is torn down if the consumer stops early
+            continuation.onTermination = { [weak self] _ in
+                Task { await self?.cancelCurrentStreamTask() }
+            }
+        }
+    }
 
     // Start a new turn: persists the user message, then streams the assistant
     public func startStream(history: [ChatMessage], userMessage: ChatMessage, output: [ToolOutput] = []) -> AsyncStream<ChatEngineEvent> {

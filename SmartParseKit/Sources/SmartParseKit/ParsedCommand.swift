@@ -9,7 +9,7 @@ import Foundation
 import NaturalLanguage
 
 public struct ParsedCommand {
-    public var intent: UserIntent
+    public var intent: CommandIntent
     public var title: String?
     public var when: Date?
     public var end: Date?
