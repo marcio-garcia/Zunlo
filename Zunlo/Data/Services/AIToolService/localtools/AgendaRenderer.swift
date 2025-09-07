@@ -167,6 +167,201 @@ public struct AgendaRenderer {
         return AgendaRenderParts(attributed: out, text: textFallback, json: jsonOut, schema: schema)
     }
     
+    public static func renderWeekParts(
+        _ agenda: GetAgendaResult,
+        schema: String = "zunlo.agenda#1"
+    ) -> AgendaRenderParts {
+        let tz = TimeZone(identifier: agenda.timezone) ?? .current
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = tz
+        let f = Formatters(timeZone: tz)
+
+        // -------- Styles (same as renderParts)
+        var hdr  = AttributeContainer(); hdr.font  = AppFontStyle.subtitle.uiFont()
+        var sec  = AttributeContainer(); sec.font  = AppFontStyle.heading.uiFont()
+        var time = AttributeContainer(); time.font = AppFontStyle.body.uiFont()
+        var ttl  = AttributeContainer(); ttl.font  = AppFontStyle.strongBody.uiFont()
+        var meta = AttributeContainer(); meta.font = AppFontStyle.callout.uiFont()
+
+        @inline(__always)
+        func line(_ s: String, style: AttributeContainer? = nil) -> AttributedString {
+            var a = AttributedString(s + "\n")
+            if let style { a.setAttributes(style) }
+            return a
+        }
+
+        // Compute nice "Week of ..." label
+        let weekStart = cal.startOfDay(for: agenda.start)
+        let weekEnd   = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: agenda.end)) ?? agenda.end
+        let periodLabel = "Week of \(f.humanDate.string(from: weekStart)) – \(f.humanDate.string(from: weekEnd))"
+
+        // Group items
+        let (days, undatedTasks) = groupAgendaByDay(agenda)
+
+        // Helper: clip event times to the specific day being rendered
+        func clippedTimesForEventOnDay(_ e: AgendaEvent, dayStart: Date) -> (Date, Date?) {
+            let dayEnd = cal.date(byAdding: .day, value: 1, to: dayStart)!
+            let start = max(e.start, dayStart)
+            let endExclusive = (e.end ?? e.start)
+            let end = min(endExclusive, dayEnd)
+            // If the clipped end collapsed to start, show single time
+            return start < end ? (start, end) : (start, nil)
+        }
+
+        // -------- Build attributed output
+        var out = AttributedString()
+        out += line("Agenda — \(periodLabel)", style: hdr)
+        out += line("")
+
+        if days.isEmpty && undatedTasks.isEmpty {
+            var empty = AttributedString("No items this week.")
+            var emptyStyle = AttributeContainer()
+            emptyStyle.font = AppFontStyle.body.uiFont()
+            emptyStyle.foregroundColor = .secondary
+            empty.setAttributes(emptyStyle)
+            out += empty
+            out += line("")
+        } else {
+            // Per-day sections
+            for day in days {
+                // Day heading
+                out += line(f.humanDate.string(from: day.date), style: sec)
+                out += line("")
+
+                if day.items.isEmpty {
+                    var none = AttributedString("   • No items")
+                    var noneStyle = meta
+                    // You can also set a secondary color here if you wish
+                    none.setAttributes(noneStyle)
+                    out += none
+                    out += line("") + line("")
+                    continue
+                }
+
+                // Items (already sorted by groupAgendaByDay: events first, then tasks)
+                var eventIndex = 0
+                var taskIndex = 0
+
+                for item in day.items {
+                    switch item {
+                    case .event(let e):
+                        eventIndex += 1
+                        let (s, eClipped) = clippedTimesForEventOnDay(e, dayStart: day.date)
+
+                        let num = AttributedString("\(eventIndex). ")
+                        var t   = AttributedString(
+                            eClipped != nil
+                            ? f.timeRange(from: s, to: eClipped, includeDay: false)
+                            : f.timeRange(from: s, to: nil, includeDay: false)
+                        )
+                        t.setAttributes(time)
+
+                        let sep = AttributedString(" — ")
+
+                        var title = AttributedString(e.title)
+                        title.setAttributes(ttl)
+
+                        out += num + t + sep + title
+                        out += line("")
+
+                        // meta line (location, flags)
+                        var metaBits: [String] = []
+                        if let loc = e.location, !loc.isEmpty { metaBits.append("@ \(loc)") }
+                        if e.isRecurring { metaBits.append("recurring") }
+                        if e.isOverride  { metaBits.append("override") }
+                        if !metaBits.isEmpty {
+                            var m = AttributedString("   • " + metaBits.joined(separator: "  • "))
+                            m.setAttributes(meta)
+                            out += m
+                            out += line("")
+                        }
+
+                        out += line("") // spacing
+
+                    case .task(let tsk):
+                        taskIndex += 1
+                        let num = AttributedString("\(taskIndex). ")
+
+                        var pri = AttributedString("(\(tsk.priority)) ")
+                        pri.setAttributes(time)
+
+                        var title = AttributedString(tsk.title)
+                        title.setAttributes(ttl)
+
+                        // For a week/day section, show due time if present on this date
+                        var dueLine: AttributedString?
+                        if let due = tsk.dueDate {
+                            let dueStrTime = f.humanTime.string(from: due)
+                            var dueAttr = AttributedString("   • due \(dueStrTime)")
+                            dueAttr.setAttributes(meta)
+                            dueLine = dueAttr
+                        }
+
+                        out += num + pri + title
+                        out += line("")
+                        if let dueLine {
+                            out += dueLine
+                            out += line("")
+                        }
+                        out += line("") // spacing
+                    }
+                }
+            }
+
+            // Undated tasks at the end
+            if !undatedTasks.isEmpty {
+                out += line("No due date", style: sec)
+                out += line("")
+                for (i, tsk) in undatedTasks.enumerated() {
+                    let idx = i + 1
+                    let num = AttributedString("\(idx). ")
+
+                    var pri = AttributedString("(\(tsk.priority)) ")
+                    pri.setAttributes(time)
+
+                    var title = AttributedString(tsk.title)
+                    title.setAttributes(ttl)
+
+                    out += num + pri + title
+                    out += line("") + line("")
+                }
+            }
+        }
+
+        // (Optional) Plain text fallback
+        let textFallback = String(out.characters)
+
+        // ---- Build JSON payload (same shape as renderParts)
+        struct Payload: Encodable {
+            let schema: String
+            let timezone: String
+            let start: String
+            let end: String
+            let items: [AgendaItem]
+        }
+        let utcISO = ISO8601DateFormatter()
+        utcISO.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        utcISO.timeZone = TimeZone(secondsFromGMT: 0)
+
+        let payload = Payload(
+            schema: schema,
+            timezone: tz.identifier,
+            start: utcISO.string(from: agenda.start),
+            end: utcISO.string(from: agenda.end),
+            items: agenda.items
+        )
+
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        enc.dateEncodingStrategy = .custom { (date, encoder) in
+            var c = encoder.singleValueContainer()
+            try c.encode(utcISO.string(from: date))
+        }
+        let jsonOut = (try? String(data: enc.encode(payload), encoding: .utf8)) ?? "{}"
+
+        return AgendaRenderParts(attributed: out, text: textFallback, json: jsonOut, schema: schema)
+    }
+
     // MARK: helpers
 
     private struct Formatters {
@@ -205,5 +400,133 @@ public struct AgendaRenderer {
                 return humanTime.string(from: start)
             }
         }
+    }
+}
+
+extension AgendaRenderer {
+
+    // Optional: a shaped result that’s easy to render in a per-day list
+    public struct DayAgenda: Codable {
+        public var date: Date          // midnight at start of day in the agenda timezone
+        public var items: [AgendaItem] // items that belong on this date
+    }
+
+    public static func groupAgendaByDay(_ result: GetAgendaResult) -> ([DayAgenda], [AgendaTask]) {
+        let tz = TimeZone(identifier: result.timezone) ?? .current
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = tz
+
+        // Normalize bounds to day edges
+        let periodStart = cal.startOfDay(for: result.start)
+        let periodEndExclusive: Date = {
+            let endStartOfDay = cal.startOfDay(for: result.end)
+            if endStartOfDay == result.end { return endStartOfDay }
+            return cal.date(byAdding: .day, value: 1, to: endStartOfDay)!
+        }()
+
+        // Prebuild days
+        var dayKeys: [Date] = []
+        var dayCursor = periodStart
+        while dayCursor < periodEndExclusive {
+            dayKeys.append(dayCursor)
+            dayCursor = cal.date(byAdding: .day, value: 1, to: dayCursor)!
+        }
+
+        var buckets: [Date: [AgendaItem]] = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, []) })
+        var undatedTasks: [AgendaTask] = []
+
+        func bucketDate(for date: Date) -> Date {
+            cal.startOfDay(for: date)
+        }
+
+        func eachDayKeys(from a: Date, toExclusive b: Date) -> [Date] {
+            guard a < b else { return [] }
+            var d = cal.startOfDay(for: a)
+            let endKeyExclusive = cal.startOfDay(for: b)
+            var keys: [Date] = []
+            while d <= endKeyExclusive {
+                if d == endKeyExclusive {
+                    if d < b { keys.append(d) }
+                    break
+                } else {
+                    keys.append(d)
+                    d = cal.date(byAdding: .day, value: 1, to: d)!
+                }
+            }
+            return keys
+        }
+
+        func clippedRange(start a: Date, end bOpt: Date?) -> (Date, Date) {
+            let b = bOpt ?? a
+            let start = max(a, periodStart)
+            let endExclusive = min(bOpt ?? b, periodEndExclusive)
+            if start >= endExclusive {
+                let fallbackEnd = cal.date(byAdding: .second, value: 1, to: start) ?? start
+                return (start, fallbackEnd)
+            }
+            return (start, endExclusive)
+        }
+
+        for item in result.items {
+            switch item {
+            case .event(let ev):
+                let (s, eExclusive) = clippedRange(start: ev.start, end: ev.end)
+                for day in eachDayKeys(from: s, toExclusive: eExclusive) where buckets[day] != nil {
+                    buckets[day]!.append(item)
+                }
+
+            case .task(let task):
+                if let due = task.dueDate {
+                    let key = bucketDate(for: due)
+                    if key >= periodStart && key < periodEndExclusive, buckets[key] != nil {
+                        buckets[key]!.append(item)
+                    }
+                } else {
+                    undatedTasks.append(task)
+                }
+            }
+        }
+
+        func priorityRank(_ p: String) -> Int {
+            switch p.lowercased() {
+            case "high": return 0
+            case "medium": return 1
+            case "low": return 2
+            default: return 3
+            }
+        }
+
+        func sortDayItems(_ items: inout [AgendaItem]) {
+            items.sort { a, b in
+                switch (a, b) {
+                case (.event(let e1), .event(let e2)):
+                    if e1.start != e2.start { return e1.start < e2.start }
+                    return e1.title.localizedCaseInsensitiveCompare(e2.title) == .orderedAscending
+
+                case (.event, .task):
+                    return true
+                case (.task, .event):
+                    return false
+
+                case (.task(let t1), .task(let t2)):
+                    let r1 = priorityRank(t1.priority), r2 = priorityRank(t2.priority)
+                    if r1 != r2 { return r1 < r2 }
+                    if t1.title.caseInsensitiveCompare(t2.title) != .orderedSame {
+                        return t1.title.localizedCaseInsensitiveCompare(t2.title) == .orderedAscending
+                    }
+                    if let d1 = t1.dueDate, let d2 = t2.dueDate, d1 != d2 { return d1 < d2 }
+                    return t1.id.uuidString < t2.id.uuidString
+                }
+            }
+        }
+
+        var dayAgendas: [DayAgenda] = []
+        for day in dayKeys {
+            var items = buckets[day] ?? []
+            sortDayItems(&items)
+            dayAgendas.append(DayAgenda(date: day, items: items))
+        }
+
+        return (dayAgendas, undatedTasks)
     }
 }

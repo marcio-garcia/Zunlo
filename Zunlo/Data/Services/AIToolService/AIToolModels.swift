@@ -323,7 +323,7 @@ public struct EventMutationResult: Codable {
 
 // ---- GetAgenda tool
 
-public struct AgendaEvent: Codable {
+public struct AgendaEvent: Equatable, Codable {
     var kind: String = "event"
     var id: UUID
     var title: String
@@ -335,7 +335,7 @@ public struct AgendaEvent: Codable {
     var isRecurring: Bool
 }
 
-public struct AgendaTask: Codable {
+public struct AgendaTask: Equatable, Codable {
     var kind: String = "task"
     var id: UUID
     var title: String
@@ -351,7 +351,7 @@ public struct GetAgendaResult: Codable {
     var items: [AgendaItem] // enum wrapper over event/task
 }
 
-public enum AgendaItem: Codable {
+public enum AgendaItem: Equatable, Codable {
     case event(AgendaEvent)
     case task(AgendaTask)
 }

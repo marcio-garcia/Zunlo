@@ -62,7 +62,12 @@ final public class AIToolService: AIToolServiceAPI {
     public func getAgenda(args: GetAgendaArgs, calculatedRange: Range<Date>, timezone: TimeZone) async throws -> AgendaRenderParts {
         let agendaComputer = LocalAgendaComputer(userId: userId, toolRepo: toolRepo)
         let result = try await agendaComputer.computeAgenda(range: calculatedRange, timezone: timezone)
-        let formatted = AgendaRenderer.renderParts(result, agendaRange: args.dateRange)
+        var formatted: AgendaRenderParts
+        if args.dateRange == .week {
+            formatted = AgendaRenderer.renderWeekParts(result)
+        } else {
+            formatted = AgendaRenderer.renderParts(result, agendaRange: args.dateRange)
+        }
         return formatted
     }
     
