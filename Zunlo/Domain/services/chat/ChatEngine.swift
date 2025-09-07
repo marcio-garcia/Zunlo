@@ -61,36 +61,39 @@ public actor ChatEngine {
         try await repo.loadMessages(conversationId: conversationId, limit: limit)
     }
     
-    public func nlp(userMessage: ChatMessage) async -> [CommandResult] {
-        // Handle locally with NLP
+    public func run(history: [ChatMessage], userMessage: ChatMessage, chatEvent: (ChatEngineEvent) -> Void) async {
         let lower = userMessage.rawText.lowercased()
         do {
-            return try await nlpService.process(text: lower)
+            // Handle locally with NLP
+            let results = try await nlpService.process(text: lower)
+            
+            for result in results {
+                var asyncStream: AsyncStream<ChatEngineEvent>
+                
+                switch result.outcome {
+                case .unknown:
+                    // No local handling → use regular AI streaming path
+                    asyncStream = startStream(history: history, userMessage: userMessage)
+                    
+                default:
+                    // Stream local processing result to the ViewModel
+                    asyncStream = processNlpResult(result: result, history: history, userMessage: userMessage)
+                }
+                
+                for await ev in asyncStream {
+                    chatEvent(ev)
+                }
+            }
+            
         } catch {
-            log("NLP error: \(error)")
-            return []
+            // If NLP fails, just use the normal AI streaming path
+            let asyncStream = startStream(history: history, userMessage: userMessage)
+            for await ev in asyncStream {
+                chatEvent(ev)
+            }
         }
     }
     
-    public func process(result: CommandResult?, history: [ChatMessage], userMessage: ChatMessage) async -> AsyncStream<ChatEngineEvent> {
-        let lower = userMessage.rawText.lowercased()
-        
-        guard let res = result else {
-            // If NLP fails, just use the normal AI streaming path
-            return startStream(history: history, userMessage: userMessage)
-        }
-        
-        switch res.outcome {
-        case .unknown:
-            // No local handling → use regular AI streaming path
-            return startStream(history: history, userMessage: userMessage)
-            
-        default:
-            // Stream ChatEngineEvent's to the ViewModel
-            return processNlpResult(result: res, history: history, userMessage: userMessage)
-        }
-    }
-
     public func processNlpResult(result: CommandResult, history: [ChatMessage], userMessage: ChatMessage) -> AsyncStream<ChatEngineEvent> {
         cancelCurrentStreamIfAny()
         
