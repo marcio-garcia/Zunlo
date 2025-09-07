@@ -106,9 +106,19 @@ public final class ChatViewModel: ObservableObject {
 
         // Call chat engine
         let historySnapshot = messages // pass snapshot to engine
-        let asyncStream = await engine.run(history: historySnapshot, userMessage: userMessage)
-        for await ev in asyncStream {
-            await self.consume(ev)
+        let results = await engine.nlp(userMessage: userMessage)
+        if results.isEmpty {
+            let asyncStream = await engine.process(result: nil, history: historySnapshot, userMessage: userMessage)
+            for await ev in asyncStream {
+                await self.consume(ev)
+            }
+        } else {
+            for result in results {
+                let asyncStream = await engine.process(result: result, history: historySnapshot, userMessage: userMessage)
+                for await ev in asyncStream {
+                    await self.consume(ev)
+                }
+            }
         }
     }
 

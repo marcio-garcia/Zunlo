@@ -28,7 +28,7 @@ public struct RelativeWeekdayPolicy {
     public var this: ThisPolicy
     public var next: NextPolicy
 
-    public init(this: ThisPolicy = .upcomingIncludingToday,
+    public init(this: ThisPolicy = .upcomingExcludingToday,
                 next: NextPolicy = .immediateUpcoming) {
         self.this = this
         self.next = next
@@ -55,7 +55,7 @@ public struct RelativeLexicon {
     }
 
     /// pt-BR–tuned defaults (falls back to en/es minimal if not pt)
-    public static func `default`(calendar: Calendar = .current, locale: Locale = .current) -> RelativeLexicon {
+    public static func current(calendar: Calendar = .current, locale: Locale = .current) -> RelativeLexicon {
         var cal = calendar
         cal.locale = locale
 
@@ -105,15 +105,17 @@ public struct RelativeLexicon {
 
 // MARK: - Detector
 
-/// A thin wrapper around NSDataDetector that fixes "this/next [weekday]" semantics (pt-BR tuned).
+/// A thin wrapper around NSDataDetector that:
+/// 1) fixes "this/next [weekday]" semantics (pt-BR tuned),
+/// 2) adds synthetic matches for "this/next week" / "semana que vem" / "esta semana" / "plan my week" etc.
 public final class HumanDateDetector {
     public struct Match {
         public let date: Date
         public let timeZone: TimeZone?
         public let duration: TimeInterval?
         public let range: Range<String.Index>
-        public let original: NSTextCheckingResult
-        public let overridden: Bool
+        public let original: NSTextCheckingResult?   // nil for synthetic week matches
+        public let overridden: Bool                  // true if we overrode or synthesized
     }
 
     private let detector: NSDataDetector
@@ -121,6 +123,8 @@ public final class HumanDateDetector {
     private let policy: RelativeWeekdayPolicy
     var calendar: Calendar
     let lexicon: RelativeLexicon
+
+    // ----- Weekday phrase regexes -----
     let regex: NSRegularExpression
     lazy var weekdayQueVemRegex: NSRegularExpression = {
         let weekdayAlt = lexicon.weekdayToNumber.keys
@@ -131,6 +135,12 @@ public final class HumanDateDetector {
         return try! NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
     }()
 
+    // ----- Week phrase regexes -----
+    // e.g., "esta semana", "próxima semana", "semana que vem", "this week", "next week"
+    internal let weekMainRegex: NSRegularExpression
+    // e.g., bare "week" / "semana" in task-like phrasing: "plan my week", "minha semana", "agenda da semana"
+    internal let weekBareRegex: NSRegularExpression
+
     /// - Parameters:
     ///   - calendar: Calendar used for computations (locale is respected).
     ///   - timeZone: Force a timezone when none is present in the match. Defaults to calendar.timeZone.
@@ -139,7 +149,7 @@ public final class HumanDateDetector {
     public init(calendar: Calendar = .current,
                 timeZone: TimeZone? = nil,
                 policy: RelativeWeekdayPolicy = .init(),
-                lexicon: RelativeLexicon = .default()) {
+                lexicon: RelativeLexicon = .current()) {
 
         self.detector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue)
         var cal = calendar
@@ -149,7 +159,7 @@ public final class HumanDateDetector {
         self.policy = policy
         self.lexicon = lexicon
 
-        // Build a case-insensitive regex like:  (THIS|NEXT words) [opt article] <weekday> [opt "que vem"]
+        // Build a case-insensitive regex like:  (THIS|NEXT words) [opt article] <weekday> [opt "que vem"] --- Weekday regex (this/next <weekday> [que vem]) ---
         let thisAlt = lexicon.thisWords.map(NSRegularExpression.escapedPattern).joined(separator: "|")
         let nextAlt = lexicon.nextWords.map(NSRegularExpression.escapedPattern).joined(separator: "|")
         let weekdayAlt = lexicon.weekdayToNumber.keys
@@ -157,7 +167,7 @@ public final class HumanDateDetector {
             .map(NSRegularExpression.escapedPattern)
             .joined(separator: "|")
 
-        let pattern = #"""
+        let weekdayPattern = #"""
         \b(
             (?:\#(thisAlt))|
             (?:\#(nextAlt))
@@ -167,24 +177,53 @@ public final class HumanDateDetector {
           (?:\s+que\s+vem)?
         \b
         """#
-        self.regex = try! NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .allowCommentsAndWhitespace])
+        self.regex = try! NSRegularExpression(pattern: weekdayPattern, options: [.caseInsensitive, .allowCommentsAndWhitespace])
+
+        // --- Week regexes ---
+        let weekWords = #"semana|week"#
+        let weekMainPattern = #"""
+        \b(
+            (?:\#(thisAlt))|
+            (?:\#(nextAlt))|
+            (?:que\s+vem)        # supports "<something> que vem" when preceded by "semana"
+        )
+        \s*(?:a|o|na|no|desta|deste|nesta|neste)?\s*
+        (?:\#(weekWords))
+        \b
+        """#
+        self.weekMainRegex = try! NSRegularExpression(pattern: weekMainPattern, options: [.caseInsensitive, .allowCommentsAndWhitespace])
+
+        // "Bare" week cues (no explicit this/next): plan my week / minha semana / agenda da semana / this agenda week-ish)
+        let weekBarePattern = #"""
+        (?x)
+        \b(?:
+            plan(?:\s+my)?\s+week |
+            agenda\s+(?:da|de|para)\s+semana |
+            minha\s+semana |
+            meu\s+planejamento\s+da\s+semana |
+            (?:the\s+)?week\b |
+            \bsemana\b
+        )
+        """#
+        self.weekBareRegex = try! NSRegularExpression(pattern: weekBarePattern, options: [.caseInsensitive])
     }
 
-    /// Find dates in `text`, overriding ambiguous relative weekdays per policy.
+    /// Find dates/ranges in `text`, overriding ambiguous relative weekdays and adding week ranges.
     public func matches(in text: String, base: Date = Date()) -> [Match] {
         let fullRange = NSRange(text.startIndex..., in: text)
         var results: [Match] = []
 
+        // 1) Normal NSDataDetector dates (then possibly override weekday phrases)
         detector.enumerateMatches(in: text, options: [], range: fullRange) { raw, _, _ in
-            guard let raw, raw.resultType == .date, let date = raw.date,
-                  var r = Range(raw.range, in: text) else { return }
-
-            if let override = overriddenDateIfRelativeWeekday(phrase: text.lowercased(),
+            guard let raw, raw.resultType == .date, let date = raw.date else { return }
+            guard var r = Range(raw.range, in: text) else { return }
+            
+            if let override = overriddenDateIfRelativeWeekday(in: text,
                                                               base: base,
                                                               detectedDate: date,
                                                               range: &r) {
                 // Preserve time components from detectedDate, apply to override day.
-                let final = self.applyTime(of: date, toDayOf: override)
+                let final = applyTime(calendar: calendar, of: date, toDayOf: override)
                 results.append(.init(date: final,
                                      timeZone: raw.timeZone ?? self.timeZone,
                                      duration: raw.duration,
@@ -200,48 +239,60 @@ public final class HumanDateDetector {
                                      overridden: false))
             }
         }
+
+        // 2) Synthetic "week" ranges that NSDataDetector misses.
+        results.append(contentsOf: weekRangeMatches(in: text, base: base))
+
+        // Sort by range start for deterministic order
+        results.sort { lhs, rhs in
+            lhs.range.lowerBound < rhs.range.lowerBound
+        }
+
         return results
     }
 
-    // MARK: - Internals
+    // MARK: - Internals (weekday overrides)
 
     private func overriddenDateIfRelativeWeekday(
-        phrase: String,
+        in text: String,
         base: Date,
         detectedDate: Date,
         range: inout Range<String.Index>
     ) -> Date? {
-        var nsRange = NSRange(range, in: phrase)
-        
-        var m = regex.firstMatch(in: phrase, options: [], range: nsRange)
-        
-        // expand range's lower bound to check if the detector excluded the "next" word
-        var newRange: Range<String.Index>?
-        if m == nil {
-            let newLower = phrase.index(range.lowerBound, offsetBy: -24, limitedBy: phrase.startIndex) ?? phrase.startIndex
-            newRange = newLower..<range.upperBound
-            nsRange = NSRange(newRange!, in: phrase)
-        }
-        
-        m = regex.firstMatch(in: phrase, options: [], range: nsRange)
-        
-        if let m = regex.firstMatch(in: phrase, options: [], range: nsRange) {
-            range = newRange ?? range
-            let mod = substring(phrase, m.range(at: 1))
-            let weekdayStr = substring(phrase, m.range(at: 2))
-            guard let weekday = lexicon.weekdayToNumber[weekdayStr] else { return nil }
-            return resolve(modifierToken: mod, weekday: weekday, base: base)
+        // Work with NSRange against the ORIGINAL text
+        var nsRange = NSRange(range, in: text)
+
+        // Try immediate match in the current range
+        var match = regex.firstMatch(in: text, options: [], range: nsRange)
+
+        // If none, expand the LEFT side a bit to include a possible skipped modifier (e.g., “next”)
+        if match == nil {
+            let newLower = text.index(range.lowerBound, offsetBy: -24, limitedBy: text.startIndex) ?? text.startIndex
+            let expanded = newLower..<range.upperBound
+            nsRange = NSRange(expanded, in: text)
+            match = regex.firstMatch(in: text, options: [], range: nsRange)
+            if match != nil { range = expanded } // keep range in sync with text
         }
 
-        // e.g. "domingo que vem" (implicit 'next')
-        if let m2 = weekdayQueVemRegex.firstMatch(in: phrase, options: [], range: nsRange) {
-            let weekdayStr = substring(phrase, m2.range(at: 1))
-            guard let weekday = lexicon.weekdayToNumber[weekdayStr] else { return nil }
-            return resolve(modifierToken: "próximo", weekday: weekday, base: base) // treat as "next"
+        if let m = match {
+            let mod = substring(text, m.range(at: 1))
+            let weekdayStr = substring(text, m.range(at: 2))
+            if let weekday = lexicon.weekdayToNumber[weekdayStr.lowercased()] {
+                return resolve(modifierToken: mod, weekday: weekday, base: base)
+            }
+        }
+
+        // Try "<weekday> que vem" as implicit NEXT, in the SAME text/range
+        if let m2 = weekdayQueVemRegex.firstMatch(in: text, options: [], range: nsRange) {
+            let weekdayStr = substring(text, m2.range(at: 1))
+            if let weekday = lexicon.weekdayToNumber[weekdayStr.lowercased()] {
+                return resolve(modifierToken: "próximo", weekday: weekday, base: base)
+            }
         }
 
         return nil
     }
+
 
     private func resolve(modifierToken: String, weekday: Int, base: Date) -> Date? {
         let baseStart = calendar.startOfDay(for: base)
@@ -275,23 +326,69 @@ public final class HumanDateDetector {
         }
     }
 
-    private func applyTime(of source: Date, toDayOf day: Date) -> Date {
-        let comps = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: source)
-        var dayComps = calendar.dateComponents([.year, .month, .day], from: day)
-        dayComps.hour = comps.hour
-        dayComps.minute = comps.minute
-        dayComps.second = comps.second
-        dayComps.nanosecond = comps.nanosecond
-        return calendar.date(from: dayComps)!
+    // MARK: - Internals (week phrases)
+
+    /// Creates synthetic matches for week phrases with a 1-week duration starting at the calendar's week start.
+    private func weekRangeMatches(in text: String, base: Date) -> [Match] {
+        var out: [Match] = []
+        let ns = text as NSString
+        let full = NSRange(location: 0, length: ns.length)
+
+        func addMatch(range nsRange: NSRange, start: Date, interval: TimeInterval) {
+            guard let r = Range(nsRange, in: text) else { return }
+            out.append(.init(date: start,
+                             timeZone: timeZone,
+                             duration: interval,
+                             range: r,
+                             original: nil,
+                             overridden: true))
+        }
+
+        // Compute this week's start + length
+        let (thisWeekStart, thisWeekInterval) = weekStartAndInterval(containing: base)
+        let nextWeekStart = calendar.date(byAdding: .weekOfYear, value: 1, to: thisWeekStart)!
+        let // usually 7d; use same interval as this week for consistency
+            nextWeekInterval = thisWeekInterval
+
+        // A) Explicit "this/next week" (incl. "semana que vem")
+        weekMainRegex.enumerateMatches(in: text, options: [], range: full) { m, _, _ in
+            guard let m = m else { return }
+            let phrase = ns.substring(with: m.range).lowercased()
+
+            // If phrase contains an explicit NEXT cue ("next" / "próximo" / "que vem" / etc.), use next week; else this week.
+            let isNext =
+                containsAny(in: phrase, of: lexicon.nextWords) ||
+                phrase.contains("que vem") ||
+                phrase.contains("next")
+
+            if isNext {
+                addMatch(range: m.range, start: nextWeekStart, interval: nextWeekInterval)
+            } else {
+                addMatch(range: m.range, start: thisWeekStart, interval: thisWeekInterval)
+            }
+        }
+
+        // B) Bare week cues (interpret as "this week")
+        weekBareRegex.enumerateMatches(in: text, options: [], range: full) { m, _, _ in
+            guard let m = m else { return }
+            // Avoid duplicating a range we've already added from the main regex
+            let alreadyCovered = out.contains { existing in
+                let a = NSRange(existing.range, in: text)
+                return NSIntersectionRange(a, m.range).length > 0
+            }
+            if !alreadyCovered {
+                addMatch(range: m.range, start: thisWeekStart, interval: thisWeekInterval)
+            }
+        }
+
+        return out
     }
 
-    internal func substring(_ s: String, _ range: NSRange) -> String {
-        guard let r = Range(range, in: s) else { return "" }
-        return String(s[r])
-    }
-
-    internal func matchesAny(_ token: String, in set: [String]) -> Bool {
-        let t = token.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return set.contains { t == $0.lowercased() }
+    private func weekStartAndInterval(containing date: Date) -> (Date, TimeInterval) {
+        var start = Date()
+        var interval: TimeInterval = 0
+        _ = calendar.dateInterval(of: .weekOfYear, start: &start, interval: &interval, for: date)
+        // `interval` accounts for DST transitions if any.
+        return (start, interval)
     }
 }

@@ -12,12 +12,12 @@ import SmartParseKit
 public final class MockNLService: NLProcessing {
     public init() {}
 
-    public func process(text: String) async throws -> SmartParseKit.CommandResult {
-        return SmartParseKit.CommandResult(
+    public func process(text: String) async throws -> [SmartParseKit.CommandResult] {
+        return [SmartParseKit.CommandResult(
             outcome: .agenda,
             message: "This is your agenda",
             attributedString: AttributedString("This is your agenda")
-        )
+        )]
     }
 
     public func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult {

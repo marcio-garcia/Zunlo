@@ -21,13 +21,14 @@ public struct RelativePhraseResolution: Equatable {
 
     public let modifier: RelativeModifier       // this / next / none
     public let weekday: Int?                    // 1...7 if applicable (Sunday = 1)
-    public let originalDate: Date               // Apple/NSDataDetector date
+    public let originalDate: Date               // Apple/NSDataDetector date (or same as resolved if synthetic)
     public let resolvedDate: Date               // After our “human” override (or same)
-    public let overridden: Bool                 // Did we override Apple’s date?
+    public let overridden: Bool                 // Did we override Apple’s date or synthesize a week?
     public let deltaDays: Int                   // signed day difference: resolved - original
     public let timeZone: TimeZone?
-    public let duration: TimeInterval?
+    public let duration: TimeInterval?          // week phrases set this to ~7d
 
+    public let isWeekPhrase: Bool               // explicitly tag week phrases (e.g., “esta semana”, “semana que vem”, “plan my week”)
     /// Suggest showing a confirm UI if we moved it ≥ 6 days (typical "skip-a-week" fix).
     public var needsConfirmation: Bool {
         abs(deltaDays) >= 6
@@ -36,6 +37,12 @@ public struct RelativePhraseResolution: Equatable {
     /// Short explanation for UI surfaces.
     public func reason(calendar: Calendar = .current) -> String {
         guard overridden else { return "Mantido conforme detectado" }
+        if isWeekPhrase {
+            switch modifier {
+            case .next: return "Intervalo interpretado como “próxima semana”"
+            case .this, .none: return "Intervalo interpretado como “esta semana”"
+            }
+        }
         switch modifier {
         case .this:
             return "Interpretado como “este \(weekdayName(calendar: calendar))” (próxima ocorrência)"
@@ -60,11 +67,15 @@ public extension HumanDateDetector {
     func normalizedResolutions(in text: String, base: Date = Date()) -> [RelativePhraseResolution] {
         let all = matches(in: text, base: base)
         return all.compactMap { m in
-            guard let originalDate = m.original.date else { return nil }
             let substr = String(text[m.range])
+
+            // Default values if there was no original (synthetic week): originalDate := resolvedDate
+            let originalDate = m.original?.date ?? m.date
+
             // Re-run the small relative-phrase detection to extract modifier/weekday.
             let phrase = substr.lowercased()
-            let (modifier, weekday) = extractModifierAndWeekday(from: phrase)
+            let (modifier, weekday, isWeekPhrase) = extractModifierWeekdayOrWeek(from: phrase)
+
             let delta = daysBetween(originalDate, m.date)
 
             return RelativePhraseResolution(
@@ -77,34 +88,49 @@ public extension HumanDateDetector {
                 overridden: m.overridden,
                 deltaDays: delta,
                 timeZone: m.timeZone,
-                duration: m.duration
+                duration: m.duration,
+                isWeekPhrase: isWeekPhrase
             )
         }
     }
 
     // MARK: - Helpers for normalized summaries
 
-    internal func extractModifierAndWeekday(from phrase: String) -> (RelativeModifier, Int?) {
+    internal func extractModifierWeekdayOrWeek(from phrase: String) -> (RelativeModifier, Int?, Bool) {
         let ns = phrase as NSString
         let range = NSRange(location: 0, length: ns.length)
 
-        // Try main pattern first (captures modifier + weekday)
+        // Try weekday pattern first (captures modifier + weekday)
         if let m = regex.firstMatch(in: phrase, options: [], range: range) {
             let modTok = substring(phrase, m.range(at: 1))
             let weekdayStr = substring(phrase, m.range(at: 2))
             let modifier: RelativeModifier = matchesAny(modTok, in: lexicon.thisWords) ? .this : .next
             let weekday = lexicon.weekdayToNumber[weekdayStr]
-            return (modifier, weekday)
+            return (modifier, weekday, false)
         }
 
-        // Try "<weekday> que vem" (implicit NEXT)
+        // "<weekday> que vem" (implicit NEXT)
         if let m2 = weekdayQueVemRegex.firstMatch(in: phrase, options: [], range: range) {
             let weekdayStr = substring(phrase, m2.range(at: 1))
             let weekday = lexicon.weekdayToNumber[weekdayStr]
-            return (.next, weekday)
+            return (.next, weekday, false)
         }
 
-        return (.none, nil)
+        // Week phrases (this/next/bare)
+        if weekMainRegex.firstMatch(in: phrase, options: [], range: range) != nil {
+            // Distinguish this vs next
+            let lower = phrase.lowercased()
+            let isNext =
+                containsAny(in: lower, of: lexicon.nextWords) ||
+                lower.contains("que vem") ||
+                lower.contains("next")
+            return (isNext ? .next : .this, nil, true)
+        }
+        if weekBareRegex.firstMatch(in: phrase, options: [], range: range) != nil {
+            return (.this, nil, true)
+        }
+
+        return (.none, nil, false)
     }
 
     internal func daysBetween(_ a: Date, _ b: Date) -> Int {

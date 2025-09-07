@@ -18,6 +18,7 @@
 import Foundation
 import SwiftUI
 import SmartParseKit
+import LoggingKit
 
 // MARK: - ChatEngine (orchestrates streaming/tooling/persistence)
 
@@ -60,24 +61,33 @@ public actor ChatEngine {
         try await repo.loadMessages(conversationId: conversationId, limit: limit)
     }
     
-    public func run(history: [ChatMessage], userMessage: ChatMessage) async -> AsyncStream<ChatEngineEvent> {
+    public func nlp(userMessage: ChatMessage) async -> [CommandResult] {
+        // Handle locally with NLP
         let lower = userMessage.rawText.lowercased()
         do {
-            // Handle locally with NLP
-            let result = try await nlpService.process(text: lower)
-
-            switch result.outcome {
-            case .unknown:
-                // No local handling → use regular AI streaming path
-                return startStream(history: history, userMessage: userMessage)
-
-            default:
-                // Stream ChatEngineEvent's to the ViewModel
-                return processNlpResult(result: result, history: history, userMessage: userMessage)
-            }
+            return try await nlpService.process(text: lower)
         } catch {
+            log("NLP error: \(error)")
+            return []
+        }
+    }
+    
+    public func process(result: CommandResult?, history: [ChatMessage], userMessage: ChatMessage) async -> AsyncStream<ChatEngineEvent> {
+        let lower = userMessage.rawText.lowercased()
+        
+        guard let res = result else {
             // If NLP fails, just use the normal AI streaming path
             return startStream(history: history, userMessage: userMessage)
+        }
+        
+        switch res.outcome {
+        case .unknown:
+            // No local handling → use regular AI streaming path
+            return startStream(history: history, userMessage: userMessage)
+            
+        default:
+            // Stream ChatEngineEvent's to the ViewModel
+            return processNlpResult(result: res, history: history, userMessage: userMessage)
         }
     }
 

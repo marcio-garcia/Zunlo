@@ -24,41 +24,118 @@ public final class CommandParser {
     }
     
     public func parse(_ raw: String, now: Date = Date(), calendar: Calendar = .current) -> ParsedCommand {
+
+        // 1) Language + intent
         let language = engine.detectLanguage(raw)
         let intent = engine.classify(raw)
-        
-        // Dates & ranges
-        let dateResult = extractDates(raw, locale: Locale(identifier: language.rawValue))
-        let when: Date? = dateResult.dates.first
-        var end: Date?
-        var dateRange: Range<Date>?
-        
-        if let stat = when {
-            dateRange = stat..<stat.addingTimeInterval(dateResult.duration)
-        }
-        
-        if dateResult.dates.count >= 2 {
-            end = dateResult.dates[1]
-        }
-        
-        // Week phrases
-        let lower = raw.lowercased()
-        if dateRange == nil {
-            if lower.contains("this week") || lower.contains("esta semana") || lower.contains("essa semana") {
-                dateRange = weekRange(containing: now, calendar: calendar)
-            } else if lower.contains("next week") || lower.contains("próxima semana") {
-                dateRange = nextWeekRange(from: now, calendar: calendar)
+
+        // 2) Build a calendar localized to the detected language
+        var cal = calendar
+        cal.locale = Locale(identifier: language.rawValue)
+
+        // 3) Date detection (use the *localized* calendar everywhere)
+        let dateDetector = HumanDateDetector(
+            calendar: cal,
+            timeZone: cal.timeZone,
+            policy: RelativeWeekdayPolicy(this: .upcomingExcludingToday, next: .immediateUpcoming),
+            lexicon: RelativeLexicon.current(calendar: cal, locale: cal.locale ?? Locale.current)
+        )
+        let resolutions = dateDetector.normalizedResolutions(in: raw, base: now)
+
+        // Convenience accessors
+        let first = resolutions.first
+        let last  = resolutions.last
+
+        // 4) Primary “when”
+        let when: Date? = first?.resolvedDate
+
+        // 5) “end”: if there are 2+ date mentions, second one is a natural end or target time
+        let end: Date? = resolutions.count >= 2 ? resolutions[1].resolvedDate : nil
+
+        // 6) dateRange (respect synthesized durations first, then infer)
+        var dateRange: Range<Date>? = nil
+        if let start = when {
+            if let dur = first?.duration, dur > 0 {
+                // e.g. “this week/next week” synthesized by HumanDateDetector
+                dateRange = start..<start.addingTimeInterval(dur)
+            } else if let endDate = end {
+                // Two points → treat as range
+                dateRange = min(start, endDate)..<max(start, endDate)
             }
         }
-        
-        // Reschedule destination time (usually the last time mentioned)
-        var newTime: Date?
-        if intent == .rescheduleEvent {
-            newTime = dateResult.dates.last ?? when
+
+        // 7) Intent-specific overrides / fallbacks
+        switch intent {
+        case .planDay:
+            // If we don’t already have a solid range, default to today
+            if dateRange == nil {
+                let start = cal.startOfDay(for: now)
+                let end = cal.date(byAdding: .day, value: 1, to: start)!
+                dateRange = start..<end
+            }
+
+        case .planWeek:
+            // Prefer synthesized week ranges; otherwise compute from modifier
+            if dateRange == nil {
+                if let r = first {
+                    if r.isWeekPhrase {
+                        // If the detector gave no duration for some reason, compute via calendar
+                        if let dur = r.duration, dur > 0 {
+                            dateRange = r.resolvedDate..<r.resolvedDate.addingTimeInterval(dur)
+                        } else {
+                            dateRange = (r.modifier == .next)
+                                ? nextWeekRange(from: now, calendar: cal)
+                                : weekRange(containing: now, calendar: cal)
+                        }
+                    } else {
+                        // Not a week phrase but planWeek intent (e.g., “plan my next week” missed):
+                        // fall back to next/this week based on modifier if present
+                        switch r.modifier {
+                        case .next: dateRange = nextWeekRange(from: now, calendar: cal)
+                        case .this, .none: dateRange = weekRange(containing: now, calendar: cal)
+                        }
+                    }
+                } else {
+                    // No dates detected at all → default to this week
+                    dateRange = weekRange(containing: now, calendar: cal)
+                }
+            }
+
+        case .showAgenda:
+            if dateRange == nil {
+                // If it’s a synthesized week phrase, build the week range
+                if let r = first, r.isWeekPhrase {
+                    if let dur = r.duration, dur > 0 {
+                        dateRange = r.resolvedDate..<r.resolvedDate.addingTimeInterval(dur)
+                    } else {
+                        dateRange = (r.modifier == .next)
+                            ? nextWeekRange(from: now, calendar: cal)
+                            : weekRange(containing: now, calendar: cal)
+                    }
+                } else if let start = when {
+                    // Single day agenda (“agenda for Sunday”)
+                    let d0 = cal.startOfDay(for: start)
+                    let d1 = cal.date(byAdding: .day, value: 1, to: d0)!
+                    dateRange = d0..<d1
+                } else if resolutions.count >= 2, let s = first?.resolvedDate, let e = last?.resolvedDate {
+                    dateRange = min(s, e)..<max(s, e)
+                }
+            }
+
+        default:
+            break
         }
-        
+
+        // 8) newTime (destination time), for updates
+        var newTime: Date? = nil
+        if intent == .updateEvent || intent == .rescheduleEvent || intent == .rescheduleTask {
+            // Usually the last mentioned time is the target
+            newTime = last?.resolvedDate ?? when
+        }
+
+        // 9) Title
         let title = extractTitle(raw)
-        
+
         return ParsedCommand(
             intent: intent,
             title: title,
@@ -70,4 +147,5 @@ public final class CommandParser {
             raw: raw
         )
     }
+
 }

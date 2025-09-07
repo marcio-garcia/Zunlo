@@ -33,7 +33,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingIncludingToday, next: .immediateUpcoming),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
 
         let text = "Vamos nos ver este domingo às 15:00."
@@ -51,7 +51,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingIncludingToday, next: .immediateUpcoming),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
 
         let text = "A oficina é no próximo domingo às 10:00."
@@ -67,7 +67,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingIncludingToday, next: .immediateUpcoming),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
 
         let text = "Vamos marcar para domingo que vem às 09:30."
@@ -83,7 +83,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingIncludingToday, next: .skipOneWeek),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
 
         let text = "Reunião no próximo domingo às 10:00."
@@ -103,7 +103,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det1 = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingIncludingToday, next: .immediateUpcoming),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
         var m = det1.matches(in: "almoço este domingo às 12:00", base: baseSunday)
         XCTAssertEqual(m[0].date, date(2025, 9, 7, 12, 0))
@@ -112,7 +112,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det2 = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingExcludingToday, next: .immediateUpcoming),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
         m = det2.matches(in: "almoço este domingo às 12:00", base: baseSunday)
         XCTAssertEqual(m[0].date, date(2025, 9, 14, 12, 0))
@@ -123,7 +123,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingIncludingToday, next: .immediateUpcoming),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
 
         let text = "Evento 28/09/2025 às 18:45."
@@ -138,7 +138,7 @@ final class HumanDateDetectorTests: XCTestCase {
         let det = HumanDateDetector(
             calendar: cal,
             policy: .init(this: .upcomingIncludingToday, next: .immediateUpcoming),
-            lexicon: .default(calendar: cal, locale: cal.locale!)
+            lexicon: .current(calendar: cal, locale: cal.locale!)
         )
 
         let text = "almoço este domingo às 12:00; oficina no próximo domingo às 10:00; encontro domingo que vem 19h"
