@@ -8,21 +8,11 @@
 import Foundation
 import GlowUI
 
-// MARK: - Agenda Rendering
-
-// MARK: - Split agenda output into text + json
-
 public struct AgendaRenderParts {
     public let attributed: AttributedString
     public let text: String
     public let json: String
     public let schema: String
-}
-
-public enum AgendaRenderMode {
-    case textOnly
-    case jsonOnly
-    case parts // default
 }
 
 public struct AgendaRenderer {

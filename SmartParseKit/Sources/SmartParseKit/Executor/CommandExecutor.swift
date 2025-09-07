@@ -135,14 +135,19 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
     }
 
     private func handleShowAgenda(_ c: ParsedCommand, now: Date, calendar: Calendar) async throws -> CommandResult {
-        let range: Range<Date> = {
-            if let r = c.dateRange { return r }
-            if c.intent == .planDay || c.intent == .showAgenda {
-                let start = calendar.startOfDay(for: now)
-                return start..<(calendar.date(byAdding: .day, value: 1, to: start)!)
-            }
-            return weekRange(containing: now, calendar: calendar)
-        }()
+        var range: Range<Date>
+        if let r = c.dateRange {
+            range = r
+        } else {
+            range = {
+                if let r = c.dateRange { return r }
+                if c.intent == .planDay || c.intent == .showAgenda {
+                    let start = calendar.startOfDay(for: now)
+                    return start..<(calendar.date(byAdding: .day, value: 1, to: start)!)
+                }
+                return weekRange(containing: now, calendar: calendar)
+            }()
+        }
         let agenda = try await events.agenda(in: range)
 //        let msg = "Here’s your plan for \(DateFormatter.compact(date: range.lowerBound))–\(DateFormatter.compact(date: range.upperBound.addingTimeInterval(-60))): • \(es.count) events"
         return CommandResult(outcome: .agenda, message: agenda.agenda, attributedString: agenda.attributedAgenda)
