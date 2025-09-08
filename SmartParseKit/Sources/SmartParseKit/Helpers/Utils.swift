@@ -25,7 +25,7 @@ func extractTitle(_ text: String) -> String? {
     // Remove common scaffolding and detected date substrings
     var s = text
     let lowers = [
-        "create task","add task","create event","new event","schedule","criar tarefa","criar evento","agendar","marcar","para ","to ","for "
+        "create task","add task","create event","new event","add event","schedule","criar tarefa","criar evento","agendar","marcar","para ","to ","for "
     ]
     for k in lowers { s = s.replacingOccurrences(of: k, with: "", options: [.caseInsensitive]) }
     

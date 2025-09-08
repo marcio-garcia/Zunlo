@@ -47,7 +47,7 @@ public final class CommandExecutor<ES: EventStore, TS: TaskStore> {
     private func handleCreateEvent(_ c: ParsedCommand) async throws -> CommandResult {
         let title = c.title ?? "New event"
         let start = c.when ?? Date()
-        let end = c.end ?? start.addingTimeInterval(30*60)
+        let end = c.end ?? c.dateRange?.upperBound ?? start.addingTimeInterval(30*60)
         _ = try await events.createEvent(title: title, start: start, end: end, isRecurring: false)
         return CommandResult(outcome: .createdEvent, message: "Event ‘\(title)’ scheduled at \(DateFormatter.short(dateTime: start)).")
     }

@@ -104,7 +104,12 @@ public extension HumanDateDetector {
         if let m = regex.firstMatch(in: phrase, options: [], range: range) {
             let modTok = substring(phrase, m.range(at: 1))
             let weekdayStr = substring(phrase, m.range(at: 2))
-            let modifier: RelativeModifier = matchesAny(modTok, in: lexicon.thisWords) ? .this : .next
+            var modifier: RelativeModifier = .none
+            if matchesAny(modTok, in: lexicon.thisWords) {
+                modifier = .this
+            } else if matchesAny(modTok, in: lexicon.nextWords) {
+                modifier = .next
+            }
             let weekday = lexicon.weekdayToNumber[weekdayStr]
             return (modifier, weekday, false)
         }

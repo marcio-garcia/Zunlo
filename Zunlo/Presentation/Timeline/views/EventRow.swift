@@ -26,7 +26,9 @@ struct EventRow: View {
                     Text(occurrence.title)
                         .font(AppFontStyle.subtitle.font())
                         .foregroundStyle(titleColor)
+                        .multilineTextAlignment(.leading)
                         .strikethrough(occurrence.isCancelled, color: titleColor)
+                        .lineLimit(1)
                     if !occurrence.isFakeOccForEmptyToday {
                         Text(formatDate(start: occurrence.startDate, end: occurrence.endDate))
                             .themedFootnote()

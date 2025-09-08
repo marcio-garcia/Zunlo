@@ -168,11 +168,12 @@ public final class HumanDateDetector {
             .joined(separator: "|")
 
         let weekdayPattern = #"""
-        \b(
+        (?iu)\b(?:(
             (?:\#(thisAlt))|
             (?:\#(nextAlt))
           )
           \s+(?:o|a|no|na|neste|nesta|deste|desta)?\s*
+          )?
           (\#(weekdayAlt))
           (?:\s+que\s+vem)?
         \b

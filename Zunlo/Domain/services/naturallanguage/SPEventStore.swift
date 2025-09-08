@@ -56,7 +56,7 @@ final class SPEventStore: EventStore {
             endDate: end,
             isRecurring: isRecurring,
             location: nil,
-            color: .yellow,
+            color: .softOrange,
             reminderTriggers: nil,
             recurrenceType: recurrenceType,
             recurrenceInterval: recurrenceInterval,
