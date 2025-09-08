@@ -44,21 +44,23 @@ func extractTitle(_ text: String) -> String? {
     return title.isEmpty ? nil : title
 }
 
+@inline(__always)
 func applyTime(calendar: Calendar, of source: Date, toDayOf day: Date) -> Date {
-    let comps = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: source)
+    let comps = calendar.dateComponents([.hour, .minute, .second], from: source)
     var dayComps = calendar.dateComponents([.year, .month, .day], from: day)
     dayComps.hour = comps.hour
     dayComps.minute = comps.minute
     dayComps.second = comps.second
-    dayComps.nanosecond = comps.nanosecond
-    return calendar.date(from: dayComps)!
+    return calendar.date(from: dayComps) ?? day
 }
 
-func substring(_ s: String, _ range: NSRange) -> String {
-    guard let r = Range(range, in: s) else { return "" }
+@inline(__always)
+func substring(_ s: String, _ ns: NSRange) -> String {
+    guard ns.location != NSNotFound, let r = Range(ns, in: s) else { return "" }
     return String(s[r])
 }
 
+@inline(__always)
 func matchesAny(_ token: String, in set: [String]) -> Bool {
     let t = token.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     return set.contains { t == $0.lowercased() }
@@ -67,4 +69,26 @@ func matchesAny(_ token: String, in set: [String]) -> Bool {
 func containsAny(in s: String, of words: [String]) -> Bool {
     let l = s.lowercased()
     return words.contains { l.contains($0.lowercased()) }
+}
+
+// De-dup: prefer earlier textual range; unify exact same (date, duration) & overlapping ranges.
+func dedup(_ items: [HumanDateDetector.Match], text: String) -> [HumanDateDetector.Match] {
+    var out: [HumanDateDetector.Match] = []
+    for m in items {
+        appendUnique(&out, m, text: text)
+    }
+    return out
+}
+
+func appendUnique(_ arr: inout [HumanDateDetector.Match], _ m: HumanDateDetector.Match, text: String) {
+    let k1 = m.date.timeIntervalSinceReferenceDate
+    let k2 = m.duration ?? -1
+    let nsR = NSRange(m.range, in: text)
+    for e in arr {
+        let sameTime = abs(e.date.timeIntervalSinceReferenceDate - k1) < 0.5
+        let sameDur  = ((e.duration ?? -1) - k2).magnitude < 0.5
+        let overlap  = NSIntersectionRange(NSRange(e.range, in: text), nsR).length > 0
+        if (sameTime && sameDur) || overlap { return } // skip duplicate-ish
+    }
+    arr.append(m)
 }

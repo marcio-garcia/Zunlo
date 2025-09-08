@@ -1,19 +1,13 @@
 import Foundation
 
+let detector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue)
 
-func extractDates(text: String) {
-    let ns = text as NSString
-    
-    let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue)
-    guard let matches = detector?.matches(in: text, range: NSRange(location: 0, length: ns.length)) else { return }
-    
-    for match in matches {
-        print("resultType: \(match.resultType)")
-        if match.resultType == .date {
-            print("dur: \(match.duration)")
-            print("date: \(match.date)")
-        }
-    }
+
+let text = "domingo às 15:00."
+let fullRange = NSRange(text.startIndex..., in: text)
+
+detector.enumerateMatches(in: text, options: [], range: fullRange) { m, _, _ in
+    guard let match = m, let date = match.date else { return }
+    print(date)
+    print(match.range)
 }
-
-extractDates(text: "semana")

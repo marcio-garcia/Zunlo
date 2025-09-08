@@ -33,15 +33,34 @@ public final class CommandParser {
         var cal = calendar
         cal.locale = Locale(identifier: language.rawValue)
 
+        let packs: [DateLanguagePack] = [
+            PortugueseBRPack(calendar: cal),
+            EnglishPack(calendar: cal)
+        ]
+        
         // 3) Date detection (use the *localized* calendar everywhere)
         let dateDetector = HumanDateDetector(
             calendar: cal,
-            timeZone: cal.timeZone,
             policy: RelativeWeekdayPolicy(this: .upcomingExcludingToday, next: .immediateUpcoming),
-            lexicon: RelativeLexicon.current(calendar: cal, locale: cal.locale ?? Locale.current)
+            packs: packs
         )
         let resolutions = dateDetector.normalizedResolutions(in: raw, base: now)
 
+        // If any ambiguous → steer to moreInfo (or keep intent and attach a prompt)
+        if let ambiguous = resolutions.first(where: { $0.ambiguous }) {
+            return ParsedCommand(
+                intent: .moreInfo,
+                title: extractTitle(ambiguous.text),
+                when: nil,
+                end: nil,
+                dateRange: nil,
+                newTime: nil,
+                language: language,
+                raw: raw,
+                alternatives: ambiguous.alternatives
+            )
+        }
+        
         // Convenience accessors
         let first = resolutions.first
         let last  = resolutions.last
@@ -144,7 +163,8 @@ public final class CommandParser {
             dateRange: dateRange,
             newTime: newTime,
             language: language,
-            raw: raw
+            raw: raw,
+            alternatives: []
         )
     }
 

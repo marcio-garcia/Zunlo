@@ -17,4 +17,5 @@ public struct ParsedCommand {
     public var newTime: Date?
     public var language: NLLanguage
     public var raw: String
+    public let alternatives: [ResolutionAlternative]
 }

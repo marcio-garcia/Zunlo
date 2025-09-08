@@ -173,19 +173,19 @@
 		25FA19F42E0854F800E740A3 = {
 			isa = PBXGroup;
 			children = (
-				258212942E6B5F5B007EAD3B /* LoggingKit */,
-				25820C9C2E650AA6007EAD3B /* scripts */,
-				25A8286C2E64F76A00384DD1 /* SmartParseKit */,
-				25F5BB712E5BB30C00747955 /* ZunloHelpers */,
-				25F5BB6C2E5B65A100747955 /* GlowUI */,
 				25B7BDC32E4241BC004E1C12 /* AdStack */,
 				251483572E40FB8A00B59FF8 /* FlowNavigator */,
+				25F5BB6C2E5B65A100747955 /* GlowUI */,
+				258212942E6B5F5B007EAD3B /* LoggingKit */,
+				25A8286C2E64F76A00384DD1 /* SmartParseKit */,
 				25FAA96E2E0B6D55000AACA2 /* SupabaseSDK */,
+				25F5BB712E5BB30C00747955 /* ZunloHelpers */,
+				25FAA96F2E0B6E56000AACA2 /* Frameworks */,
+				25FA19FE2E0854F800E740A3 /* Products */,
+				25820C9C2E650AA6007EAD3B /* scripts */,
 				25FA19FF2E0854F800E740A3 /* Zunlo */,
 				25FA1A122E0854F900E740A3 /* ZunloTests */,
 				25FA1A1C2E0854F900E740A3 /* ZunloUITests */,
-				25FAA96F2E0B6E56000AACA2 /* Frameworks */,
-				25FA19FE2E0854F800E740A3 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
@@ -495,7 +495,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -699,7 +699,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -737,7 +737,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
