@@ -28,7 +28,7 @@ class AIToolServiceRepository: DomainRepositories, @unchecked Sendable {
     }
     
     func apply(task: UserTaskRemote) async throws {
-        try await taskRepo.apply(rows: [task])
+        try await taskRepo.upsert(UserTask(remote: task))
     }
     
     func apply(event: EventRemote) async throws {

@@ -33,17 +33,17 @@ class CalendarScheduleViewModel: ObservableObject {
     var itemDateToScrollTo = Date()
     
     let userId: UUID
-    var eventFetcher: EventFetcher
+    var eventRepo: EventRepository
     var visibleRange: Range<Date> = Date()..<Date()
     var locationService: LocationService
     
     init(
         userId: UUID,
-        eventFetcher: EventFetcher,
+        eventRepo: EventRepository,
         locationService: LocationService
     ) {
         self.userId = userId
-        self.eventFetcher = eventFetcher
+        self.eventRepo = eventRepo
         self.locationService = locationService
         self.visibleRange = defaultDateRange()
     }
@@ -53,7 +53,7 @@ class CalendarScheduleViewModel: ObservableObject {
         do {
             locationService.startUpdatingLocation()
             // TODO: change to fetch occurrences filtered by date range
-            let occurrences = try await eventFetcher.fetchOccurrences(for: userId)
+            let occurrences = try await eventRepo.fetchOccurrences(for: userId)
             allOccurrences = occurrences
             eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
             handleOccurrences(occurrences, in: self.visibleRange)

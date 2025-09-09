@@ -8,7 +8,7 @@
 import Foundation
 import SmartParseKit
 
-final class SPTaskStore: TaskStore {
+final class SPTaskStore: SmartParseKit.TaskStore {
     typealias T = UserTask
     
     private var taskRepo: UserTaskRepository

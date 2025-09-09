@@ -82,8 +82,7 @@ final class DefaultViewFactory: ViewFactory {
         let engine = IntentEngine.bundled()
         let parser = CommandParser(engine: engine)
         let taskStore = SPTaskStore(taskRepo: appState.userTaskRepository!, auth: appState.authManager!)
-        let eventStore = SPEventStore(fetcher: EventFetcher(repo: appState.eventRepository!),
-                                      editor: EventEditor(repo: appState.eventRepository!),
+        let eventStore = SPEventStore(repo: appState.eventRepository!,
                                       auth: appState.authManager!,
                                       aiToolRouter: aiToolRouter)
         let executor = AnyCommandExecutor(tasks: taskStore, events: eventStore)

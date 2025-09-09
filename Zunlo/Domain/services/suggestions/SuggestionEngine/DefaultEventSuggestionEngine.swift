@@ -10,7 +10,7 @@ import Foundation
 final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     let auth: AuthProviding
     let calendar: Calendar
-    let eventFetcher: EventFetcherService
+    let eventRepo: EventStore
     let adjacencyMerges: Bool
     
     var policy: SuggestionPolicy
@@ -18,13 +18,13 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     init(
         auth: AuthProviding,
         calendar: Calendar,
-        eventFetcher: EventFetcherService,
+        eventRepo: EventStore,
         policy: SuggestionPolicy,
         adjacencyMerges: Bool = true
     ) {
         self.auth = auth
         self.calendar = calendar
-        self.eventFetcher = eventFetcher
+        self.eventRepo = eventRepo
         self.policy = policy
         self.adjacencyMerges = adjacencyMerges
     }
@@ -147,7 +147,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
         calendar.timeZone = policy.availabilityTimeZone
         
         // TODO: replace with a ranged fetch. For now, fetchAll + clamp.
-        let events = (try? await eventFetcher.fetchOccurrences(for: userId)) ?? []
+        let events = (try? await eventRepo.fetchOccurrences(for: userId)) ?? []
         
         let today = date.startOfDay(calendar: calendar)
         let tomorrow = today.startOfNextDay(calendar: calendar)

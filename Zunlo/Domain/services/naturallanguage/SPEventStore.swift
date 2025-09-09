@@ -8,24 +8,21 @@
 import Foundation
 import SmartParseKit
 
-final class SPEventStore: EventStore {
+final class SPEventStore: SmartParseKit.EventStore {
 
     typealias E = AddEventInput
     typealias A = ToolDispatchResult
     
-    private let fetcher: EventFetcherService
-    private let editor: EventEditorService
+    private let repo: EventRepository
     private let auth: AuthProviding
     private let aiToolRouter: AIToolRouter
     
     init(
-        fetcher: EventFetcherService,
-        editor: EventEditorService,
+        repo: EventRepository,
         auth: AuthProviding,
         aiToolRouter: AIToolRouter
     ) {
-        self.fetcher = fetcher
-        self.editor = editor
+        self.repo = repo
         self.auth = auth
         self.aiToolRouter = aiToolRouter
     }
@@ -46,7 +43,6 @@ final class SPEventStore: EventStore {
         guard let userId = auth.userId else {
             throw LocalDBError.unauthorized
         }
-        let now = Date()
         let input = AddEventInput(
             id: UUID(),
             userId: userId,
@@ -66,12 +62,12 @@ final class SPEventStore: EventStore {
             count: count,
             isCancelled: false
         )
-        try await editor.add(input)
+        try await repo.add(input)
         return input
     }
 
     func updateEvent(id: UUID, start: Date, end: Date) async throws {
-        guard let rawOcc = try await fetcher.fetchOccurrences(id: id) else {
+        guard let rawOcc = try await repo.fetchOccurrences(id: id) else {
             throw LocalDBError.notFound
         }
 //        let occ = try EventOccurrenceService.generate(rawOccurrences: [rawOcc], in: range)
@@ -84,7 +80,7 @@ final class SPEventStore: EventStore {
     
     func events(in range: Range<Date>) async throws -> [AddEventInput] {
         guard await auth.isAuthorized(), let userId = auth.userId else { return [] }
-        let rawOcc = try await fetcher.fetchOccurrences(for: userId)
+        let rawOcc = try await repo.fetchOccurrences(for: userId)
         let occ = try EventOccurrenceService.generate(rawOccurrences: rawOcc, in: range, addFakeToday: false)
         return []
     }

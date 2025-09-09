@@ -19,7 +19,7 @@ final class SuggestionEngineTests: XCTestCase {
         DefaultEventSuggestionEngine(
             auth: TestAuthManager(),
             calendar: DT.cal,
-            eventFetcher: FakeEventFetcher(events),
+            eventRepo: FakeEventFetcher(events),
             policy: policy
         )
     }

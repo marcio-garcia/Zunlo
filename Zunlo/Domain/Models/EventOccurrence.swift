@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct EventOccurrence: Identifiable, Hashable {
-    let id: UUID
+public struct EventOccurrence: Identifiable, Hashable {
+    public let id: UUID
     let userId: UUID
     let eventId: UUID
     let title: String

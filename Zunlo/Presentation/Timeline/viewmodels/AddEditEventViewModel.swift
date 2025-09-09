@@ -52,18 +52,18 @@ final class AddEditEventViewModel: ObservableObject {
     
     let userId: UUID
     let mode: AddEditEventViewMode
-    private let editor: EventEditorService
+    private let repo: EventRepository
     
     @MainActor let errorHandler = ErrorHandler()
     
     init(
         userId: UUID,
         mode: AddEditEventViewMode,
-        editor: EventEditorService
+        repo: EventRepository
     ) {
         self.userId = userId
         self.mode = mode
-        self.editor = editor
+        self.repo = repo
         loadFields()
     }
 
@@ -201,15 +201,15 @@ final class AddEditEventViewModel: ObservableObject {
         do {
             switch mode {
             case .add:
-                try await editor.add(makeInput())
+                try await repo.add(makeInput())
             case .editAll(let event, let oldRule):
-                try await editor.editAll(event: event, with: makeInput(), oldRule: oldRule)
+                try await repo.editAll(event: event, with: makeInput(), oldRule: oldRule)
             case .editSingle(let parent, _, let occ):
-                try await editor.editSingle(parent: parent, occurrence: occ, with: makeInput())
+                try await repo.editSingle(parent: parent, occurrence: occ, with: makeInput())
             case .editOverride(let ov):
-                try await editor.editOverride(ov, with: makeInput())
+                try await repo.editOverride(ov, with: makeInput())
             case .editFuture(let parent, _, let occ):
-                try await editor.editFuture(parent: parent, startingFrom: occ, with: makeInput())
+                try await repo.editFuture(parent: parent, startingFrom: occ, with: makeInput())
             }
             await MainActor.run { self.isProcessing = false }
             return true
@@ -225,7 +225,7 @@ final class AddEditEventViewModel: ObservableObject {
         await MainActor.run { isProcessing = true }
         if case .editAll(let event, _) = mode {
             do {
-                try await editor.delete(event: event)
+                try await repo.delete(id: event.id, reminderTriggers: event.reminderTriggers)
                 await MainActor.run { isProcessing = false }
                 return true
             } catch {
@@ -237,7 +237,7 @@ final class AddEditEventViewModel: ObservableObject {
     }
     
     private func makeInput() -> AddEventInput {
-        var untilDate = showUntil ? until : nil
+        let untilDate = showUntil ? until : nil
         return AddEventInput(
             id: UUID(), // Not used by EventEditor
             userId: userId,

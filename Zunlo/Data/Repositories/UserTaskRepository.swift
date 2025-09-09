@@ -7,7 +7,11 @@
 
 import Foundation
 
-final public class UserTaskRepository {
+public protocol TaskStore {
+    func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask]
+}
+
+final public class UserTaskRepository: TaskStore {
     private let auth: AuthProviding
     private let localStore: UserTaskLocalStore
     private let remoteStore: UserTaskRemoteStore
@@ -38,11 +42,6 @@ final public class UserTaskRepository {
         reminderScheduler.cancelReminders(for: task)
     }
     
-    func apply(rows: [UserTaskRemote]) async throws {
-        guard await auth.isAuthorized(), let _ = auth.userId else { return }
-        try await localStore.apply(rows: rows)
-    }
-
     @discardableResult
     func fetchTask(id: UUID) async throws -> UserTask? {
         guard let taskLocal = try await localStore.fetch(id: id) else {
@@ -59,7 +58,7 @@ final public class UserTaskRepository {
     }
     
     @discardableResult
-    func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
+    public func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
         // Prefer local first, or merge with remote if needed
         let tasks = try await localStore.fetchTasks(filteredBy: filter)
         return tasks

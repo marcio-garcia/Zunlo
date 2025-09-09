@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TaskFilter {
+public struct TaskFilter {
     var tags: [String]?
     var userId: UUID?
     var priority: UserTaskPriorityLocal?

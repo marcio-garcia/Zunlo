@@ -428,7 +428,7 @@ extension CalendarScheduleViewController {
         let vm = AddEditEventViewModel(
             userId: viewModel.userId,
             mode: mode,
-            editor: EventEditor(repo: AppState.shared.eventRepository!)
+            repo: AppState.shared.eventRepository!
         )
         let addView = AddEditEventView(
             viewModel: vm,

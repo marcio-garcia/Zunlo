@@ -108,11 +108,9 @@ public struct UserTask: Identifiable, Codable, Hashable {
     public var parentEventId: UUID?
     public var tags: [Tag]
     public var reminderTriggers: [ReminderTrigger]?
-    
-    // NEW for sync v1
     public var deletedAt: Date? = nil
     public var needsSync: Bool = false
-    public var version: Int?          // <-- NEW (nil means “unknown / never synced”)
+    public var version: Int?
 
     public var isActionable: Bool {
         !isCompleted && parentEventId == nil

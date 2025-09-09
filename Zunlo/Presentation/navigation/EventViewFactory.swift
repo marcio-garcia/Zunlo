@@ -38,7 +38,7 @@ struct EventViewFactory: EventViews {
             CalendarScheduleContainer(
                 viewModel: CalendarScheduleViewModel(
                     userId: userId,
-                    eventFetcher: EventFetcher(repo: AppState.shared.eventRepository!),
+                    eventRepo: AppState.shared.eventRepository!,
                     locationService: AppState.shared.locationService!
                 ), onTapClose: {
                     Task { await MainActor.run { nav.pop() } }
@@ -59,7 +59,7 @@ struct EventViewFactory: EventViews {
                 viewModel: AddEditEventViewModel(
                     userId: userId,
                     mode: .add,
-                    editor: EventEditor(repo: AppState.shared.eventRepository!)),
+                    repo: AppState.shared.eventRepository!),
                 onDismiss: onAddEditEventDismiss
             )
             .environmentObject(nav)
@@ -72,7 +72,7 @@ struct EventViewFactory: EventViews {
                 viewModel: AddEditEventViewModel(
                     userId: userId,
                     mode: editMode,
-                    editor: EventEditor(repo: AppState.shared.eventRepository!)),
+                    repo: AppState.shared.eventRepository!),
                 onDismiss: onAddEditEventDismiss
             )
             .environmentObject(nav)

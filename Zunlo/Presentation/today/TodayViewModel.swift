@@ -40,44 +40,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     init(appState: AppState) {
         self.appState = appState
         appState.locationService?.startUpdatingLocation()
-        
-        observeRepositories()
         updateGreeting()
-    }
-
-    private func observeRepositories() {
-//        taskRepo.lastTaskAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
-//            if case .fetch(let tasks) = action {
-//                
-//                let today = Date().startOfNextDay()
-//                
-//                let filtered = tasks.filter {
-//                    guard $0.deletedAt == nil else { return false }
-//                    guard let due = $0.dueDate else { return !$0.isCompleted }
-//                    return due <= today && !$0.isCompleted
-//                }
-//                
-//                let isEmpty = filtered.isEmpty
-//                self?.todayTasks = filtered
-//                
-//                DispatchQueue.main.async {
-//                    self?.state = isEmpty ? .empty : .loaded
-//                }
-//
-//            }
-//        }
-        
-        eventRepo.lastEventAction.observe(owner: self, queue: DispatchQueue.main, fireNow: false) { [weak self] action in
-            switch action {
-            case .fetch(let occ):
-                let today = Date().startOfDay()
-                let tomorrow = today.startOfNextDay()
-                self?.handleOccurrences(occ, in: today..<tomorrow)
-            case .error(let error):
-                Task { await self?.errorHandler.handle(error) }
-            default: break
-            }
-        }
     }
     
     func fetchData() async {
@@ -89,9 +52,10 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
             let tasks = try await taskFetcher.fetchTasks()
             handleTasks(tasks)
             
-            let eventFetcher = EventFetcher(repo: eventRepo)
-            let _ = try await eventFetcher.fetchOccurrences(for: userId)
-            
+            let occurrences = try await eventRepo.fetchOccurrences(for: userId)
+            let today = Date().startOfDay()
+            let tomorrow = today.startOfNextDay()
+            handleOccurrences(occurrences, in: today..<tomorrow)
         } catch {
             await errorHandler.handle(error)
         }

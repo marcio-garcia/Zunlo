@@ -80,7 +80,7 @@ struct ZunloApp: App {
         let eventSuggestionEngine = DefaultEventSuggestionEngine(
             auth: authManager,
             calendar: Calendar.appDefault,
-            eventFetcher: EventFetcher(repo: eventRepo),
+            eventRepo: eventRepo,
             policy: SuggestionPolicyProvider().policy
         )
         

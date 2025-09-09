@@ -1,22 +1,12 @@
 //
-//  EventEditorService.swift
+//  AddEventInput.swift
 //  Zunlo
 //
-//  Created by Marcio Garcia on 8/9/25.
+//  Created by Marcio Garcia on 9/9/25.
 //
 
 import Foundation
 import SmartParseKit
-
-// Use cases your VM and Quick Add can both call.
-protocol EventEditorService {
-    func add(_ input: AddEventInput) async throws
-    func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws
-    func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws
-    func editOverride(_ override: EventOverride, with input: EditEventInput) async throws
-    func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws
-    func delete(event: EventOccurrence) async throws
-}
 
 // DTOs decouple UI from domain defaults/validation
 struct AddEventInput {
