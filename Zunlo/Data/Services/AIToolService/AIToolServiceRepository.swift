@@ -32,15 +32,15 @@ class AIToolServiceRepository: DomainRepositories, @unchecked Sendable {
     }
     
     func apply(event: EventRemote) async throws {
-        try await eventRepo.apply(rows: [event])
+        try await eventRepo.upsert(Event(remote: event))
     }
     
     func apply(recurrence: RecurrenceRuleRemote) async throws {
-        try await eventRepo.apply(rows: [recurrence])
+        try await eventRepo.upsertRecurrenceRule(RecurrenceRule(remote: recurrence))
     }
     
     func apply(override: EventOverrideRemote) async throws {
-        try await eventRepo.apply(rows: [override])
+        try await eventRepo.upsertOverride(EventOverride(remote: override))
     }
     
     func fetchEvents(start: Date, end: Date) async throws -> [Event] {

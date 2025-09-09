@@ -45,9 +45,12 @@ class AIToolRepository: AIToolAPI {
         guard let startDate = await eventEngine.nextEventStart(after: after, on: Date()) else {
             return nil
         }
-        guard let event = try await eventRepo.fetchEvent(startAt: startDate) else {
-            return nil
-        }
+        
+        let filter = EventFilter(startDateRange: startDate...startDate)
+        let events = try await eventRepo.fetchEvent(filteredBy: filter)
+
+        guard let event = events.first else { return nil }
+        
         return EventDraft(
             id: event.id,
             userId: event.userId,
