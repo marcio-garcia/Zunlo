@@ -80,6 +80,8 @@ public final class CommandParser {
             } else if let endDate = end {
                 // Two points → treat as range
                 dateRange = min(start, endDate)..<max(start, endDate)
+            } else {
+                dateRange = start..<start.addingTimeInterval(60 * 60)
             }
         }
 

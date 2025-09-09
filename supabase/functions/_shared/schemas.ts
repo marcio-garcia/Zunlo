@@ -117,19 +117,19 @@ export interface EventBody {
   /** required */
   title: string;
   /** required in your model */
-  start_datetime: isoDateTime;
+  startDatetime: isoDateTime;
   /** optional in model but UI typically sets an end */
-  end_datetime?: isoDateTime | null;
+  endDatetime?: isoDateTime | null;
   notes?: string | null;
   location?: string | null;
   color?: EventColor | null;
-  reminder_triggers?: ReminderTrigger[];
+  reminderTriggers?: ReminderTrigger[];
   /**
    * Recurrence:
    * - Omit entirely => non-recurring
    * - Provide => recurring; server sets is_recurring = true
    */
-  recurrence_rule?: RecurrenceRuleBody | null;
+  recurrenceRule?: RecurrenceRuleBody | null;
 }
 
 /** How to apply an edit in a recurring series */
@@ -285,16 +285,16 @@ export const eventBodySchema = {
   $id: 'EventBody',
   type: 'object',
   additionalProperties: false,
-  required: ['title', 'start_datetime','end_datetime','notes','location','color','reminder_triggers','recurrence_rule'],
+  required: ['title', 'startDatetime','endDatetime','notes','location','color','reminderTriggers','recurrenceRule'],
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 200 },
-    start_datetime: isoDateTime,
-    end_datetime: { anyOf: [ isoDateTime, { type: 'null' } ] },
+    startDatetime: isoDateTime,
+    endDatetime: { anyOf: [ isoDateTime, { type: 'null' } ] },
     notes: { anyOf: [{ type: 'string', maxLength: 2000 }, { type: 'null' }] },
     location: { anyOf: [{ type: 'string', maxLength: 200 }, { type: 'null' }] },
     color: { anyOf: [eventColorSchema, { type: 'null' }] },
-    reminder_triggers: { type: 'array', items: reminderTriggerSchema, maxItems: 5 },
-    recurrence_rule: { anyOf: [recurrenceRuleSchema, { type: 'null' }] }
+    reminderTriggers: { type: 'array', items: reminderTriggerSchema, maxItems: 5 },
+    recurrenceRule: { anyOf: [recurrenceRuleSchema, { type: 'null' }] }
   }
 } as const;
 
@@ -303,16 +303,16 @@ export const eventPatchSchema = {
   $id: 'EventPatch',
   type: 'object',
   additionalProperties: false,
-  required: ['title', 'start_datetime','end_datetime','notes','location','color','reminder_triggers','recurrence_rule'],
+  required: ['title', 'startDatetime','endDatetime','notes','location','color','reminderTriggers','recurrenceRule'],
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 200 },
-    start_datetime: isoDateTime,
-    end_datetime: { anyOf: [isoDateTime, { type: 'null' }] },
+    startDatetime: isoDateTime,
+    endDatetime: { anyOf: [isoDateTime, { type: 'null' }] },
     notes: { anyOf: [{ type: 'string', maxLength: 2000 }, { type: 'null' }] },
     location: { anyOf: [{ type: 'string', maxLength: 200 }, { type: 'null' }] },
     color: { anyOf: [eventColorSchema, { type: 'null' }] },
-    reminder_triggers: { type: 'array', items: reminderTriggerSchema, maxItems: 5 },
-    recurrence_rule: { anyOf: [recurrenceRuleSchema, { type: 'null' }] }
+    reminderTriggers: { type: 'array', items: reminderTriggerSchema, maxItems: 5 },
+    recurrenceRule: { anyOf: [recurrenceRuleSchema, { type: 'null' }] }
   }
 } as const;
 
@@ -409,16 +409,27 @@ export const deleteTaskSchema = {
 
 export const createEventSchema = {
   $id: 'CreateEventPayload',
-  allOf: [
-    { $ref: 'BaseMutation' },
-    {
-      type: 'object',
-      additionalProperties: false,
-      required: ['event'],
-      properties: { event: { $ref: 'EventBody' } }
-    }
-  ]
+  type: 'object',
+  additionalProperties: false,
+  required: [...baseMutationSchema.required, 'event'],
+  properties: {
+    ...baseMutationSchema.properties,
+    event: { $ref: 'EventBody' },
+  }
 } as const;
+
+// export const createEventSchema = {
+//   $id: 'CreateEventPayload',
+//   allOf: [
+//     { $ref: 'BaseMutation' },
+//     {
+//       type: 'object',
+//       additionalProperties: false,
+//       required: ['event'],
+//       properties: { event: { $ref: 'EventBody' } }
+//     }
+//   ]
+// } as const;
 
 export const updateEventSchema = {
   $id: 'UpdateEventPayload',

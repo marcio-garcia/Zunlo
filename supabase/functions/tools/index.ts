@@ -314,8 +314,18 @@ app.post("/createEvent", authMiddleware, async (c) => {
   const body = await readJson(c);
   if (body instanceof Response) return body;
 
+  console.log(
+    "Body: ",
+    JSON.stringify(body, null, 2)
+  );
+
   const payload = validate<CreateEventPayload>(createEventSchema, body);
   if (payload instanceof Response) return payload;
+
+  console.log(
+    "Payload: ",
+    JSON.stringify(payload, null, 2)
+  );
 
   try { await assertMutationAllowed(service, userId); }
   catch (e) { return e instanceof Response ? e : jsonErr("Forbidden", 403); }
@@ -331,12 +341,12 @@ app.post("/createEvent", authMiddleware, async (c) => {
     user_id: userId,
     title: e.title,
     notes: e.notes ?? null,
-    start_datetime: e.start_datetime,
-    end_datetime: e.end_datetime ?? null,
-    is_recurring: !!e.recurrence_rule,
+    start_datetime: e.startDatetime,
+    end_datetime: e.endDatetime ?? null,
+    is_recurring: !!e.recurrenceRule,
     location: e.location ?? null,
     color: e.color ?? null,
-    reminder_triggers: e.reminder_triggers ?? [],
+    reminder_triggers: e.reminderTriggers ?? [],
     created_at: nowISO(),
     updated_at: nowISO(),
     version: 1,
@@ -354,8 +364,8 @@ app.post("/createEvent", authMiddleware, async (c) => {
   let ruleRow: any = null;
 
   // Optional recurrence rule
-  if (e.recurrence_rule) {
-    const r = e.recurrence_rule;
+  if (e.recurrenceRule) {
+    const r = e.recurrenceRule;
     const insertRule = {
       id: crypto.randomUUID(),
       event_id: eventRow.id,

@@ -42,7 +42,7 @@ final class DefaultViewFactory: ViewFactory {
         
         let aiChatService = SupabaseAIChatClient(
             supabase: appState.supabaseClient!,
-            config: SupabaseAIChatConfig(responseType: .structured)
+            config: SupabaseAIChatConfig(responseType: .tools)
         )
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
                                                  eventRepo: appState.eventRepository!)

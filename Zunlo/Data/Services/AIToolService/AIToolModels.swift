@@ -45,7 +45,7 @@ public struct BaseMutationWire: Codable {
     public var intent: String                 // "create" | "update" | "delete"
     public var idempotencyKey: String         // UUID string
     public var reason: String
-    public var dryRun: Bool?
+    public var dryRun: Bool = false
 }
 
 // MARK: - Args decoded from tool calls (model-facing)
@@ -53,7 +53,7 @@ struct CreateTaskArgs: Decodable { var task: TaskCreateInput }
 struct UpdateTaskArgs: Decodable { var taskId: UUID; var patch: TaskPatchInput }
 struct DeleteTaskArgs: Decodable { var taskId: UUID }
 
-struct CreateEventArgs: Decodable { var event: EventCreateInput }
+//struct CreateEventArgs: Decodable { var event: EventCreateInput }
 struct UpdateEventArgs: Decodable {
     var eventId: UUID
     var editScope: EditScope
@@ -139,12 +139,12 @@ struct TaskCreateInput: Codable {
 struct EventCreateInput: Codable {
     var title: String
     var startDatetime: Date
-    var endDatetime: Date?
-    var notes: String?
-    var location: String?
-    var color: EventColor?
-    var reminderTriggers: [ReminderTrigger]?
-    var recurrenceRule: RecurrenceRule?   // your Apple 1–7 weekdays
+    @NullCodable var endDatetime: Date?
+    @NullCodable var notes: String?
+    @NullCodable var location: String?
+    @NullCodable var color: EventColor?
+    @NullCodable var reminderTriggers: [ReminderTrigger]?
+    @NullCodable var recurrenceRule: RecurrenceRule?   // your Apple 1–7 weekdays
 }
 
 // PATCH (uses Field<> for tri-state)
@@ -258,7 +258,7 @@ public struct UpdateTaskPayloadWire: Encodable {
     var intent: String = "update"
     var idempotencyKey: String
     var reason: String
-    var dryRun: Bool?
+    var dryRun: Bool  = false
     var taskId: UUID
     var version: Int
     var patch: TaskPatchInput
@@ -268,7 +268,7 @@ public struct DeleteTaskPayloadWire: Encodable {
     public var intent: String = "delete"
     public var idempotencyKey: String
     public var reason: String
-    public var dryRun: Bool?
+    public var dryRun: Bool = false
     public var taskId: UUID
     public var version: Int
 }
@@ -277,7 +277,7 @@ public struct CreateEventPayloadWire: Encodable {
     var intent: String = "create"
     var idempotencyKey: String
     var reason: String
-    var dryRun: Bool?
+    var dryRun: Bool = false
     var event: EventCreateInput
 }
 
@@ -285,7 +285,7 @@ public struct UpdateEventPayloadWire: Encodable {
     var intent: String = "update"
     var idempotencyKey: String
     var reason: String
-    var dryRun: Bool?
+    var dryRun: Bool = false
     var eventId: UUID
     var version: Int
     var editScope: EditScope
@@ -297,7 +297,7 @@ public struct DeleteEventPayloadWire: Encodable {
     public var intent: String = "delete"
     public var idempotencyKey: String
     public var reason: String
-    public var dryRun: Bool?
+    public var dryRun: Bool = false
     public var eventId: UUID
     public var version: Int
     public var editScope: EditScope

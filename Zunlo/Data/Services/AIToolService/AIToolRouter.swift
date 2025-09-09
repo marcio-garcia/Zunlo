@@ -119,11 +119,11 @@ public class AIToolRouter: ToolRouter {
         }
 
         case "createEvent": do {
-            let args = try JSONDecoder.makeDecoder().decode(CreateEventArgs.self, from: Data(normalizedArgsJSON.utf8))
+            let args = try JSONDecoder.makeDecoder().decode(EventCreateInput.self, from: Data(normalizedArgsJSON.utf8))
             let p = CreateEventPayloadWire(
                 idempotencyKey: UUID().uuidString,
                 reason: reason,
-                event: args.event
+                event: args
             )
             let res = try await tools.createEvent(p)
             if let e = res.event { try await repo.apply(event: e) }

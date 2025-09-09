@@ -197,7 +197,7 @@ public final class HumanDateDetector {
                       duration: interval,
                       range: r,
                       original: nil,
-                      overridden: true,
+                      overridden: false,
                       ambiguous: false,
                       ambiguityReason: nil),
                 text: text)
@@ -319,7 +319,7 @@ public final class HumanDateDetector {
                       duration: dur,
                       range: r,
                       original: nil,
-                      overridden: true,
+                      overridden: false,
                       ambiguous: false,
                       ambiguityReason: nil),
                 text: text)
@@ -444,7 +444,7 @@ public final class HumanDateDetector {
                     duration: duration,
                     range: r,
                     original: nil,
-                    overridden: true,
+                    overridden: false,
                     ambiguous: ambiguous || (endIsBare && !e.hadMeridiem),
                     ambiguityReason: reason
                 ))
@@ -456,7 +456,7 @@ public final class HumanDateDetector {
                     duration: policy.defaultSingleDuration,
                     range: r,
                     original: nil,
-                    overridden: true,
+                    overridden: false,
                     ambiguous: ambiguous,
                     ambiguityReason: reason
                 ))
