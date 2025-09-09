@@ -11,6 +11,7 @@ public struct EnglishPack: DateLanguagePack {
     public let calendar: Calendar
     public let thisTokens = ["this", "coming"]
     public let nextTokens = ["next"]
+    public var connectorTokens = ["at", "on", "from", "to", "until", "till", "by"]
     public let weekdayMap: [String : Int]
 
     public init(calendar: Calendar) {
@@ -68,8 +69,22 @@ public struct EnglishPack: DateLanguagePack {
         return BaseLanguagePack.regex(pat)
     }
 
+    public func commandPrefixRegex() -> NSRegularExpression {
+        let pat = #"""
+        (?ix) ^
+        \s* (?:
+            (create|move|update|add|set up|i have|put) \s+ (?:an?\s+)? (?:event|task|reminder) |
+            add \s+ (?:an?\s+)? reminder |
+            (schedule|book) \s+ (?:an?\s+)? (?:event|task|reminder)? |
+            set \s+ (?:an?\s+)? reminder
+        )
+        (?: \s+ (?:for|to|on|at) )?
+        \s*
+        """#
+        return BaseLanguagePack.regex(pat)
+    }
+
     public func phraseIndicatesNext(_ s: String) -> Bool {
         s.range(of: #"(?i)\bnext\b"#, options: .regularExpression) != nil
     }
 }
-

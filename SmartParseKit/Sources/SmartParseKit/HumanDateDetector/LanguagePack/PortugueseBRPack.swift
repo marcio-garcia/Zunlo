@@ -11,6 +11,7 @@ public struct PortugueseBRPack: DateLanguagePack {
     public let calendar: Calendar
     public let thisTokens = ["este","esta","neste","nesta","deste","desta","agora","nessa"]
     public let nextTokens = ["próximo","proximo","no próximo","no proximo","na próxima","na proxima","seguinte","que vem"]
+    public var connectorTokens = ["às", "as", "das", "de", "até", "a", "no", "na", "em"]
     public let weekdayMap: [String : Int]
 
     public init(calendar: Calendar) {
@@ -94,6 +95,26 @@ public struct PortugueseBRPack: DateLanguagePack {
         """#
         return BaseLanguagePack.regex(pat)
     }
+    
+    public func commandPrefixRegex() -> NSRegularExpression {
+        // Matches at start (case/diacritic insensitive):
+        // "adicionar lembrete", "criar (evento|lembrete|tarefa)", "agendar",
+        // "marcar", "definir (um )?lembrete", optionally followed by "para|de|do|da"
+        let pat = #"""
+        (?ix) ^
+        \s* (?:
+            (criar|mover|atualizar|adicionar|agendar|marcar|novo|add|reservar|tenho um|colocar) \s+ (?:um\s+)? (?:evento|lembrete|tarefa) |
+            agendar |
+            marcar |
+            definir \s+ (?:um\s+)? lembrete |
+            preciso adicionar \s+ (?:um\s+)? lembrete
+        )
+        (?: \s+ (?:para|de|do|da) )?
+        \s*
+        """#
+        return BaseLanguagePack.regex(pat)
+    }
+
 
     public func phraseIndicatesNext(_ s: String) -> Bool {
         let l = s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: calendar.locale ?? .current)

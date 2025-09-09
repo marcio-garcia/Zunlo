@@ -33,10 +33,7 @@ public final class CommandParser {
         var cal = calendar
         cal.locale = Locale(identifier: language.rawValue)
 
-        let packs: [DateLanguagePack] = [
-            PortugueseBRPack(calendar: cal),
-            EnglishPack(calendar: cal)
-        ]
+        let packs: [DateLanguagePack] = language.rawValue == "en" ? [EnglishPack(calendar: cal)] : [PortugueseBRPack(calendar: cal)]
         
         // 3) Date detection (use the *localized* calendar everywhere)
         let dateDetector = HumanDateDetector(
@@ -46,11 +43,13 @@ public final class CommandParser {
         )
         let resolutions = dateDetector.normalizedResolutions(in: raw, base: now)
 
+        let extractor = TitleExtractor(detector: dateDetector)
+        
         // If any ambiguous → steer to moreInfo (or keep intent and attach a prompt)
         if let ambiguous = resolutions.first(where: { $0.ambiguous }) {
             return ParsedCommand(
                 intent: .moreInfo,
-                title: extractTitle(ambiguous.text),
+                title: extractor.extractTitle(from: ambiguous.text, base: now),
                 when: nil,
                 end: nil,
                 dateRange: nil,
@@ -155,7 +154,7 @@ public final class CommandParser {
         }
 
         // 9) Title
-        let title = extractTitle(raw)
+        let title = extractor.extractTitle(from: raw, base: now)
 
         return ParsedCommand(
             intent: intent,

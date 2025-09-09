@@ -9,8 +9,9 @@ import Foundation
 
 public struct SpanishPack: DateLanguagePack {
     public let calendar: Calendar
-    public let thisTokens: [String]
-    public let nextTokens: [String]
+    public let thisTokens = ["este", "esta"]
+    public let nextTokens = ["próximo", "proximo", "próxima", "proxima", "siguiente", "que viene"]
+    public var connectorTokens = ["a las", "desde", "hasta", "en", "el", "la"]
     public let weekdayMap: [String : Int]
 
     // Convenience: access the locale from the calendar
@@ -23,10 +24,6 @@ public struct SpanishPack: DateLanguagePack {
             cal.locale = Locale(identifier: "es_ES")
         }
         self.calendar = cal
-
-        // “this” / “next” tokens (lowercased, diacritic-insensitive matches are handled in regex)
-        self.thisTokens = ["este", "esta"]
-        self.nextTokens = ["próximo", "proximo", "próxima", "proxima", "siguiente", "que viene"]
 
         // Build robust weekday map (includes localized names AND en 3-letter aliases)
         self.weekdayMap = BaseLanguagePack.makeWeekdayMap(calendar: cal)
@@ -120,6 +117,22 @@ public struct SpanishPack: DateLanguagePack {
         )\s+
         (\#(timeToken))
         \b
+        """#
+        return BaseLanguagePack.regex(pat)
+    }
+    
+    public func commandPrefixRegex() -> NSRegularExpression {
+        let pat = #"""
+        (?ix) ^
+        \s* (?:
+            (crear|mover|actualizar|agregar|programar|reservar|nuevo|add|reservar|tener un) \s+ (?:un\s+)? (?:evento|tarea|recordatorio) |
+            agregar \s+ (?:un\s+)? recordatorio |
+            programar \s+ (?:un\s+)? (?:evento|tarea|recordatorio) |
+            programar |
+            establecer \s+ (?:un\s+)? recordatorio
+        )
+        (?: \s+ (?:para|a|en) )?
+        \s*
         """#
         return BaseLanguagePack.regex(pat)
     }

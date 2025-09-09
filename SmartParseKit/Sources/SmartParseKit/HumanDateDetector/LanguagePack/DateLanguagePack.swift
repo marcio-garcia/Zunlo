@@ -10,11 +10,12 @@ import Foundation
 // MARK: - Language pack protocol
 
 public protocol DateLanguagePack {
-    var calendar: Calendar { get }           // preconfigured with locale/tz if you want
+    var calendar: Calendar { get }          // preconfigured with locale/tz if you want
     var thisTokens: [String] { get }        // e.g. ["this", "coming"] / ["este", "esta"]
     var nextTokens: [String] { get }        // e.g. ["next"] / ["próximo", "que vem"]
     var weekdayMap: [String: Int] { get }   // lowercased tokens → 1…7 (Sun=1)
-
+    var connectorTokens: [String] { get }   // tokens to strip when extracting titles
+    
     /// Relative weekday phrases.
     /// Capturing groups MUST be:
     ///   (1) optional modifier token (may be NSNotFound/empty)
@@ -37,6 +38,9 @@ public protocol DateLanguagePack {
 
     /// Whether a phrase implies “next” (used for week phrases).
     func phraseIndicatesNext(_ phraseLowercased: String) -> Bool
+    
+    // NEW: boilerplate command/intents to remove from the beginning of titles
+    func commandPrefixRegex() -> NSRegularExpression
 }
 
 // MARK: - Base helper (weekday maps + regex builder)

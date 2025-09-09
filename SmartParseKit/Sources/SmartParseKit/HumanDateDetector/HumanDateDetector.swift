@@ -119,7 +119,24 @@ public final class HumanDateDetector {
 
         // 4) "from–to" with optional weekday (e.g., "quarta das 9 às 10", "from 9 to 10")
         for b in bundles {
-            results.append(contentsOf: fromToTimeMatches(bundle: b, in: text, base: base))
+            let matches = fromToTimeMatches(bundle: b, in: text, base: base)
+            for match in matches {
+                if results.isEmpty {
+                    results.append(match)
+                } else {
+                    for (index, _) in results.enumerated() {
+                        let final = applyTime(calendar: calendar, of: match.date, toDayOf: results[index].date)
+                        results[index] = Match(date: final,
+                                               timeZone: results[index].timeZone,
+                                               duration: match.duration,
+                                               range: results[index].range,
+                                               original: results[index].original,
+                                               overridden: true,
+                                               ambiguous: false,
+                                               ambiguityReason: nil)
+                    }
+                }
+            }
         }
 
         // 5) Dedup ONLY exact duplicates; keep overlapping alternatives from different sources
