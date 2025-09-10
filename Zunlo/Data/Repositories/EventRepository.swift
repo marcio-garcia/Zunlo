@@ -8,8 +8,12 @@
 import Foundation
 
 public protocol EventStore {
+    func makeEvent(title: String, start: Date, end: Date) -> Event?
+    func fetchEvent(by id: UUID) async throws -> Event?
     func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrence]
     func fetchOccurrences(id: UUID) async throws -> EventOccurrence?
+    func fetchOccurrences(in range: Range<Date>) async throws -> [EventOccurrence]
+    func upsert(_ event: Event) async throws
 }
 
 final public class EventRepository: EventStore {
@@ -49,7 +53,13 @@ final public class EventRepository: EventStore {
         return occResp.map { EventOccurrence(occ: $0) }
     }
     
-    func fetchEvent(by id: UUID) async throws -> Event? {
+    public func fetchOccurrences(in range: Range<Date>) async throws -> [EventOccurrence] {
+        guard await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        let rawOcc = try await fetchOccurrences(for: userId)
+        return try EventOccurrenceService.generate(rawOccurrences: rawOcc, in: range, addFakeToday: false)
+    }
+    
+    public func fetchEvent(by id: UUID) async throws -> Event? {
         if let event = try await eventLocalStore.fetch(id: id) {
             return Event(local: event)
         }
@@ -61,7 +71,7 @@ final public class EventRepository: EventStore {
         return events.map { Event(local: $0) }
     }
 
-    func upsert(_ event: Event) async throws {
+    public func upsert(_ event: Event) async throws {
         guard await auth.isAuthorized() else { return }
         try await eventLocalStore.upsert(EventLocal(domain: event))
         reminderScheduler.cancelReminders(for: event)
@@ -99,6 +109,23 @@ final public class EventRepository: EventStore {
     
     func upsertOverride(_ override: EventOverride) async throws {
         try await eventOverrideLocalStore.upsert(override)
+    }
+}
+
+extension EventRepository {
+    public func makeEvent(title: String, start: Date, end: Date) -> Event? {
+        guard let userId = auth.userId else { return nil }
+        return Event(
+            id: UUID(),
+            userId: userId,
+            title: title,
+            startDate: start,
+            endDate: end,
+            isRecurring: false,
+            createdAt: Date(),
+            updatedAt: Date(),
+            color: .softOrange,
+            needsSync: true)
     }
 }
 

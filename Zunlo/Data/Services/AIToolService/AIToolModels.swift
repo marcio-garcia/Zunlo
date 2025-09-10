@@ -35,7 +35,7 @@ public struct NullCodable<Value: Codable>: Codable {
 }
 
 
-public enum EditScope: String, Codable { case single, override, this_and_future, entire_series }
+public enum EventEditScope: String, Codable { case single, override, this_and_future, entire_series }
 
 /// Used when we don't need to decode any response payload.
 public struct EmptyResponse: Decodable {}
@@ -56,13 +56,13 @@ struct DeleteTaskArgs: Decodable { var taskId: UUID }
 //struct CreateEventArgs: Decodable { var event: EventCreateInput }
 struct UpdateEventArgs: Decodable {
     var eventId: UUID
-    var editScope: EditScope
+    var editScope: EventEditScope
     var occurrenceDate: Date?
     var patch: EventPatchInput
 }
 struct DeleteEventArgs: Decodable {
     var eventId: UUID
-    var editScope: EditScope
+    var editScope: EventEditScope
     var occurrenceDate: Date?
 }
 
@@ -109,6 +109,14 @@ enum Field<T: Codable>: Codable {
         } else {
             let v = try c.decode(T.self)
             self = .set(v)
+        }
+    }
+    
+    var value: T? {
+        switch self {
+        case .omit: return nil
+        case .set(let v): return v
+        case .null: return nil
         }
     }
 }
@@ -191,7 +199,16 @@ struct TaskPatchInput: Codable {
         priority         = decodeField(.priority, UserTaskPriority.self)
     }
 
-    // Keep the default memberwise init for building patches locally.
+    init(title: String? = nil, notes: String? = nil, dueDate: Date? = nil, isCompleted: Bool? = nil, tags: [String]? = nil, reminderTriggers: [ReminderTrigger]? = nil, parentEventId: UUID? = nil, priority: UserTaskPriority? = nil) {
+        self.title = title == nil ? .omit : Field.set(title!)
+        self.notes = notes == nil ? .omit : Field.set(notes!)
+        self.dueDate = dueDate == nil ? .omit : Field.set(dueDate!)
+        self.isCompleted = isCompleted == nil ? .omit : Field.set(isCompleted!)
+        self.tags = tags == nil ? .omit : Field.set(tags!)
+        self.reminderTriggers = reminderTriggers == nil ? .omit : Field.set(reminderTriggers!)
+        self.parentEventId = parentEventId == nil ? .omit : Field.set(parentEventId!)
+        self.priority = priority == nil ? .omit : Field.set(priority!)
+    }
 }
 
 struct EventPatchInput: Codable {
@@ -243,6 +260,17 @@ struct EventPatchInput: Codable {
             recurrenceRule = .omit
         }
     }
+    
+    init(title: String? = nil, startDatetime: Date? = nil, endDatetime: Date? = nil, notes: String? = nil, location: String? = nil, color: EventColor? = nil, reminderTriggers: [ReminderTrigger]? = nil, recurrenceRule: RecurrenceRule? = nil) {
+        self.title = title == nil ? .omit : Field.set(title!)
+        self.startDatetime = startDatetime == nil ? .omit : Field.set(startDatetime!)
+        self.endDatetime = endDatetime == nil ? .omit : Field.set(endDatetime!)
+        self.notes = notes == nil ? .omit : Field.set(notes!)
+        self.location = location == nil ? .omit : Field.set(location!)
+        self.color = color == nil ? .omit : Field.set(color!)
+        self.reminderTriggers = reminderTriggers == nil ? .omit : Field.set(reminderTriggers!)
+        self.recurrenceRule = recurrenceRule == nil ? .omit : Field.set(recurrenceRule!)
+    }
 }
 
 
@@ -288,7 +316,7 @@ public struct UpdateEventPayloadWire: Encodable {
     var dryRun: Bool = false
     var eventId: UUID
     var version: Int
-    var editScope: EditScope
+    var editScope: EventEditScope
     var occurrenceDate: Date?
     var patch: EventPatchInput
 }
@@ -300,7 +328,7 @@ public struct DeleteEventPayloadWire: Encodable {
     public var dryRun: Bool = false
     public var eventId: UUID
     public var version: Int
-    public var editScope: EditScope
+    public var editScope: EventEditScope
     public var occurrenceDate: Date?
 }
 // --- Server responses (authoritative snapshots for immediate local apply)

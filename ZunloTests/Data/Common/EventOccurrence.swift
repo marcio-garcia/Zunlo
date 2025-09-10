@@ -9,7 +9,7 @@ import Foundation
 @testable import Zunlo
 
 extension EventOccurrence {
-    init(startDate: Date, endDate: Date?) {
+    init(startDate: Date, endDate: Date) {
         self.init(
             id: UUID(),
             userId: UUID(),

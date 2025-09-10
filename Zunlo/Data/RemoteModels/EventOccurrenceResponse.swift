@@ -13,7 +13,7 @@ struct EventOccurrenceResponse: Codable, Identifiable {
     let title: String
     let notes: String?
     let start_datetime: Date
-    let end_datetime: Date?
+    let end_datetime: Date
     let is_recurring: Bool
     let location: String?
     let created_at: Date

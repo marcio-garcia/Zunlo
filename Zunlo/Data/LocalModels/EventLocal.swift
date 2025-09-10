@@ -14,7 +14,7 @@ class EventLocal: Object {
     @Persisted var title: String = ""
     @Persisted var notes: String?
     @Persisted var startDate: Date = Date()
-    @Persisted var endDate: Date?
+    @Persisted var endDate: Date
     @Persisted var isRecurring: Bool = false
     @Persisted var location: String?
     @Persisted var createdAt: Date = Date()
@@ -43,7 +43,7 @@ class EventLocal: Object {
         title: String = "",
         notes: String? = nil,
         startDate: Date = Date(),
-        endDate: Date? = nil,
+        endDate: Date,
         isRecurring: Bool = false,
         location: String? = nil,
         createdAt: Date = Date(),

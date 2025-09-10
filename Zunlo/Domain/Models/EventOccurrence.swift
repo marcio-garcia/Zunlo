@@ -11,11 +11,11 @@ public struct EventOccurrence: Identifiable, Hashable {
     public let id: UUID
     let userId: UUID
     let eventId: UUID
-    let title: String
+    public let title: String
     let notes: String?
-    let startDate: Date
-    let endDate: Date?
-    let isRecurring: Bool
+    public let startDate: Date
+    public let endDate: Date
+    public let isRecurring: Bool
     let location: String?
     let color: EventColor
     let reminderTriggers: [ReminderTrigger]?
@@ -37,7 +37,7 @@ public struct EventOccurrence: Identifiable, Hashable {
         title: String,
         notes: String?,
         startDate: Date,
-        endDate: Date?,
+        endDate: Date,
         isRecurring: Bool,
         location: String?,
         color: EventColor,
@@ -100,5 +100,31 @@ extension EventOccurrence {
         self.needsSync = occ.needsSync
         self.isFakeOccForEmptyToday = false
         self.version = occ.version
+    }
+}
+
+extension EventOccurrence: EventType {
+    public var recurrenceType: String? {
+        recurrence_rules.first?.freq.rawValue
+    }
+    
+    public var recurrenceInterval: Int? {
+        recurrence_rules.first?.interval
+    }
+    
+    public var byWeekday: [Int]? {
+        recurrence_rules.first?.byWeekday
+    }
+    
+    public var byMonthday: [Int]? {
+        recurrence_rules.first?.byMonthday
+    }
+    
+    public var until: Date? {
+        recurrence_rules.first?.until
+    }
+    
+    public var count: Int? {
+        recurrence_rules.first?.count
     }
 }

@@ -27,7 +27,7 @@ public struct EventInsertPayload: Encodable {
         title = r.title
         notes = r.notes
         start_datetime = RFC3339MicrosUTC.string(r.start_datetime)
-        end_datetime = r.end_datetime.map(RFC3339MicrosUTC.string)
+        end_datetime = RFC3339MicrosUTC.string(r.end_datetime)
         is_recurring = r.is_recurring
         location = r.location
         color = r.color
@@ -53,7 +53,7 @@ public struct EventUpdatePayload: Encodable {
             title: r.title,
             notes: r.notes,
             start_datetime: RFC3339MicrosUTC.string(r.start_datetime),
-            end_datetime: r.end_datetime.map(RFC3339MicrosUTC.string),
+            end_datetime: RFC3339MicrosUTC.string(r.end_datetime),
             is_recurring: r.is_recurring,
             location: r.location,
             color: r.color,

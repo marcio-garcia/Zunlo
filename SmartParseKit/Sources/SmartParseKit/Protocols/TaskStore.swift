@@ -15,7 +15,7 @@ public protocol TaskType {
 }
 
 // Replace your old TaskStore with this generic version
-public protocol TaskStore {
+public protocol TaskStoreProtocol {
     associatedtype T: TaskType
     @discardableResult
     func createTask(title: String, due: Date?, userInfo: [String: Any]?) async throws -> T

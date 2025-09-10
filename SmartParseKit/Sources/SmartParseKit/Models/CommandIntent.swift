@@ -9,7 +9,7 @@ public enum CommandIntent: String {
     case createTask         = "create_task"
     case createEvent        = "create_event"
     case rescheduleTask     = "reschedule_task"
-    case rescheduleEvent    = "reschedule_event"   // split from old updateReschedule
+    case rescheduleEvent    = "reschedule_event"
     case updateTask         = "update_task"
     case updateEvent        = "update_event"
     case planWeek           = "plan_week"

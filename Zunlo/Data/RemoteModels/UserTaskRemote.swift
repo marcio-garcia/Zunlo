@@ -123,6 +123,44 @@ extension UserTaskRemote {
 }
 
 extension UserTaskRemote {
+    init(input: TaskCreateInput, userId: UUID) {
+        self.id = UUID()
+        self.userId = userId
+        self.title = input.title
+        self.notes = input.notes
+        self.isCompleted = input.isCompleted
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.dueDate = input.dueDate
+        self.priority = input.priority
+        self.parentEventId = input.parentEventId
+        self.tags = input.tags
+        self.reminderTriggers = input.reminderTriggers
+        self.deletedAt = nil
+        self.version = nil
+        self.updatedAtRaw = ""
+    }
+    
+    init(input: TaskPatchInput, userId: UUID) {
+        self.id = UUID()
+        self.userId = userId
+        self.title = input.title.value ?? ""
+        self.notes = input.notes.value
+        self.isCompleted = input.isCompleted.value ?? false
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.dueDate = input.dueDate.value
+        self.priority = input.priority.value ?? .medium
+        self.parentEventId = input.parentEventId.value
+        self.tags = input.tags.value ?? []
+        self.reminderTriggers = input.reminderTriggers.value
+        self.deletedAt = nil
+        self.version = nil
+        self.updatedAtRaw = ""
+    }
+}
+
+extension UserTaskRemote {
     var isInsertCandidate: Bool { version == nil }
 }
 

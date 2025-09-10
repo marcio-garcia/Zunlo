@@ -81,11 +81,8 @@ final class DefaultViewFactory: ViewFactory {
         
         let engine = IntentEngine.bundled()
         let parser = CommandParser(engine: engine)
-        let taskStore = SPTaskStore(taskRepo: appState.userTaskRepository!, auth: appState.authManager!)
-        let eventStore = SPEventStore(repo: appState.eventRepository!,
-                                      auth: appState.authManager!,
-                                      aiToolRouter: aiToolRouter)
-        let executor = AnyCommandExecutor(tasks: taskStore, events: eventStore)
+        let executor = CommandExecutor(tasks: appState.userTaskRepository!,
+                                       events: appState.eventRepository!)
         let nlpService = NLService(parser: parser, executor: executor, engine: engine)
         
         let aiChatEngine = ChatEngine(

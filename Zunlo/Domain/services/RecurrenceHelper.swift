@@ -500,7 +500,7 @@ class RecurrenceHelper {
                 title: String(localized: "Nothing for today"),
                 notes: nil,
                 startDate: today,
-                endDate: nil,
+                endDate: today,
                 isRecurring: false,
                 location: nil,
                 color: EventColor.yellow,

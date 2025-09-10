@@ -7,13 +7,13 @@
 
 import Foundation
 
-struct Event: Identifiable, Codable, Hashable {
-    var id: UUID
+public struct Event: Identifiable, Codable, Hashable {
+    public var id: UUID
     var userId: UUID
     var title: String
     var notes: String?
     var startDate: Date
-    var endDate: Date?
+    var endDate: Date
     var isRecurring: Bool
     var location: String?
     var createdAt: Date
@@ -61,9 +61,46 @@ extension Event {
         self.updatedAt = local.updatedAt
         self.color = local.color ?? .yellow
         self.reminderTriggers = local.reminderTriggersArray
-        
         self.deletedAt = local.deletedAt
         self.needsSync = local.needsSync
         self.version = local.version
+    }
+}
+
+extension Event {
+    init(input: EventCreateInput, userId: UUID) {
+        self.id = UUID()
+        self.userId = userId
+        self.title = input.title
+        self.notes = input.notes
+        self.startDate = input.startDatetime
+        self.endDate = input.endDatetime ?? startDate
+        self.isRecurring = false
+        self.location = input.location
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.color = input.color ?? .softOrange
+        self.reminderTriggers = input.reminderTriggers
+        self.deletedAt = nil
+        self.needsSync = true
+        self.version = nil
+    }
+    
+    init(input: EventPatchInput, userId: UUID) {
+        self.id = UUID()
+        self.userId = userId
+        self.title = input.title.value ?? "Update event"
+        self.notes = input.notes.value
+        self.startDate = input.startDatetime.value ?? Date()
+        self.endDate = input.endDatetime.value ?? startDate
+        self.isRecurring = false
+        self.location = input.location.value
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.color = input.color.value ?? .softOrange
+        self.reminderTriggers = input.reminderTriggers.value
+        self.deletedAt = nil
+        self.needsSync = true
+        self.version = nil
     }
 }

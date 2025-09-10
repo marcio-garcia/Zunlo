@@ -127,11 +127,7 @@ final class AddEditEventViewModel: ObservableObject {
             title = event.title
             notes = event.notes ?? ""
             startDate = event.startDate
-            if let end = event.endDate {
-                endDate = end
-            } else {
-                updateEndDate()
-            }
+            endDate = event.endDate
             location = event.location ?? ""
             isRecurring = event.isRecurring
             color = event.color.rawValue
@@ -158,11 +154,7 @@ final class AddEditEventViewModel: ObservableObject {
             title = parent.title
             notes = parent.notes ?? ""
             startDate = occurrence.startDate
-            if let end = occurrence.endDate {
-                endDate = end
-            } else {
-                updateEndDate()
-            }
+            endDate = occurrence.endDate
             location = parent.location ?? ""
             color = parent.color.rawValue
             isCancelled = false
@@ -182,11 +174,7 @@ final class AddEditEventViewModel: ObservableObject {
             title = startingFromOccurrence.title
             notes = startingFromOccurrence.notes ?? ""
             startDate = startingFromOccurrence.startDate
-            if let end = startingFromOccurrence.endDate {
-                endDate = end
-            } else {
-                updateEndDate()
-            }
+            endDate = startingFromOccurrence.endDate
             location = startingFromOccurrence.location ?? ""
             color = startingFromOccurrence.color.rawValue
             isCancelled = startingFromOccurrence.isCancelled

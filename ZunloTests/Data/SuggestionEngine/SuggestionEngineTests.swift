@@ -39,8 +39,8 @@ final class SuggestionEngineTests: XCTestCase {
             .init(startDate: DT.d("2025-08-12 09:30"), endDate: DT.d("2025-08-12 10:30")),
             // D: 10:30 – 11:00 (adjacent to C)
             .init(startDate: DT.d("2025-08-12 10:30"), endDate: DT.d("2025-08-12 11:00")),
-            // E: 22:00 – nil (treated as 22:00–24:00 in engine)
-            .init(startDate: DT.d("2025-08-12 22:00"), endDate: nil),
+            // E: 22:00 – 00:00 (treated as 22:00–24:00 in engine)
+            .init(startDate: DT.d("2025-08-12 22:00"), endDate: DT.d("2025-08-13 00:00")),
             // G: 23:30 – Aug 13 00:30 (spills out)
             .init(startDate: DT.d("2025-08-12 23:30"), endDate: DT.d("2025-08-13 00:30")),
         ]

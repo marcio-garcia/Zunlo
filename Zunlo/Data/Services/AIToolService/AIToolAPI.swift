@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol AIToolServiceAPI: Sendable {
+public protocol AIToolServiceAPI {
     // MARK: - Tasks
     @discardableResult
     func createTask(_ payload: CreateTaskPayloadWire) async throws -> TaskMutationResult

@@ -65,7 +65,7 @@ struct EventOccurrenceService {
                         )
                         occurrences.append(occu)
                     } else {
-                        let eventDuration = rawOcc.endDate?.timeIntervalSince(rawOcc.startDate)
+                        let eventDuration = rawOcc.endDate.timeIntervalSince(rawOcc.startDate)
                         let occu = EventOccurrence(
                             id: date == rawOcc.startDate ? rawOcc.id : UUID(),
                             userId: rawOcc.userId,
@@ -73,7 +73,7 @@ struct EventOccurrenceService {
                             title: rawOcc.title,
                             notes: rawOcc.notes,
                             startDate: date,
-                            endDate: eventDuration == nil ? nil : date.addingTimeInterval(eventDuration ?? 0),
+                            endDate: date.addingTimeInterval(eventDuration),
                             isRecurring: rawOcc.isRecurring,
                             location: rawOcc.location,
                             color: rawOcc.color,

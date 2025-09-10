@@ -138,13 +138,9 @@ class EventRowView: UIView {
         } else {
             let start = occurrence.startDate.formattedDate(dateFormat: .time,
                                                            timeZone: Calendar.appDefault.timeZone)
-            if let endDate = occurrence.endDate {
-                let end = endDate.formattedDate(dateFormat: .time,
-                                                timeZone: Calendar.appDefault.timeZone)
-                timeLabel.text = "\(start) - \(end)"
-            } else {
-                timeLabel.text = start
-            }
+            let end = occurrence.endDate.formattedDate(dateFormat: .time,
+                                            timeZone: Calendar.appDefault.timeZone)
+            timeLabel.text = "\(start) - \(end)"
         }
         
         overrideIcon.isHidden = !occurrence.isOverride

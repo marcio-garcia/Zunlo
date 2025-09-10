@@ -14,7 +14,7 @@ public struct EventDraft: Sendable {
     public var userId: UUID
     public var title: String
     public var start: Date
-    public var end: Date?
+    public var end: Date
     public var notes: String?
     public var linkedTaskId: UUID? // optional cross-link
 }

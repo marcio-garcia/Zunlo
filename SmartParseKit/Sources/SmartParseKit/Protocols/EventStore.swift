@@ -29,7 +29,7 @@ public protocol AgendaType {
     var attributedAgenda: AttributedString? { get }
 }
 
-public protocol EventStore {
+public protocol EventStoreProtocol {
     associatedtype E: EventType
     associatedtype A: AgendaType
     @discardableResult
@@ -51,7 +51,7 @@ public protocol EventStore {
     func agenda(in range: Range<Date>) async throws -> A
 }
 
-public extension EventStore {
+public extension EventStoreProtocol {
     @discardableResult
     func createEvent(
         title: String,

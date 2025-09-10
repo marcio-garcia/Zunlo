@@ -12,6 +12,12 @@ import Foundation
 public struct RescheduleHints {
     public var preferredDate: Date?
     public var keywords: [String]
+    
+    public init(preferredDate: Date? = nil, keywords: [String]) {
+        self.preferredDate = preferredDate
+        self.keywords = keywords
+    }
+    
 }
 
 public func selectEventToReschedule<E: EventType>(events: [E], hints: RescheduleHints, calendar: Calendar = .current) -> E? {

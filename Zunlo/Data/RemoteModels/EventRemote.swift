@@ -28,7 +28,7 @@ public struct EventRemote: RemoteEntity, Codable, Identifiable {
     public var title: String
     public var notes: String?
     public var start_datetime: Date
-    public var end_datetime: Date?
+    public var end_datetime: Date
     public var is_recurring: Bool
     public var location: String?
     public var createdAt: Date
@@ -76,6 +76,41 @@ extension EventRemote {
     }
 }
 
+extension EventRemote {
+    init(input: EventCreateInput, userId: UUID) {
+        self.id = UUID()
+        self.user_id = userId
+        self.title = input.title
+        self.notes = input.notes
+        self.start_datetime = input.startDatetime
+        self.end_datetime = input.endDatetime ?? input.startDatetime
+        self.is_recurring = false
+        self.location = input.location
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.color = input.color ?? .softOrange
+        self.reminder_triggers = input.reminderTriggers
+        self.deletedAt = nil
+        self.version = nil
+    }
+    
+    init(input: EventPatchInput, userId: UUID) {
+        self.id = UUID()
+        self.user_id = userId
+        self.title = input.title.value ?? "Update event"
+        self.notes = input.notes.value
+        self.start_datetime = input.startDatetime.value ?? Date()
+        self.end_datetime = input.endDatetime.value ?? start_datetime
+        self.is_recurring = false
+        self.location = input.location.value
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.color = input.color.value ?? .softOrange
+        self.reminder_triggers = input.reminderTriggers.value
+        self.deletedAt = nil
+        self.version = nil
+    }
+}
 extension EventRemote {
     enum CodingKeys: String, CodingKey {
         case id
@@ -136,16 +171,13 @@ extension EventRemote {
         }
         start_datetime = d
         
-        if let endDatetimeRaw = try c.decodeIfPresent(String.self, forKey: .end_datetime) {
-            guard let d = RFC3339MicrosUTC.parse(endDatetimeRaw) else {
-                _DecodePolicy.reportDecodeIssue(entity: "UserTaskRemote", id: id, field: "due_date", raw: endDatetimeRaw)
-                throw DecodingError.dataCorruptedError(forKey: .end_datetime, in: c, debugDescription: "Invalid due_date: \(endDatetimeRaw)")
-            }
-            end_datetime = d
-        } else {
-            end_datetime = nil
+        let endDatetimeRaw = try c.decode(String.self, forKey: .end_datetime)
+        guard let d = RFC3339MicrosUTC.parse(endDatetimeRaw) else {
+            _DecodePolicy.reportDecodeIssue(entity: "UserTaskRemote", id: id, field: "due_date", raw: endDatetimeRaw)
+            throw DecodingError.dataCorruptedError(forKey: .end_datetime, in: c, debugDescription: "Invalid due_date: \(endDatetimeRaw)")
         }
-
+        end_datetime = d
+        
         if let delRaw = try c.decodeIfPresent(String.self, forKey: .deletedAt) {
             guard let d = RFC3339MicrosUTC.parse(delRaw) else {
                 _DecodePolicy.reportDecodeIssue(entity: "UserTaskRemote", id: id, field: "deleted_at", raw: delRaw)
@@ -176,13 +208,9 @@ extension EventRemote {
         case .exclude:
             break
         }
-         
-
-        try c.encode(RFC3339MicrosUTC.string(start_datetime), forKey: .start_datetime)
         
-        if let end_datetime {
-            try c.encode(RFC3339MicrosUTC.string(end_datetime), forKey: .end_datetime)
-        }
+        try c.encode(RFC3339MicrosUTC.string(start_datetime), forKey: .start_datetime)
+        try c.encode(RFC3339MicrosUTC.string(end_datetime), forKey: .end_datetime)
 
         try c.encode(color, forKey: .color)
         try c.encodeIfPresent(location, forKey: .location)

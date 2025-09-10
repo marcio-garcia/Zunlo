@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SmartParseKit
 
 // DTOs decouple UI from domain defaults/validation
 struct AddEventInput {

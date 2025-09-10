@@ -19,24 +19,6 @@ enum ToolRoutingError: LocalizedError {
     }
 }
 
-public struct ChatInsert {
-    public let text: AttributedString
-    public let attachments: [ChatAttachment]
-    public let actions: [ChatMessageAction]
-}
-
-public struct ToolDispatchResult {
-    public let note: String            // short note that the model sees
-    public let attributedText: AttributedString?
-    public let ui: ChatInsert?         // optional chat bubble to insert
-    
-    public init(note: String, attributedText: AttributedString? = nil,  ui: ChatInsert? = nil) {
-        self.note = note
-        self.attributedText = attributedText
-        self.ui = ui
-    }
-}
-
 public protocol ToolRouter {
     func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult
 }

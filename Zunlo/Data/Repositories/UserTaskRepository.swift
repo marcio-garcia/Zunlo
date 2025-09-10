@@ -8,7 +8,10 @@
 import Foundation
 
 public protocol TaskStore {
+    func makeTask(title: String, dueDate: Date?) -> UserTask?
+    func fetchAll() async throws -> [UserTask]
     func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask]
+    func upsert(_ task: UserTask) async throws
 }
 
 final public class UserTaskRepository: TaskStore {
@@ -29,7 +32,7 @@ final public class UserTaskRepository: TaskStore {
         self.reminderScheduler = ReminderScheduler()
     }
     
-    func upsert(_ task: UserTask) async throws {
+    public func upsert(_ task: UserTask) async throws {
         guard await auth.isAuthorized(), let _ = auth.userId else { return }
         try await localStore.upsert(task)
         reminderScheduler.cancelReminders(for: task)
@@ -52,7 +55,7 @@ final public class UserTaskRepository: TaskStore {
     }
     
     @discardableResult
-    func fetchAll() async throws -> [UserTask] {
+    public func fetchAll() async throws -> [UserTask] {
         let tasks = try await localStore.fetchAll()
         return tasks
     }
@@ -69,4 +72,23 @@ final public class UserTaskRepository: TaskStore {
         let tags = try await localStore.fetchAllUniqueTags()
         return tags
     }
+}
+
+extension UserTaskRepository {
+    public func makeTask(title: String, dueDate: Date?) -> UserTask? {
+        guard let userId = auth.userId else { return nil }
+        return UserTask(
+            id: UUID(),
+            userId: userId,
+            title: title,
+            isCompleted: false,
+            createdAt: Date(),
+            updatedAt: Date(),
+            dueDate: dueDate,
+            priority: .medium,
+            tags: [],
+            reminderTriggers: [],
+            version: 1)
+    }
+
 }

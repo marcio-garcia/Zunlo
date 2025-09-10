@@ -175,9 +175,7 @@ extension UserTask {
         self.needsSync = local.needsSync
         self.version = local.version
     }
-}
-
-extension UserTask {
+    
     init(remote: UserTaskRemote) {
         self.id = remote.id
         self.userId = remote.userId
@@ -194,5 +192,43 @@ extension UserTask {
         self.deletedAt = remote.deletedAt
         self.needsSync = false
         self.version = remote.version
+    }
+}
+
+extension UserTask {
+    init(input: TaskCreateInput, userId: UUID) {
+        self.id = UUID()
+        self.userId = userId
+        self.title = input.title
+        self.notes = input.notes
+        self.isCompleted = input.isCompleted
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.dueDate = input.dueDate
+        self.priority = input.priority
+        self.parentEventId = input.parentEventId
+        self.tags = Tag.toTag(tags: input.tags)
+        self.reminderTriggers = input.reminderTriggers
+        self.deletedAt = nil
+        self.needsSync = true
+        self.version = nil
+    }
+    
+    init(input: TaskPatchInput, userId: UUID) {
+        self.id = UUID()
+        self.userId = userId
+        self.title = input.title.value ?? ""
+        self.notes = input.notes.value
+        self.isCompleted = input.isCompleted.value ?? false
+        self.createdAt = Date()
+        self.updatedAt = Date()
+        self.dueDate = input.dueDate.value
+        self.priority = input.priority.value ?? .medium
+        self.parentEventId = input.parentEventId.value
+        self.tags = Tag.toTag(tags: input.tags.value ?? [])
+        self.reminderTriggers = input.reminderTriggers.value
+        self.deletedAt = nil
+        self.needsSync = true
+        self.version = nil
     }
 }
