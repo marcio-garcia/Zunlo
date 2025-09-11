@@ -14,15 +14,15 @@ public struct Event: Identifiable, Codable, Hashable {
     var notes: String?
     var startDate: Date
     var endDate: Date
-    var isRecurring: Bool
+    var isRecurring: Bool = false
     var location: String?
-    var createdAt: Date
-    var updatedAt: Date
-    var color: EventColor
-    var reminderTriggers: [ReminderTrigger]?
-    var deletedAt: Date?
-    var needsSync: Bool
-    var version: Int?
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
+    var color: EventColor = .yellow
+    var reminderTriggers: [ReminderTrigger]? = []
+    var deletedAt: Date? = nil
+    var needsSync: Bool = true
+    var version: Int? = nil
 }
 
 extension Event: SchedulableReminderItem {

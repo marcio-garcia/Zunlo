@@ -29,6 +29,6 @@ struct AddEventInput {
     var isCancelled: Bool
 }
 
-extension AddEventInput: EventType {}
+//extension AddEventInput: EventType {}
 
 typealias EditEventInput = AddEventInput

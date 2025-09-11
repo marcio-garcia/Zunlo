@@ -70,8 +70,8 @@ public actor ChatEngine {
             for result in results {
                 var asyncStream: AsyncStream<ChatEngineEvent>
                 
-                switch result.outcome {
-                case .unknown:
+                switch result.action {
+                case .none:
                     // No local handling → use regular AI streaming path
                     asyncStream = startStream(history: history, userMessage: userMessage)
                     
@@ -94,7 +94,7 @@ public actor ChatEngine {
         }
     }
     
-    public func processNlpResult(result: CommandResult, history: [ChatMessage], userMessage: ChatMessage) -> AsyncStream<ChatEngineEvent> {
+    public func processNlpResult(result: ToolResult, history: [ChatMessage], userMessage: ChatMessage) -> AsyncStream<ChatEngineEvent> {
         cancelCurrentStreamIfAny()
         
         return AsyncStream<ChatEngineEvent> { continuation in
@@ -111,7 +111,7 @@ public actor ChatEngine {
                         let assistant = await self.createAssistantMessage(
                             conversationId: self.conversationId,
                             rawText: result.message,
-                            richText: result.attributedString,
+                            richText: result.richText,
                             status: .sent
                         )
 

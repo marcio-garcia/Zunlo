@@ -76,11 +76,12 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     /// If you also count conflicts, don't treat adjacency as a conflict:
     /// sort tie-break: ends (-1) before starts (+1)
     public func conflictingItemsCount(on date: Date) async -> Int {
-        let raw = await dayRawBusyIntervals(on: date, policy: policy)
+        let raw = try? await dayRawBusyIntervals(on: date, policy: policy)
+        let busyIntervals = raw ?? []
         // Sweep-line, ends before starts at same instant => adjacency is not a conflict
         var pts: [(Date, Int)] = []
-        pts.reserveCapacity(raw.count * 2)
-        for i in raw { pts.append((i.start, +1)); pts.append((i.end, -1)) }
+        pts.reserveCapacity(busyIntervals.count * 2)
+        for i in busyIntervals { pts.append((i.start, +1)); pts.append((i.end, -1)) }
         pts.sort { $0.0 == $1.0 ? $0.1 < $1.1 : $0.0 < $1.0 }
 
         var active = 0, overlaps = 0
@@ -138,8 +139,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     }
 
     // Build RAW busy intervals *clamped to the policy's availability windows for that day*.
-    private func dayRawBusyIntervals(on date: Date, policy: SuggestionPolicy) async -> [BusyInterval] {
-        guard await auth.isAuthorized(), let userId = auth.userId else { return [] }
+    private func dayRawBusyIntervals(on date: Date, policy: SuggestionPolicy) async throws -> [BusyInterval] {
         let ranges = utcAvailabilityRanges(for: date)
         guard !ranges.isEmpty else { return [] }
 
@@ -147,7 +147,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
         calendar.timeZone = policy.availabilityTimeZone
         
         // TODO: replace with a ranged fetch. For now, fetchAll + clamp.
-        let events = (try? await eventRepo.fetchOccurrences(for: userId)) ?? []
+        let events = (try? await eventRepo.fetchOccurrences()) ?? []
         
         let today = date.startOfDay(calendar: calendar)
         let tomorrow = today.startOfNextDay(calendar: calendar)
@@ -162,7 +162,7 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
 
         for e in occurrences {
             let s = e.startDate.addingTimeInterval(-policy.padBefore)
-            let eEnd = (e.endDate ?? utcDayEnd).addingTimeInterval(policy.padAfter)
+            let eEnd = e.endDate.addingTimeInterval(policy.padAfter)
             let bi = BusyInterval(start: s, end: eEnd)
             for r in ranges {
                 if let clipped = clamp(bi, to: r) { raw.append(clipped) }
@@ -173,8 +173,8 @@ final class DefaultEventSuggestionEngine: EventSuggestionEngine {
     
     /// Merged for the day with adjacency/gap absorption
     func dayMergedBusyIntervals(on date: Date) async -> [BusyInterval] {
-        mergeBusy(await dayRawBusyIntervals(on: date, policy: policy),
-                  absorbGapsBelow: policy.absorbGapsBelow)
+        let busyIntervals = try? await dayRawBusyIntervals(on: date, policy: policy)
+        return mergeBusy(busyIntervals ?? [], absorbGapsBelow: policy.absorbGapsBelow)
     }
     
     /// Merge overlaps and absorb small gaps: it.start <= cur.end + absorb

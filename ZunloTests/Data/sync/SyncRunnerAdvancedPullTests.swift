@@ -41,10 +41,10 @@ final class SyncRunnerAdvancedPullTests: XCTestCase {
         )
 
         // Act
-        let report = await SyncRunner(spec: spec).syncNow()
+        let report = try? await SyncRunner(spec: spec).syncNow()
 
         // Assert
-        XCTAssertEqual(report.pulled, 5)
+        XCTAssertEqual(report?.pulled, 5)
         XCTAssertEqual(db.applied.count, 5)
         XCTAssertEqual(db.cursorTsRaw, e.updatedAtRaw) // advanced to the last row’s ts
         // We avoid asserting cursorId tie-break here since your base test covers that detail.

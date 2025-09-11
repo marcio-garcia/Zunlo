@@ -121,17 +121,17 @@ public struct UserTask: Identifiable, Codable, Hashable {
         userId: UUID,
         title: String,
         notes: String? = nil,
-        isCompleted: Bool,
-        createdAt: Date,
-        updatedAt: Date,
+        isCompleted: Bool = false,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
         dueDate: Date? = nil,
-        priority: UserTaskPriority,
+        priority: UserTaskPriority = .medium,
         parentEventId: UUID? = nil,
-        tags: [Tag],
-        reminderTriggers: [ReminderTrigger]?,
+        tags: [Tag] = [],
+        reminderTriggers: [ReminderTrigger]? = [],
         deletedAt: Date? = nil,
         needsSync: Bool = false,
-        version: Int?
+        version: Int? = nil
     ) {
         self.id = id
         self.userId = userId

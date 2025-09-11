@@ -20,10 +20,9 @@ struct EventOverride: Identifiable, Codable, Hashable {
     let createdAt: Date
     let updatedAt: Date
     let color: EventColor
-    
     var deletedAt: Date? = nil
     var needsSync: Bool = false
-    var version: Int?          // <-- NEW (nil means “unknown / never synced”)
+    var version: Int?
 }
 
 extension EventOverride {

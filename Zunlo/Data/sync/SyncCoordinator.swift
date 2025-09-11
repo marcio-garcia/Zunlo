@@ -111,10 +111,10 @@ final class SyncCoordinator {
         let overrideRunner = overrides.makeRunner()
         let taskRunner  = userTasks.makeRunner()
         
-        let eventReport = await eventRunner.syncNow()
-        let ruleReport  = await ruleRunner.syncNow()
-        let overrideReport = await overrideRunner.syncNow()
-        let taskReport = await taskRunner.syncNow()
+        let eventReport = try await eventRunner.syncNow()
+        let ruleReport  = try await ruleRunner.syncNow()
+        let overrideReport = try await overrideRunner.syncNow()
+        let taskReport = try await taskRunner.syncNow()
         
         return SyncSummary(
             eventReport: eventReport,

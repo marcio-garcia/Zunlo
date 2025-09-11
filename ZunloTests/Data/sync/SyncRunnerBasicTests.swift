@@ -42,10 +42,10 @@ final class SyncRunnerBasicTests: XCTestCase {
         let runner = SyncRunner(spec: spec)
 
         // Act
-        let report = await runner.syncNow()
+        let report = try? await runner.syncNow()
 
         // Assert
-        XCTAssertEqual(report.pulled, 3)
+        XCTAssertEqual(report?.pulled, 3)
         XCTAssertEqual(db.applied.count, 3)
         XCTAssertEqual(db.cursorTsRaw, c.updatedAtRaw)
         XCTAssertEqual(db.cursorId, a.id)
@@ -78,8 +78,8 @@ final class SyncRunnerBasicTests: XCTestCase {
             makeUpdatePayload: { $0 }
         )
 
-        let report = await SyncRunner(spec: spec).syncNow()
-        XCTAssertEqual(report.pulled, 2)
+        let report = try? await SyncRunner(spec: spec).syncNow()
+        XCTAssertEqual(report?.pulled, 2)
         XCTAssertNotNil(db.applied[tomb.id]?.deletedAt)
     }
 
@@ -109,10 +109,10 @@ final class SyncRunnerBasicTests: XCTestCase {
             makeUpdatePayload: { $0 }
         )
 
-        let report = await SyncRunner(spec: spec).syncNow()
-        XCTAssertEqual(report.inserted, 0)
-        XCTAssertEqual(report.updated, 0)
-        XCTAssertEqual(report.conflicts, 1)
+        let report = try? await SyncRunner(spec: spec).syncNow()
+        XCTAssertEqual(report?.inserted, 0)
+        XCTAssertEqual(report?.updated, 0)
+        XCTAssertEqual(report?.conflicts, 1)
         XCTAssertEqual(db.cleaned.contains(existing.id), false, "Should not mark clean on conflict")
         XCTAssertEqual(db.conflicts.count, 1)
     }
@@ -144,8 +144,8 @@ final class SyncRunnerBasicTests: XCTestCase {
             makeUpdatePayload: { $0 }
         )
 
-        let report = await SyncRunner(spec: spec).syncNow()
-        XCTAssertEqual(report.conflicts, 1)
+        let report = try? await SyncRunner(spec: spec).syncNow()
+        XCTAssertEqual(report?.conflicts, 1)
         XCTAssertTrue(db.conflicts.contains { $0.0.id == duplicate.id })
         XCTAssertFalse(db.cleaned.contains(duplicate.id))
     }
@@ -168,7 +168,7 @@ final class SyncRunnerBasicTests: XCTestCase {
             makeInsertPayload: { $0 },
             makeUpdatePayload: { $0 }
         )
-        let report = await SyncRunner(spec: spec).syncNow()
-        XCTAssertEqual(report.pulled, 0)
+        let report = try? await SyncRunner(spec: spec).syncNow()
+        XCTAssertEqual(report?.pulled, 0)
     }
 }

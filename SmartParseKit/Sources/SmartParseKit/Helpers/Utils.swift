@@ -49,15 +49,15 @@ func containsAny(in s: String, of words: [String]) -> Bool {
 }
 
 // De-dup: prefer earlier textual range; unify exact same (date, duration) & overlapping ranges.
-func dedup(_ items: [HumanDateDetector.Match], text: String) -> [HumanDateDetector.Match] {
-    var out: [HumanDateDetector.Match] = []
+func dedup(_ items: [Match], text: String) -> [Match] {
+    var out: [Match] = []
     for m in items {
         appendUnique(&out, m, text: text)
     }
     return out
 }
 
-func appendUnique(_ arr: inout [HumanDateDetector.Match], _ m: HumanDateDetector.Match, text: String) {
+func appendUnique(_ arr: inout [Match], _ m: Match, text: String) {
     let k1 = m.date.timeIntervalSinceReferenceDate
     let k2 = m.duration ?? -1
     let nsR = NSRange(m.range, in: text)

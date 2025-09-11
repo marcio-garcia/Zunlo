@@ -45,14 +45,11 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     
     func fetchData() async {
         do {
-            guard let auth = appState.authManager, await auth.isAuthorized(), let userId = appState.authManager?.userId else {
-                return
-            }
             let taskFetcher = UserTaskFetcher(repo: taskRepo)
             let tasks = try await taskFetcher.fetchTasks()
             handleTasks(tasks)
             
-            let occurrences = try await eventRepo.fetchOccurrences(for: userId)
+            let occurrences = try await eventRepo.fetchOccurrences()
             let today = Date().startOfDay()
             let tomorrow = today.startOfNextDay()
             handleOccurrences(occurrences, in: today..<tomorrow)

@@ -27,11 +27,15 @@ protocol UserStorage {
     func clear() throws
 }
 
+enum AuthProvidingError: Error {
+    case unauthorized
+}
+
 public protocol AuthProviding {
     var userId: UUID? { get }
     var accessToken: String? { get }
     func refreshSession(refreshToken: String?) async throws -> AuthToken?
-    func isAuthorized() async -> Bool
+    func isAuthorized() async throws -> Bool
 }
 
 final class AuthManager: ObservableObject, AuthProviding {
@@ -112,12 +116,12 @@ final class AuthManager: ObservableObject, AuthProviding {
         }
     }
     
-    public func isAuthorized() async -> Bool {
+    public func isAuthorized() async throws -> Bool {
         if let auth = authToken, authService.validateToken(auth) {
             return true
         }
         await unauthenticated()
-        return false
+        throw AuthProvidingError.unauthorized
     }
     
     func signIn(email: String, password: String) async throws {

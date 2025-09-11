@@ -136,7 +136,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 22, // <- increment this every time you change schema!
+        schemaVersion: 23, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,
@@ -210,6 +210,15 @@ func setupRealm() {
             if oldSchemaVersion < 22 {
                 migration.enumerateObjects(ofType: ChatMessageLocal.className()) { oldObject, newObject in
                     newObject?["textData"] = nil
+                }
+            }
+            if oldSchemaVersion < 23 {
+                migration.enumerateObjects(ofType: EventLocal.className()) { oldObject, newObject in
+                    if let obj = newObject, obj["endDate"] == nil {
+                        if let startDate = newObject?["startDate"] as? Date {
+                            newObject?["endDate"] = startDate.addingTimeInterval(3600)
+                        }
+                    }
                 }
             }
         }

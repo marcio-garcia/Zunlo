@@ -6,18 +6,17 @@
 //
 
 import Foundation
-import SmartParseKit
 @testable import Zunlo
 
 public final class MockNLService: NLProcessing {
     public init() {}
 
-    public func process(text: String) async throws -> [SmartParseKit.CommandResult] {
-        return [SmartParseKit.CommandResult(
-            outcome: .agenda,
+    public func process(text: String) async throws -> [ToolResult] {
+        return [ToolResult(
+            intent: .showAgenda,
             message: "This is your agenda",
-            attributedString: AttributedString("This is your agenda")
-        )]
+            richText: AttributedString("This is your agenda"))
+        ]
     }
 
     public func dispatch(_ env: AIToolEnvelope) async throws -> ToolDispatchResult {

@@ -41,6 +41,23 @@ public protocol DateLanguagePack {
     
     // NEW: boilerplate command/intents to remove from the beginning of titles
     func commandPrefixRegex() -> NSRegularExpression
+    
+}
+
+public extension DateLanguagePack {
+    func weekendRegex()      -> NSRegularExpression? { nil } // “(this|next) weekend / fim de semana / fin de semana”
+    func relativeDayRegex()  -> NSRegularExpression? { nil } // today/tomorrow/tonight, hoje/amanhã/esta noite, hoy/mañana/esta noche
+    func partOfDayRegex()    -> NSRegularExpression? { nil } // morning/afternoon/evening/noon/midnight
+    func ordinalDayRegex()   -> NSRegularExpression? { nil } // 11th / 8º / “día 11”
+    func timeOnlyRegex()     -> NSRegularExpression? { nil } // 20:00 / 20h30 / 10hs / noon / midnight
+    func betweenTimeRegex()  -> NSRegularExpression? { nil } // between 9 and 10 / entre 9 e 10 / entre 9 y 10
+    func inFromNowRegex()    -> NSRegularExpression? { nil } // in/within <n> <unit>, “daqui a <n> …”, “dentro de <n> …”
+    func byOffsetRegex()     -> NSRegularExpression? { nil } // by <n> <unit>, “adiar em <n> …”, “aplazar en <n> …”
+
+    // Count “next” repetitions (“next next week” → 2). Default to 1 when phraseIndicatesNext is true.
+    func nextRepetitionCount(in s: String) -> Int {
+        phraseIndicatesNext(s) ? 1 : 0
+    }
 }
 
 // MARK: - Base helper (weekday maps + regex builder)
@@ -90,5 +107,15 @@ public enum BaseLanguagePack {
         for (i, key) in en3.enumerated() { map[key] = i+1 }
 
         return map
+    }
+    
+    // Accepts 09:30, 9, 9am, 21h, 21h30, 21 hs, 21 hrs
+    public static var timeToken: String {
+        #"(?:\d{1,2}(?:(?::\d{2})|(?:\s*[hH]\s*\d{2}))?)\s*(?:am|pm|hs?|hrs?)?"#
+    }
+    
+    // EN-only ampms; other packs still reuse timeToken above
+    public static var timeTokenEN: String {
+        #"(?:\d{1,2}(?::\d{2})?)\s*(?:am|pm)?"#
     }
 }

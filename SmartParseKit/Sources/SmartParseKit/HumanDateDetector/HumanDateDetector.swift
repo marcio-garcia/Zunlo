@@ -16,21 +16,31 @@ struct PackBundle {
     let fromTo: NSRegularExpression
 }
 
+public enum MatchSource: String, Equatable {
+    case appleDetector      // NSDataDetector
+    case nextWeekdayOverride // configurable "next friday" to be treated like next friday or the friday of the next week
+    case inlineWeekdayTime  // “fri 9-10”, “sex 11-1”, “wed 9”
+    case fromToTime         // “de 10 a 12”, “from 9 to 10”
+    case weekPhrase         // “esta semana”, “next week”, bare “week”
+    case other
+}
+
+public struct Match {
+    public let date: Date
+    public let timeZone: TimeZone?
+    public let duration: TimeInterval?
+    public let range: Range<String.Index>
+    public let original: NSTextCheckingResult?   // nil for synthetic week matches
+    public let overridden: Bool                  // true if we overrode or synthesized
+    public let ambiguous: Bool
+    public let ambiguityReason: String?
+    public let source: MatchSource
+}
+
 /// A thin wrapper around NSDataDetector that:
 /// 1) fixes "this/next [weekday]" semantics (pt-BR tuned),
 /// 2) adds synthetic matches for "this/next week" / "semana que vem" / "esta semana" / "plan my week" etc.
 public final class HumanDateDetector {
-    public struct Match {
-        public let date: Date
-        public let timeZone: TimeZone?
-        public let duration: TimeInterval?
-        public let range: Range<String.Index>
-        public let original: NSTextCheckingResult?   // nil for synthetic week matches
-        public let overridden: Bool                  // true if we overrode or synthesized
-        public let ambiguous: Bool
-        public let ambiguityReason: String?
-    }
-
     private let timeZone: TimeZone
     private let policy: RelativeWeekdayPolicy
     private(set) var bundles: [PackBundle]
@@ -89,7 +99,8 @@ public final class HumanDateDetector {
                           original: raw,
                           overridden: true,
                           ambiguous: false,
-                          ambiguityReason: nil),
+                          ambiguityReason: nil,
+                          source: .nextWeekdayOverride),
                     text: text)
                             
             } else {
@@ -102,7 +113,8 @@ public final class HumanDateDetector {
                           original: raw,
                           overridden: false,
                           ambiguous: false,
-                          ambiguityReason: nil),
+                          ambiguityReason: nil,
+                          source: .appleDetector),
                     text: text)
             }
         }
@@ -133,7 +145,8 @@ public final class HumanDateDetector {
                                                original: results[index].original,
                                                overridden: true,
                                                ambiguous: false,
-                                               ambiguityReason: nil)
+                                               ambiguityReason: nil,
+                                               source: results[index].source)
                     }
                 }
             }
@@ -216,7 +229,8 @@ public final class HumanDateDetector {
                       original: nil,
                       overridden: false,
                       ambiguous: false,
-                      ambiguityReason: nil),
+                      ambiguityReason: nil,
+                      source: .weekPhrase),
                 text: text)
         }
 
@@ -338,7 +352,8 @@ public final class HumanDateDetector {
                       original: nil,
                       overridden: false,
                       ambiguous: false,
-                      ambiguityReason: nil),
+                      ambiguityReason: nil,
+                      source: .fromToTime),
                 text: text)
         }
         return out
@@ -422,7 +437,7 @@ public final class HumanDateDetector {
             // Ambiguity: bare hour(s) without markers (no ":", AM/PM, or h/hs/hrs)
             let startIsBare = isBareHourToken(startTok ?? "")
             let endIsBare   = isBareHourToken(endTok ?? "")
-            let ambiguous   = (endTok == nil && startIsBare) || (endTok != nil && startIsBare && !startHM.hadMeridiem)
+            let ambiguous   = (endTok == nil && startIsBare) || (endTok != nil && startIsBare && !startHM.hadMeridiem && !substring(text, m.range(at: 0)).contains("-"))
             let reason      = ambiguous ? "Bare hour without explicit time marker; could be a day number." : nil
             
             // Compose start
@@ -463,7 +478,8 @@ public final class HumanDateDetector {
                     original: nil,
                     overridden: false,
                     ambiguous: ambiguous || (endIsBare && !e.hadMeridiem),
-                    ambiguityReason: reason
+                    ambiguityReason: reason,
+                    source: .inlineWeekdayTime
                 ))
             } else {
                 // --- Single time case ---
@@ -475,7 +491,8 @@ public final class HumanDateDetector {
                     original: nil,
                     overridden: false,
                     ambiguous: ambiguous,
-                    ambiguityReason: reason
+                    ambiguityReason: reason,
+                    source: .inlineWeekdayTime
                 ))
             }
         }

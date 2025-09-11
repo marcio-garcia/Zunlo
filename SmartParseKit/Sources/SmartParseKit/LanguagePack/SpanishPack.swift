@@ -29,7 +29,70 @@ public struct SpanishPack: DateLanguagePack {
         self.weekdayMap = BaseLanguagePack.makeWeekdayMap(calendar: cal)
     }
 
-    // MARK: - Regex builders
+    public func weekMainRegex() -> NSRegularExpression {
+        let thisAlt = thisTokens.map(NSRegularExpression.escapedPattern).joined(separator: "|")
+        let nextAlt = nextTokens.map(NSRegularExpression.escapedPattern).joined(separator: "|")
+        return BaseLanguagePack.regex(#"""
+        (?ix)\b
+        (?:
+            (?:\#(thisAlt))\s+semana |
+            (?:(?:\#(nextAlt)\s+)+semana) |
+            semana\s+que\s+viene
+        )
+        \b
+        """#)
+    }
+
+    public func inlineTimeRangeRegex() -> NSRegularExpression {
+        let weekdayAlt = BaseLanguagePack.weekdayAlternation(weekdayMap)
+        let t = BaseLanguagePack.timeToken
+        let preBetween = #"(?:\s+(?:a\s+las|a|en))?"#
+        let sep = #"(?:\s*(?:[-–—~]|a)\s*)"#
+        return BaseLanguagePack.regex(#"""
+        (?ix)\b
+        (\#(weekdayAlt))\#(preBetween)\s+
+        (\#(t))
+        (?:\#(sep)(\#(t)))?
+        \b
+        """#)
+    }
+
+    public func fromToTimeRegex() -> NSRegularExpression {
+        let weekdayAlt = BaseLanguagePack.weekdayAlternation(weekdayMap)
+        let t = BaseLanguagePack.timeToken
+        return BaseLanguagePack.regex(#"""
+        (?ix)\b
+        (?:(\#(weekdayAlt))\s+)?
+        (?:(?:de|desde|from))\s+ (\#(t)) \s+ (?:(?:a|hasta|to)) \s+ (\#(t)) \b
+        """#)
+    }
+
+    // NEW
+    public func weekendRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(?:(?:\#(thisTokens.joined(separator:"|"))|\#(nextTokens.joined(separator:"|")))\s+)?fin\s+de\s+semana\b"#)
+    }
+    public func relativeDayRegex() -> NSRegularExpression {
+        // Standalone "mañana" = tomorrow; "por/en/de la mañana" = part of day (handled below)
+        BaseLanguagePack.regex(#"(?ix)\b(?:hoy|mañana|esta\s+noche)\b"#)
+    }
+    public func partOfDayRegex() -> NSRegularExpression {
+        // Require prepositions to avoid clashing with "mañana = tomorrow"
+        BaseLanguagePack.regex(#"(?ix)\b(?:(?:por|en|de)\s+la\s+)?(?:mañana|tarde|noche)|mediod[ií]a|medianoche\b"#)
+    }
+    public func ordinalDayRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(?:d[ií]a\s*)?([12]?\d|3[01])(?:º|o)?\b"#)
+    }
+    public func timeOnlyRegex() -> NSRegularExpression {
+        let t = BaseLanguagePack.timeToken
+        return BaseLanguagePack.regex(#"(?ix)\b(?:mediod[ií]a|medianoche|\#(t))\b"#)
+    }
+    public func betweenTimeRegex() -> NSRegularExpression {
+        let t = BaseLanguagePack.timeToken
+        return BaseLanguagePack.regex(#"""
+        (?ix)\b (?:entre)\s+ (\#(t)) \s+ (?:y|-|a)\s+ (\#(t)) \b
+        """#)
+    }
+
 
     public func weekdayPhraseRegex() -> NSRegularExpression {
         // Optional modifier + optional article + weekday + optional “que viene”
@@ -52,22 +115,6 @@ public struct SpanishPack: DateLanguagePack {
         return BaseLanguagePack.regex(pat)
     }
 
-    public func weekMainRegex() -> NSRegularExpression {
-        // “esta semana”, “(la) próxima semana”, “semana que viene”
-        let thisAlt = thisTokens.map(NSRegularExpression.escapedPattern).joined(separator: "|")
-        let nextAlt = nextTokens.map(NSRegularExpression.escapedPattern).joined(separator: "|")
-        let pat = #"""
-        (?ix)\b
-        (?:
-            (?:\#(thisAlt))\s+semana |
-            (?:la\s+)?(?:\#(nextAlt))\s+semana |
-            semana\s+que\s+viene
-        )
-        \b
-        """#
-        return BaseLanguagePack.regex(pat)
-    }
-
     public func weekBareRegex() -> NSRegularExpression {
         // “planificar mi semana”, “mi semana”, “agenda de la semana”, “planear mi semana”, “semana”
         let pat = #"""
@@ -78,45 +125,6 @@ public struct SpanishPack: DateLanguagePack {
             agenda\s+de\s+la\s+semana |
             \bsemana\b
         )
-        """#
-        return BaseLanguagePack.regex(pat)
-    }
-
-    public func inlineTimeRangeRegex() -> NSRegularExpression {
-        // “mié a las 9-10”, “miercoles 14-16”, allow separators -, ~, “a”
-        // Groups: 1=weekday, 2=start time, 3=end time (optional)
-        let weekdayAlt = BaseLanguagePack.weekdayAlternation(weekdayMap)
-        let timeToken  = #"(?:\d{1,2}(?::\d{2})?\s*(?:am|pm|h)?)"#
-        let preBetween = #"(?:\s+(?:a\s+las|a|en|a\slas))?"#
-        let sep        = #"(?:\s*(?:[-–—~]|a)\s*)"#
-        let pat = #"""
-        (?ix)\b
-        (\#(weekdayAlt))\#(preBetween)\s+
-        (\#(timeToken))
-        (?:\#(sep)(\#(timeToken)))?
-        \b
-        """#
-        return BaseLanguagePack.regex(pat)
-    }
-
-    public func fromToTimeRegex() -> NSRegularExpression {
-        // “(miércoles )de 9 a 10”, “(mié )desde 9 hasta 10”, also accept “from 9 to 10”
-        // Groups: 1=weekday (optional), 2=start, 3=end
-        let weekdayAlt = BaseLanguagePack.weekdayAlternation(weekdayMap)
-        let timeToken  = #"(?:\d{1,2}(?::\d{2})?\s*(?:am|pm|h)?)"#
-        let pat = #"""
-        (?ix)\b
-        (?:(\#(weekdayAlt))\s+)?
-        (?:
-            de|desde|from
-        )\s+
-        (\#(timeToken))
-        \s+
-        (?:
-            a|hasta|to
-        )\s+
-        (\#(timeToken))
-        \b
         """#
         return BaseLanguagePack.regex(pat)
     }

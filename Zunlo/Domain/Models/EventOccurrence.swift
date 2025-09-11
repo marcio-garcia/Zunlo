@@ -102,29 +102,29 @@ extension EventOccurrence {
         self.version = occ.version
     }
 }
-
-extension EventOccurrence: EventType {
-    public var recurrenceType: String? {
-        recurrence_rules.first?.freq.rawValue
-    }
-    
-    public var recurrenceInterval: Int? {
-        recurrence_rules.first?.interval
-    }
-    
-    public var byWeekday: [Int]? {
-        recurrence_rules.first?.byWeekday
-    }
-    
-    public var byMonthday: [Int]? {
-        recurrence_rules.first?.byMonthday
-    }
-    
-    public var until: Date? {
-        recurrence_rules.first?.until
-    }
-    
-    public var count: Int? {
-        recurrence_rules.first?.count
-    }
-}
+//
+//extension EventOccurrence: EventType {
+//    public var recurrenceType: String? {
+//        recurrence_rules.first?.freq.rawValue
+//    }
+//    
+//    public var recurrenceInterval: Int? {
+//        recurrence_rules.first?.interval
+//    }
+//    
+//    public var byWeekday: [Int]? {
+//        recurrence_rules.first?.byWeekday
+//    }
+//    
+//    public var byMonthday: [Int]? {
+//        recurrence_rules.first?.byMonthday
+//    }
+//    
+//    public var until: Date? {
+//        recurrence_rules.first?.until
+//    }
+//    
+//    public var count: Int? {
+//        recurrence_rules.first?.count
+//    }
+//}

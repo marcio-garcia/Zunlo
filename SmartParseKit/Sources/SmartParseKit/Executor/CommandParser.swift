@@ -148,9 +148,14 @@ public final class CommandParser {
 
         // 8) newTime (destination time), for updates
         var newTime: Date? = nil
-        if intent == .updateEvent || intent == .rescheduleEvent || intent == .rescheduleTask {
-            // Usually the last mentioned time is the target
-            newTime = last?.resolvedDate ?? when
+        if intent == .rescheduleEvent || intent == .rescheduleTask {
+            // apple detector ususally returns the original date and duration for input like "from today to tomorrow"
+            if resolutions.count == 1, let dur = resolutions.first?.duration, dur > 0 {
+                newTime = first?.resolvedDate.addingTimeInterval(dur)
+            } else {
+                // Usually the last mentioned time is the target
+                newTime = last?.resolvedDate ?? when
+            }
         }
 
         // 9) Title

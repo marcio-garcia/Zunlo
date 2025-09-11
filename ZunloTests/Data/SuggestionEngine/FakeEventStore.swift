@@ -15,7 +15,7 @@ final class FakeEventFetcher: EventStore {
         self.events = events
     }
     
-    func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrence] {
+    func fetchOccurrences() async throws -> [EventOccurrence] {
         return events
     }
     
@@ -39,4 +39,23 @@ final class FakeEventFetcher: EventStore {
         
     }
 
+    func add(_ input: Zunlo.AddEventInput) async throws {
+        events.append(EventOccurrence(startDate: input.startDate, endDate: input.endDate))
+    }
+    
+    func editAll(event: Zunlo.EventOccurrence, with input: Zunlo.EditEventInput, oldRule: Zunlo.RecurrenceRule?) async throws {
+        
+    }
+    
+    func editSingle(parent: Zunlo.EventOccurrence, occurrence: Zunlo.EventOccurrence, with input: Zunlo.EditEventInput) async throws {
+        
+    }
+    
+    func editOverride(_ override: Zunlo.EventOverride, with input: Zunlo.EditEventInput) async throws {
+        
+    }
+    
+    func editFuture(parent: Zunlo.EventOccurrence, startingFrom occurrence: Zunlo.EventOccurrence, with input: Zunlo.EditEventInput) async throws {
+        
+    }
 }

@@ -7,13 +7,18 @@
 
 import Foundation
 
-public protocol EventStore {
+protocol EventStore {
     func makeEvent(title: String, start: Date, end: Date) -> Event?
     func fetchEvent(by id: UUID) async throws -> Event?
-    func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrence]
+    func fetchOccurrences() async throws -> [EventOccurrence]
     func fetchOccurrences(id: UUID) async throws -> EventOccurrence?
     func fetchOccurrences(in range: Range<Date>) async throws -> [EventOccurrence]
     func upsert(_ event: Event) async throws
+    func add(_ input: AddEventInput) async throws
+    func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws
+    func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws
+    func editOverride(_ override: EventOverride, with input: EditEventInput) async throws
+    func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws
 }
 
 final public class EventRepository: EventStore {
@@ -38,7 +43,8 @@ final public class EventRepository: EventStore {
         self.reminderScheduler = ReminderScheduler()
     }
 
-    public func fetchOccurrences(for userId: UUID) async throws -> [EventOccurrence] {
+    public func fetchOccurrences() async throws -> [EventOccurrence] {
+        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
         do {
             let occurrences = try await eventLocalStore.fetchOccurrences(for: userId)
             let occ = occurrences.map { EventOccurrence(occ: $0) }
@@ -54,8 +60,7 @@ final public class EventRepository: EventStore {
     }
     
     public func fetchOccurrences(in range: Range<Date>) async throws -> [EventOccurrence] {
-        guard await auth.isAuthorized(), let userId = auth.userId else { return [] }
-        let rawOcc = try await fetchOccurrences(for: userId)
+        let rawOcc = try await fetchOccurrences()
         return try EventOccurrenceService.generate(rawOccurrences: rawOcc, in: range, addFakeToday: false)
     }
     
@@ -72,7 +77,7 @@ final public class EventRepository: EventStore {
     }
 
     public func upsert(_ event: Event) async throws {
-        guard await auth.isAuthorized() else { return }
+        guard try await auth.isAuthorized() else { return }
         try await eventLocalStore.upsert(EventLocal(domain: event))
         reminderScheduler.cancelReminders(for: event)
         reminderScheduler.scheduleReminders(for: event)
@@ -87,7 +92,7 @@ final public class EventRepository: EventStore {
         splitDate: Date,
         newEvent: Event
     ) async throws {
-        guard await auth.isAuthorized() else { return }
+        guard try await auth.isAuthorized() else { return }
         let _ = try await eventLocalStore.splitRecurringEvent(
             originalEventId: originalEventId,
             splitDate: splitDate,
@@ -96,7 +101,7 @@ final public class EventRepository: EventStore {
     }
 
     func delete(id: UUID, reminderTriggers: [ReminderTrigger]? = nil) async throws {
-        guard await auth.isAuthorized() else { return }
+        guard try await auth.isAuthorized() else { return }
         try await eventLocalStore.delete(id: id)
         if let reminders = reminderTriggers {
             reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminders)

@@ -7,6 +7,9 @@
     "–" : {
 
     },
+    "(no title)" : {
+
+    },
     "%@ (Device)" : {
 
     },
@@ -144,6 +147,12 @@
         }
       }
     },
+    "Agenda ready." : {
+
+    },
+    "All in series" : {
+
+    },
     "All set for now ✨" : {
       "localizations" : {
         "pt-BR" : {
@@ -183,6 +192,9 @@
           }
         }
       }
+    },
+    "Apply title change to:" : {
+
     },
     "Assistant is typing" : {
       "localizations" : {
@@ -370,6 +382,9 @@
         }
       }
     },
+    "Could not prepare the event." : {
+
+    },
     "Create account" : {
       "localizations" : {
         "pt-BR" : {
@@ -396,6 +411,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Criar plano"
+          }
+        }
+      }
+    },
+    "Created %@ ‘%@’ for %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Created %1$@ ‘%2$@’ for %3$@."
+          }
+        }
+      }
+    },
+    "Created %@ ‘%@’ from %@ to %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Created %1$@ ‘%2$@’ from %3$@ to %4$@."
+          }
+        }
+      }
+    },
+    "Created %@ ‘%@’." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Created %1$@ ‘%2$@’."
           }
         }
       }
@@ -576,6 +621,9 @@
           }
         }
       }
+    },
+    "Do you want to update just this one or the whole series?" : {
+
     },
     "Drizzle" : {
       "localizations" : {
@@ -907,6 +955,12 @@
         }
       }
     },
+    "Here is your day." : {
+
+    },
+    "Here is your week." : {
+
+    },
     "high" : {
       "localizations" : {
         "pt-BR" : {
@@ -916,6 +970,24 @@
           }
         }
       }
+    },
+    "I couldn't figure that out. Did you mean to create a task or an event?" : {
+
+    },
+    "I couldn't find a matching event." : {
+
+    },
+    "I couldn't find a matching task." : {
+
+    },
+    "I need a task title." : {
+
+    },
+    "I need a valid start and end time." : {
+
+    },
+    "I need an event title." : {
+
     },
     "I want to keep my tasks" : {
       "localizations" : {
@@ -1148,6 +1220,9 @@
         }
       }
     },
+    "No non-time changes detected." : {
+
+    },
     "No tasks for today." : {
       "localizations" : {
         "pt-BR" : {
@@ -1227,6 +1302,15 @@
           }
         }
       }
+    },
+    "Pick a due date for ‘%@’." : {
+      "comment" : "disambig message"
+    },
+    "Pick a new time for ‘%@’." : {
+
+    },
+    "Pick a new time for this event." : {
+
     },
     "Plan my day" : {
       "localizations" : {
@@ -1443,6 +1527,19 @@
           }
         }
       }
+    },
+    "Rescheduled ‘%@’ to %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rescheduled ‘%1$@’ to %2$@."
+          }
+        }
+      }
+    },
+    "Rescheduled ‘%@’." : {
+
     },
     "Reset Upgrade Reminder" : {
       "localizations" : {
@@ -1787,6 +1884,12 @@
         }
       }
     },
+    "This and future" : {
+
+    },
+    "This occurrence" : {
+
+    },
     "Time Zone" : {
       "localizations" : {
         "pt-BR" : {
@@ -1870,6 +1973,15 @@
     "Try “Buy gift for Ana • %@ • High”." : {
 
     },
+    "Updated the event." : {
+
+    },
+    "Updated this override." : {
+
+    },
+    "Updating ‘%@’." : {
+
+    },
     "Upgrade Reminder" : {
       "localizations" : {
         "pt-BR" : {
@@ -1950,6 +2062,21 @@
         }
       }
     },
+    "What time should ‘%@’ be?" : {
+
+    },
+    "Which event do you want to update?" : {
+
+    },
+    "Which event should I reschedule?" : {
+
+    },
+    "Which task should I reschedule?" : {
+
+    },
+    "Which task should I update?" : {
+
+    },
     "Why this suggestion" : {
       "localizations" : {
         "pt-BR" : {
@@ -1966,6 +2093,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por quê?"
+          }
+        }
+      }
+    },
+    "Will reschedule ‘%@’ to %@ (apply failed: %@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Will reschedule ‘%1$@’ to %2$@ (apply failed: %3$@)."
           }
         }
       }

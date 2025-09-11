@@ -118,7 +118,7 @@ struct TodayView: View {
                         }
                         .refreshable {
                             Task {
-                                await fetchInfo()
+                                try? await fetchInfo()
                             }
                         }
                         .background(
@@ -258,8 +258,8 @@ struct TodayView: View {
             }
         }
         .task {
-            factory = await getNavViewFactory()
-            await fetchInfo()
+            factory = try? await getNavViewFactory()
+            try? await fetchInfo()
             await appState.adManager?.loadInterstitial(for: .openCalendar)
             await appState.adManager?.loadRewarded(for: .chat)
         }
@@ -436,14 +436,14 @@ struct TodayView: View {
         }
     }
     
-    private func getNavViewFactory() async -> NavigationViewFactory {
-        guard await authManager.isAuthorized(), let userId = authManager.userId else {
+    private func getNavViewFactory() async throws -> NavigationViewFactory {
+        guard try await authManager.isAuthorized(), let userId = authManager.userId else {
             return NavigationViewFactory()
         }
         let taskFactory = TaskViewFactory(
             viewID: viewID,
             nav: nav,
-            userId: await getUserId(),
+            userId: try await getUserId(),
             editableTaskProvider: { self.editableUserTask },
             onAddEditTaskViewDismiss: {
                 Task { await viewModel.fetchData() }
@@ -468,15 +468,15 @@ struct TodayView: View {
         return factory
     }
     
-    private func getUserId() async -> UUID {
-        guard await authManager.isAuthorized(), let userId = authManager.userId else {
+    private func getUserId() async throws -> UUID {
+        guard try await authManager.isAuthorized(), let userId = authManager.userId else {
             return UUID()
         }
         return userId
     }
     
-    private func fetchInfo() async {
-        guard await authManager.isAuthorized(), let userId = authManager.userId else {
+    private func fetchInfo() async throws {
+        guard try await authManager.isAuthorized(), let userId = authManager.userId else {
             return
         }
         await viewModel.fetchData()

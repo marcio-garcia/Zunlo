@@ -43,14 +43,15 @@ public final class SyncRunner<R: RemoteEntity, InsertPayload, UpdatePayload> {
         self.conflictCenter = conflictCenter
     }
 
-    public func syncNow() async -> SyncReport {
+    public func syncNow() async throws -> SyncReport {
         var push = PushStats.zero
         var pull = PullStats.zero
         do {
             push = try await pushDirty()
             pull = try await pullSinceCursor()
         } catch {
-            // return partials; you can rethrow if you prefer
+            // TODO: return partials; you can rethrow if you prefer
+            throw error
         }
         return SyncReport.from(push: push, pull: pull)
     }

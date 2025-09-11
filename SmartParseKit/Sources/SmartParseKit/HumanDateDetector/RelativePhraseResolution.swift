@@ -14,18 +14,10 @@ public enum RelativeModifier: String {
     case none // explicit dates or phrases with no relative modifier
 }
 
-public enum ResolutionSource: String, Equatable {
-    case appleDetector      // NSDataDetector
-    case inlineWeekdayTime  // “fri 9-10”, “sex 11-1”, “wed 9”
-    case fromToTime         // “de 10 a 12”, “from 9 to 10”
-    case weekPhrase         // “esta semana”, “next week”, bare “week”
-    case other
-}
-
 public struct ResolutionAlternative: Equatable {
     public let date: Date
     public let duration: TimeInterval?
-    public let source: ResolutionSource
+    public let source: MatchSource
     /// Optional short label for UI chips (“sex às 9h”, “dia 9 (ter)”).
     public let label: String?
 }
@@ -34,7 +26,6 @@ public struct ResolutionAlternative: Equatable {
 public struct RelativePhraseResolution: Equatable {
     public let text: String                     // substring that matched
     public let range: Range<String.Index>
-
     public let modifier: RelativeModifier       // this / next / none
     public let weekday: Int?                    // 1...7 if applicable (Sunday = 1)
     public let originalDate: Date               // Apple/NSDataDetector date (or same as resolved if synthetic)
@@ -168,18 +159,6 @@ public extension HumanDateDetector {
             return df.string(from: date)
         }
 
-        // Map source from match properties
-        func source(for m: Match, in text: String) -> ResolutionSource {
-            if m.original != nil { return .appleDetector }
-            // Heuristics by span contents (cheap and practical)
-            let s = String(text[m.range]).lowercased()
-            if s.contains("semana") || s.contains("week") { return .weekPhrase }
-            if s.contains(" de ") || s.contains(" das ") || s.contains(" às ")
-                || s.contains(" from ") || s.contains(" to ") { return .fromToTime }
-            // Otherwise it's likely the compact weekday+time
-            return .inlineWeekdayTime
-        }
-
         // Build rows
         let result = all.map { m in
             let substr = String(text[m.range])
@@ -195,13 +174,12 @@ public extension HumanDateDetector {
             var alts: [ResolutionAlternative] = []
             var seen = Set<String>()
             for g in group {
-                let src = source(for: g, in: text)
-                let key = "\(g.date.timeIntervalSinceReferenceDate)|\(g.duration ?? -1)|\(src.rawValue)"
+                let key = "\(g.date.timeIntervalSinceReferenceDate)|\(g.duration ?? -1)|\(g.source.rawValue)"
                 if seen.insert(key).inserted {
                     alts.append(ResolutionAlternative(
                         date: g.date,
                         duration: g.duration,
-                        source: src,
+                        source: g.source,
                         label: makeLabel(g.date, g.duration, cal: calendar)
                     ))
                 }

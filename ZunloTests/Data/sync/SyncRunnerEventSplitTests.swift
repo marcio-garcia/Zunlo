@@ -110,9 +110,9 @@ final class SyncRunnerEventSplitTests: XCTestCase {
         )
 
         // ---- Act: run in the order your app would ----
-        _ = await SyncRunner(spec: evSpec).syncNow()
-        _ = await SyncRunner(spec: rrSpec).syncNow()
-        _ = await SyncRunner(spec: ovSpec).syncNow()
+        _ = try? await SyncRunner(spec: evSpec).syncNow()
+        _ = try? await SyncRunner(spec: rrSpec).syncNow()
+        _ = try? await SyncRunner(spec: ovSpec).syncNow()
 
         // ---- Assert: Events ----
         let e1Local = eventDB.applied[e1ID]!

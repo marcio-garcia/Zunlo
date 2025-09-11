@@ -53,7 +53,7 @@ class CalendarScheduleViewModel: ObservableObject {
         do {
             locationService.startUpdatingLocation()
             // TODO: change to fetch occurrences filtered by date range
-            let occurrences = try await eventRepo.fetchOccurrences(for: userId)
+            let occurrences = try await eventRepo.fetchOccurrences()
             allOccurrences = occurrences
             eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
             handleOccurrences(occurrences, in: self.visibleRange)

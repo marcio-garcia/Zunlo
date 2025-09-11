@@ -41,12 +41,12 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         )
 
         // Act
-        let report = await SyncRunner(spec: spec).syncNow()
+        let report = try? await SyncRunner(spec: spec).syncNow()
 
         // Assert
-        XCTAssertEqual(report.inserted, 0)
-        XCTAssertEqual(report.updated, 0)
-        XCTAssertEqual(report.conflicts, 0)
+        XCTAssertEqual(report?.inserted, 0)
+        XCTAssertEqual(report?.updated, 0)
+        XCTAssertEqual(report?.conflicts, 0)
         XCTAssertTrue(db.cleaned.isEmpty, "Items should remain dirty after 429")
     }
 
@@ -56,7 +56,7 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         let db = MockDB<Row>()
         let now = Date()
         let stale = Row(updatedAtRaw: addSecToTS(now, sec: 0.0001), version: 1, title: "stale")
-        var dirty = [stale]
+        let dirty = [stale]
 
         let spec = SyncSpec<Row, Row, Row>(
             entityKey: "rows",
@@ -76,11 +76,11 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         )
 
         // Act
-        let report = await SyncRunner(spec: spec).syncNow()
+        let report = try? await SyncRunner(spec: spec).syncNow()
 
         // Assert
-        XCTAssertEqual(report.updated, 0)
-        XCTAssertEqual(report.conflicts, 0)
+        XCTAssertEqual(report?.updated, 0)
+        XCTAssertEqual(report?.conflicts, 0)
         XCTAssertTrue(db.cleaned.isEmpty, "Transient failure should not clean the item")
     }
 
@@ -90,7 +90,7 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         let db = MockDB<Row>()
         let now = Date()
         let stale = Row(updatedAtRaw: ts(now), version: 2, title: "stale")
-        var dirty = [stale]
+        let dirty = [stale]
 
         let spec = SyncSpec<Row, Row, Row>(
             entityKey: "rows",
@@ -110,11 +110,11 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         )
 
         // Act
-        let report = await SyncRunner(spec: spec).syncNow()
+        let report = try? await SyncRunner(spec: spec).syncNow()
 
         // Assert
-        XCTAssertEqual(report.conflicts, 0)
-        XCTAssertEqual(report.updated, 0)
+        XCTAssertEqual(report?.conflicts, 0)
+        XCTAssertEqual(report?.updated, 0)
         XCTAssertTrue(db.cleaned.isEmpty, "404 should not clean or record conflict")
     }
 
@@ -123,7 +123,7 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
         let server = MockServer<Row>()
         let db = MockDB<Row>()
         let stale = Row(updatedAtRaw: ts(Date()), version: 1, title: "stale")
-        var dirty = [stale]
+        let dirty = [stale]
 
         let spec = SyncSpec<Row, Row, Row>(
             entityKey: "rows",
@@ -142,8 +142,8 @@ final class SyncRunnerAdvancedPushTests: XCTestCase {
             makeUpdatePayload: { $0 }
         )
 
-        let report = await SyncRunner(spec: spec).syncNow()
-        XCTAssertEqual(report.conflicts, 1)
+        let report = try? await SyncRunner(spec: spec).syncNow()
+        XCTAssertEqual(report?.conflicts, 1)
         XCTAssertTrue(db.cleaned.isEmpty)
         XCTAssertEqual(db.conflicts.count, 1)
     }
