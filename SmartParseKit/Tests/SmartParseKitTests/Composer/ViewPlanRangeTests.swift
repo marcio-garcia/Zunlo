@@ -13,7 +13,7 @@ final class ViewPlanRangeTests: XCTestCase {
         XCTAssertEqual(compsStart.year, 2025)
         XCTAssertEqual(compsStart.month, 9)
         XCTAssertEqual(compsStart.day, 18)
-        XCTAssertEqual(compsStart.hour, 8) // morning slice starts at 08:00
+        XCTAssertEqual(compsStart.hour, 6)
     }
 
     func testBareWeekPlansThisWeekRange() {

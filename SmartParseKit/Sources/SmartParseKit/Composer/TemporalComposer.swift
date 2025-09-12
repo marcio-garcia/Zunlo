@@ -57,7 +57,7 @@ public struct TemporalToken {
 }
 
 public enum ResolvedTemporal {
-    case instant(Date, confidence: Double, notes: [String])
+    case instant(Date, confidence: Double, notes: [String], duration: TimeInterval? = nil)
     case range(DateInterval, confidence: Double, notes: [String])
 }
 
@@ -99,7 +99,7 @@ public final class TemporalComposer {
             resolution = .range(dateInterval, confidence: Double(context.confidence), notes: context.conflicts)
             filters.append(resolution)
         } else {
-            resolution = .instant(context.finalDate, confidence: Double(context.confidence), notes: context.conflicts)
+            resolution = .instant(context.finalDate, confidence: Double(context.confidence), notes: context.conflicts, duration: context.finalDateDuration)
         }
         
         return ParseResult(title: title, intent: intent, resolution: resolution, filters: filters, ignoredNotes: [])

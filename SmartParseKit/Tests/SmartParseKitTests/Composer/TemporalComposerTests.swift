@@ -32,7 +32,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("add event graduation ceremony next week at 11:00", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         // Monday Sep 15, 11:00
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 18)
@@ -44,7 +44,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("rebook team meeting for next week Fri 11:00", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 19)
         XCTAssertEqual(c.h, 11); XCTAssertEqual(c.min, 0)
@@ -55,7 +55,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("move team meeting to next Friday 3pm", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 19)
         XCTAssertEqual(c.h, 15); XCTAssertEqual(c.min, 0)
@@ -66,7 +66,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("move oil change to next week noon", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 18)
         XCTAssertEqual(c.h, 12)
@@ -77,7 +77,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("push dentist appointment to october 15th 7pm", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 10); XCTAssertEqual(c.d, 15)
         XCTAssertEqual(c.h, 19)
@@ -88,7 +88,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("dinner with parents tonight 8pm at 7pm", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.h, 19) // 7pm
     }
@@ -100,7 +100,7 @@ final class TemporalComposerTests: XCTestCase {
         let r = composer.parse("a month from now 11am", now: now)
         // Offsets are not fully applied in this compact example; we at least parse time and day scope == today.
         // For demonstration, expect 11:00 today or we can relax by checking time.
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.h, 11)
     }
@@ -110,7 +110,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("change write report task to next tue", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         let referenceComp = components(now)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 16) // Tue next week
@@ -124,7 +124,7 @@ final class TemporalComposerTests: XCTestCase {
         let r = composer.parse("push back do laundry to weekend", now: now)
         
         switch r.resolution! {
-        case .instant(_, _, _):
+        case .instant(_, _, _, _):
             return XCTFail("Return range because there is no specifics")
         case .range(let dateInterval, _, _):
             let compStart = components(dateInterval.start)
@@ -143,7 +143,7 @@ final class TemporalComposerTests: XCTestCase {
         let now = makeNow()
         let r = composer.parse("show agenda for next Thursday morning", now: now)
         switch r.resolution! {
-        case .instant(_, _, _):
+        case .instant(_, _, _, _):
             return XCTFail("Expected range filter for view intent")
         case .range(let dateInterval, _, _):
             let compStart = components(dateInterval.start)
@@ -162,7 +162,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("schedule client meeting for 10am tomorrow", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.d, 12) // tomorrow
         XCTAssertEqual(c.h, 10)
@@ -174,7 +174,7 @@ final class TemporalComposerTests: XCTestCase {
         let now = makeNow()
         let r = composer.parse("what is my agenda for next week", now: now)
         switch r.resolution! {
-        case .instant(_, _, _):
+        case .instant(_, _, _, _):
             return XCTFail("Expected range filter for view intent")
         case .range(let dateInterval, _, _):
             let compStart = components(dateInterval.start)
@@ -194,7 +194,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("remarcar reunião para próxima semana sex 11:00", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         // Next week's Friday: 2025-09-19 11:00
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 19)
@@ -206,7 +206,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("marcar café terça às 10h", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         // Next upcoming Tuesday from Sep 11, 2025 (Thu) is Sep 16
         XCTAssertEqual(c.d, 16); XCTAssertEqual(c.h, 10)
@@ -218,7 +218,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("reprogramar reunión para la próxima semana vie 11:00", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.d, 19); XCTAssertEqual(c.h, 11)
     }
@@ -228,7 +228,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("programar café para el martes a las 10:00", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail("No instant") }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
         let c = components(date)
         XCTAssertEqual(c.d, 16); XCTAssertEqual(c.h, 10)
     }
@@ -238,7 +238,7 @@ final class TemporalComposerTests: XCTestCase {
         let composer = TemporalComposer(pack: pack)
         let now = makeNow()
         let r = composer.parse("schedule coffee on Tuesday 10:00", now: now)
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail() }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail() }
         let c = components(date)
         XCTAssertEqual(c.d, 16); XCTAssertEqual(c.h, 10)
     }
@@ -249,7 +249,7 @@ final class TemporalComposerTests: XCTestCase {
         let now = makeNow()
         let r = composer.parse("block Wed 09:00-11:30", now: now)
         // Verify timeRange was recognized and start time used as anchor
-        guard case .instant(let date, _, _) = r.resolution! else { return XCTFail() }
+        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail() }
         let c = components(date)
         XCTAssertEqual(c.h, 9); XCTAssertEqual(c.min, 0)
     }

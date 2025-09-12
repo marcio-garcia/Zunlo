@@ -4,14 +4,16 @@ import Foundation
 
 public struct TemporalContext {
     public let finalDate: Date
+    public let finalDateDuration: TimeInterval?
     public let dateRange: DateInterval? // For queries that imply a range
     public let confidence: Float // 0.0 to 1.0
     public let resolvedTokens: [TemporalToken]
     public let conflicts: [String] // Descriptions of any conflicts found
     public let isRangeQuery: Bool // True for queries like "next week" that imply a range
     
-    public init(finalDate: Date, dateRange: DateInterval? = nil, confidence: Float, resolvedTokens: [TemporalToken], conflicts: [String] = [], isRangeQuery: Bool = false) {
+    public init(finalDate: Date, finalDateDuration: TimeInterval? = nil, dateRange: DateInterval? = nil, confidence: Float, resolvedTokens: [TemporalToken], conflicts: [String] = [], isRangeQuery: Bool = false) {
         self.finalDate = finalDate
+        self.finalDateDuration = finalDateDuration
         self.dateRange = dateRange
         self.confidence = confidence
         self.resolvedTokens = resolvedTokens
@@ -47,7 +49,7 @@ public class TemporalTokenInterpreter {
         let tokenGroups = groupTokens(sortedTokens)
         
         // Resolve conflicts and build context
-        let (resolvedComponents, conflicts) = resolveTokens(tokenGroups)
+        let (resolvedComponents, duration, conflicts) = resolveTokens(tokenGroups)
         
         // Build final date
         let finalDate = buildFinalDate(from: resolvedComponents)
@@ -60,6 +62,7 @@ public class TemporalTokenInterpreter {
         
         return TemporalContext(
             finalDate: finalDate,
+            finalDateDuration: duration,
             dateRange: dateRange,
             confidence: confidence,
             resolvedTokens: sortedTokens,
@@ -105,8 +108,9 @@ public class TemporalTokenInterpreter {
     
     // MARK: - Token Resolution
     
-    private func resolveTokens(_ groups: TokenGroups) -> (DateComponents, [String]) {
+    private func resolveTokens(_ groups: TokenGroups) -> (DateComponents, TimeInterval?, [String]) {
         var resolvedComponents = DateComponents()
+        var duration: TimeInterval?
         var conflicts: [String] = []
         
         // Start with reference date as base
@@ -125,7 +129,7 @@ public class TemporalTokenInterpreter {
         if let timeRange = groups.timeRanges.first {
             resolvedComponents.hour = timeRange.1.hour
             resolvedComponents.minute = timeRange.1.minute
-            // Note: We use start time for simplicity, but you might want to handle ranges differently
+            duration = try? secondsBetween(timeRange.1, timeRange.2)
         }
         
         // 2. Handle absolute times
@@ -166,15 +170,6 @@ public class TemporalTokenInterpreter {
             }
         }
         
-        // Handle relative weeks and weekdays
-        else if !groups.relativeWeeks.isEmpty || !groups.weekdays.isEmpty {
-            resolvedComponents = handleRelativeWeeksAndWeekdays(
-                groups: groups,
-                baseComponents: resolvedComponents,
-                conflicts: &conflicts
-            )
-        }
-        
         // Handle relative days
         else if !groups.relativeDays.isEmpty {
             if let relativeDay = groups.relativeDays.first {
@@ -207,7 +202,17 @@ public class TemporalTokenInterpreter {
             }
         }
         
-        return (resolvedComponents, conflicts)
+        // Handle relative weeks and weekdays
+        else if !groups.relativeWeeks.isEmpty || !groups.weekdays.isEmpty {
+            resolvedComponents = handleRelativeWeeksAndWeekdays(
+                groups: groups,
+                baseComponents: resolvedComponents,
+                conflicts: &conflicts
+            )
+        }
+
+        
+        return (resolvedComponents, duration, conflicts)
     }
     
     // MARK: - Helper Methods
@@ -340,18 +345,6 @@ public class TemporalTokenInterpreter {
             }
         }
         
-        // Check if we have standalone relative week tokens (indicating range queries)
-        if !groups.relativeWeeks.isEmpty && groups.weekdays.isEmpty && groups.relativeDays.isEmpty {
-            // This is likely a range query like "next week"
-            if let relativeWeek = groups.relativeWeeks.first {
-                let weekStart = getWeekStart(for: relativeWeek.1)
-                let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
-                let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: weekEnd) ?? weekEnd
-                
-                return (DateInterval(start: weekStart, end: endOfDay), true)
-            }
-        }
-        
         // Check for weekend tokens
         if !groups.weekends.isEmpty {
             if let weekend = groups.weekends.first {
@@ -362,6 +355,18 @@ public class TemporalTokenInterpreter {
                 let sundayEnd = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: sunday) ?? sunday
                 
                 return (DateInterval(start: saturdayStart, end: sundayEnd), true)
+            }
+        }
+        
+        // Check if we have standalone relative week tokens (indicating range queries)
+        if !groups.relativeWeeks.isEmpty && groups.weekdays.isEmpty && groups.relativeDays.isEmpty {
+            // This is likely a range query like "next week"
+            if let relativeWeek = groups.relativeWeeks.first {
+                let weekStart = getWeekStart(for: relativeWeek.1)
+                let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+                let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: weekEnd) ?? weekEnd
+                
+                return (DateInterval(start: weekStart, end: endOfDay), true)
             }
         }
         
