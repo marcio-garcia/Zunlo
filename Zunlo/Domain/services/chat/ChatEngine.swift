@@ -27,6 +27,7 @@ public actor ChatEngine {
     private let ai: AIChatService
     private let tools: ToolRouter
     private let repo: ChatRepository
+    private let localTools: Tools
     private let nlpService: NLProcessing
     
     private(set) var state: ChatStreamState = .idle
@@ -47,13 +48,15 @@ public actor ChatEngine {
         ai: AIChatService,
         nlpService: NLProcessing,
         tools: ToolRouter,
-        repo: ChatRepository
+        repo: ChatRepository,
+        localTools: Tools
     ) {
         self.conversationId = conversationId
         self.ai = ai
         self.nlpService = nlpService
         self.tools = tools
         self.repo = repo
+        self.localTools = localTools
     }
 
     // Load history via repo actor
@@ -65,20 +68,28 @@ public actor ChatEngine {
         let lower = userMessage.rawText.lowercased()
         do {
             // Handle locally with NLP
-            let results = try await nlpService.process(text: lower)
-            
-            for result in results {
+            let nlpResult = try await nlpService.process(text: lower)
+
+            // Process NLP result through local tools
+            var toolResults: [ToolResult] = []
+            for result in nlpResult {
+                let res = try await execute(result)
+                log("command result: \(res)")
+                toolResults.append(res)
+            }
+
+            for result in toolResults {
                 var asyncStream: AsyncStream<ChatEngineEvent>
                 
-                switch result.action {
-                case .none:
+//                switch result.action {
+//                case .none:
                     // No local handling → use regular AI streaming path
-                    asyncStream = startStream(history: history, userMessage: userMessage)
+//                    asyncStream = startStream(history: history, userMessage: userMessage)
                     
-                default:
+//                default:
                     // Stream local processing result to the ViewModel
                     asyncStream = processNlpResult(result: result, history: history, userMessage: userMessage)
-                }
+//                }
                 
                 for await ev in asyncStream {
                     chatEvent(ev)
@@ -420,6 +431,26 @@ public actor ChatEngine {
 
     // MARK: Tools
 
+    private func execute(_ cmd: ParseResult) async throws -> ToolResult {
+        switch cmd.intent {
+        case .createTask: return await localTools.createTask(cmd)
+        case .createEvent: return await localTools.createEvent(cmd)
+        case .updateEvent: return await localTools.updateEvent(cmd)
+        case .updateTask: return await localTools.createTask(cmd)
+        case .rescheduleTask: return await localTools.rescheduleTask(cmd)
+        case .rescheduleEvent: return await localTools.rescheduleEvent(cmd)
+        case .cancelTask: return ToolResult(intent: .cancelTask)
+        case .cancelEvent: return ToolResult(intent: .cancelEvent)
+        case .plan: return await localTools.planWeek(cmd)
+        case .view: return await localTools.planWeek(cmd)
+//        case .planWeek: return await tool.planWeek(cmd)
+//        case .planDay: return await tool.planDay(cmd)
+//        case .showAgenda: return await tool.showAgenda(cmd)
+//        case .moreInfo: return await tool.moreInfo(cmd)
+        case .unknown: return await localTools.unknown(cmd)
+        }
+    }
+    
     private func runSingleTool(name: String, argsJSON: String, continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
         do {
             let env = AIToolEnvelope(name: name, argsJSON: argsJSON)

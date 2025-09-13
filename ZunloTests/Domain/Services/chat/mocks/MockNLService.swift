@@ -6,16 +6,27 @@
 //
 
 import Foundation
+import SmartParseKit
 @testable import Zunlo
 
 public final class MockNLService: NLProcessing {
     public init() {}
 
-    public func process(text: String) async throws -> [ToolResult] {
-        return [ToolResult(
-            intent: .showAgenda,
-            message: "This is your agenda",
-            richText: AttributedString("This is your agenda"))
+    public func process(text: String) async throws -> [ParseResult] {
+        let calendar = Calendar(identifier: .gregorian)
+        let duration: TimeInterval = 60 * 60 * 24
+        let today = calendar.startOfDay(for: Date())
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? today.addingTimeInterval(duration)
+        let range = DateInterval(start: today, end: tomorrow)
+        return [ParseResult(title: "This is your agenda",
+                            intent: .view,
+                            context: TemporalContext(finalDate: today,
+                                                     finalDateDuration: duration,
+                                                     dateRange: range,
+                                                     confidence: 1.0,
+                                                     resolvedTokens: [],
+                                                     conflicts: [],
+                                                     isRangeQuery: true))
         ]
     }
 

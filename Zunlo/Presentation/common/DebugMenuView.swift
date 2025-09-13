@@ -14,9 +14,11 @@ struct DebugMenuView: View {
     var body: some View {
         Form {
             Section(header: Text("Upgrade Reminder")) {
+#if DEBUG
                 Button("Reset Upgrade Reminder") {
                     upgradeReminderManager.resetReminderDebug()
                 }
+#endif
                 Button("Simulate Reminder Conditions") {
                     UserDefaults.standard.set(Date().addingTimeInterval(-4 * 86400).timeIntervalSince1970, forKey: "firstLaunchTimestamp")
                     UserDefaults.standard.set(10, forKey: "sessionCount")
@@ -31,8 +33,10 @@ struct DebugMenuView: View {
             }
         }
         .navigationTitle("Debug Menu")
+#if DEBUG
         .sheet(isPresented: $showRealmBrowser) {
             RealmDebugBrowserView() // or pass a custom Realm.Configuration if needed
         }
+#endif
     }
 }

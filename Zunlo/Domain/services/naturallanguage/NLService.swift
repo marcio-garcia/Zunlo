@@ -10,7 +10,7 @@ import SmartParseKit
 import LoggingKit
 
 public protocol NLProcessing {
-    func process(text: String) async throws -> [ToolResult]
+    func process(text: String) async throws -> [ParseResult]
 }
 
 public struct ParseResult {
@@ -21,18 +21,16 @@ public struct ParseResult {
 
 public final class NLService: NLProcessing {
     private let parser: InputParser
-    private let tool: Tools
-    private let engine: IntentEngine
+    private let engine: IntentDetector
     private let calendar: Calendar
     
-    public init(parser: InputParser, tool: Tools, engine: IntentEngine, calendar: Calendar) {
+    public init(parser: InputParser, engine: IntentDetector, calendar: Calendar) {
         self.parser = parser
-        self.tool = tool
         self.engine = engine
         self.calendar = calendar
     }
     
-    public func process(text: String) async throws -> [ToolResult] {
+    public func process(text: String) async throws -> [ParseResult] {
         
         // Language
         let language = engine.detectLanguage(text)
@@ -51,7 +49,7 @@ public final class NLService: NLProcessing {
         
         let referenceDate = Date()
         
-        var results: [ToolResult] = []
+        var results: [ParseResult] = []
         for clause in splittedClauses {
             for pack in packs {
                 let (title, intent, tokens) = parser.parse(clause.text, now: referenceDate, pack: pack)
@@ -60,32 +58,9 @@ public final class NLService: NLProcessing {
                 let interpreter = TemporalTokenInterpreter(calendar: calendar, timeZone: calendar.timeZone, referenceDate: referenceDate)
                 let context = interpreter.interpret(tokens)
                 let parseResult = ParseResult(title: title, intent: intent, context: context)
-                
-                let result = try await execute(parseResult, now: Date(), calendar: cal)
-                log("command result: \(result)")
-                results.append(result)
+                results.append(parseResult)
             }
         }
         return results
-    }
-    
-    private func execute(_ cmd: ParseResult, now: Date = Date(), calendar: Calendar = .current) async throws -> ToolResult {
-        switch cmd.intent {
-        case .createTask: return await tool.createTask(cmd)
-        case .createEvent: return await tool.createEvent(cmd)
-        case .updateEvent: return await tool.updateEvent(cmd)
-        case .updateTask: return await tool.createTask(cmd)
-        case .rescheduleTask: return await tool.rescheduleTask(cmd)
-        case .rescheduleEvent: return await tool.rescheduleEvent(cmd)
-        case .cancelTask: return ToolResult(intent: .cancelTask)
-        case .cancelEvent: return ToolResult(intent: .cancelEvent)
-        case .plan: return await tool.planWeek(cmd)
-        case .view: return await tool.planWeek(cmd)
-//        case .planWeek: return await tool.planWeek(cmd)
-//        case .planDay: return await tool.planDay(cmd)
-//        case .showAgenda: return await tool.showAgenda(cmd)
-//        case .moreInfo: return await tool.moreInfo(cmd)
-        case .unknown: return await tool.unknown(cmd)
-        }
     }
 }

@@ -17,9 +17,9 @@ import NaturalLanguage
 // Mapper → fills your Event or UserTask model fields (title, startDate, notes, etc.) based on the entities.
 
 public final class CommandParser {
-    private let engine: IntentEngine
+    private let engine: IntentDetector
     
-    public init(engine: IntentEngine = IntentEngine()) {
+    public init(engine: IntentDetector = IntentDetector()) {
         self.engine = engine
     }
     

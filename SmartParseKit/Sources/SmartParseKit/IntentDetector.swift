@@ -9,7 +9,7 @@ import NaturalLanguage
 
 // MARK: - IntentEngine
 
-public final class IntentEngine {
+public final class IntentDetector {
     private let model: NLModel?
 
     public init(modelURL: URL? = nil) {
@@ -41,7 +41,7 @@ public final class IntentEngine {
         }
         // fallback heuristics
         let lower = text.lowercased()
-        if let i = intent, intent == .updateTask || intent == .updateEvent {
+        if let i = intent, i == .updateTask || i == .updateEvent {
             if let i = fallbackRescheduleTask(text: lower) { intent = i }
             if let i = fallbackRescheduleEvent(text: lower) { intent = i }
         } else  {
@@ -141,9 +141,9 @@ public final class IntentEngine {
 }
 
 // Inside SmartParseKit, e.g. add this helper:
-extension IntentEngine {
-    public static func bundled() -> IntentEngine {
+extension IntentDetector {
+    public static func bundled() -> IntentDetector {
         let url = Bundle.module.url(forResource: "ZunloIntents", withExtension: "mlmodelc")
-        return IntentEngine(modelURL: url)
+        return IntentDetector(modelURL: url)
     }
 }

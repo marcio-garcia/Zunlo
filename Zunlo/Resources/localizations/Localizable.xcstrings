@@ -373,14 +373,7 @@
       }
     },
     "Copy Realm file path" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copiar ‘path’ do Realm"
-          }
-        }
-      }
+
     },
     "Could not prepare the event." : {
 
@@ -513,14 +506,7 @@
       }
     },
     "Delete All %@" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Excluir tudo %@"
-          }
-        }
-      }
+
     },
     "Delete all messages" : {
       "localizations" : {
@@ -613,14 +599,7 @@
       }
     },
     "Details" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Detalhes"
-          }
-        }
-      }
+
     },
     "Do you want to update just this one or the whole series?" : {
 
@@ -1479,14 +1458,7 @@
       }
     },
     "Refresh" : {
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Atualizar"
-          }
-        }
-      }
+
     },
     "Reminders" : {
       "localizations" : {
