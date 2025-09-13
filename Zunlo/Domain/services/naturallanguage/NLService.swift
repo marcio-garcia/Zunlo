@@ -13,13 +13,19 @@ public protocol NLProcessing {
     func process(text: String) async throws -> [ToolResult]
 }
 
+public struct ParseResult {
+    public let title: String
+    public let intent: Intent
+    public let context: TemporalContext
+}
+
 public final class NLService: NLProcessing {
-    private let parser: DateParser
+    private let parser: InputParser
     private let tool: Tools
     private let engine: IntentEngine
     private let calendar: Calendar
     
-    public init(parser: DateParser, tool: Tools, engine: IntentEngine, calendar: Calendar) {
+    public init(parser: InputParser, tool: Tools, engine: IntentEngine, calendar: Calendar) {
         self.parser = parser
         self.tool = tool
         self.engine = engine
@@ -43,12 +49,19 @@ public final class NLService: NLProcessing {
         let splittedClauses = InputSplitter().split(text, language: language)
         log("splitted clauses: \(splittedClauses)")
         
+        let referenceDate = Date()
+        
         var results: [ToolResult] = []
         for clause in splittedClauses {
             for pack in packs {
-                let parsed = parser.parse(clause.text, now: Date(), pack: pack)
-                log("parsed command: \(parsed)")
-                let result = try await execute(parsed, now: Date(), calendar: cal)
+                let (title, intent, tokens) = parser.parse(clause.text, now: referenceDate, pack: pack)
+                log("parsed command: \(tokens)")
+                
+                let interpreter = TemporalTokenInterpreter(calendar: calendar, timeZone: calendar.timeZone, referenceDate: referenceDate)
+                let context = interpreter.interpret(tokens)
+                let parseResult = ParseResult(title: title, intent: intent, context: context)
+                
+                let result = try await execute(parseResult, now: Date(), calendar: cal)
                 log("command result: \(result)")
                 results.append(result)
             }
@@ -56,7 +69,7 @@ public final class NLService: NLProcessing {
         return results
     }
     
-    private func execute(_ cmd: ParsedCommand, now: Date = Date(), calendar: Calendar = .current) async throws -> ToolResult {
+    private func execute(_ cmd: ParseResult, now: Date = Date(), calendar: Calendar = .current) async throws -> ToolResult {
         switch cmd.intent {
         case .createTask: return await tool.createTask(cmd)
         case .createEvent: return await tool.createEvent(cmd)
@@ -64,10 +77,14 @@ public final class NLService: NLProcessing {
         case .updateTask: return await tool.createTask(cmd)
         case .rescheduleTask: return await tool.rescheduleTask(cmd)
         case .rescheduleEvent: return await tool.rescheduleEvent(cmd)
-        case .planWeek: return await tool.planWeek(cmd)
-        case .planDay: return await tool.planDay(cmd)
-        case .showAgenda: return await tool.showAgenda(cmd)
-        case .moreInfo: return await tool.moreInfo(cmd)
+        case .cancelTask: return ToolResult(intent: .cancelTask)
+        case .cancelEvent: return ToolResult(intent: .cancelEvent)
+        case .plan: return await tool.planWeek(cmd)
+        case .view: return await tool.planWeek(cmd)
+//        case .planWeek: return await tool.planWeek(cmd)
+//        case .planDay: return await tool.planDay(cmd)
+//        case .showAgenda: return await tool.showAgenda(cmd)
+//        case .moreInfo: return await tool.moreInfo(cmd)
         case .unknown: return await tool.unknown(cmd)
         }
     }

@@ -10,6 +10,13 @@ import SmartParseKit
 
 // MARK: - Tool Result primitives
 
+extension DateInterval {
+    func toDateRange() -> Range<Date> {
+        let exclusiveEnd = Calendar.current.date(byAdding: .minute, value: 1, to: self.end) ?? self.end
+        return self.start..<exclusiveEnd
+    }
+}
+
 public enum ToolAction: Equatable {
     case createdTask(id: UUID)
     case createdEvent(id: UUID)
@@ -64,14 +71,14 @@ public struct DisambiguationOption: Identifiable, Equatable {
 }
 
 public struct ToolResult: Equatable {
-    public let intent: CommandIntent
+    public let intent: Intent
     public let action: ToolAction
     public let needsDisambiguation: Bool
     public let options: [DisambiguationOption]
     public let message: String?
     public let richText: AttributedString?
 
-    public init(intent: CommandIntent,
+    public init(intent: Intent,
                 action: ToolAction = .none,
                 needsDisambiguation: Bool = false,
                 options: [DisambiguationOption] = [],
@@ -88,17 +95,17 @@ public struct ToolResult: Equatable {
 }
 
 public protocol Tools {
-    func createTask(_ cmd: ParsedCommand) async -> ToolResult
-    func createEvent(_ cmd: ParsedCommand) async -> ToolResult
-    func rescheduleTask(_ cmd: ParsedCommand) async -> ToolResult
-    func rescheduleEvent(_ cmd: ParsedCommand) async -> ToolResult
-    func updateTask(_ cmd: ParsedCommand) async -> ToolResult
-    func updateEvent(_ cmd: ParsedCommand) async -> ToolResult
-    func planWeek(_ cmd: ParsedCommand) async -> ToolResult
-    func planDay(_ cmd: ParsedCommand) async -> ToolResult
-    func showAgenda(_ cmd: ParsedCommand) async -> ToolResult
-    func moreInfo(_ cmd: ParsedCommand) async -> ToolResult
-    func unknown(_ cmd: ParsedCommand) async -> ToolResult
+    func createTask(_ cmd: ParseResult) async -> ToolResult
+    func createEvent(_ cmd: ParseResult) async -> ToolResult
+    func rescheduleTask(_ cmd: ParseResult) async -> ToolResult
+    func rescheduleEvent(_ cmd: ParseResult) async -> ToolResult
+    func updateTask(_ cmd: ParseResult) async -> ToolResult
+    func updateEvent(_ cmd: ParseResult) async -> ToolResult
+    func planWeek(_ cmd: ParseResult) async -> ToolResult
+    func planDay(_ cmd: ParseResult) async -> ToolResult
+    func showAgenda(_ cmd: ParseResult) async -> ToolResult
+    func moreInfo(_ cmd: ParseResult) async -> ToolResult
+    func unknown(_ cmd: ParseResult) async -> ToolResult
 }
 
 // MARK: - ActionTools
@@ -120,9 +127,11 @@ final class ActionTools: Tools {
 
     // MARK: Tools conformance
 
-    public func planWeek(_ cmd: ParsedCommand) async -> ToolResult {
-        let when = cmd.when ?? cmd.dateRange?.lowerBound ?? Date()
-        let range = weekRange(containing: when)
+    public func planWeek(_ cmd: ParseResult) async -> ToolResult {
+        let dateInterval = cmd.context.dateRange
+        guard let range = dateInterval?.toDateRange() else {
+            return ToolResult(intent: cmd.intent, action: .info(message: "Plan request with no period"), needsDisambiguation: true)
+        }
         do {
             let occ = try await events.fetchOccurrences(in: range)
             return ToolResult(intent: cmd.intent, action: .plannedWeek(range: range, occurrences: occ), message: NSLocalizedString("Here is your week.", comment: ""))
@@ -131,9 +140,11 @@ final class ActionTools: Tools {
         }
     }
 
-    public func planDay(_ cmd: ParsedCommand) async -> ToolResult {
-        let when = cmd.when ?? cmd.dateRange?.lowerBound ?? Date()
-        let range = dayRange(containing: when)
+    public func planDay(_ cmd: ParseResult) async -> ToolResult {
+        let dateInterval = cmd.context.dateRange
+        guard let range = dateInterval?.toDateRange() else {
+            return ToolResult(intent: cmd.intent, action: .info(message: "Plan request with no period"), needsDisambiguation: true)
+        }
         do {
             let occ = try await events.fetchOccurrences(in: range)
             return ToolResult(intent: cmd.intent, action: .plannedDay(range: range, occurrences: occ), message: NSLocalizedString("Here is your day.", comment: ""))
@@ -142,14 +153,10 @@ final class ActionTools: Tools {
         }
     }
 
-    public func showAgenda(_ cmd: ParsedCommand) async -> ToolResult {
-        let range: Range<Date>
-        if let r = cmd.dateRange {
-            range = r
-        } else if let w = cmd.when, let e = cmd.end ?? calendar.date(byAdding: .day, value: 1, to: w) {
-            range = w..<e
-        } else {
-            range = dayRange(containing: Date())
+    public func showAgenda(_ cmd: ParseResult) async -> ToolResult {
+        let dateInterval = cmd.context.dateRange
+        guard let range = dateInterval?.toDateRange() else {
+            return ToolResult(intent: cmd.intent, action: .info(message: "Agenda request with no period"), needsDisambiguation: true)
         }
         do {
             let occ = try await events.fetchOccurrences(in: range)
@@ -159,8 +166,9 @@ final class ActionTools: Tools {
         }
     }
     
-    public func createTask(_ cmd: ParsedCommand) async -> ToolResult {
-        guard let title = cmd.title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else {
+    public func createTask(_ cmd: ParseResult) async -> ToolResult {
+        let title = cmd.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else {
             return ToolResult(
                 intent: cmd.intent,
                 action: .none,
@@ -171,67 +179,61 @@ final class ActionTools: Tools {
         }
 
         // Prefer explicit `when`; otherwise offer alternatives as due-date options.
-        if let when = cmd.when {
-            do {
-                let id = try await tasks.insert(title: title, due: when)
-                return ToolResult(intent: cmd.intent, action: .createdTask(id: id), message: ok("task", title, when))
-            } catch {
-                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
-            }
-        }
-
-        // If the parser produced alternatives with dates, surface them as choices.
-        let options = cmd.alternatives.map { alt in
-            DisambiguationOption(label: alt.label ?? formatDate(alt.date), payload: .resolution(alt))
-        }
-        if !options.isEmpty {
-            return ToolResult(
-                intent: cmd.intent,
-                action: .none,
-                needsDisambiguation: true,
-                options: options,
-                message: NSLocalizedString("Pick a due date for ‘%@’.", comment: "disambig message").replacingOccurrences(of: "%@", with: title)
-            )
-        }
-
-        // No date information at all — create an undated task (if your model supports that)
+        let when = cmd.context.finalDate
         do {
-            let id = try await tasks.insert(title: title, due: nil)
-            return ToolResult(intent: cmd.intent, action: .createdTask(id: id), message: ok("task", title, nil))
+            let id = try await tasks.insert(title: title, due: when)
+            return ToolResult(intent: cmd.intent, action: .createdTask(id: id), message: ok("task", title, when))
         } catch {
             return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
         }
+
+        // If the parser produced alternatives with dates, surface them as choices.
+//        let options = cmd.alternatives.map { alt in
+//            DisambiguationOption(label: alt.label ?? formatDate(alt.date), payload: .resolution(alt))
+//        }
+//        if !options.isEmpty {
+//            return ToolResult(
+//                intent: cmd.intent,
+//                action: .none,
+//                needsDisambiguation: true,
+//                options: options,
+//                message: NSLocalizedString("Pick a due date for ‘%@’.", comment: "disambig message").replacingOccurrences(of: "%@", with: title)
+//            )
+//        }
+
+        // No date information at all — create an undated task (if your model supports that)
+//        do {
+//            let id = try await tasks.insert(title: title, due: nil)
+//            return ToolResult(intent: cmd.intent, action: .createdTask(id: id), message: ok("task", title, nil))
+//        } catch {
+//            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
+//        }
     }
 
-    public func createEvent(_ cmd: ParsedCommand) async -> ToolResult {
-        guard let title = cmd.title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else {
+    public func createEvent(_ cmd: ParseResult) async -> ToolResult {
+        let title = cmd.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else {
             return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: [], message: NSLocalizedString("I need an event title.", comment: ""))
         }
 
         // Determine start/end
-        let start: Date?
-        let end: Date?
+        let start: Date = cmd.context.finalDate
+        var end: Date? = cmd.context.finalDateDuration == nil ? nil : start.addingTimeInterval(cmd.context.finalDateDuration!)
 
-        if let w = cmd.when, let e = cmd.end ?? (cmd.newTime != nil ? cmd.newTime : nil) {
-            start = w
-            end = e
-        } else if let range = cmd.dateRange {
-            start = range.lowerBound
-            end = range.upperBound
-        } else if let w = cmd.when {
-            start = w
-            // If we only have a start, infer a default duration (60m) or from alternative
-            let inferred: TimeInterval = cmd.alternatives.first?.duration ?? 60 * 60
-            end = calendar.date(byAdding: .second, value: Int(inferred), to: w)
-        } else {
-            // Missing time entirely → disambiguation using alternatives
-            let opts = cmd.alternatives.map { alt in
-                DisambiguationOption(label: alt.label ?? labelFor(alt), payload: .resolution(alt))
-            }
-            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("What time should ‘%@’ be?", comment: "").replacingOccurrences(of: "%@", with: title))
+        // If we only have a start, infer a default duration (60m) or from alternative
+        if end == nil {
+            end = calendar.date(byAdding: .second, value: 60 * 60, to: start)
         }
+//        else {
+//            // Missing time entirely → disambiguation using alternatives
+//            let opts = cmd.alternatives.map { alt in
+//                DisambiguationOption(label: alt.label ?? labelFor(alt), payload: .resolution(alt))
+//            }
+//            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("What time should ‘%@’ be?", comment: "").replacingOccurrences(of: "%@", with: title))
+//        }
 
-        guard let s = start, let e = end, s < e else {
+        let s = start
+        guard let e = end, s < e else {
             return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: [], message: NSLocalizedString("I need a valid start and end time.", comment: ""))
         }
 
@@ -247,7 +249,7 @@ final class ActionTools: Tools {
         }
     }
 
-    public func updateTask(_ cmd: ParsedCommand) async -> ToolResult {
+    public func updateTask(_ cmd: ParseResult) async -> ToolResult {
         // Fetch candidates via store and score them by title/time proximity
         do {
             let candidates = try await tasks.fetchAll().compactMap { TaskCandidate(id: $0.id, title: $0.title, due: $0.dueDate) }
@@ -278,9 +280,9 @@ final class ActionTools: Tools {
     }
     
     // NEW: Update Event (non-time edits only)
-    public func updateEvent(_ cmd: ParsedCommand) async -> ToolResult {
+    public func updateEvent(_ cmd: ParseResult) async -> ToolResult {
         // Only non-time fields (currently: title). If nothing to change, bail early.
-        let hasTitleChange = (cmd.title?.isEmpty == false)
+        let hasTitleChange = (cmd.title.isEmpty == false)
         guard hasTitleChange else {
             return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: NSLocalizedString("No non-time changes detected.", comment: ""))
         }
@@ -299,7 +301,7 @@ final class ActionTools: Tools {
                 return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: [], message: NSLocalizedString("I couldn't find a matching event.", comment: ""))
             }
 
-            let newTitle = cmd.title!
+            let newTitle = cmd.title
             let input = buildEditInput(from: one, newStart: one.startDate, newEnd: one.endDate, newTitle: newTitle)
 
             // Scope handling for non-time edits: be conservative.
@@ -325,7 +327,7 @@ final class ActionTools: Tools {
     }
     
     // NEW: Reschedule Task
-    public func rescheduleTask(_ cmd: ParsedCommand) async -> ToolResult {
+    public func rescheduleTask(_ cmd: ParseResult) async -> ToolResult {
         do {
             let candidates = try await tasks.fetchAll().compactMap { TaskCandidate(id: $0.id, title: $0.title, due: $0.dueDate) }
             let scored = bestTaskCandidates(in: candidates, cmd: cmd)
@@ -360,9 +362,9 @@ final class ActionTools: Tools {
     }
 
     // NEW: Reschedule Event (time edits with scope inference)
-    public func rescheduleEvent(_ cmd: ParsedCommand) async -> ToolResult {
+    public func rescheduleEvent(_ cmd: ParseResult) async -> ToolResult {
         do {
-//            let range = searchRange(for: cmd)
+            let range = searchRange(for: cmd)
             let occ = try await events.fetchOccurrences()
             let scored = bestEventCandidates(in: occ, cmd: cmd, titleBias: 0.75)
             let (single, many) = pick(scored, threshold: 0.7)
@@ -419,13 +421,13 @@ final class ActionTools: Tools {
         }
     }
     
-    public func moreInfo(_ cmd: ParsedCommand) async -> ToolResult {
+    public func moreInfo(_ cmd: ParseResult) async -> ToolResult {
         let summary = describe(cmd)
         let opts = buildTimeOptions(from: cmd)
         return ToolResult(intent: cmd.intent, action: .info(message: summary), needsDisambiguation: !opts.isEmpty, options: opts, message: summary)
     }
 
-    public func unknown(_ cmd: ParsedCommand) async -> ToolResult {
+    public func unknown(_ cmd: ParseResult) async -> ToolResult {
         ToolResult(intent: .unknown, action: .none, needsDisambiguation: true, options: buildTimeOptions(from: cmd), message: NSLocalizedString("I couldn't figure that out. Did you mean to create a task or an event?", comment: ""))
     }
 }
@@ -502,8 +504,9 @@ private extension ActionTools {
         return formatDate(alt.date)
     }
 
-    func buildTimeOptions(from cmd: ParsedCommand) -> [DisambiguationOption] {
-        cmd.alternatives.map { DisambiguationOption(label: labelFor($0), payload: .resolution($0)) }
+    func buildTimeOptions(from cmd: ParseResult) -> [DisambiguationOption] {
+//        cmd.alternatives.map { DisambiguationOption(label: labelFor($0), payload: .resolution($0)) }
+        return []
     }
 
     func dayRange(containing date: Date) -> Range<Date> {
@@ -518,27 +521,21 @@ private extension ActionTools {
         return startOfWeek..<end
     }
 
-    func describe(_ cmd: ParsedCommand) -> String {
+    func describe(_ cmd: ParseResult) -> String {
         var bits: [String] = []
         bits.append("intent=\(cmd.intent.rawValue)")
-        if let t = cmd.title { bits.append("title=\(t)") }
-        if let w = cmd.when { bits.append("when=\(formatDate(w))") }
-        if let e = cmd.end { bits.append("end=\(formatDate(e))") }
-        if let r = cmd.dateRange { bits.append("range=\(formatDate(r.lowerBound))–\(formatDate(r.upperBound))") }
-        if let nt = cmd.newTime { bits.append("newTime=\(formatDate(nt))") }
-        bits.append("alts=\(cmd.alternatives.count)")
+        bits.append("title=\(cmd.title)")
+        bits.append("when=\(formatDate(cmd.context.finalDate))")
+        if let d = cmd.context.finalDateDuration { bits.append("duration=\(d)") }
+        if let r = cmd.context.dateRange { bits.append("range=\(formatDate(r.start))–\(formatDate(r.end))") }
+//        bits.append("alts=\(cmd.alternatives.count)")
         return bits.joined(separator: ", ")
     }
 
     // MARK: Smart matching
 
-    func searchRange(for cmd: ParsedCommand, defaultHours: Int = 12) -> Range<Date> {
-        if let r = cmd.dateRange { return r }
-        if let when = cmd.when {
-            let start = calendar.date(byAdding: .hour, value: -defaultHours/2, to: when) ?? when
-            let end = calendar.date(byAdding: .hour, value: defaultHours/2, to: when) ?? when
-            return start..<end
-        }
+    func searchRange(for cmd: ParseResult, defaultHours: Int = 12) -> Range<Date> {
+        if let r = cmd.context.dateRange { return r.toDateRange() }
         return dayRange(containing: Date())
     }
 
@@ -554,8 +551,8 @@ private extension ActionTools {
         return t.title
     }
 
-    func bestEventCandidates(in occs: [EventOccurrence], cmd: ParsedCommand, top: Int = 5, titleBias: Double = 0.65) -> [Scored<EventOccurrence>] {
-        let anch = cmd.when ?? cmd.dateRange?.lowerBound
+    func bestEventCandidates(in occs: [EventOccurrence], cmd: ParseResult, top: Int = 5, titleBias: Double = 0.65) -> [Scored<EventOccurrence>] {
+        let anch = cmd.context.dateRange?.start ?? cmd.context.finalDate
         let q = cmd.title
         let scored = occs.map { occ -> Scored<EventOccurrence> in
             let ts = titleScore(q, occ.title)
@@ -566,8 +563,8 @@ private extension ActionTools {
         return scored.sorted { $0.score > $1.score }.prefix(top).map { $0 }
     }
 
-    func bestTaskCandidates(in tasks: [TaskCandidate], cmd: ParsedCommand, top: Int = 5, titleBias: Double = 0.75) -> [Scored<TaskCandidate>] {
-        let anch = cmd.when ?? cmd.dateRange?.lowerBound
+    func bestTaskCandidates(in tasks: [TaskCandidate], cmd: ParseResult, top: Int = 5, titleBias: Double = 0.75) -> [Scored<TaskCandidate>] {
+        let anch = cmd.context.dateRange?.start ?? cmd.context.finalDate
         let q = cmd.title
         let scored = tasks.map { t -> Scored<TaskCandidate> in
             let ts = titleScore(q, t.title)
@@ -587,24 +584,15 @@ private extension ActionTools {
 
     // MARK: Timing derivation & scope inference
 
-    func deriveNewDue(from cmd: ParsedCommand) -> Date? {
-        if let r = cmd.dateRange { return r.lowerBound }
-        if let nt = cmd.newTime { return nt }
-        if let w = cmd.when { return w }
-        return cmd.alternatives.first?.date
+    func deriveNewDue(from cmd: ParseResult) -> Date? {
+        if let r = cmd.context.dateRange { return r.start }
+        return cmd.context.finalDate
     }
 
-    func timingFrom(_ cmd: ParsedCommand, current: EventOccurrence) -> (Date, Date)? {
-        if let nt = cmd.newTime {
-            let dur = current.endDate.timeIntervalSince(current.startDate)
-            return (nt, nt.addingTimeInterval(dur))
-        }
-        if let r = cmd.dateRange { return (r.lowerBound, r.upperBound) }
-        if let w = cmd.when, let e = cmd.end { return (w, e) }
-        if let alt = cmd.alternatives.first {
-            let d = alt.duration ?? current.endDate.timeIntervalSince(current.startDate)
-            return (alt.date, alt.date.addingTimeInterval(d))
-        }
+    func timingFrom(_ cmd: ParseResult, current: EventOccurrence) -> (Date, Date)? {
+        if let r = cmd.context.dateRange { return (r.start, r.end) }
+        let w = cmd.context.finalDate
+        if let d = cmd.context.finalDateDuration { return (w, w.addingTimeInterval(d)) }
         return nil
     }
 
