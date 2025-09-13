@@ -29,11 +29,12 @@ final class TemporalComposerTests: XCTestCase {
 
     func testNextWeekAt11() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("add event graduation ceremony next week at 11:00", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("add event graduation ceremony next week at 11:00", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         // Monday Sep 15, 11:00
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 18)
         XCTAssertEqual(c.h, 11); XCTAssertEqual(c.min, 0)
@@ -41,233 +42,244 @@ final class TemporalComposerTests: XCTestCase {
 
     func testNextWeekFri1100() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("rebook team meeting for next week Fri 11:00", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("rebook team meeting for next week Fri 11:00", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 19)
         XCTAssertEqual(c.h, 11); XCTAssertEqual(c.min, 0)
     }
 
     func testNextFriday3pm() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("move team meeting to next Friday 3pm", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("move team meeting to next Friday 3pm", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 19)
         XCTAssertEqual(c.h, 15); XCTAssertEqual(c.min, 0)
     }
 
     func testNextWeekNoon() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("move oil change to next week noon", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("move oil change to next week noon", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 18)
         XCTAssertEqual(c.h, 12)
     }
 
     func testSpecificDateWithTime() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("push dentist appointment to october 15th 7pm", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("push dentist appointment to october 15th 7pm", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 10); XCTAssertEqual(c.d, 15)
         XCTAssertEqual(c.h, 19)
     }
 
     func testConflictTimesRightmostWins() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("dinner with parents tonight 8pm at 7pm", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("dinner with parents tonight 8pm at 7pm", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.h, 19) // 7pm
     }
 
     func testMonthFromNow() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("a month from now 11am", now: now)
+        let result = composer.parse("a month from now 11am", now: now, pack: pack)
         // Offsets are not fully applied in this compact example; we at least parse time and day scope == today.
         // For demonstration, expect 11:00 today or we can relax by checking time.
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.h, 11)
     }
 
     func testNextTue() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("change write report task to next tue", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("change write report task to next tue", now: now, pack: pack)
+        let c = components(result.context.finalDate)
         let referenceComp = components(now)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 16) // Tue next week
         XCTAssertEqual(c.h, referenceComp.h) // morning anchor
     }
 
     func testWeekendAnchor() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("push back do laundry to weekend", now: now)
+        let result = composer.parse("push back do laundry to weekend", now: now, pack: pack)
+        let startComp = components(result.context.dateRange!.start)
+        let endComp = components(result.context.dateRange!.end)
         
-        switch r.resolution! {
-        case .instant(_, _, _, _):
-            return XCTFail("Return range because there is no specifics")
-        case .range(let dateInterval, _, _):
-            let compStart = components(dateInterval.start)
-            let compEnd = components(dateInterval.end)
-            
-            XCTAssertEqual(compStart.y, 2025); XCTAssertEqual(compStart.m, 9); XCTAssertEqual(compStart.d, 13)
-            XCTAssertEqual(compStart.h, 00); XCTAssertEqual(compStart.min, 0)
-            XCTAssertEqual(compEnd.y, 2025); XCTAssertEqual(compEnd.m, 9); XCTAssertEqual(compEnd.d, 14)
-            XCTAssertEqual(compEnd.h, 23); XCTAssertEqual(compEnd.min, 59)
-        }
+        XCTAssertTrue(result.context.isRangeQuery)
+        XCTAssertEqual(startComp.y, 2025); XCTAssertEqual(startComp.m, 9); XCTAssertEqual(startComp.d, 13)
+        XCTAssertEqual(startComp.h, 00); XCTAssertEqual(startComp.min, 0)
+        XCTAssertEqual(endComp.y, 2025); XCTAssertEqual(endComp.m, 9); XCTAssertEqual(endComp.d, 14)
+        XCTAssertEqual(endComp.h, 23); XCTAssertEqual(endComp.min, 59)
     }
 
     func testNextThursdayMorning() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("show agenda for next Thursday morning", now: now)
-        switch r.resolution! {
-        case .instant(_, _, _, _):
-            return XCTFail("Expected range filter for view intent")
-        case .range(let dateInterval, _, _):
-            let compStart = components(dateInterval.start)
-            let compEnd = components(dateInterval.end)
-            
-            XCTAssertEqual(r.intent, .view)
-            XCTAssertEqual(compStart.y, 2025); XCTAssertEqual(compStart.m, 9); XCTAssertEqual(compStart.d, 18)
-            XCTAssertEqual(compStart.h, 6); XCTAssertEqual(compStart.min, 0)
-            XCTAssertEqual(compEnd.y, 2025); XCTAssertEqual(compEnd.m, 9); XCTAssertEqual(compEnd.d, 18)
-            XCTAssertEqual(compEnd.h, 11); XCTAssertEqual(compEnd.min, 59)
-        }
+        let result = composer.parse("show agenda for next Thursday morning", now: now, pack: pack)
+        let startComp = components(result.context.dateRange!.start)
+        let endComp = components(result.context.dateRange!.end)
+        
+        XCTAssertTrue(result.context.isRangeQuery)
+        XCTAssertEqual(result.intent, .view)
+        XCTAssertEqual(startComp.y, 2025); XCTAssertEqual(startComp.m, 9); XCTAssertEqual(startComp.d, 18)
+        XCTAssertEqual(startComp.h, 6); XCTAssertEqual(startComp.min, 0)
+        XCTAssertEqual(endComp.y, 2025); XCTAssertEqual(endComp.m, 9); XCTAssertEqual(endComp.d, 18)
+        XCTAssertEqual(endComp.h, 11); XCTAssertEqual(endComp.min, 59)
     }
 
     func testRelativeDayAndPartOfDay() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("schedule client meeting for 10am tomorrow", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("schedule client meeting for 10am tomorrow", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.d, 12) // tomorrow
         XCTAssertEqual(c.h, 10)
     }
     
     func testShowAgendNextWeek() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("what is my agenda for next week", now: now)
-        switch r.resolution! {
-        case .instant(_, _, _, _):
-            return XCTFail("Expected range filter for view intent")
-        case .range(let dateInterval, _, _):
-            let compStart = components(dateInterval.start)
-            let compEnd = components(dateInterval.end)
-            
-            XCTAssertEqual(r.intent, .view)
-            XCTAssertEqual(compStart.y, 2025); XCTAssertEqual(compStart.m, 9); XCTAssertEqual(compStart.d, 15)
-            XCTAssertEqual(compStart.h, 0); XCTAssertEqual(compStart.min, 0)
-            XCTAssertEqual(compEnd.y, 2025); XCTAssertEqual(compEnd.m, 9); XCTAssertEqual(compEnd.d, 21)
-            XCTAssertEqual(compEnd.h, 23); XCTAssertEqual(compEnd.min, 59)
-        }
+        let result = composer.parse("what is my agenda for next week", now: now, pack: pack)
+        let startComp = components(result.context.dateRange!.start)
+        let endComp = components(result.context.dateRange!.end)
+        
+        XCTAssertTrue(result.context.isRangeQuery)
+        XCTAssertEqual(result.intent, .view)
+        XCTAssertEqual(startComp.y, 2025); XCTAssertEqual(startComp.m, 9); XCTAssertEqual(startComp.d, 15)
+        XCTAssertEqual(startComp.h, 0); XCTAssertEqual(startComp.min, 0)
+        XCTAssertEqual(endComp.y, 2025); XCTAssertEqual(endComp.m, 9); XCTAssertEqual(endComp.d, 21)
+        XCTAssertEqual(endComp.h, 23); XCTAssertEqual(endComp.min, 59)
     }
 
     // --- Portuguese (BR) ---
     func testPT_NextWeekFri1100() {
         let pack = PortugueseBRPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("remarcar reunião para próxima semana sex 11:00", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
-        // Next week's Friday: 2025-09-19 11:00
+        let result = composer.parse("remarcar reunião para próxima semana sex 11:00", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)        // Next week's Friday: 2025-09-19 11:00
         XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 19)
         XCTAssertEqual(c.h, 11)
     }
 
     func testPT_TerceaAs10() {
         let pack = PortugueseBRPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("marcar café terça às 10h", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
-        // Next upcoming Tuesday from Sep 11, 2025 (Thu) is Sep 16
+        let result = composer.parse("marcar café terça às 10h", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)        // Next upcoming Tuesday from Sep 11, 2025 (Thu) is Sep 16
         XCTAssertEqual(c.d, 16); XCTAssertEqual(c.h, 10)
     }
 
     // --- Spanish ---
     func testES_NextWeekFri1100() {
         let pack = SpanishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("reprogramar reunión para la próxima semana vie 11:00", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("reprogramar reunión para la próxima semana vie 11:00", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.d, 19); XCTAssertEqual(c.h, 11)
     }
 
     func testES_MartesALas10() {
         let pack = SpanishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("programar café para el martes a las 10:00", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail("No instant") }
-        let c = components(date)
+        let result = composer.parse("programar café para el martes a las 10:00", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.d, 16); XCTAssertEqual(c.h, 10)
     }
     
     func testInlineWeekdayTimeSingle() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("schedule coffee on Tuesday 10:00", now: now)
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail() }
-        let c = components(date)
+        let result = composer.parse("schedule coffee on Tuesday 10:00", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.d, 16); XCTAssertEqual(c.h, 10)
     }
 
     func testInlineWeekdayTimeRange() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("block Wed 09:00-11:30", now: now)
+        let result = composer.parse("block Wed 09:00-11:30", now: now, pack: pack)
         // Verify timeRange was recognized and start time used as anchor
-        guard case .instant(let date, _, _, _) = r.resolution! else { return XCTFail() }
-        let c = components(date)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         XCTAssertEqual(c.h, 9); XCTAssertEqual(c.min, 0)
     }
     
     func testOrdinalDayEN() {
         let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("display calendar for the 24th", now: now)
+        let result = composer.parse("display calendar for the 24th", now: now, pack: pack)
+        let c = components(result.context.finalDate)
+        
+        XCTAssertFalse(result.context.isRangeQuery)
         // Should resolve to 24 of this month (or next if past)
-        XCTAssertNotNil(r.resolution)
+        XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 09); XCTAssertEqual(c.d, 24);
+        XCTAssertEqual(c.h, 10); XCTAssertEqual(c.min, 0); // same time as reference
     }
 
     func testOrdinalDayPT() {
         let pack = PortugueseBRPack(calendar: calendarSP())
-        let composer = TemporalComposer(pack: pack)
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let r = composer.parse("mostrar agenda do dia 11º", now: now)
-        XCTAssertNotNil(r.resolution)
+        let result = composer.parse("mostrar agenda do dia 11º", now: now, pack: pack)
+        let comp = components(result.context.finalDate)
+        
+        // This case is dependent on the intent to have context
+        // the interpreter do not about the intent so it returns
+        // only a final date.
+        // The business logic should check the intent and create the range
+        XCTAssertFalse(result.context.isRangeQuery)
+        XCTAssertEqual(comp.y, 2025); XCTAssertEqual(comp.m, 9); XCTAssertEqual(comp.d, 11);
+        XCTAssertEqual(comp.h, 10); XCTAssertEqual(comp.min, 0);
     }
 }

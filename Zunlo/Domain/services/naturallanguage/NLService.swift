@@ -14,32 +14,44 @@ public protocol NLProcessing {
 }
 
 public final class NLService: NLProcessing {
-    private let parser: CommandParser
+    private let parser: DateParser
     private let tool: Tools
     private let engine: IntentEngine
+    private let calendar: Calendar
     
-    public init(parser: CommandParser, tool: Tools, engine: IntentEngine) {
+    public init(parser: DateParser, tool: Tools, engine: IntentEngine, calendar: Calendar) {
         self.parser = parser
         self.tool = tool
         self.engine = engine
+        self.calendar = calendar
     }
     
     public func process(text: String) async throws -> [ToolResult] {
-        var cal = Calendar.appDefault
-        cal.timeZone = .current
-        log("raw text: \(text), calendar: \(cal)")
+        
+        // Language
         let language = engine.detectLanguage(text)
-        log("language: \(language)")
+        
+        // Build a calendar localized to the detected language
+        var cal = calendar
+        cal.locale = Locale(identifier: language.rawValue)
+
+        // Build language packs based on calendar
+        let packs: [DateLanguagePack] = language.rawValue == "en" ? [EnglishPack(calendar: cal)] : [PortugueseBRPack(calendar: cal)]
+        log("raw text: \(text), calendar: \(cal)")
+        
+        // Preprocess input to detect multiple clauses
         let splittedClauses = InputSplitter().split(text, language: language)
         log("splitted clauses: \(splittedClauses)")
         
         var results: [ToolResult] = []
         for clause in splittedClauses {
-            let parsed = parser.parse(clause.text, now: Date(), calendar: cal)
-            log("parsed command: \(parsed)")
-            let result = try await execute(parsed, now: Date(), calendar: cal)
-            log("command result: \(result)")
-            results.append(result)
+            for pack in packs {
+                let parsed = parser.parse(clause.text, now: Date(), pack: pack)
+                log("parsed command: \(parsed)")
+                let result = try await execute(parsed, now: Date(), calendar: cal)
+                log("command result: \(result)")
+                results.append(result)
+            }
         }
         return results
     }

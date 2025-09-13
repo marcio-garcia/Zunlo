@@ -281,16 +281,8 @@ public class TemporalTokenInterpreter {
         // Calculate days to add
         var daysToAdd = calendarWeekday - currentWeekday
         if weekOffset > 0 {
-//            if daysToAdd <= 0 {
-//                daysToAdd += 7
-//            }
-//            daysToAdd += (weekOffset - 1) * 7
             daysToAdd += weekOffset * 7
         } else if weekOffset < 0 {
-//            if daysToAdd >= 0 {
-//                daysToAdd -= 7
-//            }
-//            daysToAdd += (weekOffset + 1) * 7
             daysToAdd += weekOffset * 7
         } else if daysToAdd < 0 {
             daysToAdd += 7 // This week, but the day hasn't passed yet

@@ -80,11 +80,11 @@ final class DefaultViewFactory: ViewFactory {
 //        }
         
         let engine = IntentEngine.bundled()
-        let parser = CommandParser(engine: engine)
+        let parser = TemporalComposer(prefs: Preferences(calendar: calendar))
         let tools = ActionTools(events: appState.eventRepository!,
                                 tasks: appState.userTaskRepository!,
                                 calendar: calendar)
-        let nlpService = NLService(parser: parser, tool: tools, engine: engine)
+        let nlpService = NLService(parser: parser, tool: tools, engine: engine, calendar: calendar)
         
         let aiChatEngine = ChatEngine(
             conversationId: cid,

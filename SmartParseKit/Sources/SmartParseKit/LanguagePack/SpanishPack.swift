@@ -122,13 +122,57 @@ public struct SpanishPack: DateLanguagePack {
     }
 
     // Intents
-    public func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(crear|agregar|programar|reservar|establecer)\b"#) }
-    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reprogramar|reagendar|posponer|aplazar|mover|cambiar|modificar)\b"#) }
-    public func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(eliminar|quitar|cancelar|no\s+programar|no\s+agendar)\b"#) }
+//    public func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(crear|agregar|programar|reservar|establecer)\b"#) }
+//    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reprogramar|reagendar|posponer|aplazar|mover|cambiar|modificar)\b"#) }
+//    public func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(eliminar|quitar|cancelar|no\s+programar|no\s+agendar)\b"#) }
     public func intentViewRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(mostrar|ver|mi\s+agenda|agenda|mi\s+calendario|qué\s+hay|que\s+hay)\b"#) }
     public func intentPlanRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(planificar|planear|organizar|estructurar|mapear)\b"#) }
     public func timePivotRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:a|a\s+las|de|desde|hasta|por|para)\b"#) }
 
+    // Enhanced create patterns
+    public func intentCreateTaskRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(añadir|crear|hacer|configurar|anotar)\s+(?:una?\s+)?(?:nueva?\s+)?(tarea|todo|recordatorio|nota|asignación|elemento\s+de\s+acción|actividad)\b"#)
+    }
+
+    public func intentCreateEventRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(programar|agendar|añadir|crear|configurar|reservar)\s+(?:una?\s+)?(?:nueva?\s+)?(reunión|evento|cita|llamada|almuerzo|cena|conferencia|sesión|encuentro)\b"#)
+    }
+
+    // Enhanced cancel patterns
+    public func intentCancelTaskRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(eliminar|borrar|cancelar|completar|terminar|marcar\s+como\s+completada?|finalizar)\s+(?:la\s+)?(?:esta\s+)?(tarea|todo|recordatorio|nota|actividad|elemento)\b"#)
+    }
+
+    public func intentCancelEventRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(cancelar|eliminar|borrar|anular)\s+(?:la\s+)?(?:esta\s+)?(reunión|evento|cita|llamada|almuerzo|cena|conferencia|sesión|encuentro)\b"#)
+    }
+
+    // Base intent patterns
+    public func intentCreateRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(crear|añadir|programar|agendar|configurar|reservar)\b"#)
+    }
+
+    public func intentRescheduleRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(reprogramar|reagendar|posponer|aplazar|retrasar|mover|cambiar|modificar|transferir)\b"#)
+    }
+
+    public func intentCancelRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(eliminar|borrar|cancelar|no\s+programar|no\s+agendar|anular)\b"#)
+    }
+
+    public func intentUpdateRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(actualizar|editar|modificar|cambiar\s+detalles|alterar)\b"#)
+    }
+
+    // Keyword detection
+    public func taskKeywordsRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(tarea|todo|recordatorio|nota|asignación|elemento\s+de\s+acción|trabajo|actividad)\b"#)
+    }
+
+    public func eventKeywordsRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(reunión|evento|cita|llamada|almuerzo|cena|conferencia|sesión|encuentro|fiesta|ceremonia)\b"#)
+    }
+    
     // Optionals
     public func weekendRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"(?ix)\b(?:(?:este|esta|pr[óo]ximo|siguiente|que\s+viene)\s+)?fin\s+de\s+semana\b"#)

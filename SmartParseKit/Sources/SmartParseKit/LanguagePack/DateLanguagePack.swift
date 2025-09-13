@@ -25,12 +25,20 @@ public protocol DateLanguagePack {
     func commandPrefixRegex() -> NSRegularExpression
 
     // Intent regexes
-    func intentCreateRegex() -> NSRegularExpression
-    func intentRescheduleRegex() -> NSRegularExpression
-    func intentCancelRegex() -> NSRegularExpression
+//    func intentCreateRegex() -> NSRegularExpression
+//    func intentRescheduleRegex() -> NSRegularExpression
+//    func intentCancelRegex() -> NSRegularExpression
     func intentViewRegex() -> NSRegularExpression
     func intentPlanRegex() -> NSRegularExpression
 
+    func intentCreateTaskRegex() -> NSRegularExpression
+    func intentCreateEventRegex() -> NSRegularExpression
+    func intentCancelTaskRegex() -> NSRegularExpression
+    func intentCancelEventRegex() -> NSRegularExpression
+    func intentUpdateRegex() -> NSRegularExpression
+    func taskKeywordsRegex() -> NSRegularExpression
+    func eventKeywordsRegex() -> NSRegularExpression
+    
     // Pivot used to prefer the rightmost time after these tokens
     func timePivotRegex() -> NSRegularExpression
 

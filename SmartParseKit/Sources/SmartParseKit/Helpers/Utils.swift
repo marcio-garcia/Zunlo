@@ -70,69 +70,135 @@ func appendUnique(_ arr: inout [Match], _ m: Match, text: String) {
     arr.append(m)
 }
 
-/// Calculates the elapsed seconds between two "time-of-day" DateComponents
-/// (e.g., hour/minute/second), anchored to a specific day in a given Calendar.
-/// If the computed `end` time is earlier than `start`, `end` is rolled to the next day.
+import Foundation
+
+/// Elapsed seconds between two DateComponents representing times of day,
+/// respecting any explicit **date** (year/month/day) present in either component.
+/// - If both `start` and `end` include Y/M/D, those dates are used as-is (no rolling).
+/// - If only one includes Y/M/D, that date anchors **both** times.
+/// - If neither includes Y/M/D, both are anchored to `baseDay`.
+/// - If at least one side lacked a date and the computed `end` is earlier than `start`,
+///   `end` is rolled forward by 1 day when `rollEndToNextDayWhenEarlier` is `true`.
+///
+/// DST-safe: uses Calendar APIs that handle nonexistent/ambiguous times (spring-forward / fall-back).
+///
+/// Missing time fields default to 0.
+/// Validation ensures hour/minute/second/nanosecond are in range.
+/// Uses the provided `calendar` (and its `timeZone`) consistently.
 ///
 /// - Parameters:
-///   - start: The starting time as DateComponents (hour/minute/second/nanosecond). Missing parts default to 0.
-///   - end:   The ending time as DateComponents (hour/minute/second/nanosecond). Missing parts default to 0.
-///   - day:   The day to anchor both times on (defaults to today).
-///   - calendar: The calendar to use (timezone-sensitive). Defaults to `.current`.
-///   - rollEndToNextDayWhenEarlier: If true, and `end < start`, moves `end` forward by 1 day. Defaults to true.
-/// - Returns: The elapsed time in seconds as `TimeInterval`.
-/// - Throws:  If any provided components are outside valid ranges (e.g., hour: 0...23).
+///   - start: Start time as DateComponents (optionally including Y/M/D).
+///   - end: End time as DateComponents (optionally including Y/M/D).
+///   - baseDay: Day to anchor when a side lacks Y/M/D (defaults to `Date()`).
+///   - calendar: Calendar to use (timezone-sensitive). Defaults to `.current`.
+///   - rollEndToNextDayWhenEarlier: If true, rolls `end` to the next day when earlier than `start`
+///     and **at least one** side lacked Y/M/D. Defaults to true.
+/// - Returns: Elapsed seconds as `TimeInterval`.
+/// - Throws: `NSError` if components are invalid or an impossible date is formed.
 public func secondsBetween(
     _ start: DateComponents,
     _ end: DateComponents,
-    on day: Date = Date(),
+    baseDay: Date = Date(),
     calendar: Calendar = .current,
     rollEndToNextDayWhenEarlier: Bool = true
 ) throws -> TimeInterval {
 
+    // MARK: - Validation
     func validate(_ c: DateComponents) throws {
-        if let h = c.hour, !(0...23).contains(h) { throw NSError(domain: "TimeOfDay", code: 1, userInfo: [NSLocalizedDescriptionKey: "hour must be 0...23"]) }
-        if let m = c.minute, !(0...59).contains(m) { throw NSError(domain: "TimeOfDay", code: 2, userInfo: [NSLocalizedDescriptionKey: "minute must be 0...59"]) }
-        if let s = c.second, !(0...59).contains(s) { throw NSError(domain: "TimeOfDay", code: 3, userInfo: [NSLocalizedDescriptionKey: "second must be 0...59"]) }
+        if let h = c.hour, !(0...23).contains(h) {
+            throw NSError(domain: "TimeOfDay", code: 1, userInfo: [NSLocalizedDescriptionKey: "hour must be 0...23"])
+        }
+        if let m = c.minute, !(0...59).contains(m) {
+            throw NSError(domain: "TimeOfDay", code: 2, userInfo: [NSLocalizedDescriptionKey: "minute must be 0...59"])
+        }
+        if let s = c.second, !(0...59).contains(s) {
+            throw NSError(domain: "TimeOfDay", code: 3, userInfo: [NSLocalizedDescriptionKey: "second must be 0...59"])
+        }
         if let ns = c.nanosecond, !(0...999_999_999).contains(ns) {
             throw NSError(domain: "TimeOfDay", code: 4, userInfo: [NSLocalizedDescriptionKey: "nanosecond must be 0...999,999,999"])
         }
     }
-
     try validate(start)
     try validate(end)
 
-    let baseDay = calendar.startOfDay(for: day)
-
-    // Build a safe "anchored" date for a time-of-day on baseDay, handling DST gaps/duplicates.
-    func anchoredDate(for time: DateComponents) -> Date {
-        var t = DateComponents()
-        t.hour = time.hour ?? 0
-        t.minute = time.minute ?? 0
-        t.second = time.second ?? 0
-        t.nanosecond = time.nanosecond ?? 0
-
-        // Use nextDate to respect DST: .nextTime moves through nonexistent times,
-        // .first picks the first instance for repeated times (fall-back).
-        if let d = calendar.nextDate(
-            after: baseDay,
-            matching: t,
-            matchingPolicy: .nextTime,
-            repeatedTimePolicy: .first,
-            direction: .forward
-        ) {
-            return d
-        }
-
-        // Fallback should basically never happen with valid components.
-        return baseDay
+    // MARK: - Helpers
+    func hasYMD(_ c: DateComponents) -> Bool {
+        c.year != nil && c.month != nil && c.day != nil
     }
 
-    let startDate = anchoredDate(for: start)
-    var endDate = anchoredDate(for: end)
+    func startOfDay(fromY y: Int, m: Int, d: Int) throws -> Date {
+        var ymd = DateComponents()
+        ymd.year = y; ymd.month = m; ymd.day = d
+        let midnight = calendar.date(from: ymd)
+        guard let day = midnight.map({ calendar.startOfDay(for: $0) }) else {
+            throw NSError(domain: "TimeOfDay", code: 5, userInfo: [NSLocalizedDescriptionKey: "invalid Y/M/D in components"])
+        }
+        return day
+    }
 
-    if rollEndToNextDayWhenEarlier, endDate < startDate {
-        endDate = calendar.date(byAdding: .day, value: 1, to: endDate)!
+    // Build an anchored date on a given "day", setting hour/minute/second/nanosecond safely w.r.t. DST.
+    func setTimeOfDay(_ time: DateComponents, on day: Date) throws -> Date {
+        let h = time.hour ?? 0
+        let m = time.minute ?? 0
+        let s = time.second ?? 0
+        // Set H/M/S on that specific day. Use policies to handle nonexistent/ambiguous times.
+        guard var result = calendar.date(bySettingHour: h,
+                                         minute: m,
+                                         second: s,
+                                         of: day,
+                                         matchingPolicy: .nextTime,
+                                         repeatedTimePolicy: .first,
+                                         direction: .forward) else {
+            // Extremely unlikely with valid inputs, but be defensive.
+            throw NSError(domain: "TimeOfDay", code: 6, userInfo: [NSLocalizedDescriptionKey: "failed to set time on day"])
+        }
+        if let ns = time.nanosecond {
+            // Set nanoseconds precisely if provided.
+            result = calendar.date(bySetting: .nanosecond, value: ns, of: result) ?? result.addingTimeInterval(Double(ns) / 1e9)
+        }
+        return result
+    }
+
+    // MARK: - Determine anchor days respecting provided dates
+    let startHasDate = hasYMD(start)
+    let endHasDate   = hasYMD(end)
+
+    let baseDayStart = calendar.startOfDay(for: baseDay)
+
+    let startAnchorDay: Date = {
+        if startHasDate, let y = start.year, let m = start.month, let d = start.day {
+            return (try? startOfDay(fromY: y, m: m, d: d)) ?? baseDayStart
+        } else if endHasDate, let y = end.year, let m = end.month, let d = end.day {
+            // Anchor start to end's date if only end has Y/M/D
+            return (try? startOfDay(fromY: y, m: m, d: d)) ?? baseDayStart
+        } else {
+            // Neither has a date, use baseDay
+            return baseDayStart
+        }
+    }()
+
+    let endAnchorDay: Date = {
+        if endHasDate, let y = end.year, let m = end.month, let d = end.day {
+            return (try? startOfDay(fromY: y, m: m, d: d)) ?? baseDayStart
+        } else if startHasDate, let y = start.year, let m = start.month, let d = start.day {
+            // Anchor end to start's date if only start has Y/M/D
+            return (try? startOfDay(fromY: y, m: m, d: d)) ?? baseDayStart
+        } else {
+            // Neither has a date, use baseDay
+            return baseDayStart
+        }
+    }()
+
+    // MARK: - Build concrete Dates
+    let startDate = try setTimeOfDay(start, on: startAnchorDay)
+    var endDate   = try setTimeOfDay(end,   on: endAnchorDay)
+
+    // Only roll if at least one side lacked Y/M/D (i.e., the "same-day unless earlier" semantics)
+    if rollEndToNextDayWhenEarlier, (!startHasDate || !endHasDate), endDate < startDate {
+        guard let rolled = calendar.date(byAdding: .day, value: 1, to: endDate) else {
+            throw NSError(domain: "TimeOfDay", code: 7, userInfo: [NSLocalizedDescriptionKey: "failed to roll end to next day"])
+        }
+        endDate = rolled
     }
 
     return endDate.timeIntervalSince(startDate)

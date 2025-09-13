@@ -3,22 +3,63 @@ import Foundation
 
 // MARK: - Public API
 
-public enum Intent { case create, reschedule, cancel, view, plan, unknown }
+//public enum Intent { case create, reschedule, cancel, view, plan, unknown }
+
+public enum Intent {
+    case createTask
+    case createEvent
+    case rescheduleTask
+    case rescheduleEvent
+    case updateTask
+    case updateEvent
+    case cancelTask
+    case cancelEvent
+    case view
+    case plan
+    case unknown
+}
+
+//public enum Intent: String {
+//    case createTask         = "create_task"
+//    case createEvent        = "create_event"
+//    case rescheduleTask     = "reschedule_task"
+//    case rescheduleEvent    = "reschedule_event"
+//    case updateTask         = "update_task"
+//    case updateEvent        = "update_event"
+//    case planWeek           = "plan_week"
+//    case planDay            = "plan_day"
+//    case showAgenda         = "show_agenda"
+//    case moreInfo           = "more_info"
+//    case unknown
+//}
 
 public struct Preferences {
-    public var timeZone: TimeZone = TimeZone(identifier: "America/Sao_Paulo")!
-    public var startOfWeek: Int = 2 // Monday
-    public var anchors: [PartOfDay: DateComponents] = [
-        .morning: .init(hour: 9),
-        .afternoon: .init(hour: 15),
-        .evening: .init(hour: 19),
-        .night: .init(hour: 20),
-        .noon: .init(hour: 12),
-        .midnight: .init(hour: 0),
-    ]
-    public var nextWeekPolicyCalendarWeek: Bool = true
-    public var weekendAnchorHour: Int = 10 // For create/reschedule when only "weekend" is given
-    public init() {}
+    public var calendar: Calendar
+    public var startOfWeek: Int
+    public var anchors: [PartOfDay: DateComponents]
+    public var nextWeekPolicyCalendarWeek: Bool
+    public var weekendAnchorHour: Int
+    
+    public init(
+        calendar: Calendar = .current,
+        startOfWeek: Int = 2, // Monday
+        anchors: [PartOfDay : DateComponents] = [
+            .morning: .init(hour: 9),
+            .afternoon: .init(hour: 15),
+            .evening: .init(hour: 19),
+            .night: .init(hour: 20),
+            .noon: .init(hour: 12),
+            .midnight: .init(hour: 0),],
+        nextWeekPolicyCalendarWeek: Bool = true,
+        weekendAnchorHour: Int = 10 // For create/reschedule when only "weekend" is given
+    ) {
+        self.calendar = calendar
+        self.startOfWeek = startOfWeek
+        self.anchors = anchors
+        self.nextWeekPolicyCalendarWeek = nextWeekPolicyCalendarWeek
+        self.weekendAnchorHour = weekendAnchorHour
+    }
+
 }
 
 public struct TemporalToken {
@@ -64,34 +105,34 @@ public enum ResolvedTemporal {
 public struct ParseResult {
     public let title: String
     public let intent: Intent
-    public let resolution: ResolvedTemporal?
-    public let filters: [ResolvedTemporal]
-    public let ignoredNotes: [String]
+    public let context: TemporalContext
+}
+
+public protocol DateParser {
+    func parse(_ text: String, now: Date, pack: DateLanguagePack) -> ParseResult
 }
 
 // MARK: - Composer
 
-public final class TemporalComposer {
-    private let pack: DateLanguagePack
+public final class TemporalComposer: DateParser {
     private var prefs: Preferences
     private var calendar: Calendar
 
-    public init(pack: DateLanguagePack, prefs: Preferences = Preferences()) {
-        self.pack = pack
+    public init(prefs: Preferences = Preferences()) {
         self.prefs = prefs
-        var cal = pack.calendar
-        cal.timeZone = prefs.timeZone
-        cal.firstWeekday = prefs.startOfWeek
-        self.calendar = cal
+        self.calendar = prefs.calendar
+        self.calendar.firstWeekday = prefs.startOfWeek
     }
 
     // Entry point
-    public func parse(_ text: String, now: Date, originalEvent: Date? = nil) -> ParseResult {
-        let (clean, title, intent) = preprocess(text)
-        let tokens = detectTokens(in: clean, now: now)
+    public func parse(_ text: String, now: Date, pack: DateLanguagePack) -> ParseResult {
+        let (clean, title) = preprocess(text, pack: pack)
+        let tokens = detectTokens(in: clean, now: now, pack: pack)
 //        let (resolution, filters, ignored) = compose(tokens: tokens, text: clean, intent: intent, now: now, originalEvent: originalEvent)
         let interpreter = TemporalTokenInterpreter(calendar: calendar, timeZone: calendar.timeZone, referenceDate: now)
         let context = interpreter.interpret(tokens)
+        
+        let intent = detectIntent(text, pack: pack)
         
         var resolution: ResolvedTemporal
         var filters: [ResolvedTemporal] = []
@@ -102,13 +143,12 @@ public final class TemporalComposer {
             resolution = .instant(context.finalDate, confidence: Double(context.confidence), notes: context.conflicts, duration: context.finalDateDuration)
         }
         
-        return ParseResult(title: title, intent: intent, resolution: resolution, filters: filters, ignoredNotes: [])
+        return ParseResult(title: title, intent: intent, context: context)
     }
 
     // MARK: - Preprocess
 
-    private func preprocess(_ s: String) -> (clean: String, title: String, intent: Intent) {
-        let intent = detectIntent(s)
+    private func preprocess(_ s: String, pack: DateLanguagePack) -> (clean: String, title: String) {
         let prefixRe = pack.commandPrefixRegex()
         let ns = s as NSString
         var clean = s
@@ -126,22 +166,22 @@ public final class TemporalComposer {
                 title = String(clean.dropFirst(firstWord.count)).trimmingCharacters(in: .whitespaces)
             }
         }
-        return (clean, title, intent)
+        return (clean, title)
     }
 
-    private func detectIntent(_ s: String) -> Intent {
-        let range = NSRange(location: 0, length: (s as NSString).length)
-        if pack.intentRescheduleRegex().firstMatch(in: s, options: [], range: range) != nil { return .reschedule }
-        if pack.intentCancelRegex().firstMatch(in: s, options: [], range: range) != nil { return .cancel }
-        if pack.intentViewRegex().firstMatch(in: s, options: [], range: range) != nil { return .view }
-        if pack.intentPlanRegex().firstMatch(in: s, options: [], range: range) != nil { return .plan }
-        if pack.intentCreateRegex().firstMatch(in: s, options: [], range: range) != nil { return .create }
-        return .unknown
-    }
+//    private func detectIntent(_ s: String, context: TemporalContext, pack: DateLanguagePack) -> Intent {
+//        let range = NSRange(location: 0, length: (s as NSString).length)
+//        if pack.intentRescheduleRegex().firstMatch(in: s, options: [], range: range) != nil { return .reschedule }
+//        if pack.intentCancelRegex().firstMatch(in: s, options: [], range: range) != nil { return .cancel }
+//        if pack.intentViewRegex().firstMatch(in: s, options: [], range: range) != nil { return .view }
+//        if pack.intentPlanRegex().firstMatch(in: s, options: [], range: range) != nil { return .plan }
+//        if pack.intentCreateRegex().firstMatch(in: s, options: [], range: range) != nil { return .create }
+//        return .unknown
+//    }
 
     // MARK: - Detection
 
-    private func detectTokens(in text: String, now: Date) -> [TemporalToken] {
+    private func detectTokens(in text: String, now: Date, pack: DateLanguagePack) -> [TemporalToken] {
         var tokens: [TemporalToken] = []
 
         func add(_ re: NSRegularExpression?, _ make: (NSTextCheckingResult, String) -> TemporalToken?) {
@@ -254,7 +294,7 @@ public final class TemporalComposer {
                 }
 
                 // Then, try time
-                if let comps = parseTime(raw) {
+                if let comps = parseTime(raw, pack: pack) {
                     timeHits.append((r, raw, comps))
                     continue
                 }
@@ -296,7 +336,7 @@ public final class TemporalComposer {
             }
             let sText = nsAll.substring(with: m.range(at: 2))
             let eText = nsAll.substring(with: m.range(at: 3))
-            if let sComp = parseTime(sText), let eComp = parseTime(eText) {
+            if let sComp = parseTime(sText, pack: pack), let eComp = parseTime(eText, pack: pack) {
                 return TemporalToken(range: m.range, text: sub, kind: .timeRange(start: sComp, end: eComp))
             }
             return nil
@@ -307,7 +347,7 @@ public final class TemporalComposer {
             let nsAll = text as NSString
             let sText = nsAll.substring(with: m.range(at: 1))
             let eText = nsAll.substring(with: m.range(at: 2))
-            if let sComp = parseTime(sText), let eComp = parseTime(eText) {
+            if let sComp = parseTime(sText, pack: pack), let eComp = parseTime(eText, pack: pack) {
                 return TemporalToken(range: m.range, text: sub, kind: .timeRange(start: sComp, end: eComp))
             }
             return nil
@@ -315,7 +355,7 @@ public final class TemporalComposer {
 
         // time-only
         add(pack.timeOnlyRegex()) { m, sub in
-            if let comps = parseTime(sub) {
+            if let comps = parseTime(sub, pack: pack) {
                 return TemporalToken(range: m.range, text: sub, kind: .absoluteTime(comps))
             }
             return nil
@@ -372,14 +412,14 @@ public final class TemporalComposer {
                 if let tre = pack.timeOnlyRegex() {
                     let full = NSRange(location: 0, length: (substr as NSString).length)
                     if let mm = tre.firstMatch(in: substr, options: [], range: full), mm.range.length == full.length {
-                        if let comps = parseTime(substr) {
+                        if let comps = parseTime(substr, pack: pack) {
                             tokens.append(TemporalToken(range: m.range, text: substr, kind: .absoluteTime(comps)))
                             return
                         }
                     }
                 }
                 if hasRelativeCues(substr) { return }
-                let comps = Calendar.current.dateComponents(in: prefs.timeZone, from: date)
+                let comps = Calendar.current.dateComponents(in: calendar.timeZone, from: date)
                 tokens.append(TemporalToken(range: m.range, text: substr, kind: .absoluteDate(comps)))
             }
         }
@@ -413,33 +453,33 @@ public final class TemporalComposer {
         let kind: Kind
     }
 
-    private func compose(tokens: [TemporalToken], text: String, intent: Intent, now: Date, originalEvent: Date?) -> (ResolvedTemporal?, [ResolvedTemporal], [String]) {
-        var ignored: [String] = []
-
-        let scope = resolveDayScope(tokens: tokens, intent: intent, now: now)
-        let time = resolveTime(tokens: tokens, text: text, scope: scope, now: now, ignored: &ignored)
-
-        if intent == .view || intent == .plan {
-            if let interval = rangeForScope(scope: scope, now: now) {
-                return (.range(interval, confidence: 0.9, notes: []), [.range(interval, confidence: 0.9, notes: [])], ignored)
-            }
-            let part = tokens.compactMap { t -> PartOfDay? in if case .partOfDay(let p) = t.kind { return p } else { return nil } }.last
-            if let dayDate = buildDate(scope: scope, time: nil, now: now) {
-                let dayStart = calendar.startOfDay(for: dayDate)
-                let slice = dayInterval(for: dayStart, part: part)
-                return (.range(slice, confidence: 0.9, notes: []), [.range(slice, confidence: 0.9, notes: [])], ignored)
-            }
-        }
-
-        if let date = buildDate(scope: scope, time: time, now: now) {
-            return (.instant(date, confidence: 0.95, notes: []), [], ignored)
-        }
-        if let interval = rangeForScope(scope: scope, now: now) {
-            let anchor = anchorForRange(interval: interval, scope: scope)
-            return (.instant(anchor, confidence: 0.75, notes: ["Anchored inside range"]), [], ignored)
-        }
-        return (nil, [], ignored)
-    }
+//    private func compose(tokens: [TemporalToken], text: String, intent: Intent, now: Date, originalEvent: Date?) -> (ResolvedTemporal?, [ResolvedTemporal], [String]) {
+//        var ignored: [String] = []
+//
+//        let scope = resolveDayScope(tokens: tokens, intent: intent, now: now)
+//        let time = resolveTime(tokens: tokens, text: text, scope: scope, now: now, ignored: &ignored)
+//
+//        if intent == .view || intent == .plan {
+//            if let interval = rangeForScope(scope: scope, now: now) {
+//                return (.range(interval, confidence: 0.9, notes: []), [.range(interval, confidence: 0.9, notes: [])], ignored)
+//            }
+//            let part = tokens.compactMap { t -> PartOfDay? in if case .partOfDay(let p) = t.kind { return p } else { return nil } }.last
+//            if let dayDate = buildDate(scope: scope, time: nil, now: now) {
+//                let dayStart = calendar.startOfDay(for: dayDate)
+//                let slice = dayInterval(for: dayStart, part: part)
+//                return (.range(slice, confidence: 0.9, notes: []), [.range(slice, confidence: 0.9, notes: [])], ignored)
+//            }
+//        }
+//
+//        if let date = buildDate(scope: scope, time: time, now: now) {
+//            return (.instant(date, confidence: 0.95, notes: []), [], ignored)
+//        }
+//        if let interval = rangeForScope(scope: scope, now: now) {
+//            let anchor = anchorForRange(interval: interval, scope: scope)
+//            return (.instant(anchor, confidence: 0.75, notes: ["Anchored inside range"]), [], ignored)
+//        }
+//        return (nil, [], ignored)
+//    }
     
     // MARK: - Token reconciliation (context-aware, no substring checks)
 
@@ -515,81 +555,81 @@ public final class TemporalComposer {
 
     // MARK: - Day scope resolution (intent-aware + combinators)
 
-    private func resolveDayScope(tokens: [TemporalToken], intent: Intent, now: Date) -> DayScope? {
-        // Helpers
-        func first<T>(_ f: (TemporalToken.Kind) -> T?) -> T? {
-            for t in tokens {
-                if let v = f(t.kind) { return v }
-            }
-            return nil
-        }
-
-        // 1) COMBINE: relativeWeek + weekday  → weekday with modifier (this/next)
-        //    Example: “next week Fri 11:00” should resolve to Friday of next week.
-        let combinedWeekday: DayScope? = {
-            var relSpec: WeekSpecifier?
-            var wd: (idx: Int, mod: WeekModifier?)?
-
-            for t in tokens {
-                switch t.kind {
-                case .relativeWeek(let spec): relSpec = spec
-                case .weekday(let idx, let mod): wd = (idx, mod)
-                default: break
-                }
-            }
-            if let spec = relSpec, let wd = wd {
-                // Prefer explicit weekday; apply modifier from week spec
-                let forcedMod: WeekModifier = (spec == .thisWeek) ? .this : .next
-                return DayScope(kind: .weekday(dayIndex: wd.idx, modifier: forcedMod))
-            }
-            return nil
-        }()
-
-        if let combined = combinedWeekday {
-            return combined
-        }
-
-        // 2) Extract single-token candidates
-        let weekScope: DayScope? = first { if case .relativeWeek(let s) = $0 { return DayScope(kind: .week(s)) } else { return nil } }
-        let weekendScope: DayScope? = first { if case .weekend(let s) = $0 { return DayScope(kind: .weekend(s)) } else { return nil } }
-        let relDayScope: DayScope? = first { if case .relativeDay(let r) = $0 { return DayScope(kind: .relativeDay(r)) } else { return nil } }
-        let weekdayScope: DayScope? = first { if case .weekday(let i, let m) = $0 { return DayScope(kind: .weekday(dayIndex: i, modifier: m)) } else { return nil } }
-        let ordinalScope: DayScope? = first { if case .ordinalDay(let d) = $0 { return DayScope(kind: .ordinalDay(d)) } else { return nil } }
-        let absoluteScope: DayScope? = first { if case .absoluteDate(let c) = $0 { return DayScope(kind: .absolute(c)) } else { return nil } }
-
-        // 3) Intent-driven priority
-        switch intent {
-        case .create, .reschedule, .cancel:
-            // For “do something at a specific time”, prefer the most concrete day signal.
-            return absoluteScope
-                ?? weekdayScope
-                ?? relDayScope
-                ?? weekScope
-                ?? weekendScope
-                ?? ordinalScope
-
-        case .view, .plan:
-            // For agenda/plan, prefer ranges first, but still use concrete day if present.
-            return weekScope
-                ?? weekendScope
-                ?? relDayScope
-                ?? weekdayScope
-                ?? ordinalScope
-                ?? absoluteScope
-
-        case .unknown:
-            // Balanced default
-            return absoluteScope
-                ?? weekdayScope
-                ?? relDayScope
-                ?? weekScope
-                ?? weekendScope
-                ?? ordinalScope
-        }
-    }
+//    private func resolveDayScope(tokens: [TemporalToken], intent: Intent, now: Date) -> DayScope? {
+//        // Helpers
+//        func first<T>(_ f: (TemporalToken.Kind) -> T?) -> T? {
+//            for t in tokens {
+//                if let v = f(t.kind) { return v }
+//            }
+//            return nil
+//        }
+//
+//        // 1) COMBINE: relativeWeek + weekday  → weekday with modifier (this/next)
+//        //    Example: “next week Fri 11:00” should resolve to Friday of next week.
+//        let combinedWeekday: DayScope? = {
+//            var relSpec: WeekSpecifier?
+//            var wd: (idx: Int, mod: WeekModifier?)?
+//
+//            for t in tokens {
+//                switch t.kind {
+//                case .relativeWeek(let spec): relSpec = spec
+//                case .weekday(let idx, let mod): wd = (idx, mod)
+//                default: break
+//                }
+//            }
+//            if let spec = relSpec, let wd = wd {
+//                // Prefer explicit weekday; apply modifier from week spec
+//                let forcedMod: WeekModifier = (spec == .thisWeek) ? .this : .next
+//                return DayScope(kind: .weekday(dayIndex: wd.idx, modifier: forcedMod))
+//            }
+//            return nil
+//        }()
+//
+//        if let combined = combinedWeekday {
+//            return combined
+//        }
+//
+//        // 2) Extract single-token candidates
+//        let weekScope: DayScope? = first { if case .relativeWeek(let s) = $0 { return DayScope(kind: .week(s)) } else { return nil } }
+//        let weekendScope: DayScope? = first { if case .weekend(let s) = $0 { return DayScope(kind: .weekend(s)) } else { return nil } }
+//        let relDayScope: DayScope? = first { if case .relativeDay(let r) = $0 { return DayScope(kind: .relativeDay(r)) } else { return nil } }
+//        let weekdayScope: DayScope? = first { if case .weekday(let i, let m) = $0 { return DayScope(kind: .weekday(dayIndex: i, modifier: m)) } else { return nil } }
+//        let ordinalScope: DayScope? = first { if case .ordinalDay(let d) = $0 { return DayScope(kind: .ordinalDay(d)) } else { return nil } }
+//        let absoluteScope: DayScope? = first { if case .absoluteDate(let c) = $0 { return DayScope(kind: .absolute(c)) } else { return nil } }
+//
+//        // 3) Intent-driven priority
+//        switch intent {
+//        case .create, .reschedule, .cancel:
+//            // For “do something at a specific time”, prefer the most concrete day signal.
+//            return absoluteScope
+//                ?? weekdayScope
+//                ?? relDayScope
+//                ?? weekScope
+//                ?? weekendScope
+//                ?? ordinalScope
+//
+//        case .view, .plan:
+//            // For agenda/plan, prefer ranges first, but still use concrete day if present.
+//            return weekScope
+//                ?? weekendScope
+//                ?? relDayScope
+//                ?? weekdayScope
+//                ?? ordinalScope
+//                ?? absoluteScope
+//
+//        case .unknown:
+//            // Balanced default
+//            return absoluteScope
+//                ?? weekdayScope
+//                ?? relDayScope
+//                ?? weekScope
+//                ?? weekendScope
+//                ?? ordinalScope
+//        }
+//    }
 
     // Time parsing helper
-    func parseTime(_ s: String) -> DateComponents? {
+    func parseTime(_ s: String, pack: DateLanguagePack) -> DateComponents? {
         let lower = s.lowercased().trimmingCharacters(in: .whitespaces)
         if let p = pack.classifyPartOfDay(lower) {
             switch p {
@@ -631,7 +671,7 @@ public final class TemporalComposer {
         return nil
     }
 
-    private func resolveTime(tokens: [TemporalToken], text: String, scope: DayScope?, now: Date, ignored: inout [String]) -> DateComponents? {
+    private func resolveTime(tokens: [TemporalToken], text: String, scope: DayScope?, now: Date, ignored: inout [String], pack: DateLanguagePack) -> DateComponents? {
         if let tr = tokens.last(where: { if case .timeRange = $0.kind { return true } else { return false } }),
            case .timeRange(let s, _) = tr.kind { return s }
 
@@ -732,7 +772,7 @@ public final class TemporalComposer {
     }
     
     /// Returns true if the phrase itself contains relative cues that we should compose.
-    private func hasRelativeCues(_ s: String) -> Bool {
+    private func hasRelativeCues(_ s: String, pack: DateLanguagePack) -> Bool {
         let range = NSRange(location: 0, length: (s as NSString).length)
         if pack.weekdayPhraseRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
         if pack.weekMainRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
@@ -812,5 +852,114 @@ public final class TemporalComposer {
         }
         comps.day = day
         return calendar.date(from: comps)!
+    }
+}
+
+extension TemporalComposer {
+    private func detectIntent(_ s: String, pack: DateLanguagePack) -> Intent {
+        let range = NSRange(location: 0, length: (s as NSString).length)
+        
+        // Check for view and plan intents (no task/event split needed)
+        if pack.intentViewRegex().firstMatch(in: s, options: [], range: range) != nil { return .view }
+        if pack.intentPlanRegex().firstMatch(in: s, options: [], range: range) != nil { return .plan }
+        
+        // Check for action intents that need task/event specificity
+        if pack.intentCreateRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return detectCreateSpecificity(s, pack: pack)
+        }
+        
+        if pack.intentRescheduleRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return detectRescheduleSpecificity(s, pack: pack)
+        }
+        
+        if pack.intentUpdateRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return detectUpdateSpecificity(s, pack: pack)
+        }
+        
+        if pack.intentCancelRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return detectCancelSpecificity(s, pack: pack)
+        }
+        
+        return .unknown
+    }
+
+    private func detectCreateSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
+        let range = NSRange(location: 0, length: (s as NSString).length)
+        
+        // Check enhanced create patterns first (more specific)
+        if pack.intentCreateTaskRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .createTask
+        }
+        
+        if pack.intentCreateEventRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .createEvent
+        }
+        
+        // Fallback to keyword detection
+        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .createTask
+        }
+        
+        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .createEvent
+        }
+        
+        // Default based on context or fallback
+        return .createTask // Most common case
+    }
+
+    private func detectRescheduleSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
+        let range = NSRange(location: 0, length: (s as NSString).length)
+        
+        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .rescheduleTask
+        }
+        
+        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .rescheduleEvent
+        }
+        
+        // Default to event for reschedule (more common)
+        return .rescheduleEvent
+    }
+
+    private func detectUpdateSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
+        let range = NSRange(location: 0, length: (s as NSString).length)
+        
+        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .updateTask
+        }
+        
+        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .updateEvent
+        }
+        
+        // Default to task for updates (more common)
+        return .updateTask
+    }
+
+    private func detectCancelSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
+        let range = NSRange(location: 0, length: (s as NSString).length)
+        
+        // Check enhanced cancel patterns first (more specific)
+        if pack.intentCancelTaskRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .cancelTask
+        }
+        
+        if pack.intentCancelEventRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .cancelEvent
+        }
+        
+        // Fallback to keyword detection
+        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .cancelTask
+        }
+        
+        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .cancelEvent
+        }
+        
+        // Default to event for cancel (meetings are more commonly cancelled)
+        return .cancelEvent
     }
 }

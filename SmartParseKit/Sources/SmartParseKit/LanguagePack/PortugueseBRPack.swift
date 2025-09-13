@@ -106,15 +106,15 @@ public struct PortugueseBRPack: DateLanguagePack {
     }
 
     // Intents
-    public func intentCreateRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(criar|adicionar|agendar|marcar|definir|reservar)\b"#)
-    }
-    public func intentRescheduleRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(remarcar|reagendar|adiar|postergar|empurrar|mudar|alterar|trocar|mover)\b"#)
-    }
-    public func intentCancelRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(deletar|apagar|remover|cancelar|n[aã]o\s+agendar|nao\s+agendar)\b"#)
-    }
+//    public func intentCreateRegex() -> NSRegularExpression {
+//        BaseLanguagePack.regex(#"(?ix)\b(criar|adicionar|agendar|marcar|definir|reservar)\b"#)
+//    }
+//    public func intentRescheduleRegex() -> NSRegularExpression {
+//        BaseLanguagePack.regex(#"(?ix)\b(remarcar|reagendar|adiar|postergar|empurrar|mudar|alterar|trocar|mover)\b"#)
+//    }
+//    public func intentCancelRegex() -> NSRegularExpression {
+//        BaseLanguagePack.regex(#"(?ix)\b(deletar|apagar|remover|cancelar|n[aã]o\s+agendar|nao\s+agendar)\b"#)
+//    }
     public func intentViewRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(mostrar|ver|minha\s+agenda|agenda|meu\s+calend[aá]rio|calendario|o\s+que\s+(h[aá]|tem))\b"#)
     }
@@ -124,6 +124,51 @@ public struct PortugueseBRPack: DateLanguagePack {
     public func timePivotRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:às|as|a|pra|pras|para|das|de|desde|at[eé])\b"#)
     }
+    
+    // Enhanced create patterns
+    public func intentCreateTaskRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(adicionar|criar|fazer|configurar|marcar)\s+(?:uma?\s+)?(?:nova?\s+)?(tarefa|todo|afazer|lembrete|nota|tarefa|item\s+de\s+ação|atividade)\b"#)
+    }
+
+    public func intentCreateEventRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(agendar|marcar|adicionar|criar|configurar|programar)\s+(?:uma?\s+)?(?:nova?\s+)?(reunião|evento|compromisso|ligação|chamada|almoço|jantar|conferência|sessão|encontro)\b"#)
+    }
+
+    // Enhanced cancel patterns
+    public func intentCancelTaskRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(deletar|remover|cancelar|completar|finalizar|marcar\s+como\s+concluída?|concluir)\s+(?:a\s+)?(?:esta\s+)?(tarefa|todo|afazer|lembrete|nota|atividade|item)\b"#)
+    }
+
+    public func intentCancelEventRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(cancelar|deletar|remover|desmarcar)\s+(?:a\s+)?(?:esta\s+)?(reunião|evento|compromisso|ligação|chamada|almoço|jantar|conferência|sessão|encontro)\b"#)
+    }
+
+    // Base intent patterns
+    public func intentCreateRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(criar|adicionar|agendar|marcar|configurar|programar)\b"#)
+    }
+
+    public func intentRescheduleRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(reagendar|remarcar|adiar|empurrar|atrasar|mover|mudar|modificar|transferir)\b"#)
+    }
+
+    public func intentCancelRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(deletar|remover|cancelar|não\s+agendar|não\s+marcar|desmarcar)\b"#)
+    }
+
+    public func intentUpdateRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(atualizar|editar|modificar|mudar\s+detalhes|alterar)\b"#)
+    }
+
+    // Keyword detection
+    public func taskKeywordsRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(tarefa|todo|afazer|lembrete|nota|atividade|item\s+de\s+ação|trabalho|compromisso)\b"#)
+    }
+
+    public func eventKeywordsRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(reunião|evento|compromisso|ligação|chamada|almoço|jantar|conferência|sessão|encontro|festa|cerimônia)\b"#)
+    }
+    
     public func weekendRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:(?:este|esta|proximo|próximo|seguinte)\s+)?fim\s*de\s*semana\b"#) }
     public func relativeDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:hoje|amanh[ãa]|esta\s+noite)\b"#) }
     public func partOfDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:manh[ãa]|tarde|noite|meio\s*dia|meia\s*noite)\b"#) }
