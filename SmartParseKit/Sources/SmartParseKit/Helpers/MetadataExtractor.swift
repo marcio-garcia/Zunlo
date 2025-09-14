@@ -86,11 +86,14 @@ public struct MetadataExtractor {
     // MARK: - Token Extraction Methods
 
     private func extractTagTokens(from text: String, pack: DateLanguagePack) -> [MetadataToken] {
-        guard let regex = pack.tagPatternRegex() else { return [] }
+        guard let tagRegex = pack.tagPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
+        // Check for command words first using existing intent detection
+        let hasCommandWord = hasCommandWord(in: text, pack: pack)
+
         let nsText = text as NSString
-        regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
+        tagRegex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
 
             for groupIndex in 1...match.numberOfRanges - 1 {
@@ -100,12 +103,22 @@ public struct MetadataExtractor {
                     let tagNames = tagText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
 
                     for tagName in tagNames {
-                        if !tagName.isEmpty && tagName.count >= 2 && tagName.count <= 50 {
-                            let confidence = calculateTagConfidence(tagName, fullMatch: nsText.substring(with: match.range))
+                        // Clean up special characters from tag names (@ and #)
+                        let cleanedTagName = tagName.replacingOccurrences(of: "^[@#]+", with: "", options: .regularExpression)
+
+                        if !cleanedTagName.isEmpty && cleanedTagName.count >= 2 && cleanedTagName.count <= 50 {
+                            var confidence = calculateTagConfidence(cleanedTagName, fullMatch: nsText.substring(with: match.range))
+
+                            // Boost confidence if command word is present
+                            if hasCommandWord {
+                                confidence += 0.2
+                            }
+
+                            confidence = min(1.0, max(0.1, confidence))
                             let token = MetadataToken(
                                 range: match.range,
                                 text: nsText.substring(with: match.range),
-                                kind: .tag(name: String(tagName), confidence: confidence),
+                                kind: .tag(name: String(cleanedTagName), confidence: confidence),
                                 confidence: confidence
                             )
                             tokens.append(token)
@@ -117,6 +130,15 @@ public struct MetadataExtractor {
         }
 
         return tokens
+    }
+
+    private func hasCommandWord(in text: String, pack: DateLanguagePack) -> Bool {
+        // Check for create/add commands using existing intent detection
+        let createRegex = pack.intentCreateRegex()
+        let nsText = text as NSString
+        let range = NSRange(location: 0, length: nsText.length)
+
+        return createRegex.firstMatch(in: text, options: [], range: range) != nil
     }
 
     private func extractReminderTokens(from text: String, pack: DateLanguagePack) -> [MetadataToken] {

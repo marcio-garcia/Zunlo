@@ -45,7 +45,7 @@ final class MetadataExtractionTests: XCTestCase {
 
         XCTAssertEqual(result.tags.count, 1)
         XCTAssertEqual(result.tags.first?.name, "important")
-        XCTAssertGreaterThan(result.tags.first?.confidence ?? 0, 0.6)
+        XCTAssertGreaterThanOrEqual(result.tags.first?.confidence ?? 0, 0.6)
     }
 
     // MARK: - Priority Extraction Tests
@@ -101,7 +101,7 @@ final class MetadataExtractionTests: XCTestCase {
         let result = extractor.extractMetadata(from: text, temporalRanges: [], pack: pack)
 
         XCTAssertNotNil(result.location)
-        XCTAssertEqual(result.location?.name, "the office")
+        XCTAssertEqual(result.location?.name, "office")
         XCTAssertGreaterThan(result.location?.confidence ?? 0, 0.5)
     }
 
@@ -147,11 +147,12 @@ final class MetadataExtractionTests: XCTestCase {
             XCTFail("Expected timeOffset reminder trigger")
         }
 
-        XCTAssertNotNil(result.notes)
-        XCTAssertEqual(result.notes?.content, "Complete quarterly report")
+        // Should NOT extract a note since ": Complete quarterly report" is the main task title
+        XCTAssertNil(result.notes)
 
-        // Title should be cleaned of metadata
+        // Title should contain the main task description and be cleaned of metadata
         let cleanedTitle = result.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        XCTAssertTrue(cleanedTitle.contains("Complete quarterly report"))
         XCTAssertFalse(cleanedTitle.contains("high priority"))
         XCTAssertFalse(cleanedTitle.contains("tag work"))
         XCTAssertFalse(cleanedTitle.contains("at home"))

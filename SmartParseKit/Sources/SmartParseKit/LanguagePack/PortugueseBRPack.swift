@@ -175,6 +175,9 @@ public struct PortugueseBRPack: DateLanguagePack {
         return BaseLanguagePack.regex(#"(?ix)\b entre \s+ (\#(t)) \s+ (?:e|-|a|até) \s+ (\#(t)) \b"#)
     }
     public func inFromNowRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:em|dentro\s+de)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|dias?|semanas?|meses?)\b"#) }
+    public func articleFromNowRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"(?ix)\b(?:daqui\s+a\s+)?(uma?|um)\s+(minuto|hora|dia|semana|mês|ano)s?(?:\s+a\s+partir\s+de\s+agora)?\b"#)
+    }
     public func byOffsetRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:adiar|postergar)\s+em\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|dias?|semanas?|meses?)\b"#) }
 
     public func nextRepetitionCount(in s: String) -> Int {

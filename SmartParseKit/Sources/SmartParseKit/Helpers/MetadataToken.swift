@@ -115,6 +115,16 @@ public struct MetadataExtractionResult {
         }
     }
 
+    /// Get all reminders with their trigger and confidence scores
+    public var reminders: [(trigger: ReminderTriggerToken, confidence: Float)] {
+        return tokens.compactMap { token in
+            if case .reminder(let trigger, let confidence) = token.kind {
+                return (trigger, confidence)
+            }
+            return nil
+        }
+    }
+
     /// Get the highest confidence priority level
     public var priority: (level: TaskPriority, confidence: Float)? {
         let priorityTokens = tokens.compactMap { token -> (TaskPriority, Float)? in
@@ -124,6 +134,28 @@ public struct MetadataExtractionResult {
             return nil
         }
         return priorityTokens.max { $0.1 < $1.1 }.map { (level: $0.0, confidence: $0.1) }
+    }
+
+    /// Get the highest confidence location
+    public var location: (name: String, confidence: Float)? {
+        let locationTokens = tokens.compactMap { token -> (String, Float)? in
+            if case .location(let name, let confidence) = token.kind {
+                return (name, confidence)
+            }
+            return nil
+        }
+        return locationTokens.max { $0.1 < $1.1 }.map { (name: $0.0, confidence: $0.1) }
+    }
+
+    /// Get the highest confidence notes
+    public var notes: (content: String, confidence: Float)? {
+        let notesTokens = tokens.compactMap { token -> (String, Float)? in
+            if case .notes(let content, let confidence) = token.kind {
+                return (content, confidence)
+            }
+            return nil
+        }
+        return notesTokens.max { $0.1 < $1.1 }.map { (content: $0.0, confidence: $0.1) }
     }
 }
 

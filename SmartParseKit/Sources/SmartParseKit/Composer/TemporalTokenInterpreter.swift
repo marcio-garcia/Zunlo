@@ -200,6 +200,53 @@ public class TemporalTokenInterpreter {
             }
         }
         
+        // Handle duration offsets (e.g., "a month from now")
+        else if !groups.durationOffsets.isEmpty {
+            if let durationOffset = groups.durationOffsets.first {
+                let (_, value, unit, mode) = durationOffset
+
+                switch mode {
+                case .fromNow:
+                    // Add the duration to the reference date
+                    if let targetDate = calendar.date(byAdding: unit, value: value, to: referenceDate) {
+                        let targetComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: targetDate)
+                        resolvedComponents.year = targetComponents.year
+                        resolvedComponents.month = targetComponents.month
+                        resolvedComponents.day = targetComponents.day
+
+                        // If no specific time was set, preserve the time from the offset calculation
+                        if resolvedComponents.hour == baseComponents.hour && resolvedComponents.minute == baseComponents.minute {
+                            resolvedComponents.hour = targetComponents.hour
+                            resolvedComponents.minute = targetComponents.minute
+                        }
+                    }
+                case .shift:
+                    // Shift from the current base date
+                    if let currentDate = calendar.date(from: resolvedComponents),
+                       let targetDate = calendar.date(byAdding: unit, value: value, to: currentDate) {
+                        let targetComponents = calendar.dateComponents([.year, .month, .day], from: targetDate)
+                        resolvedComponents.year = targetComponents.year
+                        resolvedComponents.month = targetComponents.month
+                        resolvedComponents.day = targetComponents.day
+                    }
+                case .ago:
+                    // Subtract the duration from the reference date
+                    if let targetDate = calendar.date(byAdding: unit, value: -value, to: referenceDate) {
+                        let targetComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: targetDate)
+                        resolvedComponents.year = targetComponents.year
+                        resolvedComponents.month = targetComponents.month
+                        resolvedComponents.day = targetComponents.day
+
+                        // If no specific time was set, preserve the time from the offset calculation
+                        if resolvedComponents.hour == baseComponents.hour && resolvedComponents.minute == baseComponents.minute {
+                            resolvedComponents.hour = targetComponents.hour
+                            resolvedComponents.minute = targetComponents.minute
+                        }
+                    }
+                }
+            }
+        }
+
         // Handle relative weeks and weekdays
         else if !groups.relativeWeeks.isEmpty || !groups.weekdays.isEmpty {
             resolvedComponents = handleRelativeWeeksAndWeekdays(
@@ -209,7 +256,7 @@ public class TemporalTokenInterpreter {
             )
         }
 
-        
+
         return (resolvedComponents, duration, conflicts)
     }
     
@@ -324,7 +371,7 @@ public class TemporalTokenInterpreter {
         
         // Check for part of day tokens - these always indicate ranges
         if !groups.partsOfDay.isEmpty {
-            if let partOfDay = groups.partsOfDay.first {
+            if let partOfDay = groups.partsOfDay.first, partOfDay.1 != .noon, partOfDay.1 != .midnight {
                 let (startTime, endTime) = timeRangeForPartOfDay(partOfDay.1)
                 
                 let baseCalendar = Calendar.current
@@ -349,7 +396,7 @@ public class TemporalTokenInterpreter {
         }
         
         // Check if we have standalone relative week tokens (indicating range queries)
-        if !groups.relativeWeeks.isEmpty && groups.weekdays.isEmpty && groups.relativeDays.isEmpty {
+        if !groups.relativeWeeks.isEmpty && groups.weekdays.isEmpty && groups.relativeDays.isEmpty && groups.partsOfDay.isEmpty {
             // This is likely a range query like "next week"
             if let relativeWeek = groups.relativeWeeks.first {
                 let weekStart = getWeekStart(for: relativeWeek.1)

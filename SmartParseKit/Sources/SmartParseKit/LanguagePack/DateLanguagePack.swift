@@ -50,6 +50,7 @@ public protocol DateLanguagePack {
     func timeOnlyRegex() -> NSRegularExpression?
     func betweenTimeRegex() -> NSRegularExpression?
     func inFromNowRegex() -> NSRegularExpression?
+    func articleFromNowRegex() -> NSRegularExpression?
     func byOffsetRegex() -> NSRegularExpression?
 
     // Language-aware classification helpers
@@ -91,6 +92,7 @@ public protocol DateLanguagePack {
 //    func timeOnlyRegex() -> NSRegularExpression? { nil }
 //    func betweenTimeRegex() -> NSRegularExpression? { nil }
 //    func inFromNowRegex() -> NSRegularExpression? { nil }
+//    func articleFromNowRegex() -> NSRegularExpression? { nil }
 //    func byOffsetRegex() -> NSRegularExpression? { nil }
 //    func classifyRelativeDay(_ s: String) -> RelativeDay? { nil }
 //    func classifyPartOfDay(_ s: String) -> PartOfDay? { nil }

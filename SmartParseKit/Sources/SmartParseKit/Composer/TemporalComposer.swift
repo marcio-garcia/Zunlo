@@ -281,7 +281,7 @@ public final class TemporalComposer: InputParser {
                         tokens.append(
                             TemporalToken(
                                 range: NSUnionRange(first.range, second.range),
-                                text: first.text + "–" + second.text,
+                                text: first.text + "-" + second.text,
                                 kind: .timeRange(start: adjustedFirst, end: adjustedSecond)
                             )
                         )
@@ -290,7 +290,7 @@ public final class TemporalComposer: InputParser {
                         tokens.append(
                             TemporalToken(
                                 range: NSUnionRange(first.range, second.range),
-                                text: first.text + "–" + second.text,
+                                text: first.text + "-" + second.text,
                                 kind: .timeRange(start: first.comps, end: second.comps)
                             )
                         )
@@ -365,6 +365,21 @@ public final class TemporalComposer: InputParser {
             }
             return nil
         }
+
+        // Handle "a month from now", "an hour from now" patterns
+        add(pack.articleFromNowRegex()) { m, sub in
+            let nsAll = text as NSString
+            if m.numberOfRanges >= 3 {
+                let articleS = nsAll.substring(with: m.range(at: 1)) // "a", "an", "um", "una", etc.
+                let unitS = nsAll.substring(with: m.range(at: 2)) // "month", "hour", etc.
+                if let unit = unitFrom(unitS) {
+                    let val = 1 // Articles always mean "1"
+                    return TemporalToken(range: m.range, text: sub, kind: .durationOffset(value: val, unit: unit, mode: .fromNow))
+                }
+            }
+            return nil
+        }
+
         add(pack.byOffsetRegex()) { m, sub in
             let nsAll = text as NSString
             if m.numberOfRanges >= 3 {

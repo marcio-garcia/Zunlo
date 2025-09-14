@@ -158,7 +158,13 @@ public struct EnglishPack: DateLanguagePack {
         """#) // groups 1=start, 2=end
     }
 
-    public func inFromNowRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:in|within)\s+(\d+)\s+(minutes?|mins?|hours?|hrs?|days?|weeks?|months?)\b"#) }
+    public func inFromNowRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"(?ix)\b(?:in|within)\s+(\d+)\s+(minutes?|mins?|hours?|hrs?|days?|weeks?|months?)\b"#)
+    }
+
+    public func articleFromNowRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"(?ix)\b(a|an)\s+(minute|hour|day|week|month|year)s?\s+from\s+now\b"#)
+    }
     public func byOffsetRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\bby\s+(\d+)\s+(minutes?|mins?|hours?|hrs?|days?|weeks?|months?)\b"#) }
 
 
@@ -194,18 +200,18 @@ public struct EnglishPack: DateLanguagePack {
     public func tagPatternRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"""
         (?ix)
-        \b(?:add\s+)?(?:with\s+)?tag\s+([a-zA-Z0-9_-]+)(?:\s+(?:to|for))?\b
+        \b(?:with\s+)?tags?\s+(\S+(?:,\S+)*)(?:\s+(?:to|for))?\b
         |
-        \btags?\s*[:=]\s*([a-zA-Z0-9_,-]+)\b
+        \btags?\s*[:=]\s*(\S+(?:,\S+)*)\b
         |
-        \b(?:tagged\s+(?:as\s+)?|label(?:ed)?\s+(?:as\s+)?|category\s+)([a-zA-Z0-9_-]+)\b
+        \b(?:tagged\s+(?:as\s+)?|label(?:ed)?\s+(?:as\s+)?|category\s+)(\S+)\b
         """#) // groups 1, 2, or 3 = tag name(s)
     }
 
     public func reminderPatternRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"""
         (?ix)
-        \b(?:remind\s+me|set\s+(?:a\s+)?reminder|alert\s+me)
+        \b(?:remind\s+me|set\s+(?:a\s+)?reminder|with\s+(?:a\s+)?reminder|alert\s+me)
         (?:\s+(?:in|at|for))?\s+
         (?:(\d+)\s+(minutes?|mins?|hours?|hrs?|days?)\s+(?:before|early)
         |(?:at\s+)?(\d{1,2}(?::\d{2})?)(?:\s*(?:am|pm))?
@@ -229,8 +235,8 @@ public struct EnglishPack: DateLanguagePack {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:at|in|location\s*[:=]?)\s+
-        (?:the\s+)?([a-zA-Z0-9\s_-]{2,30})
-        (?=\s|$|[.!?,:;])
+        (?:the\s+)?([a-zA-Z0-9\s_-]{2,30}?)
+        (?=\s+(?:tomorrow|today|yesterday|next|this|on|for|with|and|or|but|\d|$)|[.!?,:;]|$)
         |
         \blocation\s*[:=]\s*([^\s,;.!?]{2,30})\b
         """#) // groups 1 or 2 = location name
@@ -239,10 +245,7 @@ public struct EnglishPack: DateLanguagePack {
     public func notesPatternRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"""
         (?ix)
-        \b(?:notes?|comments?|description)
-        \s*[:=]\s*
-        ([^.!?;]{1,200})
-        (?=[.!?;]|$)
+        \b(?:notes?|comments?|description)\s*[:=]\s*([^.!?;]{1,200})(?=[.!?;]|$)
         """#) // group 1 = notes content
     }
 

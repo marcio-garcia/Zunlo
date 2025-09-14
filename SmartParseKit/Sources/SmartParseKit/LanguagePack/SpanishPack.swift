@@ -30,7 +30,7 @@ public struct SpanishPack: DateLanguagePack {
         (?:
            ((?:\#(thisAlt))|(?:\#(nextAlt)))\s+
         )?
-        (?:el|la)?\s*
+        (?:el\s+|la\s+)?
         (\#(weekdayAlt))
         (?:\s+que\s+viene)?
         \b
@@ -192,6 +192,9 @@ public struct SpanishPack: DateLanguagePack {
     }
     public func inFromNowRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"(?ix)\b(?:en|dentro\s+de)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|d[ií]as?|semanas?|mes(?:es)?)\b"#)
+    }
+    public func articleFromNowRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"(?ix)\b(?:dentro\s+de\s+|de\s+aquí\s+a\s+)?(una?|un)\s+(minuto|hora|d[ií]a|semana|mes|año)s?(?:\s+desde\s+ahora)?\b"#)
     }
     public func byOffsetRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"(?ix)\b(?:en|por)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|d[ií]as?|semanas?|mes(?:es)?)\b"#)
