@@ -11,7 +11,7 @@ public struct PortugueseBRPack: DateLanguagePack {
     public let calendar: Calendar
     public let thisTokens = ["este","esta","neste","nesta","deste","desta","agora","nessa"]
     public let nextTokens = ["próximo","proximo","no próximo","no proximo","próxima","proxima","na próxima","na proxima","seguinte","que vem"]
-    public var connectorTokens = ["às","as","a","no","na","em","de","das","até","ao","pela","pelas","pelo","pelos","para"]
+    public var connectorTokens = ["às","as","a","à","na","o","os","no","em","de","das","até","ate","ao","pela","pelas","pelo","pelos","para","pra","pras"]
     public let weekdayMap: [String: Int]
 
     public init(calendar: Calendar) {
@@ -91,30 +91,23 @@ public struct PortugueseBRPack: DateLanguagePack {
         return !contains.isEmpty
     }
 
-    public func commandPrefixRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"""
-        (?ix) ^
-        \s* (?:
-            (criar|mover|atualizar|adicionar|agendar|marcar|novo|add|reservar|tenho\s+um|colocar|reagendar|remarcar|adiar|postergar) \s+ (?:um\s+)? (?:evento|lembrete|tarefa) |
-            agendar | marcar |
-            definir \s+ (?:um\s+)? lembrete |
-            preciso \s+ adicionar \s+ (?:um\s+)? lembrete
-        )
-        (?: \s+ (?:para|de|do|da|no|na|em|às|as|a) )?
-        \s*
-        """#)
+    public func commandPrefixRegex() -> [NSRegularExpression] {
+        return [
+            intentViewRegex(),
+            intentPlanRegex(),
+            timePivotRegex(),
+            intentCreateTaskRegex(),
+            intentCreateEventRegex(),
+            intentCancelTaskRegex(),
+            intentCancelEventRegex(),
+            intentCreateRegex(),
+            intentRescheduleRegex(),
+            intentCancelRegex(),
+            intentUpdateRegex()
+        ]
     }
 
     // Intents
-//    public func intentCreateRegex() -> NSRegularExpression {
-//        BaseLanguagePack.regex(#"(?ix)\b(criar|adicionar|agendar|marcar|definir|reservar)\b"#)
-//    }
-//    public func intentRescheduleRegex() -> NSRegularExpression {
-//        BaseLanguagePack.regex(#"(?ix)\b(remarcar|reagendar|adiar|postergar|empurrar|mudar|alterar|trocar|mover)\b"#)
-//    }
-//    public func intentCancelRegex() -> NSRegularExpression {
-//        BaseLanguagePack.regex(#"(?ix)\b(deletar|apagar|remover|cancelar|n[aã]o\s+agendar|nao\s+agendar)\b"#)
-//    }
     public func intentViewRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(mostrar|ver|minha\s+agenda|agenda|meu\s+calend[aá]rio|calendario|o\s+que\s+(h[aá]|tem))\b"#)
     }
@@ -149,7 +142,7 @@ public struct PortugueseBRPack: DateLanguagePack {
     }
 
     public func intentRescheduleRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(reagendar|remarcar|adiar|empurrar|atrasar|mover|mudar|modificar|transferir)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(reagendar|reagende|remarcar|remarque|adiar|adie|empurrar|empurre|atrasar|atrase|mover|mova|mudar|mude|modificar|modifique|transferir|transfira)\b"#)
     }
 
     public func intentCancelRegex() -> NSRegularExpression {

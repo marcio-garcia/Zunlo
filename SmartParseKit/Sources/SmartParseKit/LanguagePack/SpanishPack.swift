@@ -106,25 +106,23 @@ public struct SpanishPack: DateLanguagePack {
             || l.contains("next")
     }
 
-    public func commandPrefixRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"""
-        (?ix) ^
-        \s* (?:
-            (crear|mover|actualizar|agregar|programar|reservar|nuevo|add|tener\s+un|colocar) \s+ (?:un\s+)? (?:evento|tarea|recordatorio) |
-            agregar \s+ (?:un\s+)? recordatorio |
-            programar \s+ (?:un\s+)? (?:evento|tarea|recordatorio) |
-            programar |
-            establecer \s+ (?:un\s+)? recordatorio
-        )
-        (?: \s+ (?:para|a|en|el|la) )?
-        \s*
-        """#)
+    public func commandPrefixRegex() -> [NSRegularExpression] {
+        return [
+            intentViewRegex(),
+            intentPlanRegex(),
+            timePivotRegex(),
+            intentCreateTaskRegex(),
+            intentCreateEventRegex(),
+            intentCancelTaskRegex(),
+            intentCancelEventRegex(),
+            intentCreateRegex(),
+            intentRescheduleRegex(),
+            intentCancelRegex(),
+            intentUpdateRegex()
+        ]
     }
 
     // Intents
-//    public func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(crear|agregar|programar|reservar|establecer)\b"#) }
-//    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reprogramar|reagendar|posponer|aplazar|mover|cambiar|modificar)\b"#) }
-//    public func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(eliminar|quitar|cancelar|no\s+programar|no\s+agendar)\b"#) }
     public func intentViewRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(mostrar|ver|mi\s+agenda|agenda|mi\s+calendario|qué\s+hay|que\s+hay)\b"#) }
     public func intentPlanRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(planificar|planear|organizar|estructurar|mapear)\b"#) }
     public func timePivotRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:a|a\s+las|de|desde|hasta|por|para)\b"#) }

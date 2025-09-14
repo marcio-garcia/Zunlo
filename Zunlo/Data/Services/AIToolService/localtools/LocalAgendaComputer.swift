@@ -8,18 +8,16 @@
 import Foundation
 
 final class LocalAgendaComputer: AgendaComputing {
-    private let userId: UUID
-    private let toolRepo: DomainRepositories
-    private let cal: Calendar
+    private let eventRepo: EventStore
+    private let taskRepo: TaskStore
     
-    init(userId: UUID, toolRepo: DomainRepositories, calendar: Calendar = .appDefault) {
-        self.userId = userId
-        self.toolRepo = toolRepo
-        self.cal = calendar
+    init(eventRepo: EventStore, taskRepo: TaskStore) {
+        self.eventRepo = eventRepo
+        self.taskRepo = taskRepo
     }
 
-    func computeAgenda(range: Range<Date>, timezone: TimeZone) async throws -> GetAgendaResult {
-        let events = try await toolRepo.fetchOccurrences()
+    func computeAgenda(range: Range<Date>) async throws -> GetAgendaResult {
+        let events = try await eventRepo.fetchOccurrences()
         let occs = try EventOccurrenceService.generate(rawOccurrences: events, in: range, addFakeToday: false)
         
         var tasks: [UserTask]
@@ -32,9 +30,10 @@ final class LocalAgendaComputer: AgendaComputing {
         
         if isToday || isTomorrow {
             let filter = TaskFilter(isCompleted: false, untilDueDate: range.upperBound, deleted: false)
-            tasks = try await toolRepo.fetchTasks(filter: filter)
+            tasks = try await taskRepo.fetchTasks(filteredBy: filter)
         } else {
-            tasks = try await toolRepo.fetchTasks(range: range)
+            let filter = TaskFilter(isCompleted: false, dueDateRange: range, deleted: false)
+            tasks = try await taskRepo.fetchTasks(filteredBy: filter)
         }
 
         // 5) map → Agenda items; sort
@@ -57,6 +56,6 @@ final class LocalAgendaComputer: AgendaComputing {
             return start(a) < start(b)
         }
 
-        return GetAgendaResult(start: range.lowerBound, end: range.upperBound, timezone: timezone.identifier, items: items)
+        return GetAgendaResult(start: range.lowerBound, end: range.upperBound, items: items)
     }
 }

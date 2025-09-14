@@ -22,12 +22,12 @@ public protocol DateLanguagePack {
     func inlineTimeRangeRegex() -> NSRegularExpression
     func fromToTimeRegex() -> NSRegularExpression
     func phraseIndicatesNext(_ phraseLowercased: String) -> Bool
-    func commandPrefixRegex() -> NSRegularExpression
+    func commandPrefixRegex() -> [NSRegularExpression]
 
     // Intent regexes
-//    func intentCreateRegex() -> NSRegularExpression
-//    func intentRescheduleRegex() -> NSRegularExpression
-//    func intentCancelRegex() -> NSRegularExpression
+    func intentCreateRegex() -> NSRegularExpression
+    func intentRescheduleRegex() -> NSRegularExpression
+    func intentCancelRegex() -> NSRegularExpression
     func intentViewRegex() -> NSRegularExpression
     func intentPlanRegex() -> NSRegularExpression
 
@@ -60,26 +60,26 @@ public protocol DateLanguagePack {
     func nextRepetitionCount(in phrase: String) -> Int
 }
 
-public extension DateLanguagePack {
-    func weekendRegex() -> NSRegularExpression? { nil }
-    func relativeDayRegex() -> NSRegularExpression? { nil }
-    func partOfDayRegex() -> NSRegularExpression? { nil }
-    func ordinalDayRegex() -> NSRegularExpression? { nil }
-    func timeOnlyRegex() -> NSRegularExpression? { nil }
-    func betweenTimeRegex() -> NSRegularExpression? { nil }
-    func inFromNowRegex() -> NSRegularExpression? { nil }
-    func byOffsetRegex() -> NSRegularExpression? { nil }
-    func classifyRelativeDay(_ s: String) -> RelativeDay? { nil }
-    func classifyPartOfDay(_ s: String) -> PartOfDay? { nil }
-    func nextRepetitionCount(in phrase: String) -> Int { phraseIndicatesNext(phrase) ? 1 : 0 }
-
-    func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(create|add|schedule|book|set\s*up)\b"#) }
-    func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(reschedul|rebook|postpone|push\s*back|delay|move|change|modify)\b"#) }
-    func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(delete|remove|cancel|don't\s+schedule|do\s+not\s+schedule)\b"#) }
-    func intentViewRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(show|view|what's\s+on|agenda|my\s+schedule)\b"#) }
-    func intentPlanRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(plan|organize|structure|map\s+out)\b"#) }
-    func timePivotRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(?:at|to)\b"#) }
-}
+//public extension DateLanguagePack {
+//    func weekendRegex() -> NSRegularExpression? { nil }
+//    func relativeDayRegex() -> NSRegularExpression? { nil }
+//    func partOfDayRegex() -> NSRegularExpression? { nil }
+//    func ordinalDayRegex() -> NSRegularExpression? { nil }
+//    func timeOnlyRegex() -> NSRegularExpression? { nil }
+//    func betweenTimeRegex() -> NSRegularExpression? { nil }
+//    func inFromNowRegex() -> NSRegularExpression? { nil }
+//    func byOffsetRegex() -> NSRegularExpression? { nil }
+//    func classifyRelativeDay(_ s: String) -> RelativeDay? { nil }
+//    func classifyPartOfDay(_ s: String) -> PartOfDay? { nil }
+//    func nextRepetitionCount(in phrase: String) -> Int { phraseIndicatesNext(phrase) ? 1 : 0 }
+//
+//    func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(create|add|schedule|book|set\s*up)\b"#) }
+//    func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(reschedul|rebook|postpone|push\s*back|delay|move|change|modify)\b"#) }
+//    func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(delete|remove|cancel|don't\s+schedule|do\s+not\s+schedule)\b"#) }
+//    func intentViewRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(show|view|what's\s+on|agenda|my\s+schedule)\b"#) }
+//    func intentPlanRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(plan|organize|structure|map\s+out)\b"#) }
+//    func timePivotRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?i)\b(?:at|to)\b"#) }
+//}
 
 // MARK: - Base helper (weekday maps + regex builder)
 

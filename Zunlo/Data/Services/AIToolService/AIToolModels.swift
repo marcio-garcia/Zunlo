@@ -68,7 +68,17 @@ struct DeleteEventArgs: Decodable {
 
 // MARK: Args decoded for readonly tools
 public struct GetAgendaArgs: Codable {
-    public enum DateRange: String, Codable { case today, tomorrow, week, custom }
+    public enum DateRange: String, Codable {
+        case today, tomorrow, week, custom
+        static func range(by dateInterval: DateInterval, calendar: Calendar) -> DateRange {
+            let today = Date()
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? Date()
+            if calendar.isDate(dateInterval.start, inSameDayAs: today), dateInterval.duration <= (3600 * 24) { return .today } else
+            if calendar.isDate(dateInterval.start, inSameDayAs: tomorrow), dateInterval.duration <= (3600 * 24 * 7) { return .tomorrow } else
+            if dateInterval.duration <= (3600 * 24 * 7) { return .week } else
+            { return .custom }
+        }
+    }
     public let dateRange: DateRange
     public let start: Date?
     public let end: Date?
@@ -375,7 +385,7 @@ public struct AgendaTask: Equatable, Codable {
 public struct GetAgendaResult: Codable {
     var start: Date
     var end: Date
-    var timezone: String
+//    var timezone: String
     var items: [AgendaItem] // enum wrapper over event/task
 }
 

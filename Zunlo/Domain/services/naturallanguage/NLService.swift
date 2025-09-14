@@ -52,7 +52,7 @@ public final class NLService: NLProcessing {
         var results: [ParseResult] = []
         for clause in splittedClauses {
             for pack in packs {
-                let (title, intent, tokens) = parser.parse(clause.text, now: referenceDate, pack: pack)
+                let (title, intent, tokens) = parser.parse(clause.text, now: referenceDate, pack: pack, intentDetector: IntentDetector.bundled())
                 log("parsed command: \(tokens)")
                 
                 let interpreter = TemporalTokenInterpreter(calendar: calendar, timeZone: calendar.timeZone, referenceDate: referenceDate)

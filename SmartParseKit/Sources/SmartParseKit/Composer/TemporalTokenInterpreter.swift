@@ -362,6 +362,12 @@ public class TemporalTokenInterpreter {
             }
         }
         
+        if !groups.relativeDays.isEmpty && groups.timeRanges.isEmpty && groups.absoluteTimes.isEmpty {
+            let startOfDay = calendar.startOfDay(for: baseDate)
+            let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: startOfDay) ?? startOfDay
+            return (DateInterval(start: startOfDay, end: endOfDay), true)
+        }
+        
         return (nil, false)
     }
     

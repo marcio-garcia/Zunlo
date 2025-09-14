@@ -8,18 +8,16 @@
 import Foundation
 
 public struct TitleExtractor {
-    private let detector: HumanDateDetector
-    public init(detector: HumanDateDetector) { self.detector = detector }
+    public init() {}
 
     /// Extracts the "title" portion of an input by stripping date/time spans.
     /// - Parameters:
     ///   - text: Full user input.
-    ///   - base: Base date for relative interpretation.
+    ///   - ranges: Array of ranges of command or connector substrings.
     /// - Returns: Title candidate(s).
-    public func extractTitle(from text: String, base: Date = Date()) -> String {
+    public func extractTitle(from text: String, ranges: [Range<String.Index>], pack: DateLanguagePack) -> String {
         // 1) Collect match ranges and merge overlaps / duplicates
-        let matchRanges = detector.matches(in: text, base: base).map { $0.range }
-        let merged = mergeRanges(matchRanges, in: text)
+        let merged = mergeRanges(ranges, in: text)
 
         // 2) Build result by keeping everything outside merged ranges
         var pieces: [Substring] = []
@@ -38,7 +36,7 @@ public struct TitleExtractor {
         var result = pieces.reduce(into: String(), { $0.append(contentsOf: $1) })
 
         // 3) Strip language-specific connector tokens
-        let tokens = detector.bundles.flatMap { $0.pack.connectorTokens }
+        let tokens = pack.connectorTokens
         for tok in tokens {
             result = result.replacingOccurrences(
                 of: "\\b\(NSRegularExpression.escapedPattern(for: tok))\\b",
@@ -47,9 +45,9 @@ public struct TitleExtractor {
             )
         }
 
-        // 4) Strip command prefixes (per installed packs), only at the beginning
-        for b in detector.bundles {
-            let rx = b.pack.commandPrefixRegex()
+        // 4) Strip command prefixes, only at the beginning
+        let regexList = pack.commandPrefixRegex()
+        for rx in regexList {
             while let m = rx.firstMatch(in: result, options: [], range: NSRange(result.startIndex..., in: result)),
                   m.range.location == 0, m.range.length > 0,
                   let r = Range(m.range, in: result) {

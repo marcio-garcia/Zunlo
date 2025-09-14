@@ -103,7 +103,7 @@ public enum ResolvedTemporal {
 }
 
 public protocol InputParser {
-    func parse(_ text: String, now: Date, pack: DateLanguagePack) -> (String, Intent, [TemporalToken])
+    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (String, Intent, [TemporalToken])
 }
 
 // MARK: - Composer
@@ -119,34 +119,23 @@ public final class TemporalComposer: InputParser {
     }
 
     // Entry point
-    public func parse(_ text: String, now: Date, pack: DateLanguagePack) -> (String, Intent, [TemporalToken]) {
-        let (clean, title) = preprocess(text, pack: pack)
-        let tokens = detectTokens(in: clean, now: now, pack: pack)
+    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (String, Intent, [TemporalToken]) {
+        let tokens = detectTokens(in: text, now: now, pack: pack)
+        let title = TitleExtractor().extractTitle(
+            from: text,
+            ranges: tokens.compactMap({ Range($0.range, in: text) }),
+            pack: pack
+        )
+        
         let intent = detectIntent(text, pack: pack)
+        
+        // last atempt to detect the input intent
+        if intent == .unknown {
+            let i = intentDetector.classify(text)
+            return (title, i, tokens)
+        }
+        
         return (title, intent, tokens)
-    }
-
-    // MARK: - Preprocess
-
-    private func preprocess(_ s: String, pack: DateLanguagePack) -> (clean: String, title: String) {
-        let prefixRe = pack.commandPrefixRegex()
-        let ns = s as NSString
-        var clean = s
-        if let m = prefixRe.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) {
-            let r = m.range
-            if r.location == 0 {
-                clean = ns.substring(from: r.length).trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }
-        // Strip leading connectors in title only (e.g., "at", "on")
-        var title = clean
-        if let firstWord = clean.split(separator: " ").first {
-            let lw = firstWord.lowercased()
-            if pack.connectorTokens.contains(lw) {
-                title = String(clean.dropFirst(firstWord.count)).trimmingCharacters(in: .whitespaces)
-            }
-        }
-        return (clean, title)
     }
 
     // MARK: - Detection
@@ -240,59 +229,73 @@ public final class TemporalComposer: InputParser {
         // Inline weekday + time[-time] (robust)
         add(pack.inlineTimeRangeRegex()) { m, _ in
             let nsAll = text as NSString
-
+            
             // Collect candidates from captured groups (skip group 0 = whole match)
             var weekdayHit: (idx: Int, range: NSRange, text: String)?
             var timeHits: [(range: NSRange, text: String, comps: DateComponents)] = []
-
+            var rawTimeTexts: [String] = [] // Keep track of original text for AM/PM analysis
+            
             for i in 1..<m.numberOfRanges {
                 let r = m.range(at: i)
                 if r.location == NSNotFound || r.length == 0 { continue }
                 let raw = nsAll.substring(with: r)
-
+                
                 // Normalize for weekday lookup
                 let norm = raw
                     .folding(options: [.diacriticInsensitive, .caseInsensitive],
                              locale: pack.calendar.locale ?? .current)
                     .lowercased()
                     .replacingOccurrences(of: ".", with: "")
-
+                
                 // First, try weekday
                 if weekdayHit == nil, let idx = pack.weekdayMap[norm] {
                     weekdayHit = (idx, r, raw)
                     continue
                 }
-
+                
                 // Then, try time
                 if let comps = parseTime(raw, pack: pack) {
                     timeHits.append((r, raw, comps))
+                    rawTimeTexts.append(raw) // Store original text
                     continue
                 }
             }
-
-            // Emit time tokens based on what we found (prefer explicit hits)
+            
+            // Emit time tokens based on what we found
             if let first = timeHits.first {
                 if timeHits.count >= 2 {
                     let second = timeHits[1]
-                    tokens.append(
-                        TemporalToken(
-                            range: NSUnionRange(first.range, second.range),
-                            text: first.text + "–" + second.text,
-                            kind: .timeRange(start: first.comps, end: second.comps)
+                    
+                    // Use improved time range parsing
+                    if let (adjustedFirst, adjustedSecond) = parseTimeRange(rawTimeTexts[0], rawTimeTexts[1], pack: pack) {
+                        tokens.append(
+                            TemporalToken(
+                                range: NSUnionRange(first.range, second.range),
+                                text: first.text + "–" + second.text,
+                                kind: .timeRange(start: adjustedFirst, end: adjustedSecond)
+                            )
                         )
-                    )
+                    } else {
+                        // Fallback to original logic
+                        tokens.append(
+                            TemporalToken(
+                                range: NSUnionRange(first.range, second.range),
+                                text: first.text + "–" + second.text,
+                                kind: .timeRange(start: first.comps, end: second.comps)
+                            )
+                        )
+                    }
                 } else {
                     tokens.append(TemporalToken(range: first.range, text: first.text, kind: .absoluteTime(first.comps)))
                 }
             }
-
+            
             // Return the weekday token (so `add(...)` appends it), if found
             if let wd = weekdayHit {
                 return TemporalToken(range: wd.range, text: wd.text, kind: .weekday(dayIndex: wd.idx, modifier: nil))
             }
             return nil
         }
-
 
         // from-to
         add(pack.fromToTimeRegex()) { m, sub in
@@ -456,6 +459,73 @@ public final class TemporalComposer: InputParser {
         return nil
     }
 
+    func parseTimeRange(_ firstTimeText: String, _ secondTimeText: String, pack: DateLanguagePack) -> (DateComponents, DateComponents)? {
+        guard let firstComps = parseTime(firstTimeText, pack: pack),
+              let secondComps = parseTime(secondTimeText, pack: pack) else {
+            return nil
+        }
+        
+        var adjustedFirst = firstComps
+        var adjustedSecond = secondComps
+        
+        // Check if we need AM/PM propagation
+        let firstHasAMPM = hasAMPMMarker(firstTimeText)
+        let secondHasAMPM = hasAMPMMarker(secondTimeText)
+        let secondAMPM = extractAMPMMarker(secondTimeText)
+        
+        // Case 1: "4-6pm" - first has no AM/PM, second has PM
+        if !firstHasAMPM && secondHasAMPM && secondAMPM == "pm" {
+            // Apply PM to first time if it makes logical sense
+            if let firstHour = adjustedFirst.hour, firstHour < 12 {
+                // Only apply PM if the range makes sense (e.g., 4-6pm, not 10-6pm)
+                if let secondHour = adjustedSecond.hour, firstHour < (secondHour <= 12 ? secondHour : secondHour - 12) {
+                    adjustedFirst.hour = firstHour + 12
+                }
+            }
+        }
+        
+        // Case 2: "4am-6" - first has AM, second has no AM/PM
+        else if firstHasAMPM && !secondHasAMPM {
+            let firstAMPM = extractAMPMMarker(firstTimeText)
+            if let secondHour = adjustedSecond.hour, let firstHour = adjustedFirst.hour {
+                if firstAMPM == "am" && secondHour > (firstHour >= 12 ? firstHour - 12 : firstHour) {
+                    // Keep second as AM (no change needed)
+                } else if firstAMPM == "pm" && secondHour < 12 && secondHour > (firstHour >= 12 ? firstHour - 12 : firstHour) {
+                    // Apply PM to second time
+                    adjustedSecond.hour = secondHour + 12
+                }
+            }
+        }
+        
+        // Validate the range makes sense (start < end)
+        if let startHour = adjustedFirst.hour, let endHour = adjustedSecond.hour {
+            let startMinutes = startHour * 60 + (adjustedFirst.minute ?? 0)
+            let endMinutes = endHour * 60 + (adjustedSecond.minute ?? 0)
+            
+            if startMinutes >= endMinutes {
+                // If end is not after start, try adjusting
+                if endHour < 12 && startHour >= 12 {
+                    // Maybe end should be PM too (e.g., "2pm-4" -> "2pm-4pm")
+                    adjustedSecond.hour = endHour + 12
+                }
+            }
+        }
+        
+        return (adjustedFirst, adjustedSecond)
+    }
+    
+    private func hasAMPMMarker(_ timeText: String) -> Bool {
+        let lower = timeText.lowercased()
+        return lower.contains("am") || lower.contains("pm")
+    }
+    
+    private func extractAMPMMarker(_ timeText: String) -> String? {
+        let lower = timeText.lowercased()
+        if lower.contains("pm") { return "pm" }
+        if lower.contains("am") { return "am" }
+        return nil
+    }
+    
     /// Returns true if the phrase itself contains relative cues that we should compose.
     private func hasRelativeCues(_ s: String, pack: DateLanguagePack) -> Bool {
         let range = NSRange(location: 0, length: (s as NSString).length)
@@ -516,8 +586,7 @@ extension TemporalComposer {
             return .createEvent
         }
         
-        // Default based on context or fallback
-        return .createTask // Most common case
+        return .unknown
     }
 
     private func detectRescheduleSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
@@ -531,8 +600,27 @@ extension TemporalComposer {
             return .rescheduleEvent
         }
         
-        // Default to event for reschedule (more common)
-        return .rescheduleEvent
+        if pack.inlineTimeRangeRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .rescheduleEvent
+        }
+        
+        if pack.fromToTimeRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return .rescheduleEvent
+        }
+        
+        if pack.ordinalDayRegex()?.firstMatch(in: s, options: [], range: range) != nil {
+            return .rescheduleTask
+        }
+        
+        if pack.relativeDayRegex()?.firstMatch(in: s, options: [], range: range) != nil {
+            return .rescheduleTask
+        }
+        
+        if pack.weekendRegex()?.firstMatch(in: s, options: [], range: range) != nil {
+            return .rescheduleTask
+        }
+        
+        return .unknown
     }
 
     private func detectUpdateSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
@@ -546,8 +634,7 @@ extension TemporalComposer {
             return .updateEvent
         }
         
-        // Default to task for updates (more common)
-        return .updateTask
+        return .unknown
     }
 
     private func detectCancelSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
@@ -571,7 +658,6 @@ extension TemporalComposer {
             return .cancelEvent
         }
         
-        // Default to event for cancel (meetings are more commonly cancelled)
-        return .cancelEvent
+        return .unknown
     }
 }

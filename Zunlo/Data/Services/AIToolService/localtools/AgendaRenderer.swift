@@ -19,9 +19,10 @@ public struct AgendaRenderer {
     public static func renderParts(
         _ agenda: GetAgendaResult,
         agendaRange: GetAgendaArgs.DateRange,
-        schema: String = "zunlo.agenda#1"
+        schema: String = "zunlo.agenda#1",
+        timeZone: TimeZone
     ) -> AgendaRenderParts {
-        let tz = TimeZone(identifier: agenda.timezone) ?? .current
+        let tz = timeZone
         let f = Formatters(timeZone: tz)
 
         // Split items
@@ -169,12 +170,10 @@ public struct AgendaRenderer {
     
     public static func renderWeekParts(
         _ agenda: GetAgendaResult,
-        schema: String = "zunlo.agenda#1"
+        schema: String = "zunlo.agenda#1",
+        calendar: Calendar
     ) -> AgendaRenderParts {
-        let tz = TimeZone(identifier: agenda.timezone) ?? .current
-        var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = tz
-        let f = Formatters(timeZone: tz)
+        let f = Formatters(timeZone: calendar.timeZone)
 
         // -------- Styles (same as renderParts)
         var hdr  = AttributeContainer(); hdr.font  = AppFontStyle.subtitle.uiFont()
@@ -191,16 +190,16 @@ public struct AgendaRenderer {
         }
 
         // Compute nice "Week of ..." label
-        let weekStart = cal.startOfDay(for: agenda.start)
-        let weekEnd   = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: agenda.end)) ?? agenda.end
+        let weekStart = calendar.startOfDay(for: agenda.start)
+        let weekEnd   = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: agenda.end)) ?? agenda.end
         let periodLabel = "Week of \(f.humanDate.string(from: weekStart)) – \(f.humanDate.string(from: weekEnd))"
 
         // Group items
-        let (days, undatedTasks) = groupAgendaByDay(agenda)
+        let (days, undatedTasks) = groupAgendaByDay(agenda, calendar: calendar)
 
         // Helper: clip event times to the specific day being rendered
         func clippedTimesForEventOnDay(_ e: AgendaEvent, dayStart: Date) -> (Date, Date?) {
-            let dayEnd = cal.date(byAdding: .day, value: 1, to: dayStart)!
+            let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
             let start = max(e.start, dayStart)
             let endExclusive = (e.end ?? e.start)
             let end = min(endExclusive, dayEnd)
@@ -230,7 +229,7 @@ public struct AgendaRenderer {
 
                 if day.items.isEmpty {
                     var none = AttributedString("   • No items")
-                    var noneStyle = meta
+                    let noneStyle = meta
                     // You can also set a secondary color here if you wish
                     none.setAttributes(noneStyle)
                     out += none
@@ -345,7 +344,7 @@ public struct AgendaRenderer {
 
         let payload = Payload(
             schema: schema,
-            timezone: tz.identifier,
+            timezone: calendar.timeZone.identifier,
             start: utcISO.string(from: agenda.start),
             end: utcISO.string(from: agenda.end),
             items: agenda.items
@@ -411,17 +410,13 @@ extension AgendaRenderer {
         public var items: [AgendaItem] // items that belong on this date
     }
 
-    public static func groupAgendaByDay(_ result: GetAgendaResult) -> ([DayAgenda], [AgendaTask]) {
-        let tz = TimeZone(identifier: result.timezone) ?? .current
-        var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = tz
-
+    public static func groupAgendaByDay(_ result: GetAgendaResult, calendar: Calendar) -> ([DayAgenda], [AgendaTask]) {
         // Normalize bounds to day edges
-        let periodStart = cal.startOfDay(for: result.start)
+        let periodStart = calendar.startOfDay(for: result.start)
         let periodEndExclusive: Date = {
-            let endStartOfDay = cal.startOfDay(for: result.end)
+            let endStartOfDay = calendar.startOfDay(for: result.end)
             if endStartOfDay == result.end { return endStartOfDay }
-            return cal.date(byAdding: .day, value: 1, to: endStartOfDay)!
+            return calendar.date(byAdding: .day, value: 1, to: endStartOfDay)!
         }()
 
         // Prebuild days
@@ -429,20 +424,20 @@ extension AgendaRenderer {
         var dayCursor = periodStart
         while dayCursor < periodEndExclusive {
             dayKeys.append(dayCursor)
-            dayCursor = cal.date(byAdding: .day, value: 1, to: dayCursor)!
+            dayCursor = calendar.date(byAdding: .day, value: 1, to: dayCursor)!
         }
 
         var buckets: [Date: [AgendaItem]] = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, []) })
         var undatedTasks: [AgendaTask] = []
 
         func bucketDate(for date: Date) -> Date {
-            cal.startOfDay(for: date)
+            calendar.startOfDay(for: date)
         }
 
         func eachDayKeys(from a: Date, toExclusive b: Date) -> [Date] {
             guard a < b else { return [] }
-            var d = cal.startOfDay(for: a)
-            let endKeyExclusive = cal.startOfDay(for: b)
+            var d = calendar.startOfDay(for: a)
+            let endKeyExclusive = calendar.startOfDay(for: b)
             var keys: [Date] = []
             while d <= endKeyExclusive {
                 if d == endKeyExclusive {
@@ -450,7 +445,7 @@ extension AgendaRenderer {
                     break
                 } else {
                     keys.append(d)
-                    d = cal.date(byAdding: .day, value: 1, to: d)!
+                    d = calendar.date(byAdding: .day, value: 1, to: d)!
                 }
             }
             return keys
@@ -461,7 +456,7 @@ extension AgendaRenderer {
             let start = max(a, periodStart)
             let endExclusive = min(bOpt ?? b, periodEndExclusive)
             if start >= endExclusive {
-                let fallbackEnd = cal.date(byAdding: .second, value: 1, to: start) ?? start
+                let fallbackEnd = calendar.date(byAdding: .second, value: 1, to: start) ?? start
                 return (start, fallbackEnd)
             }
             return (start, endExclusive)

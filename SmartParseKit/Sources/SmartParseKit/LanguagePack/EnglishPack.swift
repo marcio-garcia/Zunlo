@@ -11,7 +11,7 @@ public struct EnglishPack: DateLanguagePack {
     public let calendar: Calendar
     public let thisTokens = ["this", "coming"]
     public let nextTokens = ["next"]
-    public var connectorTokens = ["at", "on", "from", "to", "until", "till", "by"]
+    public var connectorTokens = ["at", "on", "from", "to", "until", "till", "by", "for"]
     public let weekdayMap: [String: Int]
 
     public init(calendar: Calendar) {
@@ -80,22 +80,25 @@ public struct EnglishPack: DateLanguagePack {
 
     public func phraseIndicatesNext(_ s: String) -> Bool { s.range(of: #"(?i)\bnext\b"#, options: .regularExpression) != nil }
 
-    public func commandPrefixRegex() -> NSRegularExpression {
-        let pat = #"""
-        (?ix)^ \s* (?:
-            (create|move|update|add|set\s*up|schedule|book|reschedule|postpone|delay|push\s*back|change|modify|delete|remove|cancel)
-            \s+ (?:an?\s+)? (?:event|task|reminder)?
-          | (don't\s+schedule|do\s+not\s+schedule)
-        )
-        (?: \s+ (?:for|to|on|at) )?
-        \s*
-        """#
-        return BaseLanguagePack.regex(pat)
+    public func commandPrefixRegex() -> [NSRegularExpression] {
+        return [
+            intentViewRegex(),
+            intentPlanRegex(),
+            timePivotRegex(),
+            intentCreateTaskRegex(),
+            intentCreateEventRegex(),
+            intentCancelTaskRegex(),
+            intentCancelEventRegex(),
+            intentCreateRegex(),
+            intentRescheduleRegex(),
+            intentCancelRegex(),
+            intentUpdateRegex()
+        ]
     }
 
-//    public func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(create|add|schedule|book|set\s*up)\b"#) }
-//    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reschedul|rebook|postpone|push\s*back|delay|move|change|modify)\b"#) }
-//    public func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(delete|remove|cancel|don't\s+schedule|do\s+not\s+schedule)\b"#) }
+    public func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(create|add|schedule|book|set\s*up)\b"#) }
+    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reschedul|rebook|postpone|push\s*back|delay|move|change|modify)\b"#) }
+    public func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(delete|remove|cancel|don't\s+schedule|do\s+not\s+schedule)\b"#) }
     public func intentViewRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(show|view|what's\s+on|agenda|my\s+schedule)\b"#) }
     public func intentPlanRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(plan|organize|structure|map\s+out)\b"#) }
     public func timePivotRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:at|to)\b"#) }

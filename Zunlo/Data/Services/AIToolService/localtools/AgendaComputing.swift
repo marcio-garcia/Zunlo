@@ -8,5 +8,5 @@
 import Foundation
 
 protocol AgendaComputing {
-    func computeAgenda(range: Range<Date>, timezone: TimeZone) async throws -> GetAgendaResult
+    func computeAgenda(range: Range<Date>) async throws -> GetAgendaResult
 }

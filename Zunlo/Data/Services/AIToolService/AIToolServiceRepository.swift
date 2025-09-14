@@ -57,7 +57,7 @@ class AIToolServiceRepository: DomainRepositories, @unchecked Sendable {
     func fetchTasks(range: Range<Date>) async throws -> [UserTask] {
         let filter = TaskFilter(
             isCompleted: false,
-            dueDateRange: range.lowerBound...range.upperBound)
+            dueDateRange: range.lowerBound..<range.upperBound)
         return try await taskRepo.fetchTasks(filteredBy: filter)
     }
     

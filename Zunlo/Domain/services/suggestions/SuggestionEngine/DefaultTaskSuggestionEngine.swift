@@ -23,7 +23,7 @@ final class DefaultTaskSuggestionEngine: TaskSuggestionEngine {
             let all = try await taskFetcher.fetchTasks(filteredBy: TaskFilter(
                 // isCompleted filter supported; dueDateRange inclusive
                 isCompleted: false,
-                dueDateRange: Date.distantPast...date
+                dueDateRange: Date.distantPast..<date
             ))
             return all.count
         } catch {
@@ -34,11 +34,10 @@ final class DefaultTaskSuggestionEngine: TaskSuggestionEngine {
     /// Count of open tasks due within the calendar day of `date`.
     public func dueTodayCount(on date: Date) async -> Int {
         let range = calendar.dayRange(containing: date)
-        let closedRange = range.lowerBound...range.upperBound
         do {
             let all = try await taskFetcher.fetchTasks(filteredBy: TaskFilter(
                 isCompleted: false,
-                dueDateRange: closedRange
+                dueDateRange: range
             ))
             return all.count
         } catch {

@@ -12,7 +12,7 @@ import SmartParseKit
 
 extension DateInterval {
     func toDateRange() -> Range<Date> {
-        let exclusiveEnd = Calendar.current.date(byAdding: .minute, value: 1, to: self.end) ?? self.end
+        let exclusiveEnd = Calendar.current.date(byAdding: .second, value: 1, to: self.end) ?? self.end
         return self.start..<exclusiveEnd
     }
 }
@@ -154,13 +154,40 @@ final class ActionTools: Tools {
     }
 
     public func showAgenda(_ cmd: ParseResult) async -> ToolResult {
-        let dateInterval = cmd.context.dateRange
-        guard let range = dateInterval?.toDateRange() else {
+        guard let dateInterval = cmd.context.dateRange else {
             return ToolResult(intent: cmd.intent, action: .info(message: "Agenda request with no period"), needsDisambiguation: true)
         }
+        
+        let range = dateInterval.toDateRange()
+        
+//        do {
+//            let occ = try await events.fetchOccurrences(in: range)
+//            return ToolResult(intent: cmd.intent, action: .agenda(range: range, occurrences: occ), message: NSLocalizedString("Agenda ready.", comment: ""))
+//        } catch {
+//            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
+//        }
+        
         do {
-            let occ = try await events.fetchOccurrences(in: range)
-            return ToolResult(intent: cmd.intent, action: .agenda(range: range, occurrences: occ), message: NSLocalizedString("Agenda ready.", comment: ""))
+            let agendaComputer = LocalAgendaComputer(eventRepo: events, taskRepo: tasks)
+            
+            var formatted: AgendaRenderParts
+            let agendaRange = GetAgendaArgs.DateRange.range(by: dateInterval, calendar: calendar)
+            
+            let result = try await agendaComputer.computeAgenda(range: range)
+            
+            switch agendaRange {
+            case .today, .tomorrow:
+                formatted = AgendaRenderer.renderParts(result, agendaRange: agendaRange, timeZone: calendar.timeZone)
+            case .week, .custom:
+                formatted = AgendaRenderer.renderWeekParts(result, calendar: calendar)
+            }
+            
+            return ToolResult(
+                intent: cmd.intent,
+                action: .agenda(range: range, occurrences: []),
+                message: formatted.text,
+                richText: formatted.attributed
+            )
         } catch {
             return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
         }

@@ -60,15 +60,17 @@ final public class AIToolService: AIToolServiceAPI {
     
     @discardableResult
     public func getAgenda(args: GetAgendaArgs, calculatedRange: Range<Date>, timezone: TimeZone) async throws -> AgendaRenderParts {
-        let agendaComputer = LocalAgendaComputer(userId: userId, toolRepo: toolRepo)
-        let result = try await agendaComputer.computeAgenda(range: calculatedRange, timezone: timezone)
-        var formatted: AgendaRenderParts
-        if args.dateRange == .week {
-            formatted = AgendaRenderer.renderWeekParts(result)
-        } else {
-            formatted = AgendaRenderer.renderParts(result, agendaRange: args.dateRange)
-        }
-        return formatted
+//        let agendaComputer = LocalAgendaComputer(userId: userId, toolRepo: toolRepo)
+//        let result = try await agendaComputer.computeAgenda(range: calculatedRange, timezone: timezone)
+//        let formatted: AgendaRenderParts
+//        if args.dateRange == .week {
+//            formatted = AgendaRenderer.renderWeekParts(result)
+//        } else {
+//            formatted = AgendaRenderer.renderParts(result, agendaRange: args.dateRange)
+//        }
+//        return formatted
+        
+        return AgendaRenderParts(attributed: AttributedString(), text: "", json: "", schema: "")
     }
     
     @discardableResult
@@ -80,15 +82,17 @@ final public class AIToolService: AIToolServiceAPI {
         objectives: [String],
         constraints: Constraints?
     ) async throws -> ProposedPlan {
-        let agendaComputer = LocalAgendaComputer(userId: userId, toolRepo: toolRepo)
-        let weekPlanner = LocalWeekPlanner(userId: userId, agenda: agendaComputer, toolRepo: toolRepo)
-        return try await weekPlanner.proposePlan(
-            start: start,
-            horizonDays: horizonDays,
-            timezone: .current,
-            objectives: objectives,
-            constraints: constraints
-        )
+//        let agendaComputer = LocalAgendaComputer(userId: userId, toolRepo: toolRepo)
+//        let weekPlanner = LocalWeekPlanner(userId: userId, agenda: agendaComputer, toolRepo: toolRepo)
+//        return try await weekPlanner.proposePlan(
+//            start: start,
+//            horizonDays: horizonDays,
+//            timezone: .current,
+//            objectives: objectives,
+//            constraints: constraints
+//        )
+        
+        return ProposedPlan(start: Date(), end: Date(), blocks: [], notes: [])
     }
     
     // Receives Encodable to be encoded by the 'invoke' function

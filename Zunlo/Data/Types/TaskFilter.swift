@@ -12,7 +12,7 @@ public struct TaskFilter {
     var userId: UUID?
     var priority: UserTaskPriorityLocal?
     var isCompleted: Bool?
-    var dueDateRange: ClosedRange<Date>?
+    var dueDateRange: Range<Date>?
     var untilDueDate: Date?
     var deleted: Bool?
     
@@ -21,7 +21,7 @@ public struct TaskFilter {
         userId: UUID? = nil,
         priority: UserTaskPriorityLocal? = nil,
         isCompleted: Bool? = nil,
-        dueDateRange: ClosedRange<Date>? = nil,
+        dueDateRange: Range<Date>? = nil,
         untilDueDate: Date? = nil,
         deleted: Bool? = nil
     ) {

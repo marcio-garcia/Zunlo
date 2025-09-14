@@ -28,7 +28,7 @@ final class LocalWeekPlanner: WeekPlanning {
     func proposePlan(start: Date, horizonDays: Int, timezone: TimeZone, objectives: [String], constraints: Constraints?) async throws -> ProposedPlan {
         let end = (cal.date(byAdding: .day, value: horizonDays, to: start) ?? start).addingTimeInterval(1)
         let window = start..<end
-        let ag = try await agenda.computeAgenda(range: window, timezone: timezone)
+        let ag = try await agenda.computeAgenda(range: window)
 
         // Busy = events
         let busy = ag.items.compactMap { item -> (Date, Date?, String, UUID?)? in

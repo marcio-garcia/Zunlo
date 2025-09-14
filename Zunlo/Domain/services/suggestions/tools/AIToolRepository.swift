@@ -100,14 +100,14 @@ class AIToolRepository: AIToolAPI {
         
         taskFilter = TaskFilter(
             isCompleted: false,
-            dueDateRange: Date.distantPast...startOfNextDay
+            dueDateRange: Date.distantPast..<startOfNextDay
         )
         let tasksDueToday = try await taskRepo.fetchTasks(filteredBy: taskFilter)
         
         taskFilter = TaskFilter(
             priority: UserTaskPriorityLocal.high,
             isCompleted: false,
-            dueDateRange: Date.distantPast...startOfNextDay
+            dueDateRange: Date.distantPast..<startOfNextDay
         )
         let tasksHigh = try await taskRepo.fetchTasks(filteredBy: taskFilter)
         
