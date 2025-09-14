@@ -1,8 +1,14 @@
+//
+//  TemporalTokenInterpreterTests.swift
+//  SmartParseKit
+//
+//  Created by Marcio Garcia on 9/14/25.
+//
 
 import XCTest
 @testable import SmartParseKit
 
-final class TemporalComposerTests: XCTestCase {
+final class TemporalTokenInterpreterTests: XCTestCase {
 
     private func makeNow() -> Date {
         // 2025-09-11 10:00:00 -03:00 (America/Sao_Paulo)
@@ -31,13 +37,20 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("add event graduation ceremony next week at 11:00", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
-                
-        XCTAssertEqual(result.0, .createEvent)
-        XCTAssertEqual(result.1, [
-            TemporalToken(range: NSRange(location: 30, length: 9), text: "next week", kind: .relativeWeek(.nextWeek(count: 1))),
-            TemporalToken(range: NSRange(location: 43, length: 5), text: "11:00", kind: .absoluteTime(DateComponents(hour: 11, minute: 0)))
-        ])        
+        let parsed = composer.parse(
+            "add event graduation ceremony next week at 11:00",
+            now: now,
+            pack: pack,
+            intentDetector: MockIntentDetector(languge: .english, intent: .createEvent)
+        )
+        let interpreter = TemporalTokenInterpreter(calendar: calendarSP(), referenceDate: now)
+        let result = interpreter.interpret(parsed.1)
+        let c = components(result.finalDate)
+        
+        XCTAssertFalse(result.isRangeQuery)
+        // Monday Sep 15, 11:00
+        XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 9); XCTAssertEqual(c.d, 18)
+        XCTAssertEqual(c.h, 11); XCTAssertEqual(c.min, 0)
     }
 
     func testNextWeekFri1100() {

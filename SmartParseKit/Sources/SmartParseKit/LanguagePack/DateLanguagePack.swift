@@ -58,6 +58,29 @@ public protocol DateLanguagePack {
 
     // Count repetitions for "next next week". Default uses phraseIndicatesNext.
     func nextRepetitionCount(in phrase: String) -> Int
+
+    // MARK: - Metadata Detection Patterns
+
+    // Tag patterns: "tag work", "add tag home to", "with tag personal"
+    func tagPatternRegex() -> NSRegularExpression?
+
+    // Reminder patterns: "remind me 30 minutes before", "set reminder for", "alert at"
+    func reminderPatternRegex() -> NSRegularExpression?
+
+    // Priority patterns: "high priority", "urgent", "low importance"
+    func priorityPatternRegex() -> NSRegularExpression?
+
+    // Location patterns: "at home", "location office", "in the kitchen"
+    func locationPatternRegex() -> NSRegularExpression?
+
+    // Notes patterns: "note:", "notes:", "comment:", "description:"
+    func notesPatternRegex() -> NSRegularExpression?
+
+    // Helper to classify priority from matched text
+    func classifyPriority(_ matchedLowercased: String) -> TaskPriority?
+
+    // Helper to extract reminder time offset from matched text
+    func extractReminderOffset(_ matchedText: String) -> TimeInterval?
 }
 
 //public extension DateLanguagePack {

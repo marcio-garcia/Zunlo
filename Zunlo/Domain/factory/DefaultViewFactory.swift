@@ -79,7 +79,7 @@ final class DefaultViewFactory: ViewFactory {
 //            }
 //        }
         
-        let engine = IntentDetector.bundled()
+        let engine = AppleIntentDetector.bundled()
         let parser = TemporalComposer(prefs: Preferences(calendar: calendar))
         let nlpService = NLService(parser: parser, engine: engine, calendar: calendar)
 

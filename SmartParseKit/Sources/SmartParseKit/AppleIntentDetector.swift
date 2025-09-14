@@ -7,9 +7,12 @@
 import Foundation
 import NaturalLanguage
 
-// MARK: - IntentEngine
+public protocol IntentDetector {
+    func detectLanguage(_ text: String) -> NLLanguage
+    func classify(_ text: String) -> Intent
+}
 
-public final class IntentDetector {
+public final class AppleIntentDetector: IntentDetector {
     private let model: NLModel?
 
     public init(modelURL: URL? = nil) {
@@ -38,9 +41,9 @@ public final class IntentDetector {
 }
 
 // Inside SmartParseKit, e.g. add this helper:
-extension IntentDetector {
-    public static func bundled() -> IntentDetector {
+extension AppleIntentDetector {
+    public static func bundled() -> AppleIntentDetector {
         let url = Bundle.module.url(forResource: "ZunloIntents", withExtension: "mlmodelc")
-        return IntentDetector(modelURL: url)
+        return AppleIntentDetector(modelURL: url)
     }
 }

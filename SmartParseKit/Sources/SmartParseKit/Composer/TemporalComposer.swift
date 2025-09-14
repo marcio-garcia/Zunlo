@@ -62,10 +62,10 @@ public struct Preferences {
 
 }
 
-public struct TemporalToken {
+public struct TemporalToken: Equatable {
     public let range: NSRange
     public let text: String
-    public enum Kind {
+    public enum Kind: Equatable {
         case absoluteDate(DateComponents)
         case absoluteTime(DateComponents)
         case timeRange(start: DateComponents, end: DateComponents)
@@ -95,6 +95,12 @@ public struct TemporalToken {
         case .connector:                 return 5
         }
     }
+    
+    public init(range: NSRange, text: String, kind: TemporalToken.Kind) {
+        self.range = range
+        self.text = text
+        self.kind = kind
+    }
 }
 
 public enum ResolvedTemporal {
@@ -103,7 +109,7 @@ public enum ResolvedTemporal {
 }
 
 public protocol InputParser {
-    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (String, Intent, [TemporalToken])
+    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], [MetadataToken])
 }
 
 // MARK: - Composer
@@ -119,23 +125,27 @@ public final class TemporalComposer: InputParser {
     }
 
     // Entry point
-    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (String, Intent, [TemporalToken]) {
-        let tokens = detectTokens(in: text, now: now, pack: pack)
-        let title = TitleExtractor().extractTitle(
+    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], [MetadataToken]) {
+        let temporalTokens = detectTokens(in: text, now: now, pack: pack)
+
+        // Extract metadata using the new MetadataExtractor
+        let metadataResult = MetadataExtractor().extractMetadata(
             from: text,
-            ranges: tokens.compactMap({ Range($0.range, in: text) }),
+            temporalRanges: temporalTokens.compactMap({ Range($0.range, in: text) }),
             pack: pack
         )
-        
+
         let intent = detectIntent(text, pack: pack)
-        
-        // last atempt to detect the input intent
+
+        // Last attempt to detect the input intent using ML model
+        let finalIntent: Intent
         if intent == .unknown {
-            let i = intentDetector.classify(text)
-            return (title, i, tokens)
+            finalIntent = intentDetector.classify(text)
+        } else {
+            finalIntent = intent
         }
-        
-        return (title, intent, tokens)
+
+        return (finalIntent, temporalTokens, metadataResult.tokens)
     }
 
     // MARK: - Detection

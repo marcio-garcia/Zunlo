@@ -26,12 +26,10 @@ public struct TemporalContext {
 
 public class TemporalTokenInterpreter {
     private let calendar: Calendar
-    private let timeZone: TimeZone
     private let referenceDate: Date
     
-    public init(calendar: Calendar = Calendar.current, timeZone: TimeZone = TimeZone.current, referenceDate: Date = Date()) {
+    public init(calendar: Calendar, referenceDate: Date = Date()) {
         self.calendar = calendar
-        self.timeZone = timeZone
         self.referenceDate = referenceDate
     }
     
@@ -121,7 +119,7 @@ public class TemporalTokenInterpreter {
         resolvedComponents.hour = baseComponents.hour
         resolvedComponents.minute = baseComponents.minute
         resolvedComponents.second = 0
-        resolvedComponents.timeZone = timeZone
+        resolvedComponents.timeZone = calendar.timeZone
         
         // Process in order of priority and dependency
         
@@ -440,7 +438,7 @@ public class TemporalTokenInterpreter {
     
     private func buildFinalDate(from components: DateComponents) -> Date {
         var finalComponents = components
-        finalComponents.timeZone = timeZone
+        finalComponents.timeZone = calendar.timeZone
         
         return calendar.date(from: finalComponents) ?? referenceDate
     }

@@ -188,4 +188,99 @@ public struct EnglishPack: DateLanguagePack {
         if l.contains("midnight") { return .midnight }
         return nil
     }
+
+    // MARK: - Metadata Pattern Implementation
+
+    public func tagPatternRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"""
+        (?ix)
+        \b(?:add\s+)?(?:with\s+)?tag\s+([a-zA-Z0-9_-]+)(?:\s+(?:to|for))?\b
+        |
+        \btags?\s*[:=]\s*([a-zA-Z0-9_,-]+)\b
+        |
+        \b(?:tagged\s+(?:as\s+)?|label(?:ed)?\s+(?:as\s+)?|category\s+)([a-zA-Z0-9_-]+)\b
+        """#) // groups 1, 2, or 3 = tag name(s)
+    }
+
+    public func reminderPatternRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"""
+        (?ix)
+        \b(?:remind\s+me|set\s+(?:a\s+)?reminder|alert\s+me)
+        (?:\s+(?:in|at|for))?\s+
+        (?:(\d+)\s+(minutes?|mins?|hours?|hrs?|days?)\s+(?:before|early)
+        |(?:at\s+)?(\d{1,2}(?::\d{2})?)(?:\s*(?:am|pm))?
+        |(\d+)\s+(minutes?|mins?|hours?|hrs?|days?))\b
+        """#) // groups: 1=number, 2=unit, 3=time, 4=offset_number, 5=offset_unit
+    }
+
+    public func priorityPatternRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"""
+        (?ix)
+        \b(?:(?:set\s+)?priority\s+(?:to\s+|as\s+)?
+        |(?:mark\s+(?:as\s+)?)?(?:priority\s+)?)
+        (urgent|high|medium|normal|low|critical|important)
+        (?:\s+priority)?\b
+        |
+        \b(urgent|high|medium|normal|low|critical|important)(?:\s+priority)?\b
+        """#) // groups 1 or 2 = priority level
+    }
+
+    public func locationPatternRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"""
+        (?ix)
+        \b(?:at|in|location\s*[:=]?)\s+
+        (?:the\s+)?([a-zA-Z0-9\s_-]{2,30})
+        (?=\s|$|[.!?,:;])
+        |
+        \blocation\s*[:=]\s*([^\s,;.!?]{2,30})\b
+        """#) // groups 1 or 2 = location name
+    }
+
+    public func notesPatternRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"""
+        (?ix)
+        \b(?:notes?|comments?|description)
+        \s*[:=]\s*
+        ([^.!?;]{1,200})
+        (?=[.!?;]|$)
+        """#) // group 1 = notes content
+    }
+
+    public func classifyPriority(_ matchedLowercased: String) -> TaskPriority? {
+        let text = matchedLowercased.lowercased()
+        if text.contains("urgent") || text.contains("critical") {
+            return .urgent
+        } else if text.contains("high") || text.contains("important") {
+            return .high
+        } else if text.contains("medium") || text.contains("normal") {
+            return .medium
+        } else if text.contains("low") {
+            return .low
+        }
+        return nil
+    }
+
+    public func extractReminderOffset(_ matchedText: String) -> TimeInterval? {
+        let text = matchedText.lowercased()
+        let regex = try? NSRegularExpression(pattern: #"(\d+)\s+(minutes?|mins?|hours?|hrs?|days?)"#, options: .caseInsensitive)
+
+        guard let match = regex?.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let numberRange = Range(match.range(at: 1), in: text),
+              let unitRange = Range(match.range(at: 2), in: text),
+              let number = Double(String(text[numberRange])) else {
+            return nil
+        }
+
+        let unit = String(text[unitRange])
+        switch unit {
+        case let u where u.hasPrefix("min"):
+            return number * 60
+        case let u where u.hasPrefix("hour") || u.hasPrefix("hr"):
+            return number * 3600
+        case let u where u.hasPrefix("day"):
+            return number * 86400
+        default:
+            return nil
+        }
+    }
 }
