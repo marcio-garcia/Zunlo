@@ -170,6 +170,19 @@ public struct SpanishPack: DateLanguagePack {
     public func eventKeywordsRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(reunión|evento|cita|llamada|almuerzo|cena|conferencia|sesión|encuentro|fiesta|ceremonia)\b"#)
     }
+
+    // Metadata addition detection patterns
+    public func metadataAdditionWithPrepositionRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(añadir|añade|agregar|agrega|establecer|establece|poner|pon)\s+(tag|etiqueta|prioridad|recordatorio|nota|lugar|ubicación|localización)\s+\S+.*\s+(para|a|al|de|del|en)\s+.*\b(tarea|evento|reunión|cita)\b"#)
+    }
+
+    public func metadataAdditionDirectRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(añadir|añade|agregar|agrega|establecer|establece|poner|pon)\s+(tag|etiqueta|prioridad|recordatorio|nota|lugar|ubicación|localización)\s+\S+.*\b(tarea|evento|reunión|cita)\b"#)
+    }
+
+    public func taskEventReferenceRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(tarea|evento|reunión|cita|item|actividad)\b"#)
+    }
     
     // Optionals
     public func weekendRegex() -> NSRegularExpression? {

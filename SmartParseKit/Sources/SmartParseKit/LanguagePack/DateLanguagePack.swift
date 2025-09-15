@@ -37,6 +37,11 @@ public protocol DateLanguagePack {
     func intentCancelEventRegex() -> NSRegularExpression
     func intentUpdateRegex() -> NSRegularExpression
     func taskKeywordsRegex() -> NSRegularExpression
+
+    // Metadata addition detection patterns
+    func metadataAdditionWithPrepositionRegex() -> NSRegularExpression
+    func metadataAdditionDirectRegex() -> NSRegularExpression
+    func taskEventReferenceRegex() -> NSRegularExpression
     func eventKeywordsRegex() -> NSRegularExpression
     
     // Pivot used to prefer the rightmost time after these tokens
@@ -178,10 +183,6 @@ public enum BaseLanguagePack {
 
     // Accepts 09:30, 9, 9am, 21h, 21h30, 21 hs, 21 hrs
     public static var timeToken: String {
-        return #"(?:(?:[01]?\d|2[0-3])(?::\d{2})?(?:\s*[hH]\s*\d{2})?)\s*(?:am|pm|hs?|hrs?)?"#
-    }
-
-    public static var timeTokenEN: String {
-        return #"(?:(?:[01]?\d|2[0-3])(?::\d{2})?)\s*(?:am|pm)?"#
+        return #"(?:(?:[01]?[0-9]|2[0-3])(?::[0-5][0-9])?(?:\s*[h]\s*[0-5][0-9])?)\s*(?:am|pm|h(?:r)?s?)?"#
     }
 }

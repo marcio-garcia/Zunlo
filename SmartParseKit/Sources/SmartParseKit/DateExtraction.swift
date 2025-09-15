@@ -39,7 +39,7 @@ public func extractDates(_ text: String, base: Date = Date(), locale: Locale = .
         // 2) If it’s the bare “next <weekday>” flavor, override to strictly upcoming.
         if !saysNextWeek {
             if let wd = captureWeekdayEn(text) ?? captureWeekdayPt(text) {
-                let detected = strictlyNext(weekday: wd, after: base, tz: TimeZone.gmt)
+                let detected = strictlyNext(weekday: wd, after: base, tz: TimeZone(secondsFromGMT: 0)!)
                 out.dates.removeAll()
                 out.dates.append(detected)
             }

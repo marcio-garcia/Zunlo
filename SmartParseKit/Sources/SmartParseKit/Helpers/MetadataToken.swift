@@ -10,7 +10,7 @@ import Foundation
 // MARK: - MetadataToken Types
 
 public enum MetadataTokenKind: Equatable, Hashable {
-    case title(confidence: Float)
+    case title(title: String, confidence: Float)
     case tag(name: String, confidence: Float)
     case reminder(trigger: ReminderTriggerToken, confidence: Float)
     case priority(level: TaskPriority, confidence: Float)
@@ -47,7 +47,7 @@ public struct MetadataToken: Equatable, Hashable {
     /// Extract the specific confidence from the kind
     public var kindConfidence: Float {
         switch kind {
-        case .title(let confidence),
+        case .title(_, let confidence),
              .tag(_, let confidence),
              .reminder(_, let confidence),
              .priority(_, let confidence),

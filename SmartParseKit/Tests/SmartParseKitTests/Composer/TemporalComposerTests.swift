@@ -216,6 +216,17 @@ final class TemporalComposerTests: XCTestCase {
             return false
         })
     }
+    
+    func testRelativeDayAndTimeWithH() {
+        let pack = EnglishPack(calendar: calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("add movie today 20h", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+
+        XCTAssertEqual(result.0, .createEvent)
+        XCTAssertEqual(result.1[0].text, "today"); XCTAssertEqual(result.1[0].kind, .relativeDay(.today));
+        XCTAssertEqual(result.1[1].text, "20h"); XCTAssertEqual(result.1[1].kind, .absoluteTime(DateComponents(hour: 20, minute: 0)));
+    }
 
     func testPT_TerceaAs10() {
         let pack = PortugueseBRPack(calendar: calendarSP())

@@ -8,12 +8,33 @@
 import Foundation
 
 protocol TaskStore {
-//    func makeTask(title: String, dueDate: Date?) -> UserTask?
     func fetchAll() async throws -> [UserTask]
     func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask]
     func upsert(_ task: UserTask) async throws
-    func update(id: UUID, due: Date?) async throws
     func insert(title: String, due: Date?) async throws -> UUID
+    func update(
+        id: UUID,
+        title: String?,
+        dueDate: Date?,
+        tags: [String]?,
+        reminderTriggers: [ReminderTrigger]?,
+        priority: UserTaskPriority?,
+        notes: String?
+    ) async throws
+}
+
+extension TaskStore {
+    func update(
+        id: UUID,
+        title: String? = nil,
+        dueDate: Date? = nil,
+        tags: [String]? = nil,
+        reminderTriggers: [ReminderTrigger]? = nil,
+        priority: UserTaskPriority? = nil,
+        notes: String? = nil
+    ) async throws {
+        try await update(id: id, title: title, dueDate: dueDate, tags: tags, reminderTriggers: reminderTriggers, priority: priority, notes: notes)
+    }
 }
 
 final class UserTaskRepository: TaskStore {
@@ -41,9 +62,22 @@ final class UserTaskRepository: TaskStore {
         reminderScheduler.scheduleReminders(for: task)
     }
     
-    func update(id: UUID, due: Date?) async throws {
+    func update(
+        id: UUID,
+        title: String?,
+        dueDate: Date?,
+        tags: [String]?,
+        reminderTriggers: [ReminderTrigger]?,
+        priority: UserTaskPriority?,
+        notes: String?
+    ) async throws {
         if var task = try await fetchTask(id: id) {
-            task.dueDate = due
+            if let due = dueDate { task.dueDate = due }
+            if let t = title { task.title = t }
+            if let tg = tags { task.tags = tg.map({ Tag(id: UUID(), text: $0, color: "", selected: false) })}
+            if let r = reminderTriggers { task.reminderTriggers = r }
+            if let p = priority { task.priority = p }
+            if let n = notes { task.notes = n }
             try await localStore.upsert(task)
         }
     }

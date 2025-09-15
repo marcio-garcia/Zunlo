@@ -27,11 +27,11 @@ public struct MetadataExtractor {
         var conflicts: [MetadataConflict] = []
 
         // Extract each type of metadata token
-        let tagTokens = extractTagTokens(from: text, pack: pack)
-        let reminderTokens = extractReminderTokens(from: text, pack: pack)
-        let priorityTokens = extractPriorityTokens(from: text, pack: pack)
-        let locationTokens = extractLocationTokens(from: text, pack: pack)
-        let notesTokens = extractNotesTokens(from: text, pack: pack)
+        let tagTokens = extractTagTokens(from: text, excludingRanges: temporalRanges, pack: pack)
+        let reminderTokens = extractReminderTokens(from: text, excludingRanges: temporalRanges, pack: pack)
+        let priorityTokens = extractPriorityTokens(from: text, excludingRanges: temporalRanges, pack: pack)
+        let locationTokens = extractLocationTokens(from: text, excludingRanges: temporalRanges, pack: pack)
+        let notesTokens = extractNotesTokens(from: text, excludingRanges: temporalRanges, pack: pack)
 
         metadataTokens.append(contentsOf: tagTokens)
         metadataTokens.append(contentsOf: reminderTokens)
@@ -41,10 +41,10 @@ public struct MetadataExtractor {
 
         // Detect conflicts and adjust confidence
         conflicts = detectConflicts(in: metadataTokens)
-        let adjustedTokens = adjustConfidenceForConflicts(metadataTokens, conflicts: conflicts)
+        metadataTokens = adjustConfidenceForConflicts(metadataTokens, conflicts: conflicts)
 
         // Add metadata ranges to exclusion list for title extraction
-        for token in adjustedTokens {
+        for token in metadataTokens {
             if let range = Range(token.range, in: text) {
                 allUsedRanges.append(range)
             }
@@ -58,34 +58,45 @@ public struct MetadataExtractor {
         )
 
         // Add title as a metadata token if it's meaningful
-        if !cleanTitle.isEmpty && cleanTitle.count > 1 {
-            let titleToken = MetadataToken(
-                range: NSRange(location: 0, length: 0), // Virtual range for title
-                text: cleanTitle,
-                kind: .title(confidence: calculateTitleConfidence(cleanTitle)),
-                confidence: calculateTitleConfidence(cleanTitle)
-            )
-            metadataTokens.insert(titleToken, at: 0)
-        }
+//        if !cleanTitle.isEmpty && cleanTitle.count > 1 {
+//            let titleToken = MetadataToken(
+//                range: NSRange(location: 0, length: 0), // Virtual range for title
+//                text: cleanTitle,
+//                kind: .title(title: cleanTitle, confidence: calculateTitleConfidence(cleanTitle)),
+//                confidence: calculateTitleConfidence(cleanTitle)
+//            )
+//            metadataTokens.insert(titleToken, at: 0)
+//        }
 
         // Calculate overall confidence
         let overallConfidence = calculateOverallConfidence(
-            tokens: adjustedTokens,
+            tokens: metadataTokens,
             conflicts: conflicts,
             titleLength: cleanTitle.count
         )
 
         return MetadataExtractionResult(
-            tokens: adjustedTokens,
+            tokens: metadataTokens,
             title: cleanTitle,
             confidence: overallConfidence,
             conflicts: conflicts
         )
     }
 
+    // MARK: - Helper Methods
+
+    /// Checks if an NSRange overlaps with any of the excluded ranges
+    private func overlapsWithExcludedRanges(_ nsRange: NSRange, in text: String, excludingRanges: [Range<String.Index>]) -> Bool {
+        guard let stringRange = Range(nsRange, in: text) else { return false }
+
+        return excludingRanges.contains { excludedRange in
+            stringRange.overlaps(excludedRange)
+        }
+    }
+
     // MARK: - Token Extraction Methods
 
-    private func extractTagTokens(from text: String, pack: DateLanguagePack) -> [MetadataToken] {
+    private func extractTagTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
         guard let tagRegex = pack.tagPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
@@ -95,6 +106,11 @@ public struct MetadataExtractor {
         let nsText = text as NSString
         tagRegex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
+
+            // Skip matches that overlap with temporal tokens
+            if overlapsWithExcludedRanges(match.range, in: text, excludingRanges: excludingRanges) {
+                return
+            }
 
             for groupIndex in 1...match.numberOfRanges - 1 {
                 let range = match.range(at: groupIndex)
@@ -141,13 +157,18 @@ public struct MetadataExtractor {
         return createRegex.firstMatch(in: text, options: [], range: range) != nil
     }
 
-    private func extractReminderTokens(from text: String, pack: DateLanguagePack) -> [MetadataToken] {
+    private func extractReminderTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
         guard let regex = pack.reminderPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
         regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
+
+            // Skip matches that overlap with temporal tokens
+            if overlapsWithExcludedRanges(match.range, in: text, excludingRanges: excludingRanges) {
+                return
+            }
 
             let fullMatchText = nsText.substring(with: match.range)
             var trigger: ReminderTriggerToken?
@@ -182,13 +203,18 @@ public struct MetadataExtractor {
         return tokens
     }
 
-    private func extractPriorityTokens(from text: String, pack: DateLanguagePack) -> [MetadataToken] {
+    private func extractPriorityTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
         guard let regex = pack.priorityPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
         regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
+
+            // Skip matches that overlap with temporal tokens
+            if overlapsWithExcludedRanges(match.range, in: text, excludingRanges: excludingRanges) {
+                return
+            }
 
             for groupIndex in 1...match.numberOfRanges - 1 {
                 let range = match.range(at: groupIndex)
@@ -212,13 +238,18 @@ public struct MetadataExtractor {
         return tokens
     }
 
-    private func extractLocationTokens(from text: String, pack: DateLanguagePack) -> [MetadataToken] {
+    private func extractLocationTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
         guard let regex = pack.locationPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
         regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
+
+            // Skip matches that overlap with temporal tokens
+            if overlapsWithExcludedRanges(match.range, in: text, excludingRanges: excludingRanges) {
+                return
+            }
 
             for groupIndex in 1...match.numberOfRanges - 1 {
                 let range = match.range(at: groupIndex)
@@ -242,13 +273,18 @@ public struct MetadataExtractor {
         return tokens
     }
 
-    private func extractNotesTokens(from text: String, pack: DateLanguagePack) -> [MetadataToken] {
+    private func extractNotesTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
         guard let regex = pack.notesPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
         regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
+
+            // Skip matches that overlap with temporal tokens
+            if overlapsWithExcludedRanges(match.range, in: text, excludingRanges: excludingRanges) {
+                return
+            }
 
             if match.range(at: 1).location != NSNotFound {
                 let notesRange = match.range(at: 1)
@@ -314,6 +350,35 @@ public struct MetadataExtractor {
                   let range = Range(match.range, in: result) {
                 result.removeSubrange(range)
             }
+        }
+
+        // Strip task and event keywords that might appear at the end
+        let taskKeywordRegex = pack.taskKeywordsRegex()
+        let eventKeywordRegex = pack.eventKeywordsRegex()
+
+        // Remove task keywords from anywhere in the string
+        let taskMatches = taskKeywordRegex.matches(in: result, options: [], range: NSRange(result.startIndex..., in: result))
+        for match in taskMatches.reversed() { // reverse to avoid index shifting
+            if let range = Range(match.range, in: result) {
+                result.removeSubrange(range)
+            }
+        }
+
+        // Remove event keywords from anywhere in the string
+        let eventMatches = eventKeywordRegex.matches(in: result, options: [], range: NSRange(result.startIndex..., in: result))
+        for match in eventMatches.reversed() { // reverse to avoid index shifting
+            if let range = Range(match.range, in: result) {
+                result.removeSubrange(range)
+            }
+        }
+
+        // Strip common temporal keywords that might not be captured as temporal tokens
+        if let relativeDayRegex = pack.relativeDayRegex() {
+            result = relativeDayRegex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
+        }
+
+        if let partOfDayRegex = pack.partOfDayRegex() {
+            result = partOfDayRegex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
         }
 
         // Normalize whitespace & punctuation
@@ -505,7 +570,7 @@ public struct MetadataExtractor {
                     }
                     let newConfidence = max(0.1, token.confidence - penalty)
                     let newKind: MetadataTokenKind = switch token.kind {
-                    case .title: .title(confidence: newConfidence)
+                    case .title(let title, _): .title(title: title, confidence: newConfidence)
                     case .tag(let name, _): .tag(name: name, confidence: newConfidence)
                     case .reminder(let trigger, _): .reminder(trigger: trigger, confidence: newConfidence)
                     case .priority(let level, _): .priority(level: level, confidence: newConfidence)

@@ -161,18 +161,29 @@ public struct PortugueseBRPack: DateLanguagePack {
     public func eventKeywordsRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(reunião|evento|compromisso|ligação|chamada|almoço|jantar|conferência|sessão|encontro|festa|cerimônia)\b"#)
     }
+
+    // Metadata addition detection patterns
+    public func metadataAdditionWithPrepositionRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(adicionar|adicione|definir|defina|colocar|coloque)\s+(tag|prioridade|lembrete|nota|local|localização)\s+\S+.*\s+(para|na|no|à|ao|da|do)\s+.*\b(tarefa|evento|reunião|compromisso)\b"#)
+    }
+
+    public func metadataAdditionDirectRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(adicionar|adicione|definir|defina|colocar|coloque)\s+(tag|prioridade|lembrete|nota|local|localização)\s+\S+.*\b(tarefa|evento|reunião|compromisso)\b"#)
+    }
+
+    public func taskEventReferenceRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(tarefa|evento|reunião|compromisso|item|atividade)\b"#)
+    }
     
     public func weekendRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:(?:este|esta|proximo|próximo|seguinte)\s+)?fim\s*de\s*semana\b"#) }
     public func relativeDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:hoje|amanh[ãa]|esta\s+noite)\b"#) }
     public func partOfDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:manh[ãa]|tarde|noite|meio\s*dia|meia\s*noite)\b"#) }
     public func ordinalDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:dia\s*)?([12]?\d|3[01])(?:º|ª|o)?\b"#) }
     public func timeOnlyRegex() -> NSRegularExpression? {
-        let t = #"(?:(?:[01]?\d|2[0-3])(?::\d{2})?\s*(?:h|hs|hrs)?)"#
-        return BaseLanguagePack.regex(#"(?ix)\b(?:meio\s*dia|meia\s*noite|\#(t))\b"#)
+        return BaseLanguagePack.regex(#"\b(?:meio(?:-|\s*)dia|meia(?:-|\s*)noite|\#(BaseLanguagePack.timeToken))\b"#)
     }
     public func betweenTimeRegex() -> NSRegularExpression? {
-        let t = #"(?:(?:[01]?\d|2[0-3])(?::\d{2})?\s*(?:h|hs|hrs)?)"#
-        return BaseLanguagePack.regex(#"(?ix)\b entre \s+ (\#(t)) \s+ (?:e|-|a|até) \s+ (\#(t)) \b"#)
+        return BaseLanguagePack.regex(#"(?ix)\b entre \s+ (\#(BaseLanguagePack.timeToken)) \s+ (?:e|-|a|até) \s+ (\#(BaseLanguagePack.timeToken)) \b"#)
     }
     public func inFromNowRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:em|dentro\s+de)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|dias?|semanas?|meses?)\b"#) }
     public func articleFromNowRegex() -> NSRegularExpression? {

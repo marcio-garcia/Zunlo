@@ -283,11 +283,12 @@ final class ActionTools: Tools {
             let scored = bestTaskCandidates(in: candidates, cmd: cmd)
             let (single, many) = pick(scored)
             if let one = single {
+                try await applyUpdate(candidate: one, metadataTokens: cmd.metadataTokens)
                 return ToolResult(intent: cmd.intent,
-                                   action: .targetTask(id: one.id),
-                                   needsDisambiguation: false,
-                                   options: [],
-                                   message: NSLocalizedString("Updating ‘%@’.", comment: "").replacingOccurrences(of: "%@", with: one.title))
+                                  action: .updatedTask(id: one.id),
+                                  needsDisambiguation: false,
+                                  options: [],
+                                  message: NSLocalizedString("Updated ‘%@’.", comment: "").replacingOccurrences(of: "%@", with: one.title))
             }
             if !many.isEmpty {
                 let opts = many.map { t in
@@ -377,7 +378,7 @@ final class ActionTools: Tools {
 
             // Try to apply automatically; if the adapter isn't wired yet, we'll still return the proposed action.
             do {
-                try await tasks.update(id: one.id, due: newDue)
+                try await tasks.update(id: one.id, dueDate: newDue)
                 return ToolResult(intent: cmd.intent, action: .rescheduledTask(id: one.id, due: newDue), needsDisambiguation: false, options: [], message: String(format: NSLocalizedString("Rescheduled ‘%@’ to %@.", comment: ""), one.title, formatDate(newDue)))
             } catch {
                 // Fall back to returning the plan without applying
@@ -391,7 +392,7 @@ final class ActionTools: Tools {
     // NEW: Reschedule Event (time edits with scope inference)
     public func rescheduleEvent(_ cmd: ParseResult) async -> ToolResult {
         do {
-            let range = searchRange(for: cmd)
+//            let range = searchRange(for: cmd)
             let occ = try await events.fetchOccurrences()
             let scored = bestEventCandidates(in: occ, cmd: cmd, titleBias: 0.75)
             let (single, many) = pick(scored, threshold: 0.7)
@@ -671,5 +672,60 @@ private extension ActionTools {
         // Try to resolve the parent using the underlying eventId if the store supports it
         if let parent = try? await events.fetchOccurrences(id: occ.eventId) { return parent }
         return nil
+    }
+}
+
+extension ActionTools {
+    private func applyUpdate(candidate: TaskCandidate, metadataTokens: [MetadataToken]) async throws {
+        var newTitle: String?
+        var newTags: [String]?
+        var newReminders: [ReminderTrigger]?
+        var newPriority: UserTaskPriority?
+        var newNotes: String?
+        var newDue: Date?
+        for metadataToken in metadataTokens {
+            if metadataToken.confidence > 0.6 {
+                switch metadataToken.kind {
+                case .title(let title, let confidence): newTitle = title
+                case .tag(let name, let confidence):
+                    if newTags == nil { newTags = [] }
+                    newTags?.append(name)
+                case .reminder(let trigger, let confidence):
+                    switch trigger {
+                    case .timeOffset(let offset):
+                        if newReminders == nil { newReminders = [] }
+                        newReminders?.append(ReminderTrigger(timeBeforeDue: offset, message: nil))
+                    case .absoluteTime(let time):
+                        if newReminders == nil { newReminders = [] }
+                        let offset: TimeInterval
+                        if let due = candidate.due {
+                            do {
+                                offset = try secondsBetween(time.components(calendar: calendar), due.components(calendar: calendar))
+                            } catch {
+                                // Fallback to 5 minutes before if calculation fails
+                                offset = 300
+                            }
+                        } else {
+                            newDue = time
+                            offset = 300
+                        }
+                        newReminders?.append(ReminderTrigger(timeBeforeDue: offset, message: nil))
+                    case .location(let loc): break // there is no location in tasks
+                    }
+                    
+                case .priority(let level, let confidence):
+                    switch level {
+                    case .low: newPriority = UserTaskPriority.low
+                    case .medium: newPriority = UserTaskPriority.medium
+                    case .high:  newPriority = UserTaskPriority.high
+                    case .urgent: newPriority = UserTaskPriority.high
+                    }
+                case .location(let name, let confidence): break
+                case .notes(let content, let confidence): newNotes = content
+                }
+            }
+        }
+
+        try await tasks.update(id: candidate.id, title: newTitle, dueDate: newDue, tags: newTags, reminderTriggers: newReminders, priority: newPriority, notes: newNotes)
     }
 }

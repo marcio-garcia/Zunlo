@@ -68,7 +68,7 @@ public struct EnglishPack: DateLanguagePack {
 
     public func fromToTimeRegex() -> NSRegularExpression {
         let weekdayAlt = BaseLanguagePack.weekdayAlternation(weekdayMap)
-        let t = BaseLanguagePack.timeTokenEN
+        let t = BaseLanguagePack.timeToken
         let pat = #"""
         (?ix)\b
         (?:(\#(weekdayAlt))\s+)?
@@ -135,6 +135,19 @@ public struct EnglishPack: DateLanguagePack {
         BaseLanguagePack.regex(#"(?ix)\b(meeting|event|appointment|call|lunch|dinner|conference|session|gathering|party|ceremony)\b"#)
     }
 
+    // Metadata addition detection patterns
+    public func metadataAdditionWithPrepositionRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(add|set)\s+(tag|priority|reminder|note|location)\s+\S+.*\s+(to|for)\s+.*\b(task|event|meeting|appointment)\b"#)
+    }
+
+    public func metadataAdditionDirectRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(add|set)\s+(tag|priority|reminder|note|location)\s+\S+.*\b(task|event|meeting|appointment)\b"#)
+    }
+
+    public func taskEventReferenceRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"(?ix)\b(task|event|meeting|appointment|item)\b"#)
+    }
+
     public func weekendRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"(?ix)\b(?:(?:this|coming|next)\s+)?weekend\b"#)
     }
@@ -148,11 +161,11 @@ public struct EnglishPack: DateLanguagePack {
         BaseLanguagePack.regex(#"(?ix)\b(?:the\s*)?([12]?\d|3[01])(?:st|nd|rd|th)\b"#) // group 1 = day
     }
     public func timeOnlyRegex() -> NSRegularExpression? {
-        BaseLanguagePack.regex(#"(?ix)\b(?:noon|midnight|\#(BaseLanguagePack.timeTokenEN))\b"#)
+        BaseLanguagePack.regex(#"\b(?:noon|midnight|\#(BaseLanguagePack.timeToken))\b"#)
     }
     
     public func betweenTimeRegex() -> NSRegularExpression? {
-        let t = BaseLanguagePack.timeTokenEN
+        let t = BaseLanguagePack.timeToken
         return BaseLanguagePack.regex(#"""
         (?ix)\b between \s+ (\#(t)) \s+ (?:and|-|to) \s+ (\#(t)) \b
         """#) // groups 1=start, 2=end

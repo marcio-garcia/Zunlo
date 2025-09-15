@@ -109,7 +109,7 @@ public enum ResolvedTemporal {
 }
 
 public protocol InputParser {
-    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], [MetadataToken])
+    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], MetadataExtractionResult)
 }
 
 // MARK: - Composer
@@ -125,7 +125,7 @@ public final class TemporalComposer: InputParser {
     }
 
     // Entry point
-    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], [MetadataToken]) {
+    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], MetadataExtractionResult) {
         let temporalTokens = detectTokens(in: text, now: now, pack: pack)
 
         // Extract metadata using the new MetadataExtractor
@@ -135,7 +135,7 @@ public final class TemporalComposer: InputParser {
             pack: pack
         )
 
-        let intent = detectIntent(text, pack: pack)
+        let intent = detectIntent(text, metadataTokens: metadataResult.tokens, pack: pack)
 
         // Last attempt to detect the input intent using ML model
         let finalIntent: Intent
@@ -145,7 +145,7 @@ public final class TemporalComposer: InputParser {
             finalIntent = intent
         }
 
-        return (finalIntent, temporalTokens, metadataResult.tokens)
+        return (finalIntent, temporalTokens, metadataResult)
     }
 
     // MARK: - Detection
@@ -370,7 +370,7 @@ public final class TemporalComposer: InputParser {
         add(pack.articleFromNowRegex()) { m, sub in
             let nsAll = text as NSString
             if m.numberOfRanges >= 3 {
-                let articleS = nsAll.substring(with: m.range(at: 1)) // "a", "an", "um", "una", etc.
+//                let articleS = nsAll.substring(with: m.range(at: 1)) // "a", "an", "um", "una", etc.
                 let unitS = nsAll.substring(with: m.range(at: 2)) // "month", "hour", etc.
                 if let unit = unitFrom(unitS) {
                     let val = 1 // Articles always mean "1"
@@ -563,7 +563,7 @@ public final class TemporalComposer: InputParser {
 }
 
 extension TemporalComposer {
-    private func detectIntent(_ s: String, pack: DateLanguagePack) -> Intent {
+    private func detectIntent(_ s: String, metadataTokens: [MetadataToken], pack: DateLanguagePack) -> Intent {
         let range = NSRange(location: 0, length: (s as NSString).length)
         
         // Check for view and plan intents (no task/event split needed)
@@ -572,6 +572,10 @@ extension TemporalComposer {
         
         // Check for action intents that need task/event specificity
         if pack.intentCreateRegex().firstMatch(in: s, options: [], range: range) != nil {
+            // Check if this is actually a metadata addition disguised as create
+            if isMetadataAddition(s, metadataTokens: metadataTokens, pack: pack) {
+                return detectUpdateSpecificity(s, pack: pack)
+            }
             return detectCreateSpecificity(s, pack: pack)
         }
         
@@ -586,8 +590,48 @@ extension TemporalComposer {
         if pack.intentCancelRegex().firstMatch(in: s, options: [], range: range) != nil {
             return detectCancelSpecificity(s, pack: pack)
         }
-        
+
+        // Check for metadata operations that don't match traditional patterns
+        if isMetadataAddition(s, metadataTokens: metadataTokens, pack: pack) {
+            return detectUpdateSpecificity(s, pack: pack)
+        }
+
         return .unknown
+    }
+
+    private func isMetadataAddition(_ s: String, metadataTokens: [MetadataToken], pack: DateLanguagePack) -> Bool {
+        let range = NSRange(location: 0, length: (s as NSString).length)
+
+        // Pattern 1 & 2: Check explicit metadata addition patterns (these still need regex as they're structural)
+        if pack.metadataAdditionWithPrepositionRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return true
+        }
+
+        if pack.metadataAdditionDirectRegex().firstMatch(in: s, options: [], range: range) != nil {
+            return true
+        }
+
+        // Pattern 3: Use already-detected metadata tokens instead of re-running regex
+        // Check if we have any metadata tokens AND the text contains task/event references
+        if !metadataTokens.isEmpty {
+            let containsTaskReference = pack.taskEventReferenceRegex().firstMatch(in: s, options: [], range: range) != nil
+
+            if containsTaskReference {
+                // Check if any of the detected metadata tokens indicate metadata addition
+                for token in metadataTokens {
+                    switch token.kind {
+                    case .tag, .priority, .reminder, .notes, .location:
+                        // We found metadata tokens AND task references, this suggests metadata addition
+                        return true
+                    case .title:
+                        // Title tokens don't indicate metadata addition by themselves
+                        continue
+                    }
+                }
+            }
+        }
+
+        return false
     }
 
     private func detectCreateSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
