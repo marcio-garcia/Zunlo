@@ -57,17 +57,6 @@ public struct MetadataExtractor {
             pack: pack
         )
 
-        // Add title as a metadata token if it's meaningful
-//        if !cleanTitle.isEmpty && cleanTitle.count > 1 {
-//            let titleToken = MetadataToken(
-//                range: NSRange(location: 0, length: 0), // Virtual range for title
-//                text: cleanTitle,
-//                kind: .title(title: cleanTitle, confidence: calculateTitleConfidence(cleanTitle)),
-//                confidence: calculateTitleConfidence(cleanTitle)
-//            )
-//            metadataTokens.insert(titleToken, at: 0)
-//        }
-
         // Calculate overall confidence
         let overallConfidence = calculateOverallConfidence(
             tokens: metadataTokens,

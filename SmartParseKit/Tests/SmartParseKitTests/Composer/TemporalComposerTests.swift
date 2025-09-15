@@ -38,6 +38,17 @@ final class TemporalComposerTests: XCTestCase {
             TemporalToken(range: NSRange(location: 43, length: 5), text: "11:00", kind: .absoluteTime(DateComponents(hour: 11, minute: 0)))
         ])
     }
+    
+    func testNextFriday() {
+        let pack = EnglishPack(calendar: calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("move game to next Friday", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+
+        XCTAssertEqual(result.0, .rescheduleEvent)
+        XCTAssertEqual(result.1[0].text, "next Friday")
+        XCTAssertEqual(result.1[0].kind, .weekday(dayIndex: 6, modifier: .next))
+    }
 
     func testNextWeekFri1100() {
         let pack = EnglishPack(calendar: calendarSP())
@@ -260,6 +271,17 @@ final class TemporalComposerTests: XCTestCase {
             TemporalToken(range: NSRange(location: 0, length: 14), text: "daqui a um mês", kind: .durationOffset(value: 1, unit: .month, mode: .fromNow)),
             TemporalToken(range: NSRange(location: 18, length: 3), text: "11h", kind: .absoluteTime(DateComponents(hour: 11, minute: 0)))
         ])
+    }
+    
+    func testPT_NextFriday() {
+        let pack = PortugueseBRPack(calendar: calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("Mova jogo para próxima sexta", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+
+        XCTAssertEqual(result.0, .rescheduleEvent)
+        XCTAssertEqual(result.1[0].text, "próxima sexta")
+        XCTAssertEqual(result.1[0].kind, .weekday(dayIndex: 6, modifier: .next))
     }
 
     // --- Spanish ---

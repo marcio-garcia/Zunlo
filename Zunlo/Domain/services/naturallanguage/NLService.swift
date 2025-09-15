@@ -85,10 +85,10 @@ public struct ParseResult {
 
 public final class NLService: NLProcessing {
     private let parser: InputParser
-    private let engine: AppleIntentDetector
+    private let engine: IntentDetector
     private let calendar: Calendar
     
-    public init(parser: InputParser, engine: AppleIntentDetector, calendar: Calendar) {
+    public init(parser: InputParser, engine: IntentDetector, calendar: Calendar) {
         self.parser = parser
         self.engine = engine
         self.calendar = calendar
@@ -125,15 +125,10 @@ public final class NLService: NLProcessing {
                 let context = interpreter.interpret(temporalTokens)
 
                 log("command context: \(context)")
-                // Extract title from metadata tokens
-                let title = metadataResult.tokens.first { token in
-                    if case .title = token.kind { return true }
-                    return false
-                }?.text ?? "Untitled"
-
-                log("title: \(title)")
+                log("metadata: \(metadataResult)")
+                
                 let parseResult = ParseResult(
-                    title: title,
+                    title: metadataResult.title,
                     intent: intent,
                     context: context,
                     metadataTokens: metadataResult.tokens

@@ -689,7 +689,7 @@ extension TemporalComposer {
             return .rescheduleTask
         }
         
-        return .unknown
+        return .rescheduleEvent
     }
 
     private func detectUpdateSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {

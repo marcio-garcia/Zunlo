@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import RealmSwift
+import LoggingKit
 
 enum AuthState: Equatable {
     case loading
@@ -120,6 +121,7 @@ final class AuthManager: ObservableObject, AuthProviding {
         if let auth = authToken, authService.validateToken(auth) {
             return true
         }
+        log("Not authorized")
         await unauthenticated()
         throw AuthProvidingError.unauthorized
     }

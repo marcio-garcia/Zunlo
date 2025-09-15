@@ -128,11 +128,11 @@ public struct EnglishPack: DateLanguagePack {
 
     // Keyword detection (fallback)
     public func taskKeywordsRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(task|todo|to\s*do|reminder|note|assignment|action\s+item|chore|work)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(task|todo|to\s*do|reminder|note)\b"#)
     }
 
     public func eventKeywordsRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(meeting|event|appointment|call|lunch|dinner|conference|session|gathering|party|ceremony)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(event)\b"#)
     }
 
     // Metadata addition detection patterns

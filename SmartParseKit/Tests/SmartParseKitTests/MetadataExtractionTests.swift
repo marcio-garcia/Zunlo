@@ -170,6 +170,33 @@ final class MetadataExtractionTests: XCTestCase {
         XCTAssertFalse(cleanedTitle.contains("reminder"))
     }
 
+    // MARK: - Reschedule Tests
+    
+    func testExtractTitle() {
+        let text = "move game to next Friday"
+        let temporalRanges = [
+            Range(NSRange(location: 13, length: 11), in: text)!
+        ]
+        let result = extractor.extractMetadata(from: text, temporalRanges: temporalRanges, pack: pack)
+
+        // Clear, well-structured input should have higher confidence
+        XCTAssertEqual(result.tokens.count, 0)
+        XCTAssertEqual(result.title, "game")
+    }
+    
+    func testPT_ExtractTitle() {
+        let pack = PortugueseBRPack(calendar: TestUtil.calendarSP())
+        let text = "Mova jogo para próxima sexta"
+        let temporalRanges = [
+            Range(NSRange(location: 15, length: 13), in: text)!
+        ]
+        let result = extractor.extractMetadata(from: text, temporalRanges: temporalRanges, pack: pack)
+
+        // Clear, well-structured input should have higher confidence
+        XCTAssertEqual(result.tokens.count, 0)
+        XCTAssertEqual(result.title, "jogo")
+    }
+    
     // MARK: - Confidence Tests
 
     func testLowConfidenceForAmbiguousInput() {
@@ -241,6 +268,15 @@ final class MetadataExtractionTests: XCTestCase {
         
         XCTAssertEqual(result.tokens.count, 0)
         XCTAssertEqual(result.title, "movie")
+    }
+    
+    func testRenameTask() {
+        let text = "Rename buy food to buy groceries"
+        let result = extractor.extractMetadata(from: text, temporalRanges: [], pack: pack)
+
+        // Should handle special characters gracefully
+        XCTAssertEqual(result.tokens.count, 0)
+        XCTAssertEqual(result.title, "buy food")
     }
 
     // MARK: - Intent Detection Tests

@@ -365,7 +365,13 @@ final class ActionTools: Tools {
             guard let one = single else {
                 if !many.isEmpty {
                     let opts = many.map { t in DisambiguationOption(label: taskLabel(t), payload: .task(t.id)) }
-                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("Which task should I reschedule?", comment: ""))
+                    // try rescheduleEvent
+                    let result = await rescheduleEvent(cmd)
+                    if result.action == .none {
+                        return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("Which task should I reschedule?", comment: ""))
+                    } else {
+                        return result
+                    }
                 }
                 return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: buildTimeOptions(from: cmd), message: NSLocalizedString("I couldn't find a matching task.", comment: ""))
             }
@@ -621,6 +627,9 @@ private extension ActionTools {
         if let r = cmd.context.dateRange { return (r.start, r.end) }
         let w = cmd.context.finalDate
         if let d = cmd.context.finalDateDuration { return (w, w.addingTimeInterval(d)) }
+        if let origDuration = try? secondsBetween(current.startDate.components(), current.endDate.components()) {
+            return (w, w.addingTimeInterval(origDuration))
+        }
         return nil
     }
 

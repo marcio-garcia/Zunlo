@@ -164,11 +164,11 @@ public struct SpanishPack: DateLanguagePack {
 
     // Keyword detection
     public func taskKeywordsRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(tarea|todo|recordatorio|nota|asignación|elemento\s+de\s+acción|trabajo|actividad)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(tarea|todo|recordatorio|asignación)\b"#)
     }
 
     public func eventKeywordsRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(reunión|evento|cita|llamada|almuerzo|cena|conferencia|sesión|encuentro|fiesta|ceremonia)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(evento)\b"#)
     }
 
     // Metadata addition detection patterns
