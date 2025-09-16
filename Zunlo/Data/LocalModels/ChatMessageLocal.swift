@@ -70,7 +70,6 @@ final class ChatActionLocal: EmbeddedObject {
     @Persisted var intentAlternatives: String? // comma-separated intent alternatives for disambiguation
 }
 
-
 extension ChatMessageLocal {
     convenience init(from m: ChatMessage) {
         self.init()

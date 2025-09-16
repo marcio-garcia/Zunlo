@@ -136,7 +136,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 23, // <- increment this every time you change schema!
+        schemaVersion: 24, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,
@@ -219,6 +219,21 @@ func setupRealm() {
                             newObject?["endDate"] = startDate.addingTimeInterval(3600)
                         }
                     }
+                }
+            }
+            if oldSchemaVersion < 24 {
+                // New optional property `intentAlternatives` on ChatActionLocal (EmbeddedObject).
+                // Realm auto-initializes new optionals to nil. This loop is only needed if you
+                // want to set a specific default or conditionally populate it.
+                migration.enumerateObjects(ofType: ChatActionLocal.className()) { oldObj, newObj in
+                    // Example: explicitly set nil (safe but redundant)
+                    newObj?["intentAlternatives"] = nil
+
+                    // If you prefer a default for a certain action type, uncomment:
+                    // let actionType = (oldObj?["typeRaw"] as? String) ?? (newObj?["typeRaw"] as? String)
+                    // if actionType == "disambiguateIntent" {
+                    //     newObj?["intentAlternatives"] = "" // or some seed value
+                    // }
                 }
             }
         }
