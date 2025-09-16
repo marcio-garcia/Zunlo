@@ -275,8 +275,9 @@ final class MetadataExtractionTests: XCTestCase {
         let result = extractor.extractMetadata(from: text, temporalRanges: [], pack: pack)
 
         // Should handle special characters gracefully
-        XCTAssertEqual(result.tokens.count, 0)
+        XCTAssertEqual(result.tokens.count, 1)
         XCTAssertEqual(result.title, "buy food")
+        XCTAssertEqual(result.newTitle!.title, "buy groceries")
     }
 
     // MARK: - Intent Detection Tests

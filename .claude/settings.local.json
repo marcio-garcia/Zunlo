@@ -5,7 +5,8 @@
       "Read(//Users/marciogarcia/dev/loginode/**)",
       "Bash(xcodebuild build:*)",
       "Bash(xcodebuild:*)",
-      "Bash(swift build:*)"
+      "Bash(swift build:*)",
+      "Bash(swift test:*)"
     ],
     "deny": [],
     "ask": []

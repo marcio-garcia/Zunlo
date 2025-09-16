@@ -129,16 +129,16 @@ public struct SpanishPack: DateLanguagePack {
 
     // Enhanced create patterns
     public func intentCreateTaskRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(añadir|crear|hacer|configurar|anotar)\s+(?:una?\s+)?(?:nueva?\s+)?.*\b"#)
+        BaseLanguagePack.regex(#"\b(añad\S+|crear|crea|cree|hace\S+|configur\S+|anot\S+)\s+(?:una?\s+)?(?:nueva?\s+)?.*\b"#)
     }
 
     public func intentCreateEventRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(programar|agendar|añadir|crear|configurar|reservar)\s+(?:una?\s+)?(?:nueva?\s+)?.*\b"#)
+        BaseLanguagePack.regex(#"\b(program\S+|agendar|agende|añad\S+|crear|crea|cree|configur\S+|reserv\S+|bloqu\S+)\s+(?:una?\s+)?(?:nueva?\s+)?.*\b"#)
     }
 
     // Enhanced cancel patterns
     public func intentCancelTaskRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(eliminar|borrar|cancelar|completar|terminar|marcar\s+como\s+completada?|finalizar)\s+(?:la\s+)?(?:esta\s+)?.*\b"#)
+        BaseLanguagePack.regex(#"\b(elimin\S+|borr\S+|cancel\S+|complet\S+|termin\S+|marc\S+\s+como\s+completada?|finaliz\S+)\s+(?:la\s+)?(?:esta\s+)?.*\b"#)
     }
 
     public func intentCancelEventRegex() -> NSRegularExpression {
@@ -159,7 +159,7 @@ public struct SpanishPack: DateLanguagePack {
     }
 
     public func intentUpdateRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(actualizar|editar|modificar|cambiar\s+detalles|alterar)\b"#)
+        BaseLanguagePack.regex(#"\b(actualiz\S+|edit\S+|modifi\S+|cambi\S+\s+detalles|alter\S+|renom\S+)\b"#)
     }
 
     // Keyword detection
@@ -168,12 +168,12 @@ public struct SpanishPack: DateLanguagePack {
     }
 
     public func eventKeywordsRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(evento|reunión|cita|conferencia|junta|sesión)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(evento)\b"#)
     }
 
     // Metadata addition detection patterns
     public func metadataAdditionWithPrepositionRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(añadir|añade|agregar|agrega|establecer|establece|poner|pon)\s+(tag|etiqueta|prioridad|recordatorio|nota|lugar|ubicación|localización)\s+\S+.*\s+(para|a|al|de|del|en)\s+.*\b.*\b"#)
+        BaseLanguagePack.regex(#"\b(añadir|añade|agregar|agrega|establecer|establece|poner|pon)\s+((tag|etiqueta|prioridad|recordatorio|nota|lugar|ubicación|localización)(:)?\s+)(\S+)?((para|a|al|de|del|en)\s+)?\b"#)
     }
 
     public func metadataAdditionDirectRegex() -> NSRegularExpression {
@@ -256,7 +256,7 @@ public struct SpanishPack: DateLanguagePack {
     public func reminderPatternRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"""
         (?ix)
-        \b(?:recordarme|recordatorio\s+(?:en|para|a\s+las)|aviso\s+en)
+        \b(?:recordarme|recordatorio\s+(?:en|para|a\s+las)|aviso\s+en|adicion\S+\s+record\S+)
         (?:\s+(?:en|a\s+las|para))?\s+
         (?:(\d+)\s+(minutos?|mins?|horas?|hrs?|d[ií]as?)\s+(?:antes|de\s+antelaci[óo]n)
         |(?:a\s+las\s+)?(\d{1,2}(?::\d{2})?)(?:\s*[hH])?
@@ -280,10 +280,10 @@ public struct SpanishPack: DateLanguagePack {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:en|en\s+el|en\s+la|ubicaci[óo]n\s*[:=]?)\s+
-        (?:el|la|los|las)?\s*([a-zA-Z0-9\s_-]{2,30})
-        (?=\s|$|[.!?,:;])
+        (?:el|la|los|las\s+)?([a-zA-ZÀ-ÿ0-9\s_-]{2,50}?)
+        (?=\s+(?:mañana|hoy|ayer|próximo|próxima|para|con|y|o|pero|a\s+las?|\d|$)|[.!?,:;]|$)
         |
-        \bubicaci[óo]n\s*[:=]\s*([^\s,;.!?]{2,30})\b
+        \bubicaci[óo]n\s*[:=]\s*([a-zA-ZÀ-ÿ0-9\s_-]{2,50})
         """#) // groups 1 or 2 = location name
     }
 

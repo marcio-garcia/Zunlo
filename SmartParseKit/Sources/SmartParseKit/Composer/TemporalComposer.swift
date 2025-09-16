@@ -137,7 +137,7 @@ public final class TemporalComposer: InputParser {
 
         // Use new intent interpreter for classification
         let intentInterpreter = IntentInterpreter()
-        let intentAmbiguity = intentInterpreter.classify(metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens)
+        let intentAmbiguity = intentInterpreter.classify(inputText: text, metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens, languagePack: pack)
 
         // Determine final intent
         let finalIntent: Intent

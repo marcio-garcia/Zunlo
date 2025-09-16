@@ -45,9 +45,18 @@ final class TemporalComposerTests: XCTestCase {
         let now = makeNow()
         let result = composer.parse("move game to next Friday", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
 
-        XCTAssertEqual(result.0, .rescheduleEvent)
-        XCTAssertEqual(result.1[0].text, "next Friday")
-        XCTAssertEqual(result.1[0].kind, .weekday(dayIndex: 6, modifier: .next))
+        let temporalRetult = result.1
+        let metadataResult = result.2
+        XCTAssertNotNil(metadataResult.intentAmbiguity)
+        XCTAssertGreaterThan(metadataResult.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+        
+        // Should contain alternatives
+        let intentAlternatives = metadataResult.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.rescheduleTask), "Should include rescheduleTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.rescheduleEvent), "Should include rescheduleEvent as alternative")
+
+        XCTAssertEqual(temporalRetult[0].text, "next Friday")
+        XCTAssertEqual(temporalRetult[0].kind, .weekday(dayIndex: 6, modifier: .next))
     }
 
     func testNextWeekFri1100() {
@@ -156,8 +165,17 @@ final class TemporalComposerTests: XCTestCase {
         let now = makeNow()
         let result = composer.parse("push back do laundry to weekend", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleTask))
 
-        XCTAssertEqual(result.0, .rescheduleTask)
-        XCTAssertEqual(result.1, [
+        let temporalRetult = result.1
+        let metadataResult = result.2
+        XCTAssertNotNil(metadataResult.intentAmbiguity)
+        XCTAssertGreaterThan(metadataResult.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+        
+        // Should contain alternatives
+        let intentAlternatives = metadataResult.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.rescheduleTask), "Should include rescheduleTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.rescheduleEvent), "Should include rescheduleEvent as alternative")
+        
+        XCTAssertEqual(temporalRetult, [
             TemporalToken(range: NSRange(location: 24, length: 7), text: "weekend", kind: .weekend(.thisWeek))
         ])
     }
@@ -279,9 +297,18 @@ final class TemporalComposerTests: XCTestCase {
         let now = makeNow()
         let result = composer.parse("Mova jogo para próxima sexta", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
 
-        XCTAssertEqual(result.0, .rescheduleEvent)
-        XCTAssertEqual(result.1[0].text, "próxima sexta")
-        XCTAssertEqual(result.1[0].kind, .weekday(dayIndex: 6, modifier: .next))
+        let temporalRetult = result.1
+        let metadataResult = result.2
+        XCTAssertNotNil(metadataResult.intentAmbiguity)
+        XCTAssertGreaterThan(metadataResult.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+        
+        // Should contain alternatives
+        let intentAlternatives = metadataResult.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.rescheduleTask), "Should include rescheduleTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.rescheduleEvent), "Should include rescheduleEvent as alternative")
+        
+        XCTAssertEqual(temporalRetult[0].text, "próxima sexta")
+        XCTAssertEqual(temporalRetult[0].kind, .weekday(dayIndex: 6, modifier: .next))
     }
 
     // --- Spanish ---
@@ -337,7 +364,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = SpanishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("de aquí a un mes a las 11h", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .spanish, intent: .createEvent))
+        let result = composer.parse("de aquí a un mes a las 11h", now: now, pack: pack, intentDetector: AppleIntentDetector())
 
         XCTAssertEqual(result.0, .createEvent)
         XCTAssertEqual(result.1, [
@@ -406,6 +433,7 @@ final class TemporalComposerTests: XCTestCase {
         let result = composer.parse("", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .unknown))
 
         XCTAssertEqual(result.0, .unknown)
+        XCTAssertLessThanOrEqual(result.2.confidence, 0.1)
         XCTAssertEqual(result.1.count, 0)
     }
 
@@ -427,8 +455,18 @@ final class TemporalComposerTests: XCTestCase {
         let now = makeNow()
         let result = composer.parse("call tomorrow", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createTask))
 
-        XCTAssertEqual(result.0, .createTask)
-        XCTAssertEqual(result.1, [
+        let temporalRetult = result.1
+        let metadataResult = result.2
+        XCTAssertNotNil(metadataResult.intentAmbiguity)
+        XCTAssertGreaterThan(metadataResult.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+        
+        // Should contain alternatives
+        let intentAlternatives = metadataResult.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.rescheduleEvent), "Should include rescheduleEvent as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.createEvent), "Should include createEvent as alternative")
+        
+        XCTAssertEqual(metadataResult.title, "call")
+        XCTAssertEqual(temporalRetult, [
             TemporalToken(range: NSRange(location: 5, length: 8), text: "tomorrow", kind: .relativeDay(.tomorrow))
         ])
     }

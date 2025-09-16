@@ -110,7 +110,7 @@ public struct EnglishPack: DateLanguagePack {
     }
 
     public func intentCreateEventRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(schedule|book|add|create|set\s*up)\s+(?:a\s+)?(?:new\s+)?.*\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(schedule|book|add|create|set\s*up|block)\s+(?:a\s+)?(?:new\s+)?.*\b"#)
     }
 
     // Enhanced cancel patterns that combine action + type
@@ -124,7 +124,7 @@ public struct EnglishPack: DateLanguagePack {
 
     // Update intent regex
     public func intentUpdateRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(update|edit|modify|change\s+details|alter)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(update|edit|modify|change\s+details|alter|rename)\b"#)
     }
 
     // Keyword detection (fallback)
@@ -138,7 +138,7 @@ public struct EnglishPack: DateLanguagePack {
 
     // Metadata addition detection patterns
     public func metadataAdditionWithPrepositionRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(add|set)\s+(tag|priority|reminder|note|location)\s+\S+.*\s+(to|for)\s+.*\b(task|event|meeting|appointment)?\b"#)
+        BaseLanguagePack.regex(#"\b(add|set)\s+((tag|priority|reminder|note|location)(:)?\s+)(\S+)?((to|for)\s+)?(task|event|meeting|appointment)?\b"#)
     }
 
     public func metadataAdditionDirectRegex() -> NSRegularExpression {
@@ -225,7 +225,7 @@ public struct EnglishPack: DateLanguagePack {
     public func reminderPatternRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"""
         (?ix)
-        \b(?:remind\s+me|set\s+(?:a\s+)?reminder|with\s+(?:a\s+)?reminder|alert\s+me)
+        \b(?:remind\s+me|set\s+(?:a\s+)?reminder|with\s+(?:a\s+)?reminder|alert\s+me|add\s+reminder)
         (?:\s+(?:in|at|for))?\s+
         (?:(\d+)\s+(minutes?|mins?|hours?|hrs?|days?)\s+(?:before|early)
         |(?:at\s+)?(\d{1,2}(?::\d{2})?)(?:\s*(?:am|pm))?
@@ -249,10 +249,10 @@ public struct EnglishPack: DateLanguagePack {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:at|in|location\s*[:=]?)\s+
-        (?:the\s+)?([a-zA-Z0-9\s_-]{2,30}?)
-        (?=\s+(?:tomorrow|today|yesterday|next|this|on|for|with|and|or|but|\d|$)|[.!?,:;]|$)
+        (?:the\s+)?([a-zA-ZÀ-ÿ0-9\s_-]{2,50}?)
+        (?=\s+(?:tomorrow|today|yesterday|next|this|on|for|with|and|or|but|at|\d|$)|[.!?,:;]|$)
         |
-        \blocation\s*[:=]\s*([^\s,;.!?]{2,30})\b
+        \blocation\s*[:=]\s*([a-zA-ZÀ-ÿ0-9\s_-]{2,50})
         """#) // groups 1 or 2 = location name
     }
 

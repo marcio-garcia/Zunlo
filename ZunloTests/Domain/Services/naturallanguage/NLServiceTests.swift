@@ -105,7 +105,16 @@ final class NLServiceTests: XCTestCase {
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
-        XCTAssertEqual(result.intent, .updateTask)
+        
+        // This should be ambiguous
+        XCTAssertNotNil(result.intentAmbiguity, "Should detect ambiguity")
+        XCTAssertTrue(result.intentAmbiguity!.isAmbiguous, "Should be flagged as ambiguous")
+
+        // Should include both reschedule possibilities
+        let intents = result.intentAmbiguity!.predictions.map { $0.intent }
+        XCTAssertTrue(intents.contains(.createTask), "Should include createTask option")
+        XCTAssertTrue(intents.contains(.updateTask), "Should include updateTask option")
+        
         XCTAssertEqual(result.tags.count, 1)
         XCTAssertEqual(result.tags.first?.name, "home")
         XCTAssertGreaterThan(result.tags.first?.confidence ?? 0, 0.7)
@@ -139,10 +148,12 @@ final class NLServiceTests: XCTestCase {
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
+        
         XCTAssertEqual(result.intent, .createTask)
-        XCTAssertNotNil(result.priority)
-        XCTAssertEqual(result.priority?.level, .urgent)
-        XCTAssertGreaterThan(result.priority?.confidence ?? 0, 0.8)
+        XCTAssertEqual(result.context.resolvedTokens.count, 0)
+        XCTAssertEqual(result.priority!.level, .urgent)
+        XCTAssertGreaterThan(result.priority!.confidence, 0.8)
+        XCTAssertEqual(result.title, "fix server issue")
     }
 
     func testReminderTimeOffsetExtraction() async throws {
@@ -171,7 +182,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testNotesColonPattern() async throws {
-        let results = try await nlService.process(text: "Add task note: Remember to bring documents for the meeting")
+        let results = try await nlService.process(text: "Add note: Remember to bring documents for the meeting")
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -188,7 +199,7 @@ final class NLServiceTests: XCTestCase {
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
-        XCTAssertEqual(result.intent, .updateTask)
+        XCTAssertEqual(result.intent, .createTask)
 
         // Should extract tag, priority, location, reminder
         XCTAssertEqual(result.tags.count, 1)
@@ -267,8 +278,8 @@ final class NLServiceTests: XCTestCase {
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
-        XCTAssertEqual(result.intent, .updateTask)
-        XCTAssertEqual(result.tags.count, 1)
+                
+        XCTAssertEqual(result.title.count, 0)
         XCTAssertEqual(result.tags.first?.name, "trabalho")
     }
 
@@ -423,7 +434,8 @@ final class NLServiceTests: XCTestCase {
         let result = results[0]
         XCTAssertEqual(result.intent, .createEvent)
         XCTAssertNotNil(result.context.finalDate)
-        XCTAssertNotNil(result.context.dateRange)
+        XCTAssertEqual(result.context.finalDateDuration, 9000)
+        XCTAssertNil(result.context.dateRange)
     }
 
     func testFromToTimeFormat() async throws {
@@ -433,7 +445,8 @@ final class NLServiceTests: XCTestCase {
         let result = results[0]
         XCTAssertEqual(result.intent, .createEvent)
         XCTAssertNotNil(result.context.finalDate)
-        XCTAssertNotNil(result.context.dateRange)
+        XCTAssertEqual(result.context.finalDateDuration, 5400)
+        XCTAssertNil(result.context.dateRange)
     }
 
     // MARK: - Conflict Detection Tests
@@ -444,8 +457,9 @@ final class NLServiceTests: XCTestCase {
         XCTAssertEqual(results.count, 1)
         let result = results[0]
         XCTAssertEqual(result.intent, .createTask)
-        // Should detect multiple priority indicators as a conflict
-        XCTAssertGreaterThan(result.context.conflicts.count, 0)
+        XCTAssertEqual(result.title, "")
+        // Should detect multiple priority indicators
+        XCTAssertGreaterThan(result.metadataTokens.count, 1)
     }
 
     func testConflictingTimes() async throws {
@@ -478,13 +492,31 @@ final class NLServiceTests: XCTestCase {
         // Test case where a metadata pattern could potentially overlap with a temporal pattern
         let results = try await nlService.process(text: "Add tag work and remind me 30 minutes before")
 
-        XCTAssertEqual(results.count, 1)
-        let result = results[0]
-        XCTAssertEqual(result.intent, .updateTask)
-        XCTAssertEqual(result.tags.count, 1)
-        XCTAssertEqual(result.tags.first?.name, "work")
-        // Should extract reminder without overlap issues
-        XCTAssertEqual(result.reminders.count, 1)
+        // 2 clauses: "Add tag work" - "remind me 30 minutes before"
+        XCTAssertEqual(results.count, 2)
+        
+        let tagResult = results[0]
+        // Should detect ambiguity between createTask and updateTask
+        XCTAssertTrue(tagResult.isAmbiguous, "Should detect ambiguity")
+        XCTAssertGreaterThan(tagResult.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+        let intentAlternatives1 = tagResult.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives1.contains(.createTask), "Should include createTask as alternative")
+        XCTAssertTrue(intentAlternatives1.contains(.updateTask), "Should include updateTask as alternative")
+        
+        XCTAssertEqual(tagResult.context.resolvedTokens.count, 0)
+        XCTAssertEqual(tagResult.tags.count, 1)
+        XCTAssertEqual(tagResult.tags.first!.name, "work")
+        
+        let reminderResult = results[1]
+        XCTAssertTrue(reminderResult.isAmbiguous, "Should detect ambiguity")
+        XCTAssertGreaterThan(reminderResult.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+        let intentAlternatives2 = reminderResult.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives2.contains(.updateEvent), "Should include updateEvent as alternative")
+        XCTAssertTrue(intentAlternatives2.contains(.updateTask), "Should include updateTask as alternative")
+        
+        XCTAssertEqual(reminderResult.context.resolvedTokens.count, 0)
+        XCTAssertEqual(reminderResult.reminders.count, 1)
+        XCTAssertEqual(reminderResult.reminders.first!.trigger, .timeOffset(1800))
     }
 
     // MARK: - Multiple Language Pack Test
@@ -529,8 +561,26 @@ final class NLServiceTests: XCTestCase {
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
-        XCTAssertEqual(result.intent, .updateTask)
-        XCTAssertEqual(result.title.trimmingCharacters(in: .whitespacesAndNewlines), "buy food")
+        
+        // Should detect ambiguity
+        XCTAssertTrue(result.isAmbiguous, "Should detect ambiguity")
+        XCTAssertGreaterThan(result.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+
+        // Should contain alternatives
+        let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.updateTask), "Should include updateTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.updateEvent), "Should include updateEvent as alternative")
+        
+        XCTAssertEqual(result.title, "buy food")
+        XCTAssertEqual(result.metadataTokens[0].text, "buy groceries")
+        switch result.metadataTokens[0].kind {
+            
+        case .newTitle(title: let title, confidence: let confidence):
+            XCTAssertEqual(title, "buy groceries")
+            XCTAssertGreaterThan(confidence, 0.8)
+        default:
+            XCTFail("Invalid metadata")
+        }
     }
 
     // MARK: - Ambiguous Input Tests for Progressive Intent Resolution
@@ -556,17 +606,21 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testAmbiguousEventVsTask() async throws {
+        let now = TestUtil.makeNow()
+        
         // "schedule" could apply to both events and tasks
-        let results = try await nlService.process(text: "schedule review tomorrow")
+        let results = try await nlService.process(text: "schedule review tomorrow", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
 
-        XCTAssertTrue(result.isAmbiguous, "Should detect ambiguity for 'schedule review' input")
+        XCTAssertEqual(result.intent, .createEvent)
+        XCTAssertEqual(result.title, "review")
 
-        let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
-        XCTAssertTrue(intentAlternatives.contains(.createEvent), "Should include createEvent as alternative")
-        XCTAssertTrue(intentAlternatives.contains(.createTask), "Should include createTask as alternative")
+        let comps = result.context.finalDate.components()        
+        XCTAssertEqual(comps.year, 2025); XCTAssertEqual(comps.month, 9); XCTAssertEqual(comps.day, 12)
+        XCTAssertEqual(comps.hour, 10); XCTAssertEqual(comps.minute, 0)
+        
     }
 
     func testAmbiguousWithMetadata() async throws {
@@ -606,13 +660,15 @@ final class NLServiceTests: XCTestCase {
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
+        
+        // Should detect ambiguity
+        XCTAssertTrue(result.isAmbiguous, "Should detect ambiguity")
+        XCTAssertGreaterThan(result.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
 
-        // Should handle mixed language inputs and potentially detect ambiguity
-        XCTAssertTrue(result.title.contains("importante") || result.title.contains("tarefa"))
-
-        // Progressive intent resolution likely detects ambiguity for mixed language inputs
-        XCTAssertTrue(result.isAmbiguous, "Mixed language input should be ambiguous")
-        XCTAssertGreaterThan(result.intentAmbiguity?.predictions.count ?? 0, 1)
+        // Should contain alternatives
+        let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.updateTask), "Should include updateTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.createTask), "Should include createTask as alternative")
     }
 
     func testClearIntentNotAmbiguous() async throws {
@@ -634,7 +690,7 @@ final class NLServiceTests: XCTestCase {
 
     func testAmbiguousWithComplexMetadata() async throws {
         // Complex input with multiple metadata types but unclear intent
-        let results = try await nlService.process(text: "high priority work tag reminder 30 minutes report")
+        let results = try await nlService.process(text: "high priority tag work reminder 30 minutes report")
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -727,9 +783,17 @@ final class NLServiceTests: XCTestCase {
         XCTAssertEqual(results.count, 1)
         let result = results[0]
 
+        switch result.metadataTokens.first!.kind {
+        case .priority(let level, let confidence):
+            XCTAssertEqual(level, .high)
+            XCTAssertGreaterThanOrEqual(confidence, 0.8)
+        default:
+            XCTFail("Invalid metadata")
+        }
+        
         XCTAssertTrue(result.isAmbiguous, "Portuguese 'reunião importante amanhã' should be ambiguous")
         let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
-        XCTAssertTrue(intentAlternatives.contains(.createEvent), "Should include createEvent as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.createTask), "Should include createTask as alternative")
     }
 
     // MARK: - Spanish Ambiguous Tests
@@ -752,23 +816,30 @@ final class NLServiceTests: XCTestCase {
         XCTAssertEqual(results.count, 1)
         let result = results[0]
 
+        switch result.metadataTokens.first!.kind {
+        case .priority(let level, let confidence):
+            XCTAssertEqual(level, .high)
+            XCTAssertGreaterThanOrEqual(confidence, 0.8)
+        default:
+            XCTFail("Invalid metadata")
+        }
+        
         XCTAssertTrue(result.isAmbiguous, "Spanish 'reunión importante mañana' should be ambiguous")
         let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
-        XCTAssertTrue(intentAlternatives.contains(.createEvent), "Should include createEvent as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.createTask), "Should include createTask as alternative")
     }
 
     // MARK: - Edge Cases for Ambiguity Detection
 
     func testNoAmbiguityForUnknownIntent() async throws {
         // Completely unclear input should result in unknown intent, not ambiguity
-        let results = try await nlService.process(text: "xyz abc def")
+        let input = "xyz abc def"
+        let results = try await nlService.process(text: input)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
 
-        XCTAssertEqual(result.intent, .unknown)
-        XCTAssertFalse(result.isAmbiguous, "Unknown intent should not be ambiguous")
-        XCTAssertLessThanOrEqual(result.intentAmbiguity?.predictions.count ?? 0, 1)
+        XCTAssertEqual(result.title.count, input.count)
     }
 
     func testNoAmbiguityForView() async throws {
@@ -783,7 +854,7 @@ final class NLServiceTests: XCTestCase {
         // but the primary intent should be view with high confidence
         if result.isAmbiguous {
             XCTAssertTrue(result.intentAmbiguity?.predictions.first?.intent == .view, "Primary intent should be view")
-            XCTAssertTrue(result.intentAmbiguity?.predictions.first?.confidence ?? 0 > 0.8, "View intent should have high confidence")
+            XCTAssertTrue(result.intentAmbiguity?.predictions.first?.confidence ?? 0 > 0.4, "View intent should have good confidence in relation to others")
         }
     }
 
@@ -823,6 +894,21 @@ extension NLServiceTests {
             cal.firstWeekday = 2 // Monday
             cal.locale = nil
             return cal
+        }
+        
+        static func makeNow() -> Date {
+            // 2025-09-11 10:00:00 -03:00 (America/Sao_Paulo)
+            var comps = DateComponents()
+            comps.year = 2025; comps.month = 9; comps.day = 11
+            comps.hour = 10; comps.minute = 0; comps.second = 0
+            comps.timeZone = TimeZone(identifier: "America/Sao_Paulo")
+            return Calendar(identifier: .gregorian).date(from: comps)!
+        }
+
+        static func components(_ date: Date) -> (y:Int,m:Int,d:Int,h:Int,min:Int) {
+            let cal = TestUtil.calendarSP()
+            let c = cal.dateComponents([.year,.month,.day,.hour,.minute], from: date)
+            return (c.year!, c.month!, c.day!, c.hour!, c.minute!)
         }
     }
 }

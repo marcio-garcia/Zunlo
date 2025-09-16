@@ -695,6 +695,8 @@ extension ActionTools {
         for metadataToken in metadataTokens {
             if metadataToken.confidence > 0.6 {
                 switch metadataToken.kind {
+                case .newTitle(let title, let confidence):
+                    newTitle = title
                 case .tag(let name, let confidence):
                     if newTags == nil { newTags = [] }
                     newTags?.append(name)

@@ -10,7 +10,13 @@ import SmartParseKit
 import LoggingKit
 
 public protocol NLProcessing {
-    func process(text: String) async throws -> [ParseResult]
+    func process(text: String, referenceDate: Date) async throws -> [ParseResult]
+}
+
+extension NLProcessing {
+    func process(text: String, referenceDate: Date = Date()) async throws -> [ParseResult] {
+        try await process(text: text, referenceDate: referenceDate)
+    }
 }
 
 public struct ParseResult {
@@ -106,7 +112,7 @@ public final class NLService: NLProcessing {
         self.calendar = calendar
     }
     
-    public func process(text: String) async throws -> [ParseResult] {
+    public func process(text: String, referenceDate: Date) async throws -> [ParseResult] {
         
         // Language
         let language = engine.detectLanguage(text)
@@ -130,8 +136,6 @@ public final class NLService: NLProcessing {
         // Preprocess input to detect multiple clauses
         let splittedClauses = InputSplitter().split(text, language: language)
         log("splitted clauses: \(splittedClauses)")
-        
-        let referenceDate = Date()
         
         var results: [ParseResult] = []
         for clause in splittedClauses {

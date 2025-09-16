@@ -12,10 +12,10 @@ import SmartParseKit
 public final class MockNLService: NLProcessing {
     public init() {}
 
-    public func process(text: String) async throws -> [ParseResult] {
+    public func process(text: String, referenceDate: Date) async throws -> [ParseResult] {
         let calendar = Calendar(identifier: .gregorian)
         let duration: TimeInterval = 60 * 60 * 24
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: referenceDate)
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? today.addingTimeInterval(duration)
         let range = DateInterval(start: today, end: tomorrow)
         return [ParseResult(title: "This is your agenda",

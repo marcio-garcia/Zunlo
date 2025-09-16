@@ -50,23 +50,34 @@ public struct MetadataExtractor {
             }
         }
 
-        // Extract clean title by removing all used ranges
-        let cleanTitle = extractCleanTitle(
+        // Extract clean title and detect title renaming
+        let titleResult = extractCleanTitleWithRenaming(
             from: text,
             excludingRanges: allUsedRanges,
             pack: pack
         )
 
+        // Add new title token if title renaming is detected
+        if let newTitleInfo = titleResult.newTitle {
+            let token = MetadataToken(
+                range: newTitleInfo.range,
+                text: newTitleInfo.text,
+                kind: .newTitle(title: newTitleInfo.text, confidence: newTitleInfo.confidence),
+                confidence: newTitleInfo.confidence
+            )
+            metadataTokens.append(token)
+        }
+        
         // Calculate overall confidence
         let overallConfidence = calculateOverallConfidence(
             tokens: metadataTokens,
             conflicts: conflicts,
-            titleLength: cleanTitle.count
+            titleLength: titleResult.cleanTitle.count
         )
 
         return MetadataExtractionResult(
             tokens: metadataTokens,
-            title: cleanTitle,
+            title: titleResult.cleanTitle,
             confidence: overallConfidence,
             conflicts: conflicts
         )
@@ -296,11 +307,22 @@ public struct MetadataExtractor {
 
     // MARK: - Helper Methods
 
-    private func extractCleanTitle(
+    private struct TitleExtractionResult {
+        let cleanTitle: String
+        let newTitle: NewTitleInfo?
+    }
+
+    private struct NewTitleInfo {
+        let text: String
+        let range: NSRange
+        let confidence: Float
+    }
+
+    private func extractCleanTitleWithRenaming(
         from text: String,
         excludingRanges: [Range<String.Index>],
         pack: DateLanguagePack
-    ) -> String {
+    ) -> TitleExtractionResult {
         // Merge overlapping ranges
         let merged = mergeRanges(excludingRanges, in: text)
 
@@ -322,16 +344,7 @@ public struct MetadataExtractor {
 
         var result = pieces.reduce(into: String(), { $0.append(contentsOf: $1) })
 
-        // Strip language-specific connector tokens and command prefixes
-        let tokens = pack.connectorTokens
-        for token in tokens {
-            result = result.replacingOccurrences(
-                of: "\\b\(NSRegularExpression.escapedPattern(for: token))\\b",
-                with: " ",
-                options: [.regularExpression, .caseInsensitive]
-            )
-        }
-
+        // Strip command prefixes
         let regexList = pack.commandPrefixRegex()
         for regex in regexList {
             while let match = regex.firstMatch(in: result, options: [], range: NSRange(result.startIndex..., in: result)),
@@ -370,12 +383,190 @@ public struct MetadataExtractor {
             result = partOfDayRegex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
         }
 
-        // Normalize whitespace & punctuation
+        // Detect title renaming using connector tokens (before removing connectors)
+        let titleRenamingResult = detectTitleRenaming(in: result, originalText: text, connectorTokens: pack.connectorTokens)
+
+        // If title renaming was detected, clean title should only be the part before the connector
+        if titleRenamingResult.newTitle != nil,
+           let originalParts = titleRenamingResult.originalParts {
+            // Use only the original title (before connector) as clean title
+            result = originalParts.beforeConnector
+        } else {
+            // No title renaming detected, clean up all connector tokens normally
+            for token in pack.connectorTokens {
+                result = result.replacingOccurrences(
+                    of: "\\b\(NSRegularExpression.escapedPattern(for: token))\\b",
+                    with: " ",
+                    options: [.regularExpression, .caseInsensitive]
+                )
+            }
+        }
+
+        // Normalize whitespace & punctuation for clean title
         result = result.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         result = result.replacingOccurrences(of: #"^[\s,;:.-]+"#, with: "", options: .regularExpression)
         result = result.replacingOccurrences(of: #"[\s,;:.-]+$"#, with: "", options: .regularExpression)
+        result = result.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+        return TitleExtractionResult(
+            cleanTitle: result,
+            newTitle: titleRenamingResult.newTitle
+        )
+    }
+
+    private struct TitleRenamingResult {
+        let newTitle: NewTitleInfo?
+        let originalParts: TitleParts?
+    }
+
+    private struct TitleParts {
+        let beforeConnector: String
+        let afterConnector: String
+        let connector: String
+    }
+
+    private func detectTitleRenaming(in cleanedText: String, originalText: String, connectorTokens: [String]) -> TitleRenamingResult {
+        // Look for patterns like "old title to new title" or "old title → new title"
+        // Only process if we have meaningful content and exactly one connector
+
+        guard !cleanedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return TitleRenamingResult(newTitle: nil, originalParts: nil)
+        }
+
+        var detectedConnector: String?
+        var connectorRange: Range<String.Index>?
+
+        // Find the first (and hopefully only) connector token
+        for token in connectorTokens {
+            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: token))\\b"
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: cleanedText, range: NSRange(cleanedText.startIndex..., in: cleanedText)),
+               let range = Range(match.range, in: cleanedText) {
+
+                // If we already found a connector, this means multiple connectors - skip title renaming
+                if detectedConnector != nil {
+                    return TitleRenamingResult(newTitle: nil, originalParts: nil)
+                }
+
+                detectedConnector = token
+                connectorRange = range
+            }
+        }
+
+        guard let connector = detectedConnector,
+              let connRange = connectorRange else {
+            return TitleRenamingResult(newTitle: nil, originalParts: nil)
+        }
+
+        // Split the text around the connector
+        let beforeConnector = String(cleanedText[..<connRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let afterConnector = String(cleanedText[connRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Validate that both parts have meaningful content
+        guard !beforeConnector.isEmpty,
+              !afterConnector.isEmpty,
+              beforeConnector.count >= 2,  // Minimum meaningful title length
+              afterConnector.count >= 2,   // Minimum meaningful title length
+              beforeConnector != afterConnector else { // Don't detect identical titles as renaming
+            return TitleRenamingResult(newTitle: nil, originalParts: nil)
+        }
+
+        // Calculate confidence based on content quality
+        let confidence = calculateTitleRenamingConfidence(
+            originalTitle: beforeConnector,
+            newTitle: afterConnector,
+            connector: connector
+        )
+
+        // Only proceed if confidence is reasonable
+        guard confidence >= 0.6 else {
+            return TitleRenamingResult(newTitle: nil, originalParts: nil)
+        }
+
+        // Find the range of the new title in the original text
+        // This is approximate since we've done text cleaning, but better than hardcoded values
+        let newTitleRange = findApproximateRangeInOriginalText(
+            searchText: afterConnector,
+            originalText: originalText
+        )
+
+        let newTitleInfo = NewTitleInfo(
+            text: afterConnector,
+            range: newTitleRange,
+            confidence: confidence
+        )
+
+        let titleParts = TitleParts(
+            beforeConnector: beforeConnector,
+            afterConnector: afterConnector,
+            connector: connector
+        )
+
+        return TitleRenamingResult(newTitle: newTitleInfo, originalParts: titleParts)
+    }
+
+    private func calculateTitleRenamingConfidence(originalTitle: String, newTitle: String, connector: String) -> Float {
+        var confidence: Float = 0.8 // Base confidence for valid renaming pattern
+
+        // Boost confidence for common renaming connectors
+        let renamingConnectors = ["to", "→", "into", "as"]
+        if renamingConnectors.contains(connector.lowercased()) {
+            confidence += 0.1
+        }
+
+        // Reduce confidence if titles are too similar (might be false positive)
+        let similarity = calculateStringSimilarity(originalTitle.lowercased(), newTitle.lowercased())
+        if similarity > 0.8 {
+            confidence -= 0.2
+        }
+
+        // Boost confidence for reasonable title lengths
+        if newTitle.count > 3 && newTitle.count < 50 {
+            confidence += 0.05
+        }
+
+        // Reduce confidence if new title contains too many connector words (might be a sentence)
+        let commonWords = ["the", "a", "an", "and", "or", "but", "in", "on", "at", "for", "with"]
+        let wordCount = newTitle.lowercased().split(separator: " ").count
+        let commonWordCount = newTitle.lowercased().split(separator: " ").filter { commonWords.contains(String($0)) }.count
+
+        if wordCount > 0 && Float(commonWordCount) / Float(wordCount) > 0.5 {
+            confidence -= 0.15
+        }
+
+        return max(0.0, min(1.0, confidence))
+    }
+
+    private func calculateStringSimilarity(_ str1: String, _ str2: String) -> Float {
+        let set1 = Set(str1)
+        let set2 = Set(str2)
+        let intersection = set1.intersection(set2)
+        let union = set1.union(set2)
+
+        return union.isEmpty ? 0.0 : Float(intersection.count) / Float(union.count)
+    }
+
+    private func findApproximateRangeInOriginalText(searchText: String, originalText: String) -> NSRange {
+        // Try to find the search text in the original text
+        if let range = originalText.range(of: searchText, options: .caseInsensitive) {
+            return NSRange(range, in: originalText)
+        }
+
+        // If exact match not found, try to find the best approximate location
+        // This is a simplified approach - in a real implementation you might want more sophisticated matching
+        let words = searchText.split(separator: " ")
+        if let firstWord = words.first,
+           let range = originalText.range(of: String(firstWord), options: .caseInsensitive) {
+            // Return range starting from first word with estimated length
+            let location = NSRange(range, in: originalText).location
+            let length = min(searchText.count, originalText.count - location)
+            return NSRange(location: location, length: length)
+        }
+
+        // Fallback: return a range at the end of the text
+        let location = max(0, originalText.count - searchText.count)
+        let length = min(searchText.count, originalText.count)
+        return NSRange(location: location, length: length)
     }
 
     private func mergeRanges(_ ranges: [Range<String.Index>], in text: String) -> [Range<String.Index>] {
@@ -559,6 +750,7 @@ public struct MetadataExtractor {
                     }
                     let newConfidence = max(0.1, token.confidence - penalty)
                     let newKind: MetadataTokenKind = switch token.kind {
+                    case .newTitle(let title, _): .newTitle(title: title, confidence: newConfidence)
                     case .tag(let name, _): .tag(name: name, confidence: newConfidence)
                     case .reminder(let trigger, _): .reminder(trigger: trigger, confidence: newConfidence)
                     case .priority(let level, _): .priority(level: level, confidence: newConfidence)

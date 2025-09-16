@@ -68,7 +68,7 @@ public actor ChatEngine {
         let lower = userMessage.rawText.lowercased()
         do {
             // Handle locally with NLP
-            let nlpResult = try await nlpService.process(text: lower)
+            let nlpResult = try await nlpService.process(text: lower, referenceDate: Date())
 
             // Process NLP result through local tools
             var toolResults: [ToolResult] = []

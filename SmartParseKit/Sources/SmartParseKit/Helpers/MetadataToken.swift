@@ -10,6 +10,7 @@ import Foundation
 // MARK: - MetadataToken Types
 
 public enum MetadataTokenKind: Equatable, Hashable {
+    case newTitle(title: String, confidence: Float)
     case tag(name: String, confidence: Float)
     case reminder(trigger: ReminderTriggerToken, confidence: Float)
     case priority(level: TaskPriority, confidence: Float)
@@ -46,11 +47,12 @@ public struct MetadataToken: Equatable, Hashable {
     /// Extract the specific confidence from the kind
     public var kindConfidence: Float {
         switch kind {
-        case .tag(_, let confidence),
-             .reminder(_, let confidence),
-             .priority(_, let confidence),
-             .location(_, let confidence),
-             .notes(_, let confidence):
+        case .newTitle(_, let confidence),
+                .tag(_, let confidence),
+                .reminder(_, let confidence),
+                .priority(_, let confidence),
+                .location(_, let confidence),
+                .notes(_, let confidence):
             return confidence
         }
     }
@@ -63,6 +65,7 @@ public struct MetadataToken: Equatable, Hashable {
     /// Priority for conflict resolution (higher = more important)
     public func tokenPriority() -> Int {
         switch kind {
+        case .newTitle: return 100
         case .tag: return 80
         case .priority: return 75
         case .reminder: return 70
@@ -93,6 +96,7 @@ public struct MetadataExtractionResult {
     public func tokens(of kind: MetadataTokenKind) -> [MetadataToken] {
         return tokens.filter { token in
             switch (token.kind, kind) {
+            case (.newTitle, .newTitle): return true
             case (.tag, .tag): return true
             case (.reminder, .reminder): return true
             case (.priority, .priority): return true
@@ -103,6 +107,17 @@ public struct MetadataExtractionResult {
         }
     }
 
+    /// Get the new title with its confidence score
+    public var newTitle: (title: String, confidence: Float)? {
+        guard let titleToken = tokens.compactMap({ token in
+            if case .newTitle(let title, let confidence) = token.kind {
+                return (title, confidence)
+            }
+            return nil
+        }).first else { return nil }
+        return titleToken
+    }
+    
     /// Get all tag names with their confidence scores
     public var tags: [(name: String, confidence: Float)] {
         return tokens.compactMap { token in
