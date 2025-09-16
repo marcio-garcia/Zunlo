@@ -147,9 +147,6 @@
         }
       }
     },
-    "Agenda ready." : {
-
-    },
     "All in series" : {
 
     },
@@ -285,6 +282,9 @@
           }
         }
       }
+    },
+    "Canceled ‘%@’." : {
+
     },
     "Cancelled" : {
       "localizations" : {

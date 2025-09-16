@@ -19,6 +19,7 @@ protocol EventStore {
     func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws
     func editOverride(_ override: EventOverride, with input: EditEventInput) async throws
     func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws
+    func delete(id: UUID) async throws
 }
 
 final public class EventRepository: EventStore {
@@ -100,12 +101,20 @@ final public class EventRepository: EventStore {
         )
     }
 
-    func delete(id: UUID, reminderTriggers: [ReminderTrigger]? = nil) async throws {
+    func delete(id: UUID) async throws {
         guard try await auth.isAuthorized() else { return }
-        try await eventLocalStore.delete(id: id)
-        if let reminders = reminderTriggers {
-            reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminders)
+        if let event = try await eventLocalStore.fetch(id: id) {
+            if let reminderTriggers = Event(local: event).reminderTriggers, !reminderTriggers.isEmpty {
+                reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminderTriggers)
+            }
         }
+        // TODO: Add reminders to overrides
+//        if let override = try await eventOverrideLocalStore.fetch(for: id) {
+//            if let reminderTriggers = Event(local: event).reminderTriggers, !reminderTriggers.isEmpty {
+//                reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminderTriggers)
+//            }
+//        }
+        try await eventLocalStore.delete(id: id)
     }
 
     func upsertRecurrenceRule(_ rule: RecurrenceRule) async throws {

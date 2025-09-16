@@ -78,7 +78,7 @@ final class LocalToolService: AIToolServiceAPI {
             return EventMutationResult(ok: false, event: nil,
                                        recurrenceRule: nil, override: nil, code: nil, message: "There is no event with id=\(payload.eventId)")
         }
-        try await eventRepo.delete(id: event.id, reminderTriggers: event.reminderTriggers)
+        try await eventRepo.delete(id: event.id)
         return EventMutationResult(ok: true, event: nil, recurrenceRule: nil, override: nil, code: nil, message: "Event deleted")
     }
 }

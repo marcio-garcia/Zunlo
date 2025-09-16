@@ -35,7 +35,9 @@ public enum ToolAction: Equatable {
     case rescheduledTask(id: UUID, due: Date)
     case rescheduledEvent(eventId: UUID, start: Date, end: Date, scope: EventScope)
     
-    
+    case canceledTask(id: UUID)
+    case canceledEvent(id: UUID)
+
     case plannedDay(range: Range<Date>, occurrences: [EventOccurrence])
     case plannedWeek(range: Range<Date>, occurrences: [EventOccurrence])
     case agenda(range: Range<Date>, occurrences: [EventOccurrence])
@@ -159,13 +161,6 @@ final class ActionTools: Tools {
         }
         
         let range = dateInterval.toDateRange()
-        
-//        do {
-//            let occ = try await events.fetchOccurrences(in: range)
-//            return ToolResult(intent: cmd.intent, action: .agenda(range: range, occurrences: occ), message: NSLocalizedString("Agenda ready.", comment: ""))
-//        } catch {
-//            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
-//        }
         
         do {
             let agendaComputer = LocalAgendaComputer(eventRepo: events, taskRepo: tasks)
@@ -450,6 +445,56 @@ final class ActionTools: Tools {
             }
 
             return ToolResult(intent: cmd.intent, action: .rescheduledEvent(eventId: one.id, start: newStart, end: newEnd, scope: scope), needsDisambiguation: false, options: [], message: String(format: NSLocalizedString("Rescheduled ‘%@’.", comment: ""), one.title))
+        } catch {
+            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
+        }
+    }
+    
+    public func cancelTask(_ cmd: ParseResult) async -> ToolResult {
+        do {
+            let candidates = try await tasks.fetchAll().compactMap { TaskCandidate(id: $0.id, title: $0.title, due: $0.dueDate) }
+            let scored = bestTaskCandidates(in: candidates, cmd: cmd)
+            let (single, many) = pick(scored)
+            if let one = single {
+                try await tasks.delete(taskId: one.id)
+                return ToolResult(intent: cmd.intent,
+                                  action: .canceledTask(id: one.id),
+                                  needsDisambiguation: false,
+                                  options: [],
+                                  message: NSLocalizedString("Canceled ‘%@’.", comment: "").replacingOccurrences(of: "%@", with: one.title))
+            }
+            if !many.isEmpty {
+                let opts = many.map { t in
+                    DisambiguationOption(label: taskLabel(t), payload: .task(t.id))
+                }
+                return ToolResult(intent: cmd.intent,
+                                  action: .none,
+                                  needsDisambiguation: true,
+                                  options: opts,
+                                  message: NSLocalizedString("Which task should I update?", comment: ""))
+            }
+            // No good matches — fall back to asking
+            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: [], message: NSLocalizedString("I couldn't find a matching task.", comment: ""))
+        } catch {
+            return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
+        }
+    }
+    
+    public func cancelEvent(_ cmd: ParseResult) async -> ToolResult {
+        do {
+            let occ = try await events.fetchOccurrences()
+            let scored = bestEventCandidates(in: occ, cmd: cmd, titleBias: 0.75)
+            let (single, many) = pick(scored, threshold: 0.7)
+            
+            guard let one = single else {
+                if !many.isEmpty {
+                    let opts = many.map { e in DisambiguationOption(label: eventLabel(e), payload: .eventOccurrence(eventId: e.id, start: e.startDate)) }
+                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("Which event should I reschedule?", comment: ""))
+                }
+                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: buildTimeOptions(from: cmd), message: NSLocalizedString("I couldn't find a matching event.", comment: ""))
+            }
+            try await events.delete(id: one.id)
+            return ToolResult(intent: cmd.intent, action: .canceledEvent(id: one.id), needsDisambiguation: false, options: [], message: String(format: NSLocalizedString("Rescheduled ‘%@’.", comment: ""), one.title))
         } catch {
             return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: false, options: [], message: error.localizedDescription)
         }

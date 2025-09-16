@@ -58,4 +58,7 @@ final class FakeEventFetcher: EventStore {
     func editFuture(parent: Zunlo.EventOccurrence, startingFrom occurrence: Zunlo.EventOccurrence, with input: Zunlo.EditEventInput) async throws {
         
     }
+    
+    func delete(id: UUID) async throws {
+    }
 }

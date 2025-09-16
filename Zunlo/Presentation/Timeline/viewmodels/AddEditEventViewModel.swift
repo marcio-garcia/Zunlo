@@ -213,7 +213,7 @@ final class AddEditEventViewModel: ObservableObject {
         await MainActor.run { isProcessing = true }
         if case .editAll(let event, _) = mode {
             do {
-                try await repo.delete(id: event.id, reminderTriggers: event.reminderTriggers)
+                try await repo.delete(id: event.id)
                 await MainActor.run { isProcessing = false }
                 return true
             } catch {

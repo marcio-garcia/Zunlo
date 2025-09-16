@@ -21,6 +21,7 @@ protocol TaskStore {
         priority: UserTaskPriority?,
         notes: String?
     ) async throws
+    func delete(taskId: UUID) async throws
 }
 
 extension TaskStore {
@@ -94,6 +95,16 @@ final class UserTaskRepository: TaskStore {
         guard try await auth.isAuthorized(), let userId = auth.userId else { return }
         try await localStore.delete(id: task.id, userId: userId)
         reminderScheduler.cancelReminders(for: task)
+    }
+    
+    func delete(taskId: UUID) async throws {
+        guard try await auth.isAuthorized(), let userId = auth.userId else { return }
+        if let task = try await localStore.fetch(id: taskId) {
+            if let reminderTriggers = UserTask(local: task).reminderTriggers, !reminderTriggers.isEmpty {
+                reminderScheduler.cancelReminders(itemId: taskId, reminderTriggers: reminderTriggers)
+            }
+            try await localStore.delete(id: taskId, userId: userId)
+        }
     }
     
     func fetchTask(id: UUID) async throws -> UserTask? {
