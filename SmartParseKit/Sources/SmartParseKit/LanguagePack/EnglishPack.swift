@@ -97,7 +97,7 @@ public struct EnglishPack: DateLanguagePack {
     }
 
     public func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(create|add|schedule|book|set\s*up)\b"#) }
-    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reschedul|rebook|postpone|push\s*back|delay|move|change|modify)\b"#) }
+    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reschedul|rebook|postpone|push|push\s*back|delay|move|change|modify)\b"#) }
     public func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(delete|remove|cancel|don't\s+schedule|do\s+not\s+schedule)\b"#) }
     public func intentViewRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(show|view|what's\s+on|agenda|my\s+schedule)\b"#) }
     public func intentPlanRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(plan|organize|structure|map\s+out)\b"#) }
@@ -105,11 +105,12 @@ public struct EnglishPack: DateLanguagePack {
     
     // Enhanced create patterns that combine action + type
     public func intentCreateTaskRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(add|create|make|set\s*up)\s+(?:a\s+)?(?:new\s+)?(task|todo|to\s*do|reminder|note|assignment|action\s+item)\b"#)
+        //BaseLanguagePack.regex(#"(?ix)\b(add|create)\s+(?:a\s+)?(?:new\s+)?(task|todo|to\s*do|reminder|note|assignment|action\s+item)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(add|create)\s+(?:a\s+)?(?:new\s+)?.*\b"#)
     }
 
     public func intentCreateEventRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(schedule|book|add|create|set\s*up)\s+(?:a\s+)?(?:new\s+)?(meeting|event|appointment|call|lunch|dinner|conference|session)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(schedule|book|add|create|set\s*up)\s+(?:a\s+)?(?:new\s+)?.*\b"#)
     }
 
     // Enhanced cancel patterns that combine action + type
@@ -118,7 +119,7 @@ public struct EnglishPack: DateLanguagePack {
     }
 
     public func intentCancelEventRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(cancel|delete|remove|call\s+off)\s+(?:the\s+)?(?:this\s+)?(meeting|event|appointment|call|lunch|dinner|conference|session)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(cancel|delete|remove|call\s+off)\s+(?:the\s+)?(?:this\s+)?.*\b"#)
     }
 
     // Update intent regex
@@ -137,11 +138,11 @@ public struct EnglishPack: DateLanguagePack {
 
     // Metadata addition detection patterns
     public func metadataAdditionWithPrepositionRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(add|set)\s+(tag|priority|reminder|note|location)\s+\S+.*\s+(to|for)\s+.*\b(task|event|meeting|appointment)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(add|set)\s+(tag|priority|reminder|note|location)\s+\S+.*\s+(to|for)\s+.*\b(task|event|meeting|appointment)?\b"#)
     }
 
     public func metadataAdditionDirectRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(add|set)\s+(tag|priority|reminder|note|location)\s+\S+.*\b(task|event|meeting|appointment)\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(add|set)\s+(tag|priority|reminder|note|location)\s+\S+.*\b"#)
     }
 
     public func taskEventReferenceRegex() -> NSRegularExpression {

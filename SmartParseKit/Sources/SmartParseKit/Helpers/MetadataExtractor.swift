@@ -336,7 +336,7 @@ public struct MetadataExtractor {
         for regex in regexList {
             while let match = regex.firstMatch(in: result, options: [], range: NSRange(result.startIndex..., in: result)),
                   match.range.location == 0, match.range.length > 0,
-                  let range = Range(match.range, in: result) {
+                  let range = Range(match.range(at: 1), in: result) {
                 result.removeSubrange(range)
             }
         }
@@ -559,7 +559,6 @@ public struct MetadataExtractor {
                     }
                     let newConfidence = max(0.1, token.confidence - penalty)
                     let newKind: MetadataTokenKind = switch token.kind {
-                    case .title(let title, _): .title(title: title, confidence: newConfidence)
                     case .tag(let name, _): .tag(name: name, confidence: newConfidence)
                     case .reminder(let trigger, _): .reminder(trigger: trigger, confidence: newConfidence)
                     case .priority(let level, _): .priority(level: level, confidence: newConfidence)

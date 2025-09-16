@@ -135,17 +135,28 @@ public final class TemporalComposer: InputParser {
             pack: pack
         )
 
-        let intent = detectIntent(text, metadataTokens: metadataResult.tokens, pack: pack)
+        // Use new intent interpreter for classification
+        let intentInterpreter = IntentInterpreter()
+        let intentAmbiguity = intentInterpreter.classify(metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens)
 
-        // Last attempt to detect the input intent using ML model
+        // Determine final intent
         let finalIntent: Intent
-        if intent == .unknown {
+        if intentAmbiguity.primaryIntent == .unknown {
             finalIntent = intentDetector.classify(text)
         } else {
-            finalIntent = intent
+            finalIntent = intentAmbiguity.primaryIntent
         }
 
-        return (finalIntent, temporalTokens, metadataResult)
+        // Create enhanced metadata result with intent ambiguity
+        let enhancedMetadataResult = MetadataExtractionResult(
+            tokens: metadataResult.tokens,
+            title: metadataResult.title,
+            confidence: metadataResult.confidence,
+            conflicts: metadataResult.conflicts,
+            intentAmbiguity: intentAmbiguity.isAmbiguous ? intentAmbiguity : nil
+        )
+
+        return (finalIntent, temporalTokens, enhancedMetadataResult)
     }
 
     // MARK: - Detection
@@ -560,173 +571,7 @@ public final class TemporalComposer: InputParser {
         if let r = pack.partOfDayRegex(), r.firstMatch(in: s, options: [], range: range) != nil { return true }
         return false
     }
+
+    // MARK: - Utility Methods
 }
 
-extension TemporalComposer {
-    private func detectIntent(_ s: String, metadataTokens: [MetadataToken], pack: DateLanguagePack) -> Intent {
-        let range = NSRange(location: 0, length: (s as NSString).length)
-        
-        // Check for view and plan intents (no task/event split needed)
-        if pack.intentViewRegex().firstMatch(in: s, options: [], range: range) != nil { return .view }
-        if pack.intentPlanRegex().firstMatch(in: s, options: [], range: range) != nil { return .plan }
-        
-        // Check for action intents that need task/event specificity
-        if pack.intentCreateRegex().firstMatch(in: s, options: [], range: range) != nil {
-            // Check if this is actually a metadata addition disguised as create
-            if isMetadataAddition(s, metadataTokens: metadataTokens, pack: pack) {
-                return detectUpdateSpecificity(s, pack: pack)
-            }
-            return detectCreateSpecificity(s, pack: pack)
-        }
-        
-        if pack.intentRescheduleRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return detectRescheduleSpecificity(s, pack: pack)
-        }
-        
-        if pack.intentUpdateRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return detectUpdateSpecificity(s, pack: pack)
-        }
-        
-        if pack.intentCancelRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return detectCancelSpecificity(s, pack: pack)
-        }
-
-        // Check for metadata operations that don't match traditional patterns
-        if isMetadataAddition(s, metadataTokens: metadataTokens, pack: pack) {
-            return detectUpdateSpecificity(s, pack: pack)
-        }
-
-        return .unknown
-    }
-
-    private func isMetadataAddition(_ s: String, metadataTokens: [MetadataToken], pack: DateLanguagePack) -> Bool {
-        let range = NSRange(location: 0, length: (s as NSString).length)
-
-        // Pattern 1 & 2: Check explicit metadata addition patterns (these still need regex as they're structural)
-        if pack.metadataAdditionWithPrepositionRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return true
-        }
-
-        if pack.metadataAdditionDirectRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return true
-        }
-
-        // Pattern 3: Use already-detected metadata tokens instead of re-running regex
-        // Check if we have any metadata tokens AND the text contains task/event references
-        if !metadataTokens.isEmpty {
-            let containsTaskReference = pack.taskEventReferenceRegex().firstMatch(in: s, options: [], range: range) != nil
-
-            if containsTaskReference {
-                // Check if any of the detected metadata tokens indicate metadata addition
-                for token in metadataTokens {
-                    switch token.kind {
-                    case .tag, .priority, .reminder, .notes, .location:
-                        // We found metadata tokens AND task references, this suggests metadata addition
-                        return true
-                    case .title:
-                        // Title tokens don't indicate metadata addition by themselves
-                        continue
-                    }
-                }
-            }
-        }
-
-        return false
-    }
-
-    private func detectCreateSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
-        let range = NSRange(location: 0, length: (s as NSString).length)
-        
-        // Check enhanced create patterns first (more specific)
-        if pack.intentCreateTaskRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .createTask
-        }
-        
-        if pack.intentCreateEventRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .createEvent
-        }
-        
-        // Fallback to keyword detection
-        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .createTask
-        }
-        
-        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .createEvent
-        }
-        
-        return .unknown
-    }
-
-    private func detectRescheduleSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
-        let range = NSRange(location: 0, length: (s as NSString).length)
-        
-        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .rescheduleTask
-        }
-        
-        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .rescheduleEvent
-        }
-        
-        if pack.inlineTimeRangeRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .rescheduleEvent
-        }
-        
-        if pack.fromToTimeRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .rescheduleEvent
-        }
-        
-        if pack.ordinalDayRegex()?.firstMatch(in: s, options: [], range: range) != nil {
-            return .rescheduleTask
-        }
-        
-        if pack.relativeDayRegex()?.firstMatch(in: s, options: [], range: range) != nil {
-            return .rescheduleTask
-        }
-        
-        if pack.weekendRegex()?.firstMatch(in: s, options: [], range: range) != nil {
-            return .rescheduleTask
-        }
-        
-        return .rescheduleEvent
-    }
-
-    private func detectUpdateSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
-        let range = NSRange(location: 0, length: (s as NSString).length)
-        
-        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .updateTask
-        }
-        
-        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .updateEvent
-        }
-        
-        return .unknown
-    }
-
-    private func detectCancelSpecificity(_ s: String, pack: DateLanguagePack) -> Intent {
-        let range = NSRange(location: 0, length: (s as NSString).length)
-        
-        // Check enhanced cancel patterns first (more specific)
-        if pack.intentCancelTaskRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .cancelTask
-        }
-        
-        if pack.intentCancelEventRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .cancelEvent
-        }
-        
-        // Fallback to keyword detection
-        if pack.taskKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .cancelTask
-        }
-        
-        if pack.eventKeywordsRegex().firstMatch(in: s, options: [], range: range) != nil {
-            return .cancelEvent
-        }
-        
-        return .unknown
-    }
-}

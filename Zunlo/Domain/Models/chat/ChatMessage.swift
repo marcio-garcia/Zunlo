@@ -219,12 +219,14 @@ public enum ChatMessageAction: Identifiable, Equatable, Hashable, Codable {
     case copyText
     case copyAttachment(UUID)          // attachmentId
     case sendAttachmentToAI(UUID)      // attachmentId
+    case disambiguateIntent(alternatives: [String]) // intent options for disambiguation
 
     public var id: String {
         switch self {
         case .copyText: return "copyText"
         case .copyAttachment(let id): return "copyAttachment:\(id.uuidString)"
         case .sendAttachmentToAI(let id): return "sendToAI:\(id.uuidString)"
+        case .disambiguateIntent: return "disambiguateIntent"
         }
     }
 
@@ -233,6 +235,7 @@ public enum ChatMessageAction: Identifiable, Equatable, Hashable, Codable {
         case .copyText: return "Copy"
         case .copyAttachment: return "Copy JSON"
         case .sendAttachmentToAI: return "Send it to me"
+        case .disambiguateIntent: return "Choose what you meant"
         }
     }
 }
@@ -281,6 +284,9 @@ private extension ChatActionLocal {
         case "sendAttachmentToAI":
             if let id = attachmentId { return .sendAttachmentToAI(id) }
             return nil
+        case "disambiguateIntent":
+            let alternatives = intentAlternatives?.components(separatedBy: ",") ?? []
+            return .disambiguateIntent(alternatives: alternatives)
         default:
             return nil
         }

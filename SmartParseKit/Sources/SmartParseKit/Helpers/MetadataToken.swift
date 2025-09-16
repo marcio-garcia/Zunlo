@@ -10,7 +10,6 @@ import Foundation
 // MARK: - MetadataToken Types
 
 public enum MetadataTokenKind: Equatable, Hashable {
-    case title(title: String, confidence: Float)
     case tag(name: String, confidence: Float)
     case reminder(trigger: ReminderTriggerToken, confidence: Float)
     case priority(level: TaskPriority, confidence: Float)
@@ -47,8 +46,7 @@ public struct MetadataToken: Equatable, Hashable {
     /// Extract the specific confidence from the kind
     public var kindConfidence: Float {
         switch kind {
-        case .title(_, let confidence),
-             .tag(_, let confidence),
+        case .tag(_, let confidence),
              .reminder(_, let confidence),
              .priority(_, let confidence),
              .location(_, let confidence),
@@ -65,7 +63,6 @@ public struct MetadataToken: Equatable, Hashable {
     /// Priority for conflict resolution (higher = more important)
     public func tokenPriority() -> Int {
         switch kind {
-        case .title: return 100
         case .tag: return 80
         case .priority: return 75
         case .reminder: return 70
@@ -82,19 +79,20 @@ public struct MetadataExtractionResult {
     public let title: String
     public let confidence: Float
     public let conflicts: [MetadataConflict]
+    public let intentAmbiguity: IntentAmbiguity?
 
-    public init(tokens: [MetadataToken], title: String, confidence: Float, conflicts: [MetadataConflict] = []) {
+    public init(tokens: [MetadataToken], title: String, confidence: Float, conflicts: [MetadataConflict] = [], intentAmbiguity: IntentAmbiguity? = nil) {
         self.tokens = tokens
         self.title = title
         self.confidence = confidence
         self.conflicts = conflicts
+        self.intentAmbiguity = intentAmbiguity
     }
 
     /// Extract tokens of a specific kind
     public func tokens(of kind: MetadataTokenKind) -> [MetadataToken] {
         return tokens.filter { token in
             switch (token.kind, kind) {
-            case (.title, .title): return true
             case (.tag, .tag): return true
             case (.reminder, .reminder): return true
             case (.priority, .priority): return true

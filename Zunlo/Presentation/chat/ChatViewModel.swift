@@ -254,6 +254,15 @@ extension ChatViewModel {
             Task {
                 await sendAttachmentToAI(schema: att.schema, mime: att.mime, data: data)
             }
+
+        case .disambiguateIntent(let alternatives):
+            // Present disambiguation options to user
+            // For now, just send the first alternative as a new message
+            if let selectedAlternative = alternatives.first {
+                Task {
+                    await send(text: selectedAlternative)
+                }
+            }
         }
     }
 

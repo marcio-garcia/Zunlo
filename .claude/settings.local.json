@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(//Users/marciogarcia/dev/loginode/**)",
+      "Bash(xcodebuild build:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(swift build:*)"
     ],
     "deny": [],
     "ask": []

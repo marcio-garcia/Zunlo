@@ -18,12 +18,24 @@ public struct ParseResult {
     public let intent: Intent
     public let context: TemporalContext
     public let metadataTokens: [MetadataToken]
+    public let intentAmbiguity: IntentAmbiguity?
 
-    public init(title: String, intent: Intent, context: TemporalContext, metadataTokens: [MetadataToken] = []) {
+    public init(title: String, intent: Intent, context: TemporalContext, metadataTokens: [MetadataToken] = [], intentAmbiguity: IntentAmbiguity? = nil) {
         self.title = title
         self.intent = intent
         self.context = context
         self.metadataTokens = metadataTokens
+        self.intentAmbiguity = intentAmbiguity
+    }
+
+    /// Check if this parse result has ambiguous intent
+    public var isAmbiguous: Bool {
+        return intentAmbiguity?.isAmbiguous == true
+    }
+
+    /// Get alternative intents if ambiguous
+    public var alternatives: [IntentPrediction] {
+        return intentAmbiguity?.alternatives ?? []
     }
 
     /// Extract tags with their confidence scores
@@ -104,7 +116,15 @@ public final class NLService: NLProcessing {
         cal.locale = Locale(identifier: language.rawValue)
 
         // Build language packs based on calendar
-        let packs: [DateLanguagePack] = language.rawValue == "en" ? [EnglishPack(calendar: cal)] : [PortugueseBRPack(calendar: cal)]
+        var packs: [DateLanguagePack]
+        if language.rawValue == "pt" {
+            packs = [PortugueseBRPack(calendar: cal)]
+        } else if language.rawValue == "es" {
+            packs = [SpanishPack(calendar: cal)]
+        } else {
+            packs = [EnglishPack(calendar: cal)]
+        }
+        
         log("raw text: \(text), calendar: \(cal)")
         
         // Preprocess input to detect multiple clauses
@@ -131,7 +151,8 @@ public final class NLService: NLProcessing {
                     title: metadataResult.title,
                     intent: intent,
                     context: context,
-                    metadataTokens: metadataResult.tokens
+                    metadataTokens: metadataResult.tokens,
+                    intentAmbiguity: metadataResult.intentAmbiguity
                 )
                 log("parse result: \(parseResult)")
                 results.append(parseResult)
