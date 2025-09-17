@@ -54,7 +54,11 @@ final class EventOverrideSyncEngine {
                         }
                         continue
                     }
-                    let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: r.id) ?? { let o = EventOverrideLocal(); o.id = r.id; return o }()
+                    let obj = realm.object(ofType: EventOverrideLocal.self, forPrimaryKey: r.id) ?? {
+                        let o = EventOverrideLocal()
+                        o.id = r.id
+                        return o
+                    }()
                     obj.getUpdateFields(remote: r)
                     realm.add(obj, update: .modified)
                 }

@@ -54,7 +54,12 @@ final class EventSyncEngine {
                         }
                         continue
                     }
-                    let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id) ?? { let o = EventLocal(); o.id = r.id; return o }()
+                    let obj = realm.object(ofType: EventLocal.self, forPrimaryKey: r.id) ?? {
+                        let o = EventLocal()
+                        o.id = r.id
+                        o.userId = r.user_id
+                        return o
+                    }()
                     obj.getUpdateFields(remote: r)
                     realm.add(obj, update: .modified)
                 }

@@ -53,8 +53,14 @@ final class UserTaskSyncEngine {
                         }
                         continue
                     }
-                    let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: r.id) ?? { let o = UserTaskLocal(); o.id = r.id; return o }()
-                    obj.getUpdateFields(remote: r); obj.needsSync = false
+                    let obj = realm.object(ofType: UserTaskLocal.self, forPrimaryKey: r.id) ?? {
+                        let o = UserTaskLocal()
+                        o.id = r.id
+                        o.userId = r.userId
+                        return o
+                    }()
+                    obj.getUpdateFields(remote: r)
+                    obj.needsSync = false
                     realm.add(obj, update: .modified)
                 }
             }},

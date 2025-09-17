@@ -54,7 +54,11 @@ final class RecurrenceRuleSyncEngine {
                         }
                         continue
                     }
-                    let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id) ?? { let o = RecurrenceRuleLocal(); o.id = r.id; return o }()
+                    let obj = realm.object(ofType: RecurrenceRuleLocal.self, forPrimaryKey: r.id) ?? {
+                        let o = RecurrenceRuleLocal()
+                        o.id = r.id
+                        return o
+                    }()
                     obj.getUpdateFields(remote: r)
                     realm.add(obj, update: .modified)
                 }
