@@ -563,14 +563,6 @@ public actor ChatEngine {
         guard let originalParse = nlpResult.first(where: { $0.id == parseResultId }),
               let intentAmbiguity = originalParse.intentAmbiguity else {
             return
-//            return ToolResult(
-//                intent: .unknown,
-//                action: .none,
-//                needsDisambiguation: false,
-//                options: [],
-//                message: "Could not find the original request. Please try again.",
-//                richText: nil
-//            )
         }
 
         let selectedIntent = intentAmbiguity.predictions.first(where: { $0.id == selectedOptionId })?.intent ?? .unknown
@@ -590,15 +582,11 @@ public actor ChatEngine {
             let result = try await execute(resolvedParse)
             await processResults(toolResults: [result], chatEvent: chatEvent)
         } catch {
-            return
-//            return ToolResult(
-//                intent: selectedIntent,
-//                action: .none,
-//                needsDisambiguation: false,
-//                options: [],
-//                message: "Error processing your request: \(error.localizedDescription)",
-//                richText: nil
-//            )
+            // If NLP fails, just use the normal AI streaming path
+            let asyncStream = startStream(history: history, userMessage: userMessage)
+            for await ev in asyncStream {
+                chatEvent(ev)
+            }
         }
     }
 

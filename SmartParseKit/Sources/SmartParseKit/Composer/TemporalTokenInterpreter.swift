@@ -112,7 +112,8 @@ public class TemporalTokenInterpreter {
         var conflicts: [String] = []
         
         // Start with reference date as base
-        let baseComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: referenceDate)
+        let roundedDate = roundMinutesToNearest(date: referenceDate, interval: 30)
+        let baseComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: roundedDate)
         resolvedComponents.year = baseComponents.year
         resolvedComponents.month = baseComponents.month
         resolvedComponents.day = baseComponents.day
@@ -517,6 +518,52 @@ public class TemporalTokenInterpreter {
         }
         
         return max(0.0, min(1.0, confidence))
+    }
+    
+    // MARK: - Utility Methods
+    
+    private func roundMinutes(date: Date, to interval: Int) -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        
+        guard let currentMinutes = components.minute else {
+            return date
+        }
+        
+        // Calculate rounded minutes
+        let roundedMinutes = (currentMinutes / interval) * interval
+        
+        // Create new date components with rounded minutes
+        var newComponents = components
+        newComponents.minute = roundedMinutes
+        newComponents.second = 0
+        newComponents.nanosecond = 0
+        
+        return calendar.date(from: newComponents) ?? date
+    }
+    
+    private func roundMinutesToNearest(date: Date, interval: Int) -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        
+        guard let currentMinutes = components.minute else {
+            return date
+        }
+        
+        // Round to nearest interval
+        let roundedMinutes = ((currentMinutes + interval / 2) / interval) * interval
+        
+        var newComponents = components
+        newComponents.minute = roundedMinutes >= 60 ? 0 : roundedMinutes
+        newComponents.second = 0
+        newComponents.nanosecond = 0
+        
+        // Handle hour overflow
+        if roundedMinutes >= 60 {
+            newComponents.hour = (components.hour ?? 0) + 1
+        }
+        
+        return calendar.date(from: newComponents) ?? date
     }
 }
 

@@ -60,7 +60,7 @@ public final class NLService: NLProcessing {
             for pack in packs {
                 let (intent, temporalTokens, metadataResult) = parser.parse(clause.text, now: referenceDate, pack: pack, intentDetector: AppleIntentDetector.bundled())
                 log("parsed intent: \(intent)")
-                log("parsed temporal tokens: \(temporalTokens)")
+                log("parsed temporal tokens: \(temporalTokens.map({ $0.kind }))")
                 log("parsed metadata tokens: \(metadataResult.tokens.map { "\($0.kind)" })")
 
                 let interpreter = TemporalTokenInterpreter(calendar: calendar, referenceDate: referenceDate)

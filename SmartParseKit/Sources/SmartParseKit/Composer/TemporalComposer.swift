@@ -541,7 +541,5 @@ public final class TemporalComposer: InputParser {
         if let r = pack.partOfDayRegex(), r.firstMatch(in: s, options: [], range: range) != nil { return true }
         return false
     }
-
-    // MARK: - Utility Methods
 }
 
