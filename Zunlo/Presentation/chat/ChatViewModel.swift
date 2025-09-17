@@ -238,32 +238,38 @@ public final class ChatViewModel: ObservableObject {
 
 extension ChatViewModel {
     // Called by MessageBubble.onAction
-    func handleBubbleAction(_ action: ChatMessageAction, message: ChatMessage) {
-        switch action {
-        case .copyText:
-            copyToClipboard(message.rawText)
-
-        case .copyAttachment(let attachmentId):
-            guard let att = message.attachments.first(where: { $0.id == attachmentId }),
-                  let json = att.decodedString() else { return }
-            copyToClipboard(json)
-
-        case .sendAttachmentToAI(let attachmentId):
-            guard let att = message.attachments.first(where: { $0.id == attachmentId }),
-                  let data = Data(base64Encoded: att.dataBase64) else { return }
-            Task {
-                await sendAttachmentToAI(schema: att.schema, mime: att.mime, data: data)
-            }
-
-        case .disambiguateIntent(let alternatives):
-            // Present disambiguation options to user
-            // For now, just send the first alternative as a new message
-            if let selectedAlternative = alternatives.first {
-                Task {
-                    await send(text: selectedAlternative)
-                }
+    func handleBubbleAction(_ action: ChatMessageActionAlternative, message: ChatMessage) {
+        print("selected: \(action.label)")
+        Task {
+            await engine.handleDisambiguationSelection(parseResultId: action.parseResultId, selectedOptionId: action.id) { chatEvent in
+                Task { await self.consume(chatEvent) }
             }
         }
+//        switch action {
+//        case .copyText:
+//            copyToClipboard(message.rawText)
+//
+//        case .copyAttachment(let attachmentId):
+//            guard let att = message.attachments.first(where: { $0.id == attachmentId }),
+//                  let json = att.decodedString() else { return }
+//            copyToClipboard(json)
+//
+//        case .sendAttachmentToAI(let attachmentId):
+//            guard let att = message.attachments.first(where: { $0.id == attachmentId }),
+//                  let data = Data(base64Encoded: att.dataBase64) else { return }
+//            Task {
+//                await sendAttachmentToAI(schema: att.schema, mime: att.mime, data: data)
+//            }
+//
+//        case .disambiguateIntent(let alternatives):
+//            // Present disambiguation options to user
+//            // For now, just send the first alternative as a new message
+//            if let selectedAlternative = alternatives.first {
+//                Task {
+//                    await send(text: selectedAlternative)
+//                }
+//            }
+//        }
     }
 
     private func copyToClipboard(_ text: String) {

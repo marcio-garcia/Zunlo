@@ -29,7 +29,8 @@ final class ChatEngineIntegrationTests: XCTestCase {
             nlpService: nlp,
             tools: tools,
             repo: repo,
-            localTools: localTools
+            localTools: localTools,
+            calendar: TestUtil.calendarSP()
         )
         
         let user = ChatMessage(conversationId: UUID(), role: .user, plain: "Hello", createdAt: Date(), status: .sent)
@@ -69,7 +70,8 @@ final class ChatEngineIntegrationTests: XCTestCase {
             nlpService: nlp,
             tools: tools,
             repo: repo,
-            localTools: localTools
+            localTools: localTools,
+            calendar: TestUtil.calendarSP()
         )
         
         let user = ChatMessage(conversationId: UUID(), role: .user, plain: "Hi", createdAt: Date(), status: .sent)

@@ -1101,7 +1101,7 @@ extension DatabaseActor {
 
 extension DatabaseActor {
     private static func apply(domain: ChatMessage, to obj: ChatMessageLocal, in realm: Realm) {
-        let temp = ChatMessageLocal(from: domain)
+        let temp = ChatMessageLocal(domain: domain)
         obj.conversationId = temp.conversationId
         obj.roleRaw = temp.roleRaw
         obj.rawText = temp.rawText

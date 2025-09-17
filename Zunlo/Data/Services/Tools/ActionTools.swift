@@ -47,12 +47,12 @@ public enum ToolAction: Equatable {
 
 public enum EventScope: String, Equatable { case single, all, thisAndFuture, override }
 
-public struct DisambiguationOption: Identifiable, Equatable {
+// Legacy DisambiguationOption - keeping for internal logic but converting to ChatMessageActionAlternative for API
+internal struct DisambiguationOption: Identifiable, Equatable {
     public let id: UUID
     public let label: String
     public let payload: Payload
-    
-    
+
     public enum Payload: Equatable {
         case resolution(ResolutionAlternative)
         case date(Date)
@@ -63,12 +63,23 @@ public struct DisambiguationOption: Identifiable, Equatable {
         case eventOccurrence(eventId: UUID, start: Date)
         case eventScope(scope: EventScope, eventId: UUID, start: Date)
     }
-    
-    
+
     public init(label: String, payload: Payload) {
         self.id = UUID()
         self.label = label
         self.payload = payload
+    }
+
+    // Convert to ChatMessageActionAlternative for API compatibility
+    func toChatMessageActionAlternative(parseResultId: UUID, fallbackIntent: Intent) -> ChatMessageActionAlternative {
+        // For entity disambiguation, we keep the original intent from the ParseResult
+        // The intent doesn't change - we're just selecting which entity to act upon
+        return ChatMessageActionAlternative(
+            id: self.id,
+            parseResultId: parseResultId,
+            intentOption: fallbackIntent,
+            label: self.label
+        )
     }
 }
 
@@ -76,14 +87,14 @@ public struct ToolResult: Equatable {
     public let intent: Intent
     public let action: ToolAction
     public let needsDisambiguation: Bool
-    public let options: [DisambiguationOption]
+    public let options: [ChatMessageActionAlternative]
     public let message: String?
     public let richText: AttributedString?
 
     public init(intent: Intent,
                 action: ToolAction = .none,
                 needsDisambiguation: Bool = false,
-                options: [DisambiguationOption] = [],
+                options: [ChatMessageActionAlternative] = [],
                 message: String? = nil,
                 richText: AttributedString? = nil
     ) {
@@ -283,7 +294,7 @@ final class ActionTools: Tools {
                                   action: .updatedTask(id: one.id),
                                   needsDisambiguation: false,
                                   options: [],
-                                  message: NSLocalizedString("Updated ‘%@’.", comment: "").replacingOccurrences(of: "%@", with: one.title))
+                                  message: NSLocalizedString("Updated '%@'.", comment: "").replacingOccurrences(of: "%@", with: one.title))
             }
             if !many.isEmpty {
                 let opts = many.map { t in
@@ -292,7 +303,7 @@ final class ActionTools: Tools {
                 return ToolResult(intent: cmd.intent,
                                   action: .none,
                                   needsDisambiguation: true,
-                                  options: opts,
+                                  options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent),
                                   message: NSLocalizedString("Which task should I update?", comment: ""))
             }
             // No good matches — fall back to asking
@@ -319,7 +330,7 @@ final class ActionTools: Tools {
             guard let one = single else {
                 if !many.isEmpty {
                     let opts = many.map { e in DisambiguationOption(label: eventLabel(e), payload: .eventOccurrence(eventId: e.id, start: e.startDate)) }
-                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("Which event do you want to update?", comment: ""))
+                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Which event do you want to update?", comment: ""))
                 }
                 return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: [], message: NSLocalizedString("I couldn't find a matching event.", comment: ""))
             }
@@ -338,7 +349,7 @@ final class ActionTools: Tools {
             if one.isRecurring {
                 // Ask for scope (this occurrence / this & future / all)
                 let opts = buildScopeOptions(for: one)
-                return ToolResult(intent: cmd.intent, action: .targetEventOccurrence(eventId: one.id, start: one.startDate), needsDisambiguation: true, options: opts, message: NSLocalizedString("Apply title change to:", comment: ""))
+                return ToolResult(intent: cmd.intent, action: .targetEventOccurrence(eventId: one.id, start: one.startDate), needsDisambiguation: true, options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Apply title change to:", comment: ""))
             } else {
                 // Non-recurring → editAll is effectively the single event.
                 try await events.editAll(event: one, with: input, oldRule: nil)
@@ -363,18 +374,18 @@ final class ActionTools: Tools {
                     // try rescheduleEvent
                     let result = await rescheduleEvent(cmd)
                     if result.action == .none {
-                        return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("Which task should I reschedule?", comment: ""))
+                        return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Which task should I reschedule?", comment: ""))
                     } else {
                         return result
                     }
                 }
-                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: buildTimeOptions(from: cmd), message: NSLocalizedString("I couldn't find a matching task.", comment: ""))
+                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(buildTimeOptions(from: cmd), parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("I couldn't find a matching task.", comment: ""))
             }
 
             // Need a new due time
             guard let newDue = deriveNewDue(from: cmd) else {
                 let timeOpts = buildTimeOptions(from: cmd)
-                return ToolResult(intent: cmd.intent, action: .targetTask(id: one.id), needsDisambiguation: true, options: timeOpts, message: NSLocalizedString("Pick a new time for ‘%@’.", comment: "").replacingOccurrences(of: "%@", with: one.title))
+                return ToolResult(intent: cmd.intent, action: .targetTask(id: one.id), needsDisambiguation: true, options: convertToActionAlternatives(timeOpts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Pick a new time for '%@'.", comment: "").replacingOccurrences(of: "%@", with: one.title))
             }
 
             // Try to apply automatically; if the adapter isn't wired yet, we'll still return the proposed action.
@@ -401,15 +412,15 @@ final class ActionTools: Tools {
             guard let one = single else {
                 if !many.isEmpty {
                     let opts = many.map { e in DisambiguationOption(label: eventLabel(e), payload: .eventOccurrence(eventId: e.id, start: e.startDate)) }
-                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("Which event should I reschedule?", comment: ""))
+                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Which event should I reschedule?", comment: ""))
                 }
-                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: buildTimeOptions(from: cmd), message: NSLocalizedString("I couldn't find a matching event.", comment: ""))
+                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(buildTimeOptions(from: cmd), parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("I couldn't find a matching event.", comment: ""))
             }
 
             // Determine new start/end
             guard let (newStart, newEnd) = timingFrom(cmd, current: one) else {
                 let timeOpts = buildTimeOptions(from: cmd)
-                return ToolResult(intent: cmd.intent, action: .targetEventOccurrence(eventId: one.id, start: one.startDate), needsDisambiguation: true, options: timeOpts, message: NSLocalizedString("Pick a new time for this event.", comment: ""))
+                return ToolResult(intent: cmd.intent, action: .targetEventOccurrence(eventId: one.id, start: one.startDate), needsDisambiguation: true, options: convertToActionAlternatives(timeOpts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Pick a new time for this event.", comment: ""))
             }
 
             // Infer scope
@@ -438,7 +449,7 @@ final class ActionTools: Tools {
                 } else {
                     // Without parent we cannot split reliably; ask user
                     let opts = buildScopeOptions(for: one)
-                    return ToolResult(intent: cmd.intent, action: .targetEventOccurrence(eventId: one.id, start: one.startDate), needsDisambiguation: true, options: opts, message: NSLocalizedString("Do you want to update just this one or the whole series?", comment: ""))
+                    return ToolResult(intent: cmd.intent, action: .targetEventOccurrence(eventId: one.id, start: one.startDate), needsDisambiguation: true, options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Do you want to update just this one or the whole series?", comment: ""))
                 }
             case .all:
                 try await events.editAll(event: one, with: input, oldRule: one.recurrence_rules.first)
@@ -470,7 +481,7 @@ final class ActionTools: Tools {
                 return ToolResult(intent: cmd.intent,
                                   action: .none,
                                   needsDisambiguation: true,
-                                  options: opts,
+                                  options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent),
                                   message: NSLocalizedString("Which task should I update?", comment: ""))
             }
             // No good matches — fall back to asking
@@ -489,9 +500,9 @@ final class ActionTools: Tools {
             guard let one = single else {
                 if !many.isEmpty {
                     let opts = many.map { e in DisambiguationOption(label: eventLabel(e), payload: .eventOccurrence(eventId: e.id, start: e.startDate)) }
-                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: opts, message: NSLocalizedString("Which event should I reschedule?", comment: ""))
+                    return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("Which event should I reschedule?", comment: ""))
                 }
-                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: buildTimeOptions(from: cmd), message: NSLocalizedString("I couldn't find a matching event.", comment: ""))
+                return ToolResult(intent: cmd.intent, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(buildTimeOptions(from: cmd), parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("I couldn't find a matching event.", comment: ""))
             }
             try await events.delete(id: one.id)
             return ToolResult(intent: cmd.intent, action: .canceledEvent(id: one.id), needsDisambiguation: false, options: [], message: String(format: NSLocalizedString("Rescheduled ‘%@’.", comment: ""), one.title))
@@ -503,11 +514,11 @@ final class ActionTools: Tools {
     public func moreInfo(_ cmd: ParseResult) async -> ToolResult {
         let summary = describe(cmd)
         let opts = buildTimeOptions(from: cmd)
-        return ToolResult(intent: cmd.intent, action: .info(message: summary), needsDisambiguation: !opts.isEmpty, options: opts, message: summary)
+        return ToolResult(intent: cmd.intent, action: .info(message: summary), needsDisambiguation: !opts.isEmpty, options: convertToActionAlternatives(opts, parseResultId: cmd.id, intent: cmd.intent), message: summary)
     }
 
     public func unknown(_ cmd: ParseResult) async -> ToolResult {
-        ToolResult(intent: .unknown, action: .none, needsDisambiguation: true, options: buildTimeOptions(from: cmd), message: NSLocalizedString("I couldn't figure that out. Did you mean to create a task or an event?", comment: ""))
+        ToolResult(intent: .unknown, action: .none, needsDisambiguation: true, options: convertToActionAlternatives(buildTimeOptions(from: cmd), parseResultId: cmd.id, intent: cmd.intent), message: NSLocalizedString("I couldn't figure that out. Did you mean to create a task or an event?", comment: ""))
     }
 }
 
@@ -586,6 +597,13 @@ private extension ActionTools {
     func buildTimeOptions(from cmd: ParseResult) -> [DisambiguationOption] {
 //        cmd.alternatives.map { DisambiguationOption(label: labelFor($0), payload: .resolution($0)) }
         return []
+    }
+
+    // Helper to convert DisambiguationOption arrays to ChatMessageActionAlternative arrays
+    private func convertToActionAlternatives(_ options: [DisambiguationOption], parseResultId: UUID, intent: Intent) -> [ChatMessageActionAlternative] {
+        return options.map { option in
+            option.toChatMessageActionAlternative(parseResultId: parseResultId, fallbackIntent: intent)
+        }
     }
 
     func dayRange(containing date: Date) -> Range<Date> {

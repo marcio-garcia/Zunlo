@@ -43,13 +43,21 @@ public actor ChatEngine {
     private var toolingAssistantId: UUID?      // the draft bubble we turned into a "processing" placeholder
     private var mdDetectors: [UUID: MarkdownFormatDetector] = [:]
     
+    private var history: [ChatMessage] = []
+    private var userMessage = ChatMessage(conversationId: UUID(), role: .system, plain: "")
+    
+    private var nlpResult: [ParseResult] = []
+    private var toolResults: [ToolResult] = []
+    private let calendar: Calendar
+    
     public init(
         conversationId: UUID,
         ai: AIChatService,
         nlpService: NLProcessing,
         tools: ToolRouter,
         repo: ChatRepository,
-        localTools: Tools
+        localTools: Tools,
+        calendar: Calendar
     ) {
         self.conversationId = conversationId
         self.ai = ai
@@ -57,6 +65,7 @@ public actor ChatEngine {
         self.tools = tools
         self.repo = repo
         self.localTools = localTools
+        self.calendar = calendar
     }
 
     // Load history via repo actor
@@ -68,32 +77,25 @@ public actor ChatEngine {
         let lower = userMessage.rawText.lowercased()
         do {
             // Handle locally with NLP
-            let nlpResult = try await nlpService.process(text: lower, referenceDate: Date())
+            nlpResult = try await nlpService.process(text: lower, referenceDate: Date())
 
             // Process NLP result through local tools
-            var toolResults: [ToolResult] = []
             for result in nlpResult {
-                let res = try await execute(result)
-                log("command result: \(res)")
-                toolResults.append(res)
+                if result.isAmbiguous {
+                    let res = createDisambiguationMessage(parse: result)
+                    toolResults.append(res)
+                } else {
+                    let res = try await execute(result)
+                    log("command result: \(res)")
+                    toolResults.append(res)
+                }
             }
 
-            for result in toolResults {
-                var asyncStream: AsyncStream<ChatEngineEvent>
-                
-//                switch result.action {
-//                case .none:
-                    // No local handling → use regular AI streaming path
-//                    asyncStream = startStream(history: history, userMessage: userMessage)
-                    
-//                default:
-                    // Stream local processing result to the ViewModel
-                    asyncStream = processNlpResult(result: result, history: history, userMessage: userMessage)
-//                }
-                
-                for await ev in asyncStream {
-                    chatEvent(ev)
-                }
+            self.history = history
+            self.userMessage = userMessage
+            
+            await processResults(toolResults: toolResults) { event in
+                chatEvent(event)
             }
             
         } catch {
@@ -105,7 +107,27 @@ public actor ChatEngine {
         }
     }
     
-    public func processNlpResult(result: ToolResult, history: [ChatMessage], userMessage: ChatMessage) -> AsyncStream<ChatEngineEvent> {
+    private func processResults(toolResults: [ToolResult], chatEvent: (ChatEngineEvent) -> Void) async {
+        for result in toolResults {
+            var asyncStream: AsyncStream<ChatEngineEvent>
+            
+//                switch result.action {
+//                case .none:
+                // No local handling → use regular AI streaming path
+//                    asyncStream = startStream(history: history, userMessage: userMessage)
+                
+//                default:
+                // Stream local processing result to the ViewModel
+                asyncStream = processNlpResult(result: result)
+//                }
+            
+            for await ev in asyncStream {
+                chatEvent(ev)
+            }
+        }
+    }
+    
+    public func processNlpResult(result: ToolResult) -> AsyncStream<ChatEngineEvent> {
         cancelCurrentStreamIfAny()
         
         return AsyncStream<ChatEngineEvent> { continuation in
@@ -115,6 +137,7 @@ public actor ChatEngine {
                     guard let self else { return }
                     do {
                         // Persist + echo the user message (keeps repo in sync with UI snapshot)
+                        let userMessage = await self.userMessage
                         try await self.repo.upsert(userMessage)
                         continuation.yield(.messageAppended(userMessage))
 
@@ -123,7 +146,8 @@ public actor ChatEngine {
                             conversationId: self.conversationId,
                             rawText: result.message,
                             richText: result.richText,
-                            status: .sent
+                            status: .sent,
+                            actions: result.options
                         )
 
                         // Persist + stream events to the UI
@@ -267,7 +291,8 @@ public actor ChatEngine {
                 conversationId: conversationId,
                 id: id,
                 rawText: "",
-                status: .streaming
+                status: .streaming,
+                actions: []
             )
             mdDetectors[id] = MarkdownFormatDetector()
             
@@ -387,7 +412,8 @@ public actor ChatEngine {
         id: UUID? = nil,
         rawText: String? = nil,
         richText: AttributedString? = nil,
-        status: ChatMessageStatus
+        status: ChatMessageStatus,
+        actions: [ChatMessageActionAlternative]
     ) -> ChatMessage {
         if let rich = richText {
             return ChatMessage(
@@ -396,7 +422,8 @@ public actor ChatEngine {
                 role: .assistant,
                 attributed: rich,
                 createdAt: Date(),
-                status: status
+                status: status,
+                actions: actions
             )
         } else {
             return ChatMessage(
@@ -405,7 +432,8 @@ public actor ChatEngine {
                 role: .assistant,
                 plain: rawText ?? "",
                 createdAt: Date(),
-                status: status
+                status: status,
+                actions: actions
             )
         }
     }
@@ -427,6 +455,151 @@ public actor ChatEngine {
         guard let buf = deltaBuffers[id], !buf.isEmpty else { deltaBuffers[id] = nil; return }
         deltaBuffers[id] = ""
         try? await repo.appendDelta(messageId: id, delta: buf, status: .streaming)
+    }
+
+    // MARK: Disambiguation
+    
+    private func createDisambiguationMessage(parse: ParseResult) -> ToolResult {
+        guard let intentAmbiguity = parse.intentAmbiguity else {
+            // Fallback for non-ambiguous case (shouldn't happen)
+            let label = parse.label(calendar: calendar)
+            let options = [ChatMessageActionAlternative(id: UUID(), parseResultId: parse.id, intentOption: parse.intent, label: label)]
+            return ToolResult(
+                intent: parse.intent,
+                action: ToolAction.info(message: "Proceeding with single option"),
+                needsDisambiguation: false,
+                options: options,
+                message: "Processing your request...",
+                richText: nil
+            )
+        }
+
+        // Create options for each intent prediction
+        let options = intentAmbiguity.predictions.map { prediction in
+            let label = parse.labelForIntent(prediction.intent, confidence: prediction.confidence, calendar: calendar)
+            return ChatMessageActionAlternative(id: prediction.id, parseResultId: parse.id, intentOption: prediction.intent, label: label)
+        }
+
+        let message = parse.createDisambiguationText()
+
+        return ToolResult(
+            intent: .unknown,
+            action: ToolAction.info(message: "Please choose what you'd like to do"),
+            needsDisambiguation: true,
+            options: options,
+            message: message,
+            richText: nil
+        )
+    }
+    
+//    private func labelFor(_ parse: ParseResult) -> String {
+//        return labelForIntent(parse.intent, parse: parse, confidence: 1.0)
+//    }
+//
+//    private func labelForIntent(_ intent: Intent, parse: ParseResult, confidence: Float) -> String {
+//        var label = ""
+//
+//        // Add intent action
+//        switch intent {
+//        case .createTask:
+//            label = "Create task"
+//        case .createEvent:
+//            label = "Create event"
+//        case .updateTask:
+//            label = "Update task"
+//        case .updateEvent:
+//            label = "Update event"
+//        case .rescheduleTask:
+//            label = "Reschedule task"
+//        case .rescheduleEvent:
+//            label = "Reschedule event"
+//        case .cancelTask:
+//            label = "Cancel task"
+//        case .cancelEvent:
+//            label = "Cancel event"
+//        case .view:
+//            label = "View"
+//        case .plan:
+//            label = "Plan"
+//        case .unknown:
+//            label = "Process request"
+//        }
+//
+//        // Add title if available
+//        if !parse.title.isEmpty {
+//            label += ": \"\(parse.title)\""
+//        }
+//
+//        // Add temporal context if available
+//        if parse.context.finalDate != .distantPast {
+//            let dateStr = parse.context.finalDate.formattedDate(dateFormat: .long)
+//            label += " on \(dateStr)"
+//        }
+//
+//        // Add confidence indicator for ambiguous cases
+//        if confidence < 1.0 {
+//            let percentageConfidence = Int(confidence * 100)
+//            label += " (\(percentageConfidence)%)"
+//        }
+//
+//        return label
+//    }
+
+//    private func createDisambiguationText(parse: ParseResult, predictions: [IntentPrediction]) -> String {
+//        var message = "I found multiple ways to interpret your request"
+//
+//        if !parse.title.isEmpty {
+//            message += " for \"\(parse.title)\""
+//        }
+//
+//        message += ". Please choose what you'd like to do:"
+//
+//        return message
+//    }
+
+    /// Handle user selection of a disambiguation option
+    public func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
+        // Find the original parse result
+        guard let originalParse = nlpResult.first(where: { $0.id == parseResultId }),
+              let intentAmbiguity = originalParse.intentAmbiguity else {
+            return
+//            return ToolResult(
+//                intent: .unknown,
+//                action: .none,
+//                needsDisambiguation: false,
+//                options: [],
+//                message: "Could not find the original request. Please try again.",
+//                richText: nil
+//            )
+        }
+
+        let selectedIntent = intentAmbiguity.predictions.first(where: { $0.id == selectedOptionId })?.intent ?? .unknown
+        
+        // Create a new ParseResult with the selected intent
+        let resolvedParse = ParseResult(
+            id: UUID(), // New ID for the resolved parse
+            title: originalParse.title,
+            intent: selectedIntent,
+            context: originalParse.context,
+            metadataTokens: originalParse.metadataTokens,
+            intentAmbiguity: nil // Clear ambiguity since user has decided
+        )
+
+        // Execute the resolved parse
+        do {
+            let result = try await execute(resolvedParse)
+            await processResults(toolResults: [result], chatEvent: chatEvent)
+        } catch {
+            return
+//            return ToolResult(
+//                intent: selectedIntent,
+//                action: .none,
+//                needsDisambiguation: false,
+//                options: [],
+//                message: "Error processing your request: \(error.localizedDescription)",
+//                richText: nil
+//            )
+        }
     }
 
     // MARK: Tools

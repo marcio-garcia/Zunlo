@@ -7,12 +7,14 @@
 
 import Foundation
 
-public struct IntentPrediction {
+public struct IntentPrediction: Identifiable {
+    public let id: UUID
     public let intent: Intent
     public let confidence: Float
     public let reasoning: [String]
 
-    public init(intent: Intent, confidence: Float, reasoning: [String]) {
+    public init(id: UUID, intent: Intent, confidence: Float, reasoning: [String]) {
+        self.id = id
         self.intent = intent
         self.confidence = confidence
         self.reasoning = reasoning

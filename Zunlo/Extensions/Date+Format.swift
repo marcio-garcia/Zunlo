@@ -77,6 +77,7 @@ extension Date {
         case monthName = "LLLL"
         case weekAndDay = "E d"
         case inverted = "yyyy-MM-dd"
+        case long = "EEEE, MMM d, yyyy HH:mm"
     }
     
     static var format = DateFormat.regular

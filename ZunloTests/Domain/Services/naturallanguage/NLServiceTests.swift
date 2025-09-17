@@ -17,9 +17,9 @@ final class NLServiceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         calendar = TestUtil.calendarSP()
-        let parser = TemporalComposer(prefs: TestUtil.prefs())
-        let engine = AppleIntentDetector()
-        nlService = NLService(parser: parser, engine: engine, calendar: calendar)
+        let parser = TemporalComposer(prefs: TestUtil.temporalComposerPrefs())
+        let intentDetector = AppleIntentDetector()
+        nlService = NLService(parser: parser, intentDetector: intentDetector, calendar: calendar)
     }
 
     override func tearDown() {
@@ -872,43 +872,6 @@ final class NLServiceTests: XCTestCase {
         if result.isAmbiguous {
             XCTAssertTrue(result.intentAmbiguity?.predictions.first?.intent == .createTask, "Primary intent should be createTask")
             XCTAssertTrue(result.intentAmbiguity?.predictions.first?.confidence ?? 0 > 0.6, "Primary intent should have reasonable confidence")
-        }
-    }
-}
-
-// MARK: - Test Utilities Extension
-
-extension NLServiceTests {
-    enum TestUtil {
-        static func prefs() -> Preferences {
-            var p = Preferences()
-            let cal = calendarSP()
-            p.calendar = cal
-            p.startOfWeek = cal.firstWeekday
-            return p
-        }
-
-        static func calendarSP() -> Calendar {
-            var cal = Calendar(identifier: .gregorian)
-            cal.timeZone = TimeZone(identifier: "America/Sao_Paulo")!
-            cal.firstWeekday = 2 // Monday
-            cal.locale = nil
-            return cal
-        }
-        
-        static func makeNow() -> Date {
-            // 2025-09-11 10:00:00 -03:00 (America/Sao_Paulo)
-            var comps = DateComponents()
-            comps.year = 2025; comps.month = 9; comps.day = 11
-            comps.hour = 10; comps.minute = 0; comps.second = 0
-            comps.timeZone = TimeZone(identifier: "America/Sao_Paulo")
-            return Calendar(identifier: .gregorian).date(from: comps)!
-        }
-
-        static func components(_ date: Date) -> (y:Int,m:Int,d:Int,h:Int,min:Int) {
-            let cal = TestUtil.calendarSP()
-            let c = cal.dateComponents([.year,.month,.day,.hour,.minute], from: date)
-            return (c.year!, c.month!, c.day!, c.hour!, c.minute!)
         }
     }
 }

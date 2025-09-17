@@ -18,7 +18,9 @@ public final class MockNLService: NLProcessing {
         let today = calendar.startOfDay(for: referenceDate)
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? today.addingTimeInterval(duration)
         let range = DateInterval(start: today, end: tomorrow)
-        return [ParseResult(title: "This is your agenda",
+        return [ParseResult(
+            id: UUID(),
+            title: "This is your agenda",
                             intent: .view,
                             context: TemporalContext(finalDate: today,
                                                      finalDateDuration: duration,

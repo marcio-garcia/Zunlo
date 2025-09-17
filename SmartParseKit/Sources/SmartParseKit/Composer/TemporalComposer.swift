@@ -3,36 +3,6 @@ import Foundation
 
 // MARK: - Public API
 
-//public enum Intent { case create, reschedule, cancel, view, plan, unknown }
-
-public enum Intent: String {
-    case createTask         = "create_task"
-    case createEvent        = "create_event"
-    case rescheduleTask     = "reschedule_task"
-    case rescheduleEvent    = "reschedule_event"
-    case updateTask         = "update_task"
-    case updateEvent        = "update_event"
-    case cancelTask         = "cancel_task"
-    case cancelEvent        = "cancel_event"
-    case view               = "view"
-    case plan               = "plan"
-    case unknown
-}
-
-//public enum Intent: String {
-//    case createTask         = "create_task"
-//    case createEvent        = "create_event"
-//    case rescheduleTask     = "reschedule_task"
-//    case rescheduleEvent    = "reschedule_event"
-//    case updateTask         = "update_task"
-//    case updateEvent        = "update_event"
-//    case planWeek           = "plan_week"
-//    case planDay            = "plan_day"
-//    case showAgenda         = "show_agenda"
-//    case moreInfo           = "more_info"
-//    case unknown
-//}
-
 public struct Preferences {
     public var calendar: Calendar
     public var startOfWeek: Int
@@ -140,12 +110,12 @@ public final class TemporalComposer: InputParser {
         let intentAmbiguity = intentInterpreter.classify(inputText: text, metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens, languagePack: pack)
 
         // Determine final intent
-        let finalIntent: Intent
-        if intentAmbiguity.primaryIntent == .unknown {
-            finalIntent = intentDetector.classify(text)
-        } else {
-            finalIntent = intentAmbiguity.primaryIntent
-        }
+//        let finalIntent: Intent
+//        if intentAmbiguity.primaryIntent == .unknown {
+//            finalIntent = intentDetector.classify(text)
+//        } else {
+//            finalIntent = intentAmbiguity.primaryIntent
+//        }
 
         // Create enhanced metadata result with intent ambiguity
         let enhancedMetadataResult = MetadataExtractionResult(
@@ -156,7 +126,7 @@ public final class TemporalComposer: InputParser {
             intentAmbiguity: intentAmbiguity.isAmbiguous ? intentAmbiguity : nil
         )
 
-        return (finalIntent, temporalTokens, enhancedMetadataResult)
+        return (intentAmbiguity.primaryIntent, temporalTokens, enhancedMetadataResult)
     }
 
     // MARK: - Detection

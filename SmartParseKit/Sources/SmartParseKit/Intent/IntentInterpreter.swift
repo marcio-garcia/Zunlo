@@ -311,7 +311,7 @@ public final class IntentInterpreter {
             .sorted { $0.value > $1.value }
 
         guard !scoredIntents.isEmpty else {
-            return [IntentPrediction(intent: .unknown, confidence: 0.1, reasoning: ["No clear intent indicators"])]
+            return [IntentPrediction(id: UUID(), intent: .unknown, confidence: 0.1, reasoning: ["No clear intent indicators"])]
         }
 
         let maxScore = scoredIntents.first!.value
@@ -352,7 +352,7 @@ public final class IntentInterpreter {
                 // Only include predictions with meaningful confidence
                 if confidence >= 0.2 {
                     let reasoning = generateReasoning(for: intent, score: score, inputText: inputText, metadataTokens: metadataTokens, temporalTokens: temporalTokens)
-                    predictions.append(IntentPrediction(intent: intent, confidence: confidence, reasoning: reasoning))
+                    predictions.append(IntentPrediction(id: UUID(), intent: intent, confidence: confidence, reasoning: reasoning))
                 }
 
                 // Limit to top 3 predictions to avoid overwhelming the user

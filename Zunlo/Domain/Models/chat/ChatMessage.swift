@@ -7,6 +7,7 @@
 
 import Foundation
 import ZunloHelpers
+import SmartParseKit
 
 // MARK: - Core Models
 
@@ -24,7 +25,7 @@ public enum ChatMessageFormat: String, Codable {
     case rich        // use provided AttributedString
 }
 
-public struct ChatMessage: Identifiable, Hashable, Codable {
+public struct ChatMessage: Identifiable, Hashable {
     public let id: UUID
     public let conversationId: UUID
     public let role: ChatRole
@@ -35,7 +36,7 @@ public struct ChatMessage: Identifiable, Hashable, Codable {
     public var format: ChatMessageFormat
     public var userId: UUID?
     public var attachments: [ChatAttachment]
-    public var actions: [ChatMessageAction] = []
+    public var actions: [ChatMessageActionAlternative]
     public var parentId: UUID?
     public var errorDescription: String?
 }
@@ -50,7 +51,7 @@ extension ChatMessage {
         status: ChatMessageStatus = .sent,
         userId: UUID? = nil,
         attachments: [ChatAttachment] = [],
-        actions: [ChatMessageAction] = [],
+        actions: [ChatMessageActionAlternative] = [],
         parentId: UUID? = nil,
         errorDescription: String? = nil
     ) {
@@ -64,6 +65,7 @@ extension ChatMessage {
         self.status = status
         self.userId = userId
         self.attachments = attachments
+        self.actions = actions
         self.parentId = parentId
         self.errorDescription = errorDescription
     }
@@ -78,7 +80,7 @@ extension ChatMessage {
         status: ChatMessageStatus = .sent,
         userId: UUID? = nil,
         attachments: [ChatAttachment] = [],
-        actions: [ChatMessageAction] = [],
+        actions: [ChatMessageActionAlternative] = [],
         parentId: UUID? = nil,
         errorDescription: String? = nil
     ) {
@@ -92,6 +94,7 @@ extension ChatMessage {
         self.status = status
         self.userId = userId
         self.attachments = attachments
+        self.actions = actions
         self.parentId = parentId
         self.errorDescription = errorDescription
     }
@@ -105,7 +108,7 @@ extension ChatMessage {
         status: ChatMessageStatus = .sent,
         userId: UUID? = nil,
         attachments: [ChatAttachment] = [],
-        actions: [ChatMessageAction] = [],
+        actions: [ChatMessageActionAlternative] = [],
         parentId: UUID? = nil,
         errorDescription: String? = nil
     ) {
@@ -119,20 +122,31 @@ extension ChatMessage {
         self.status = status
         self.userId = userId
         self.attachments = attachments
+        self.actions = actions
         self.parentId = parentId
         self.errorDescription = errorDescription
     }
-    
-//    public static func plainText(_ text: String) {
-//    }
-//
-//    public static func appendAssistantMarkdown(_ md: String) {
-//        repo.ChatMessage(role: .assistant, markdown: md))
-//    }
-//
-//    public static func appendAssistantRich(_ attr: AttributedString) {
-//        repo.add(ChatMessage(role: .assistant, attributed: attr))
-//    }
+}
+
+// MARK: - Bridging: Realm -> Model
+
+extension ChatMessage {
+    init(local: ChatMessageLocal) {
+        self.id = local.id
+        self.conversationId = local.conversationId
+        self.role = ChatRole(rawValue: local.roleRaw) ?? .assistant
+        self.rawText = local.rawText
+        self.format = local.format
+        self.richText = local.richText
+        self.createdAt = local.createdAt
+        self.status = ChatMessageStatus(rawValue: local.statusRaw) ?? .sent
+        self.userId = local.userId
+        self.parentId = local.parentId
+        self.errorDescription = local.errorDescription
+
+        self.attachments = local.attachments.map { ChatAttachment(local: $0) }
+        self.actions = local.actions.compactMap { ChatMessageActionAlternative(label: $0) }
+    }
 }
 
 extension ChatMessage {
@@ -191,31 +205,7 @@ extension ChatMessage {
     }
 }
 
-public struct ChatAttachment: Identifiable, Equatable, Hashable, Codable {
-    public let id: UUID
-    public let mime: String            // e.g., "application/json"
-    public let schema: String?         // e.g., "zunlo.agenda#1"
-    public let filename: String?
-    public let dataBase64: String      // store text JSON as utf8/base64
-}
-
-extension ChatAttachment {
-    static func json(schema: String, json: String, filename: String? = nil) -> ChatAttachment {
-        .init(
-            id: UUID(),
-            mime: "application/json",
-            schema: schema,
-            filename: filename ?? "payload.json",
-            dataBase64: Data(json.utf8).base64EncodedString()
-        )
-    }
-
-    func decodedString() -> String? {
-        Data(base64Encoded: dataBase64).flatMap { String(data: $0, encoding: .utf8) }
-    }
-}
-
-public enum ChatMessageAction: Identifiable, Equatable, Hashable, Codable {
+public enum ChatMessageAction: Identifiable, Equatable, Hashable {
     case copyText
     case copyAttachment(UUID)          // attachmentId
     case sendAttachmentToAI(UUID)      // attachmentId
@@ -236,59 +226,6 @@ public enum ChatMessageAction: Identifiable, Equatable, Hashable, Codable {
         case .copyAttachment: return "Copy JSON"
         case .sendAttachmentToAI: return "Send it to me"
         case .disambiguateIntent: return "Choose what you meant"
-        }
-    }
-}
-
-// MARK: - Bridging: Realm -> Model
-
-extension ChatMessage {
-    init(from r: ChatMessageLocal) {
-        self.id = r.id
-        self.conversationId = r.conversationId
-        self.role = ChatRole(rawValue: r.roleRaw) ?? .assistant
-        self.rawText = r.rawText
-        self.format = r.format
-        self.richText = r.richText
-        self.createdAt = r.createdAt
-        self.status = ChatMessageStatus(rawValue: r.statusRaw) ?? .sent
-        self.userId = r.userId
-        self.parentId = r.parentId
-        self.errorDescription = r.errorDescription
-
-        self.attachments = r.attachments.map { $0.toModel() }
-        self.actions = r.actions.compactMap { $0.toModel() }
-    }
-}
-
-private extension ChatAttachmentLocal {
-    func toModel() -> ChatAttachment {
-        ChatAttachment(
-            id: id,
-            mime: mime,
-            schema: schema,
-            filename: filename,
-            dataBase64: dataBase64
-        )
-    }
-}
-
-private extension ChatActionLocal {
-    func toModel() -> ChatMessageAction? {
-        switch typeRaw {
-        case "copyText":
-            return .copyText
-        case "copyAttachment":
-            if let id = attachmentId { return .copyAttachment(id) }
-            return nil
-        case "sendAttachmentToAI":
-            if let id = attachmentId { return .sendAttachmentToAI(id) }
-            return nil
-        case "disambiguateIntent":
-            let alternatives = intentAlternatives?.components(separatedBy: ",") ?? []
-            return .disambiguateIntent(alternatives: alternatives)
-        default:
-            return nil
         }
     }
 }

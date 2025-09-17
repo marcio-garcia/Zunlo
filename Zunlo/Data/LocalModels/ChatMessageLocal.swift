@@ -8,11 +8,6 @@
 import Foundation
 import RealmSwift
 
-final class ChatAttachmentEmbedded: EmbeddedObject {
-    @Persisted var json: String = "{}"
-    @Persisted var id: UUID = UUID()
-}
-
 public final class ChatMessageLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
     @Persisted(indexed: true) var conversationId: UUID
@@ -24,7 +19,7 @@ public final class ChatMessageLocal: Object {
     @Persisted var statusRaw: String = "sent"       // MessageStatus.rawValue
     @Persisted var userId: UUID?
     @Persisted var attachments: List<ChatAttachmentLocal>
-    @Persisted var actions: List<ChatActionLocal>
+    @Persisted var actions: List<String>
     @Persisted var parentId: UUID?
     @Persisted var errorDescription: String?
     
@@ -56,74 +51,25 @@ public final class ChatMessageLocal: Object {
     }
 }
 
-final class ChatAttachmentLocal: EmbeddedObject {
-    @Persisted var id: UUID
-    @Persisted var mime: String
-    @Persisted var schema: String?
-    @Persisted var filename: String?
-    @Persisted var dataBase64: String
-}
-
-final class ChatActionLocal: EmbeddedObject {
-    @Persisted var typeRaw: String   // "copyText" | "copyAttachment" | "sendAttachmentToAI" | "disambiguateIntent"
-    @Persisted var attachmentId: UUID?
-    @Persisted var intentAlternatives: String? // comma-separated intent alternatives for disambiguation
-}
-
 extension ChatMessageLocal {
-    convenience init(from m: ChatMessage) {
+    convenience init(domain: ChatMessage) {
         self.init()
-        self.id = m.id
-        self.conversationId = m.conversationId
-        self.roleRaw = m.role.rawValue
-        self.rawText = m.rawText
-        self.richText = m.richText
-        self.format = m.format
-        self.createdAt = m.createdAt
-        self.statusRaw = m.status.rawValue
-        self.userId = m.userId
-        self.parentId = m.parentId
-        self.errorDescription = m.errorDescription
+        self.id = domain.id
+        self.conversationId = domain.conversationId
+        self.roleRaw = domain.role.rawValue
+        self.rawText = domain.rawText
+        self.richText = domain.richText
+        self.format = domain.format
+        self.createdAt = domain.createdAt
+        self.statusRaw = domain.status.rawValue
+        self.userId = domain.userId
+        self.parentId = domain.parentId
+        self.errorDescription = domain.errorDescription
 
-        let atts = m.attachments.map(ChatAttachmentLocal.init(from:))
+        let atts = domain.attachments.map { ChatAttachmentLocal(domain: $0) }
         self.attachments.append(objectsIn: atts)
 
-        let acts = m.actions.map(ChatActionLocal.init(from:))
+        let acts = domain.actions.map { $0.label }
         self.actions.append(objectsIn: acts)
-    }
-}
-
-private extension ChatAttachmentLocal {
-    convenience init(from a: ChatAttachment) {
-        self.init()
-        self.id = a.id
-        self.mime = a.mime
-        self.schema = a.schema
-        self.filename = a.filename
-        self.dataBase64 = a.dataBase64
-    }
-}
-
-private extension ChatActionLocal {
-    convenience init(from a: ChatMessageAction) {
-        self.init()
-        switch a {
-        case .copyText:
-            self.typeRaw = "copyText"
-            self.attachmentId = nil
-            self.intentAlternatives = nil
-        case .copyAttachment(let id):
-            self.typeRaw = "copyAttachment"
-            self.attachmentId = id
-            self.intentAlternatives = nil
-        case .sendAttachmentToAI(let id):
-            self.typeRaw = "sendAttachmentToAI"
-            self.attachmentId = id
-            self.intentAlternatives = nil
-        case .disambiguateIntent(let alternatives):
-            self.typeRaw = "disambiguateIntent"
-            self.attachmentId = nil
-            self.intentAlternatives = alternatives.joined(separator: ",")
-        }
     }
 }

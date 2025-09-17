@@ -21,19 +21,19 @@ extension NLProcessing {
 
 public final class NLService: NLProcessing {
     private let parser: InputParser
-    private let engine: IntentDetector
+    private let intentDetector: IntentDetector
     private let calendar: Calendar
     
-    public init(parser: InputParser, engine: IntentDetector, calendar: Calendar) {
+    public init(parser: InputParser, intentDetector: IntentDetector, calendar: Calendar) {
         self.parser = parser
-        self.engine = engine
+        self.intentDetector = intentDetector
         self.calendar = calendar
     }
     
     public func process(text: String, referenceDate: Date) async throws -> [ParseResult] {
         
         // Language
-        let language = engine.detectLanguage(text)
+        let language = intentDetector.detectLanguage(text)
         
         // Build a calendar localized to the detected language
         var cal = calendar
@@ -70,6 +70,7 @@ public final class NLService: NLProcessing {
                 log("metadata: \(metadataResult)")
                 
                 let parseResult = ParseResult(
+                    id: UUID(),
                     title: metadataResult.title,
                     intent: intent,
                     context: context,

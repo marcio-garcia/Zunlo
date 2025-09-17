@@ -24,7 +24,7 @@ public final class DefaultChatRepository: ChatRepository {
 
     public func loadMessages(conversationId: UUID, limit: Int? = 200) async throws -> [ChatMessage] {
         let messages = try await store.fetch(conversationId: conversationId, limit: limit)
-        return messages.map { ChatMessage(from: $0) }
+        return messages.map { ChatMessage(local: $0) }
     }
 
     public func upsert(_ message: ChatMessage) async throws {

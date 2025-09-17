@@ -261,7 +261,7 @@ private struct MessageBubble: View {
     @EnvironmentObject private var viewModel: ChatViewModel
     let viewID: UUID
     let message: ChatMessage
-    let onAction: (ChatMessageAction, ChatMessage) -> Void   // NEW
+    let onAction: (ChatMessageActionAlternative, ChatMessage) -> Void   // NEW
 
     var body: some View {
         HStack {
@@ -288,14 +288,12 @@ private struct MessageBubble: View {
             }
 
             if !message.actions.isEmpty {
-                HStack(spacing: 8) {
+                VStack(spacing: 8) {
                     ForEach(message.actions) { action in
-                        Button(action.title) {
+                        Button(action.label) {
                             onAction(action, message)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .clipShape(Capsule())
+                        .themedTertiaryButton()
                     }
                 }
                 .padding(.top, 2)
@@ -305,7 +303,6 @@ private struct MessageBubble: View {
                 Text(err).font(AppFontStyle.caption.font()).foregroundStyle(.red)
             } else if message.status == .streaming {
                 TypingIndicator().accessibilityLabel("Assistant is typing")
-//                ProgressView().scaleEffect(0.6)
             }
         }
         .padding(12)
