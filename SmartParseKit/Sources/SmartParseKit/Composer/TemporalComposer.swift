@@ -109,14 +109,6 @@ public final class TemporalComposer: InputParser {
         let intentInterpreter = IntentInterpreter()
         let intentAmbiguity = intentInterpreter.classify(inputText: text, metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens, languagePack: pack)
 
-        // Determine final intent
-//        let finalIntent: Intent
-//        if intentAmbiguity.primaryIntent == .unknown {
-//            finalIntent = intentDetector.classify(text)
-//        } else {
-//            finalIntent = intentAmbiguity.primaryIntent
-//        }
-
         // Create enhanced metadata result with intent ambiguity
         let enhancedMetadataResult = MetadataExtractionResult(
             tokens: metadataResult.tokens,
@@ -351,8 +343,7 @@ public final class TemporalComposer: InputParser {
         add(pack.articleFromNowRegex()) { m, sub in
             let nsAll = text as NSString
             if m.numberOfRanges >= 3 {
-//                let articleS = nsAll.substring(with: m.range(at: 1)) // "a", "an", "um", "una", etc.
-                let unitS = nsAll.substring(with: m.range(at: 2)) // "month", "hour", etc.
+                let unitS = nsAll.substring(with: m.range(at: 2))
                 if let unit = unitFrom(unitS) {
                     let val = 1 // Articles always mean "1"
                     return TemporalToken(range: m.range, text: sub, kind: .durationOffset(value: val, unit: unit, mode: .fromNow))
@@ -383,10 +374,10 @@ public final class TemporalComposer: InputParser {
             return false
         }
 
-        if let dd = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue) {
+        if let dd = AppleDateDetector() {
             let ns = text as NSString
-            dd.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: ns.length)) { m, _, _ in
-                guard let m = m, let date = m.date else { return }
+            dd.enumerateMatches(in: text, range: NSRange(location: 0, length: ns.length)) { m in
+                guard let date = m.date else { return }
                 let substr = ns.substring(with: m.range)
                 if let tre = pack.timeOnlyRegex() {
                     let full = NSRange(location: 0, length: (substr as NSString).length)

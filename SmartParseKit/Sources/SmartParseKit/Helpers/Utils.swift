@@ -49,28 +49,26 @@ func containsAny(in s: String, of words: [String]) -> Bool {
 }
 
 // De-dup: prefer earlier textual range; unify exact same (date, duration) & overlapping ranges.
-func dedup(_ items: [Match], text: String) -> [Match] {
-    var out: [Match] = []
-    for m in items {
-        appendUnique(&out, m, text: text)
-    }
-    return out
-}
+//func dedup(_ items: [Match], text: String) -> [Match] {
+//    var out: [Match] = []
+//    for m in items {
+//        appendUnique(&out, m, text: text)
+//    }
+//    return out
+//}
 
-func appendUnique(_ arr: inout [Match], _ m: Match, text: String) {
-    let k1 = m.date.timeIntervalSinceReferenceDate
-    let k2 = m.duration ?? -1
-    let nsR = NSRange(m.range, in: text)
-    for e in arr {
-        let sameTime = abs(e.date.timeIntervalSinceReferenceDate - k1) < 0.5
-        let sameDur  = ((e.duration ?? -1) - k2).magnitude < 0.5
-        let overlap  = NSIntersectionRange(NSRange(e.range, in: text), nsR).length > 0
-        if (sameTime && sameDur) || overlap { return } // skip duplicate-ish
-    }
-    arr.append(m)
-}
-
-import Foundation
+//func appendUnique(_ arr: inout [Match], _ m: Match, text: String) {
+//    let k1 = m.date.timeIntervalSinceReferenceDate
+//    let k2 = m.duration ?? -1
+//    let nsR = NSRange(m.range, in: text)
+//    for e in arr {
+//        let sameTime = abs(e.date.timeIntervalSinceReferenceDate - k1) < 0.5
+//        let sameDur  = ((e.duration ?? -1) - k2).magnitude < 0.5
+//        let overlap  = NSIntersectionRange(NSRange(e.range, in: text), nsR).length > 0
+//        if (sameTime && sameDur) || overlap { return } // skip duplicate-ish
+//    }
+//    arr.append(m)
+//}
 
 /// Elapsed seconds between two DateComponents representing times of day,
 /// respecting any explicit **date** (year/month/day) present in either component.

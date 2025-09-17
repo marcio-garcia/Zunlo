@@ -109,7 +109,7 @@ public struct PortugueseBRPack: DateLanguagePack {
 
     // Intents
     public func intentViewRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(mostrar|ver|minha\s+agenda|agenda|meu\s+calend[aá]rio|calendario|o\s+que\s+(h[aá]|tem))\b"#)
+        BaseLanguagePack.regex(#"(?ix)\b(mostr\S+|ver|minha\s+agenda|agenda|meu\s+calend[aá]rio|calendario|o\s+que\s+(h[aá]|tem))\b"#)
     }
     public func intentPlanRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(planejar|organizar|estruturar|mapear)\b"#)
