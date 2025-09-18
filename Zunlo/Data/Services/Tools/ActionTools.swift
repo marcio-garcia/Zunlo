@@ -78,7 +78,7 @@ internal struct DisambiguationOption: Identifiable, Equatable {
             id: self.id,
             parseResultId: parseResultId,
             intentOption: fallbackIntent,
-            label: self.label
+            label: AttributedString(self.label)
         )
     }
 }

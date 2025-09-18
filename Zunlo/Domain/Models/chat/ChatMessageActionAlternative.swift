@@ -12,16 +12,16 @@ public struct ChatMessageActionAlternative: Identifiable, Equatable, Hashable {
     public var id: UUID
     public var parseResultId: UUID
     public var intentOption: Intent
-    public var label: String
+    public var label: AttributedString
 
-    public init(id: UUID, parseResultId: UUID, intentOption: Intent, label: String) {
+    public init(id: UUID, parseResultId: UUID, intentOption: Intent, label: AttributedString) {
         self.id = id
         self.parseResultId = parseResultId
         self.intentOption = intentOption
         self.label = label
     }
     
-    init(label: String) {
+    init(label: AttributedString) {
         self.id = UUID()
         self.parseResultId = UUID()
         self.intentOption = .unknown

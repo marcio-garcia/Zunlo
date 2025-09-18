@@ -404,8 +404,8 @@ public struct MetadataExtractor {
 
         // Normalize whitespace & punctuation for clean title
         result = result.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"^[\s,;:.-]+"#, with: "", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"[\s,;:.-]+$"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"^[\s,;:.\-!?'/*&%$#@+=<>|\\~`_]+"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"[\s,;:.\-!?'/*&%$#@+=<>|\\~`_]+$"#, with: "", options: .regularExpression)
         result = result.trimmingCharacters(in: .whitespacesAndNewlines)
 
         return TitleExtractionResult(

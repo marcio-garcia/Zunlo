@@ -148,7 +148,14 @@
       }
     },
     "All in series" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os eventos"
+          }
+        }
+      }
     },
     "All set for now ✨" : {
       "localizations" : {
@@ -1903,6 +1910,7 @@
       }
     },
     "Title is required." : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

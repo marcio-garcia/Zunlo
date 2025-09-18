@@ -146,7 +146,7 @@ extension EventRepository {
 extension EventRepository {
     func add(_ input: AddEventInput) async throws {
         guard !input.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw EventError.validation(String(localized: "Title is required."))
+            throw EventError.validation("Title is required.".localized)
         }
         let newEvent = Event(
             id: UUID(),

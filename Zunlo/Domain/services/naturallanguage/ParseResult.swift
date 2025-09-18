@@ -5,7 +5,8 @@
 //  Created by Marcio Garcia on 9/16/25.
 //
 
-import Foundation
+import SwiftUI
+import GlowUI
 import SmartParseKit
 
 public struct ParseResult: Identifiable {
@@ -94,48 +95,99 @@ public struct ParseResult: Identifiable {
 
 extension ParseResult {
     func createDisambiguationText() -> String {
-        var message = "I found multiple ways to interpret your request"
+        var message = "I found multiple ways to interpret your request".localized
 
         if !self.title.isEmpty {
-            message += " for \"\(self.title)\""
+            message += " for \"\(self.title)\"".localized
         }
 
-        message += ". Please choose what you'd like to do:"
+        message += ". Please choose what you'd like to do:".localized
 
         return message
     }
     
-    func label(calendar: Calendar) -> String {
+    func label(calendar: Calendar) -> AttributedString {
         return labelForIntent(self.intent, confidence: 1.0, calendar: calendar)
     }
 
-    func labelForIntent(_ intent: Intent, confidence: Float, calendar: Calendar) -> String {
-        var label = ""
-
-        // Add intent action
-        label = intent.description
-
-        // Add title if available
+//    func labelForIntent(_ intent: Intent, confidence: Float, calendar: Calendar) -> String {
+//        var label = ""
+//
+//        // Add intent action
+//        label = intent.localizedDescription
+//
+//        // Add title if available
+//        if !self.title.isEmpty {
+//            label += ": \"\(self.title)\""
+//        }
+//
+//        // Add temporal context if available
+//        if self.context.finalDate != .distantPast {
+//            let dateStr = self.context.finalDate.formattedDate(
+//                dateFormat: .long,
+//                calendar: calendar,
+//                timeZone: calendar.timeZone
+//            )
+//            label += " on \(dateStr)".localized
+//        }
+//
+//        // Add confidence indicator for ambiguous cases
+//        if confidence < 1.0 {
+//            let percentageConfidence = Int(confidence * 100)
+//            label += " (\(percentageConfidence)%)"
+//        }
+//
+//        return label
+//    }
+    
+    func labelForIntent(_ intent: Intent, confidence: Float, calendar: Calendar) -> AttributedString {
+        var attributedLabel = AttributedString()
+        
+        // Intent action - most prominent
+        var intentText = AttributedString(intent.localizedDescription)
+        intentText.font = .body.weight(.semibold)
+        intentText.foregroundColor = UIColor(Color.theme.text)
+        attributedLabel += intentText
+        
+        // Title in quotes with different styling
         if !self.title.isEmpty {
-            label += ": \"\(self.title)\""
+            // Colon separator
+            var separator = AttributedString(": ")
+            separator.foregroundColor = UIColor(Color.theme.secondaryText)
+            attributedLabel += separator
+            
+            // Title in quotes
+            var titleText = AttributedString("\"\(self.title)\"\n")
+            titleText.font = .body.italic()
+            titleText.foregroundColor = UIColor(Color.theme.text)
+            attributedLabel += titleText
         }
-
-        // Add temporal context if available
+        
+        // Date with icon-like styling
         if self.context.finalDate != .distantPast {
             let dateStr = self.context.finalDate.formattedDate(
                 dateFormat: .long,
                 calendar: calendar,
                 timeZone: calendar.timeZone
             )
-            label += " on \(dateStr)"
+                        
+            var dateText = AttributedString(dateStr)
+            dateText.font = .callout.weight(.medium)
+            dateText.foregroundColor = UIColor(Color.theme.secondaryText)
+            attributedLabel += dateText
         }
-
-        // Add confidence indicator for ambiguous cases
-        if confidence < 1.0 {
-            let percentageConfidence = Int(confidence * 100)
-            label += " (\(percentageConfidence)%)"
+        
+        if EnvConfig.shared.environment == .dev {
+            // Confidence as a subtle badge
+            if confidence < 1.0 {
+                let percentageConfidence = Int(confidence * 100)
+                var confidenceText = AttributedString(" (\(percentageConfidence)%)")
+                confidenceText.font = .caption.weight(.medium)
+                confidenceText.foregroundColor = .orange
+                attributedLabel += confidenceText
+            }
         }
-
-        return label
+        
+        return attributedLabel
     }
 }

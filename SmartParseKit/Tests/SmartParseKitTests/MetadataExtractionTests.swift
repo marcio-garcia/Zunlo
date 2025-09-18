@@ -196,7 +196,21 @@ final class MetadataExtractionTests: XCTestCase {
         XCTAssertEqual(result.tokens.count, 0)
         XCTAssertEqual(result.title, "jogo")
     }
-    
+
+    func testPT_ExtractTitleInputWithSpecialChar() {
+        let pack = PortugueseBRPack(calendar: TestUtil.calendarSP())
+        let text = "Criar reunião terça `a tarde"
+        let temporalRanges = [
+            Range(NSRange(location: 14, length: 5), in: text)!,
+            Range(NSRange(location: 23, length: 5), in: text)!
+        ]
+        let result = extractor.extractMetadata(from: text, temporalRanges: temporalRanges, pack: pack)
+
+        // Clear, well-structured input should have higher confidence
+        XCTAssertEqual(result.tokens.count, 0)
+        XCTAssertEqual(result.title, "reunião")
+    }
+
     // MARK: - Confidence Tests
 
     func testLowConfidenceForAmbiguousInput() {

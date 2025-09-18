@@ -277,7 +277,6 @@ private struct MessageBubble: View {
 
     private var bubble: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(message.id.uuidString)
             if message.format == .plain {
                 Text(viewModel.displayMessageText(message))
                     .themedBody()
@@ -288,15 +287,25 @@ private struct MessageBubble: View {
             }
 
             if !message.actions.isEmpty {
-                VStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(message.actions) { action in
-                        Button(action.label) {
-                            onAction(action, message)
+                        HStack {
+                            Text(action.label)
+                                .lineLimit(nil) // Allow unlimited lines
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true) // Allow vertical expansion
+                            Spacer(minLength: 0)
                         }
-                        .themedTertiaryButton()
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.theme.accent.opacity(0.08))
+                                .stroke(Color.theme.accent.opacity(0.2), lineWidth: 1)
+                        )
                     }
                 }
-                .padding(.top, 2)
+                .padding(.top, 4)
             }
 
             if message.status == .failed, let err = message.errorDescription {

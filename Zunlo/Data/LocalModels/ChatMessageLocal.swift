@@ -69,7 +69,7 @@ extension ChatMessageLocal {
         let atts = domain.attachments.map { ChatAttachmentLocal(domain: $0) }
         self.attachments.append(objectsIn: atts)
 
-        let acts = domain.actions.map { $0.label }
+        let acts = domain.actions.map { String($0.label.characters) }
         self.actions.append(objectsIn: acts)
     }
 }

@@ -311,6 +311,29 @@ final class TemporalComposerTests: XCTestCase {
         XCTAssertEqual(temporalRetult[0].kind, .weekday(dayIndex: 6, modifier: .next))
     }
 
+    func testPT_TuesdayAfternoon() {
+        let pack = PortugueseBRPack(calendar: TestUtil.calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("Criar reunião terça `a tarde", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+
+        let temporalRetult = result.1
+        let metadataResult = result.2
+        XCTAssertNotNil(metadataResult.intentAmbiguity)
+        XCTAssertGreaterThan(metadataResult.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+        
+        // Should contain alternatives
+        let intentAlternatives = metadataResult.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.createTask), "Should include createTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.createEvent), "Should include createEvent as alternative")
+        
+        XCTAssertEqual(temporalRetult[0].text, "terça")
+        XCTAssertEqual(temporalRetult[0].kind, .weekday(dayIndex: 3, modifier: .none))
+        
+        XCTAssertEqual(temporalRetult[1].text, "tarde")
+        XCTAssertEqual(temporalRetult[1].kind, .partOfDay(.afternoon))
+    }
+    
     // --- Spanish ---
     func testES_NextWeekFri1100() {
         let pack = SpanishPack(calendar: calendarSP())

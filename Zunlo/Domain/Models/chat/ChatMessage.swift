@@ -145,7 +145,7 @@ extension ChatMessage {
         self.errorDescription = local.errorDescription
 
         self.attachments = local.attachments.map { ChatAttachment(local: $0) }
-        self.actions = local.actions.compactMap { ChatMessageActionAlternative(label: $0) }
+        self.actions = local.actions.compactMap { ChatMessageActionAlternative(label: AttributedString($0)) }
     }
 }
 

@@ -272,6 +272,31 @@ final class NLServiceTests: XCTestCase {
         // Should have reasonable confidence scores
         XCTAssertTrue(result.intentAmbiguity?.predictions.allSatisfy { $0.confidence > 0.3 } == true, "All alternatives should have reasonable confidence")
     }
+    
+    func testPT_TuesdayAfternoon() async throws {
+        let results = try await nlService.process(text: "Criar reunião terça à tarde")
+
+        XCTAssertEqual(results.count, 1)
+        let result = results[0]
+        
+        // Should detect ambiguity
+        XCTAssertTrue(result.isAmbiguous, "Should detect ambiguity")
+        XCTAssertGreaterThan(result.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+
+        // Should contain alternatives
+        let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.createTask), "Should include createTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.createEvent), "Should include createEvent as alternative")
+
+        // Should have reasonable confidence scores
+        XCTAssertTrue(result.intentAmbiguity?.predictions.allSatisfy { $0.confidence > 0.3 } == true, "All alternatives should have reasonable confidence")
+        
+        XCTAssertEqual(result.title, "reunião")
+        
+        let comps = result.context.finalDate.components()
+        XCTAssertEqual(comps.year, 2025); XCTAssertEqual(comps.month, 9); XCTAssertEqual(comps.day, 23)
+        XCTAssertEqual(comps.hour, 14); XCTAssertEqual(comps.minute, 0)
+    }
 
     func testPT_TagAddition() async throws {
         let results = try await nlService.process(text: "Adicionar tag trabalho para tarefa")
