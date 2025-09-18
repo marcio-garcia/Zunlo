@@ -63,29 +63,6 @@ struct TodayView: View {
                             VStack(alignment: .leading, spacing: 24) {
                                 TodayWeatherView(weather: viewModel.weather, greeting: viewModel.greeting)
                                 
-                                // Optionally reflect any ongoing runs:
-                                //                                if let running = store.runs.values.first(where: { $0.isRunning }) {
-                                //                                    ProgressView(running.status ?? "Working…", value: running.progress, total: 1)
-                                //                                        .padding()
-                                //                                }
-                                
-                                //                                AIWelcomeCard(
-                                //                                    vm: AIWelcomeCardViewModel(
-                                //                                        time: SystemTimeProvider(),
-                                //                                        policyProvider: policyProvider,
-                                //                                        tasksEngine: appState.taskSuggestionEngine!,
-                                //                                        eventsEngine: appState.eventSuggestionEngine!,
-                                //                                        aiToolRunner: DefaultAIToolRunner(
-                                //                                            toolRepo: AIToolRepository(
-                                //                                                eventRepo: appState.eventRepository!,
-                                //                                                taskRepo: appState.userTaskRepository!,
-                                //                                                eventEngine: appState.eventSuggestionEngine!),
-                                //                                            calendar: .appDefault,
-                                //                                            nav: nil),
-                                //                                        weather: WeatherService.shared
-                                //                                    )
-                                //                                )
-                                
                                 if let ctx = aiContext {
                                     AIWelcomeCard(
                                         vm: AIWelcomeCardViewModel(
@@ -296,7 +273,7 @@ struct TodayView: View {
                         nav.navigate(to: .eventCalendar)
                     }) {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 22, weight: .regular))
+                            .appFont(.subtitle)
                             .foregroundColor(Color.theme.text)
                     }
                     .background(
@@ -346,7 +323,7 @@ struct TodayView: View {
                         nav.navigate(to: .taskInbox)
                     }) {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 22, weight: .regular))
+                            .appFont(.subtitle)
                             .foregroundColor(Color.theme.text)
                     }
                     .background(

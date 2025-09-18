@@ -82,13 +82,13 @@ public struct AppFontStyle: Sendable {
         switch style {
         case .largeTitle: return 1.5
         case .title: return 1.2
-        case .subtitle: return 0.7
-        case .heading: return 0.5
+        case .subtitle: return 0.4
+        case .heading: return 0.3
         case .body: return 0.3
         case .callout: return 0.4
         case .button: return 0.6
         case .caption: return 0.2
-        case .footnote: return 0.1
+        case .footnote: return 0.2
         case .label: return 0.2
         }
     }

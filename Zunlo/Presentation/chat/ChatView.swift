@@ -291,6 +291,8 @@ private struct MessageBubble: View {
                     ForEach(message.actions) { action in
                         HStack {
                             Text(action.label)
+                                .appFont(AppFontStyle.caption)
+                                .foregroundStyle(Color.theme.tertiaryText)
                                 .lineLimit(nil) // Allow unlimited lines
                                 .multilineTextAlignment(.leading)
                                 .fixedSize(horizontal: false, vertical: true) // Allow vertical expansion

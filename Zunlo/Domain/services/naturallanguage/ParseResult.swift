@@ -145,7 +145,7 @@ extension ParseResult {
         
         // Intent action - most prominent
         var intentText = AttributedString(intent.localizedDescription)
-        intentText.font = .body.weight(.semibold)
+        intentText.font = AppFontStyle.body.weight(.bold).uiFont()
         intentText.foregroundColor = UIColor(Color.theme.text)
         attributedLabel += intentText
         
@@ -153,17 +153,18 @@ extension ParseResult {
         if !self.title.isEmpty {
             // Colon separator
             var separator = AttributedString(": ")
+            intentText.font = AppFontStyle.body.weight(.semibold).uiFont()
             separator.foregroundColor = UIColor(Color.theme.secondaryText)
             attributedLabel += separator
             
             // Title in quotes
             var titleText = AttributedString("\"\(self.title)\"\n")
-            titleText.font = .body.italic()
+            titleText.font = AppFontStyle.body.weight(.semibold).italic().uiFont()
             titleText.foregroundColor = UIColor(Color.theme.text)
             attributedLabel += titleText
         }
         
-        // Date with icon-like styling
+        // Date
         if self.context.finalDate != .distantPast {
             let dateStr = self.context.finalDate.formattedDate(
                 dateFormat: .long,
@@ -172,7 +173,7 @@ extension ParseResult {
             )
                         
             var dateText = AttributedString(dateStr)
-            dateText.font = .callout.weight(.medium)
+            dateText.font = AppFontStyle.caption.uiFont()
             dateText.foregroundColor = UIColor(Color.theme.secondaryText)
             attributedLabel += dateText
         }
@@ -182,7 +183,7 @@ extension ParseResult {
             if confidence < 1.0 {
                 let percentageConfidence = Int(confidence * 100)
                 var confidenceText = AttributedString(" (\(percentageConfidence)%)")
-                confidenceText.font = .caption.weight(.medium)
+                confidenceText.font = AppFontStyle.caption.weight(.medium).uiFont()
                 confidenceText.foregroundColor = .orange
                 attributedLabel += confidenceText
             }
