@@ -55,7 +55,7 @@ private struct CardContent: View {
                         .padding(.horizontal, 10)
                         .background(Color.theme.accent)
                         .foregroundColor(.white)
-                        .font(AppFontStyle.caption.font())
+                        .appFont(.caption)
                         .cornerRadius(8)
                     }
                 }

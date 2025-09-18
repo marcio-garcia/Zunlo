@@ -309,7 +309,7 @@ private struct MessageBubble: View {
             }
 
             if message.status == .failed, let err = message.errorDescription {
-                Text(err).font(AppFontStyle.caption.font()).foregroundStyle(.red)
+                Text(err).appFont(AppFontStyle.caption).foregroundStyle(.red)
             } else if message.status == .streaming {
                 TypingIndicator().accessibilityLabel("Assistant is typing")
             }

@@ -39,7 +39,7 @@ public final class ChatViewModel: ObservableObject {
         heading2Font: AppFontStyle.subtitle.font(),
         heading3Font: AppFontStyle.heading.font(),
         bodyFont: AppFontStyle.body.font(),
-        boldFont: AppFontStyle.strongBody.font(),
+        boldFont: AppFontStyle.body.weight(.bold).font(),
         codeFont: AppFontStyle.caption.font(),
         codeBackgroundColor: Color.theme.surface,
         linkColor: Color.theme.accent

@@ -42,7 +42,7 @@ public struct AgendaRenderer {
         var hdr  = AttributeContainer(); hdr.font  = AppFontStyle.subtitle.uiFont() // .system(.title3, design: .rounded).weight(.semibold)
         var sec  = AttributeContainer(); sec.font  = AppFontStyle.heading.uiFont() // .system(.headline, design: .rounded)
         var time = AttributeContainer(); time.font = AppFontStyle.body.uiFont() // .system(.subheadline); time.foregroundColor = .secondary
-        var ttl  = AttributeContainer(); ttl.font  = AppFontStyle.strongBody.uiFont() // .system(.body).weight(.semibold)
+        var ttl  = AttributeContainer(); ttl.font  = AppFontStyle.body.weight(.bold).uiFont() // .system(.body).weight(.semibold)
         var meta = AttributeContainer(); meta.font = AppFontStyle.callout.uiFont() // .system(.footnote);   meta.foregroundColor = .secondary
 
         // Helper
@@ -179,7 +179,7 @@ public struct AgendaRenderer {
         var hdr  = AttributeContainer(); hdr.font  = AppFontStyle.subtitle.uiFont()
         var sec  = AttributeContainer(); sec.font  = AppFontStyle.heading.uiFont()
         var time = AttributeContainer(); time.font = AppFontStyle.body.uiFont()
-        var ttl  = AttributeContainer(); ttl.font  = AppFontStyle.strongBody.uiFont()
+        var ttl  = AttributeContainer(); ttl.font  = AppFontStyle.body.weight(.bold).uiFont()
         var meta = AttributeContainer(); meta.font = AppFontStyle.callout.uiFont()
 
         @inline(__always)

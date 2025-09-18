@@ -40,7 +40,7 @@ struct TagChipListView: View {
                     HStack {
                         TextField("Add tag", text: $newTagText)
                             .textFieldStyle(PlainTextFieldStyle())
-                            .font(AppFontStyle.strongCaption.font())
+                            .appFont(.caption.weight(.semibold))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 10)
                             .background(
@@ -64,7 +64,7 @@ struct TagChipListView: View {
                                         addTag()
                                     } label: {
                                         Text(suggestion)
-                                            .font(AppFontStyle.strongCaption.font())
+                                            .appFont(.caption.weight(.semibold))
                                             .padding(.vertical, 6)
                                             .padding(.horizontal, 10)
                                             .background(

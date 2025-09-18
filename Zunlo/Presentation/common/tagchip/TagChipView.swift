@@ -62,7 +62,7 @@ struct TagChipView: View {
         
         var font: Font {
             switch self {
-            case .large: AppFontStyle.strongCaption.font()
+            case .large: AppFontStyle.caption.weight(.semibold).font()
             case .small: AppFontStyle.footnote.font()
             }
         }

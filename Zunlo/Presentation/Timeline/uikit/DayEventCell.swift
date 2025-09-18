@@ -45,7 +45,7 @@ class DayEventCell: UICollectionViewCell {
         titleStackView.alignment = .center
         
         weekLabel.font = AppFontStyle.body.uiFont()
-        dayLabel.font = AppFontStyle.strongBody.uiFont()
+        dayLabel.font = AppFontStyle.body.weight(.semibold).uiFont()
 
         weatherIconImageView.contentMode = .scaleAspectFit
         weatherIconImageView.tintColor = .label // or a softer tone

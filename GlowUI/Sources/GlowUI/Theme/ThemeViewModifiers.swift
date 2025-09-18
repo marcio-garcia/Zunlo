@@ -17,72 +17,72 @@ public struct DefaultBackground: ViewModifier {
 public struct ThemedBodyModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.body)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.body.font())
     }
 }
 
 public struct ThemedHeadlineModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.heading)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.heading.font())
     }
 }
 
 public struct ThemedCaptionModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.caption)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.caption.font())
     }
 }
 
 public struct ThemedCalloutModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.callout)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.callout.font())
     }
 }
 
 public struct ThemedFootnoteModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.footnote)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.footnote.font())
     }
 }
 
 public struct ThemedLabelModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.label)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.label.font())
     }
 }
 
 public struct ThemedTitleModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.title)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.title.font())
     }
 }
 
 public struct ThemedLargeTitleModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.largeTitle)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.largeTitle.font())
     }
 }
 
 public struct ThemedSubtitleModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
+            .appFont(.subtitle)
             .foregroundColor(Color.theme.text)
-            .font(AppFontStyle.subtitle.font())
     }
 }
 
@@ -131,7 +131,7 @@ public struct ThemedPrimaryButtonModifier: ViewModifier {
             .padding(.horizontal, 10)
             .background(Color.theme.accent)
             .foregroundColor(.white)
-            .font(AppFontStyle.button.font())
+            .appFont(.button)
             .cornerRadius(8)
     }
 }
@@ -143,7 +143,7 @@ public struct ThemedSecondaryButtonModifier: ViewModifier {
             .padding(8)
             .background(Color.clear)
             .foregroundColor(isEnabled ? Color.theme.accent : Color.theme.disabled)
-            .font(AppFontStyle.button.font())
+            .appFont(.button)
             .cornerRadius(8)
     }
 }
@@ -154,6 +154,6 @@ public struct ThemedTertiaryButtonModifier: ViewModifier {
             .padding(3)
             .background(Color.clear)
             .foregroundColor(Color.theme.accent)
-            .font(AppFontStyle.caption.font())
+            .appFont(.caption)
     }
 }

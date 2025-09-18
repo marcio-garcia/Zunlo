@@ -48,7 +48,6 @@ class EventRowView: UIView {
         
         colorIndicator.layer.cornerRadius = 3
         
-        titleLabel.font = AppFontStyle.heading.uiFont()
         titleLabel.numberOfLines = 1
 
         timeLabel.font = AppFontStyle.footnote.uiFont()
@@ -108,6 +107,17 @@ class EventRowView: UIView {
         overrideIcon.tintColor = UIColor(Color.theme.accent)
     }
     
+    private func createSpacedAttributedString(_ text: String, font: AppFontStyle, tracking: CGFloat) -> AttributedString {
+        var attributedString = AttributedString(text)
+        attributedString.font = font.uiFont()
+        
+        // Add tracking (kern) attribute
+        let range = attributedString.startIndex..<attributedString.endIndex
+        attributedString[range].kern = tracking
+        
+        return attributedString
+    }
+    
     func configure(with occurrence: EventOccurrence) {
         self.occurrence = occurrence
         
@@ -124,7 +134,8 @@ class EventRowView: UIView {
             timeLabel.textColor = UIColor(Color.theme.tertiaryText)
         } else {
             titleLabel.attributedText = nil
-            titleLabel.text = occurrence.title
+            titleLabel.text = nil
+            titleLabel.attributedText = AppFontStyle.heading.weight(.regular).attributedString(occurrence.title)
             titleLabel.textColor = UIColor(Color.theme.text)
             timeLabel.textColor = UIColor(Color.theme.secondaryText)
             if !occurrence.isFakeOccForEmptyToday {

@@ -21,7 +21,7 @@ public struct ToastView: View {
     
     public var body: some View {
         Text(message)
-            .font(AppFontStyle.callout.font())
+            .appFont(.callout)
             .foregroundColor(.white)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 16)

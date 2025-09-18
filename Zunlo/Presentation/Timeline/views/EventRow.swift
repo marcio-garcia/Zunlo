@@ -24,7 +24,7 @@ struct EventRow: View {
                     .cornerRadius(3)
                 VStack(alignment: .leading) {
                     Text(occurrence.title)
-                        .font(AppFontStyle.subtitle.font())
+                        .appFont(.subtitle)
                         .foregroundStyle(titleColor)
                         .multilineTextAlignment(.leading)
                         .strikethrough(occurrence.isCancelled, color: titleColor)

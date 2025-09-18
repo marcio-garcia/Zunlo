@@ -14,7 +14,7 @@ struct ReminderEditorView: View {
     var body: some View {
         RoundedSection(title: String(localized: "Reminders")) {
             Text("Set event reminders by choosing how long before the start time you want to be notified.")
-                .font(AppFontStyle.caption.font())
+                .appFont(.caption)
                 .foregroundStyle(Color.theme.tertiaryText)
             
             ForEach(triggers.indices, id: \.self) { index in
