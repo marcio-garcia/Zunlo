@@ -328,6 +328,23 @@ final class NLServiceTests: XCTestCase {
         XCTAssertEqual(result.location?.name, "escritório")
     }
 
+    func testPT_OrdinalDayAndTimeRange() async throws {
+        let results = try await nlService.process(text: "Crie evento standup 25th 9-10:30am")
+
+        // Clear, well-structured input should have higher confidence
+        XCTAssertEqual(results.count, 1)
+        let result = results[0]
+        XCTAssertEqual(result.title, "standup")
+        XCTAssertEqual(result.intent, .createEvent)
+        XCTAssertEqual(result.metadataTokens.count, 0)
+        let comps = result.context.finalDate.components()
+        XCTAssertEqual(comps.year, 2025); XCTAssertEqual(comps.month, 9); XCTAssertEqual(comps.day, 25);
+        XCTAssertEqual(comps.hour, 9); XCTAssertEqual(comps.minute, 0);
+        XCTAssertEqual(result.context.finalDateDuration, 5400)
+        XCTAssertEqual(result.context.isRangeQuery, false)
+        XCTAssertNil(result.context.dateRange)
+    }
+    
     // MARK: - Spanish Tests
 
     func testES_NextWeekFri1100() async throws {

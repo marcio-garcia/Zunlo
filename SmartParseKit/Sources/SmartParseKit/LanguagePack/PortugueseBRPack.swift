@@ -62,8 +62,8 @@ public struct PortugueseBRPack: DateLanguagePack {
         let preBetween = #"(?:\s+(?:às|as|a|pra|para))?"#
         let sep        = #"(?:\s*(?:[-–—~]|a|às|as|to)\s*)"#
         let pat = #"""
-        (?ix)\b
-        (\#(weekdayAlt))\#(preBetween)\s+
+        \b
+        (\#(weekdayAlt))?\#(preBetween)(\s+)?
         (\#(timeToken))
         (?:\#(sep)(\#(timeToken)))?
         \b
@@ -178,7 +178,9 @@ public struct PortugueseBRPack: DateLanguagePack {
     public func weekendRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:(?:este|esta|proximo|próximo|seguinte)\s+)?fim\s*de\s*semana\b"#) }
     public func relativeDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:hoje|amanh[ãa]|esta\s+noite)\b"#) }
     public func partOfDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:manh[ãa]|tarde|noite|meio\s*dia|meia\s*noite)\b"#) }
-    public func ordinalDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:dia\s*)?([12]?\d|3[01])(?:º|ª|o)?\b"#) }
+    public func ordinalDayRegex() -> NSRegularExpression? {
+        BaseLanguagePack.regex(#"\b(?:dia\s*)?([012]?\d|3[01])(?:º|ª|o|a|st|nd|rd|th)?\b"#)
+    }
     public func timeOnlyRegex() -> NSRegularExpression? {
         return BaseLanguagePack.regex(#"\b(?:meio(?:-|\s*)dia|meia(?:-|\s*)noite|\#(BaseLanguagePack.timeToken))\b"#)
     }

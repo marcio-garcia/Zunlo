@@ -59,7 +59,7 @@ public struct EnglishPack: DateLanguagePack {
         let sep = #"(?:\s*(?:[-–—~]|to)\s*)"#
         return BaseLanguagePack.regex(#"""
         (?ix)\b
-        (\#(weekdayAlt))\#(preBetween)\s+
+        (\#(weekdayAlt))?\#(preBetween)(\s+)?
         (\#(t))
         (?:\#(sep)(\#(t)))?
         \b

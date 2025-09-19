@@ -210,6 +210,20 @@ final class MetadataExtractionTests: XCTestCase {
         XCTAssertEqual(result.tokens.count, 0)
         XCTAssertEqual(result.title, "reunião")
     }
+    
+    func testPT_OrdinalDayAndTimeRange() {
+        let pack = PortugueseBRPack(calendar: TestUtil.calendarSP())
+        let text = "Crie evento standup 25th 9-10:30am"
+        let temporalRanges = [
+            Range(NSRange(location: 20, length: 4), in: text)!,
+            Range(NSRange(location: 25, length: 9), in: text)!
+        ]
+        let result = extractor.extractMetadata(from: text, temporalRanges: temporalRanges, pack: pack)
+
+        // Clear, well-structured input should have higher confidence
+        XCTAssertEqual(result.tokens.count, 0)
+        XCTAssertEqual(result.title, "standup")
+    }
 
     // MARK: - Confidence Tests
 

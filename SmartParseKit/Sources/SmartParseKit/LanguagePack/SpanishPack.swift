@@ -70,7 +70,7 @@ public struct SpanishPack: DateLanguagePack {
         let sep        = #"(?:\s*(?:[-–—~]|a)\s*)"#
         let pat = #"""
         (?ix)\b
-        (\#(weekdayAlt))\#(preBetween)\s+
+        (\#(weekdayAlt))?\#(preBetween)(\s+)?
         (\#(timeToken))
         (?:\#(sep)(\#(timeToken)))?
         \b

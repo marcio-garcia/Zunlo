@@ -334,6 +334,26 @@ final class TemporalComposerTests: XCTestCase {
         XCTAssertEqual(temporalRetult[1].kind, .partOfDay(.afternoon))
     }
     
+    func testPT_OrdinalDayAndTimeRange() {
+        let pack = PortugueseBRPack(calendar: TestUtil.calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("Crie evento standup 25th 9-10:30am", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+
+        let temporalRetult = result.1
+        let metadataResult = result.2
+
+        XCTAssertEqual(result.0, .createEvent)
+        
+        XCTAssertEqual(metadataResult.tokens.count, 0)
+        
+        XCTAssertEqual(temporalRetult[0].text, "25th")
+        XCTAssertEqual(temporalRetult[0].kind, .ordinalDay(25))
+        
+        XCTAssertEqual(temporalRetult[1].text, "9-10:30am")
+        XCTAssertEqual(temporalRetult[1].kind, .timeRange(start: DateComponents(hour: 9, minute: 0), end: DateComponents(hour: 10, minute: 30)))
+    }
+    
     // --- Spanish ---
     func testES_NextWeekFri1100() {
         let pack = SpanishPack(calendar: calendarSP())

@@ -111,15 +111,15 @@ public actor ChatEngine {
         for result in toolResults {
             var asyncStream: AsyncStream<ChatEngineEvent>
             
-//                switch result.action {
-//                case .none:
-                // No local handling → use regular AI streaming path
-//                    asyncStream = startStream(history: history, userMessage: userMessage)
+                switch result.action {
+                case .none:
+                    // No local handling → use regular AI streaming path
+                    asyncStream = startStream(history: history, userMessage: userMessage)
                 
-//                default:
-                // Stream local processing result to the ViewModel
-                asyncStream = processNlpResult(result: result)
-//                }
+                default:
+                    // Stream local processing result to the ViewModel
+                    asyncStream = processNlpResult(result: result)
+                }
             
             for await ev in asyncStream {
                 chatEvent(ev)
@@ -146,13 +146,16 @@ public actor ChatEngine {
                             conversationId: self.conversationId,
                             rawText: result.message,
                             richText: result.richText,
-                            status: .sent,
+                            status: .streaming,
                             actions: result.options
                         )
 
                         // Persist + stream events to the UI
                         try await self.repo.upsert(assistant)
                         continuation.yield(.messageAppended(assistant))
+                        
+                        try await Task.sleep(for: .seconds(2))
+                        
                         continuation.yield(.messageStatusUpdated(messageId: assistant.id, status: .sent, error: nil))
                         continuation.yield(.completed(messageId: assistant.id))
 
@@ -491,71 +494,6 @@ public actor ChatEngine {
             richText: nil
         )
     }
-    
-//    private func labelFor(_ parse: ParseResult) -> String {
-//        return labelForIntent(parse.intent, parse: parse, confidence: 1.0)
-//    }
-//
-//    private func labelForIntent(_ intent: Intent, parse: ParseResult, confidence: Float) -> String {
-//        var label = ""
-//
-//        // Add intent action
-//        switch intent {
-//        case .createTask:
-//            label = "Create task"
-//        case .createEvent:
-//            label = "Create event"
-//        case .updateTask:
-//            label = "Update task"
-//        case .updateEvent:
-//            label = "Update event"
-//        case .rescheduleTask:
-//            label = "Reschedule task"
-//        case .rescheduleEvent:
-//            label = "Reschedule event"
-//        case .cancelTask:
-//            label = "Cancel task"
-//        case .cancelEvent:
-//            label = "Cancel event"
-//        case .view:
-//            label = "View"
-//        case .plan:
-//            label = "Plan"
-//        case .unknown:
-//            label = "Process request"
-//        }
-//
-//        // Add title if available
-//        if !parse.title.isEmpty {
-//            label += ": \"\(parse.title)\""
-//        }
-//
-//        // Add temporal context if available
-//        if parse.context.finalDate != .distantPast {
-//            let dateStr = parse.context.finalDate.formattedDate(dateFormat: .long)
-//            label += " on \(dateStr)"
-//        }
-//
-//        // Add confidence indicator for ambiguous cases
-//        if confidence < 1.0 {
-//            let percentageConfidence = Int(confidence * 100)
-//            label += " (\(percentageConfidence)%)"
-//        }
-//
-//        return label
-//    }
-
-//    private func createDisambiguationText(parse: ParseResult, predictions: [IntentPrediction]) -> String {
-//        var message = "I found multiple ways to interpret your request"
-//
-//        if !parse.title.isEmpty {
-//            message += " for \"\(parse.title)\""
-//        }
-//
-//        message += ". Please choose what you'd like to do:"
-//
-//        return message
-//    }
 
     /// Handle user selection of a disambiguation option
     public func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
@@ -604,10 +542,6 @@ public actor ChatEngine {
         case .cancelEvent: return ToolResult(intent: .cancelEvent)
         case .plan: return await localTools.planWeek(cmd)
         case .view: return await localTools.showAgenda(cmd)
-//        case .planWeek: return await tool.planWeek(cmd)
-//        case .planDay: return await tool.planDay(cmd)
-//        case .showAgenda: return await tool.showAgenda(cmd)
-//        case .moreInfo: return await tool.moreInfo(cmd)
         case .unknown: return await localTools.unknown(cmd)
         }
     }

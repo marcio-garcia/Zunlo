@@ -305,6 +305,9 @@ private struct MessageBubble: View {
                                 .fill(Color.theme.accent.opacity(0.08))
                                 .stroke(Color.theme.accent.opacity(0.2), lineWidth: 1)
                         )
+                        .onTapGesture {
+                            onAction(action, message)
+                        }
                     }
                 }
                 .padding(.top, 4)
