@@ -16,7 +16,7 @@ protocol EventStore {
     func upsert(_ event: Event) async throws
     func add(_ input: AddEventInput) async throws
     func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws
-    func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws
+    func editSingleOccurrence(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws
     func editOverride(_ override: EventOverride, with input: EditEventInput) async throws
     func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws
     func delete(id: UUID) async throws
@@ -231,7 +231,7 @@ extension EventRepository {
     }
 
     // Edit a single occurrence creating a new override
-    func editSingle(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws {
+    func editSingleOccurrence(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws {
         let override = EventOverride(
             id: UUID(),
             eventId: parent.id,

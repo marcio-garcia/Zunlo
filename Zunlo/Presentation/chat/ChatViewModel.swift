@@ -13,24 +13,24 @@ import SmartParseKit
 // MARK: - ViewModel (UI-focused)
 
 @MainActor
-public final class ChatViewModel: ObservableObject {
+final class ChatViewModel: ObservableObject {
     // UI state
-    @Published public private(set) var messages: [ChatMessage] = []
-    @Published public private(set) var daySections: [DaySection] = []
-    @Published public private(set) var lastMessageAnchor: UUID?
+    @Published private(set) var messages: [ChatMessage] = []
+    @Published private(set) var daySections: [DaySection] = []
+    @Published private(set) var lastMessageAnchor: UUID?
 
-    @Published public var input: String = ""
-    @Published public var isGenerating: Bool = false
-    @Published public var suggestions: [String] = []
+    @Published var input: String = ""
+    @Published var isGenerating: Bool = false
+    @Published var suggestions: [String] = []
     @Published private(set) var currentResponseId: String?
 
-    public let conversationId: UUID
+    let conversationId: UUID
 
-    private let engine: ChatEngine
-    private let repo: ChatRepository
+    let engine: ChatEngine
+    let repo: ChatRepository
 
     // Deterministic calendar/formatting for stable section ids
-    private let calendar: Calendar
+    let calendar: Calendar
 
     private let rebuildDebouncer = Debouncer()
     
@@ -45,7 +45,7 @@ public final class ChatViewModel: ObservableObject {
         linkColor: Color.theme.accent
     )
 
-    public init(
+    init(
         conversationId: UUID,
         engine: ChatEngine,
         repo: ChatRepository,
@@ -69,7 +69,7 @@ public final class ChatViewModel: ObservableObject {
         }
     }
 
-    public func displayMessageText(_ msg: ChatMessage) -> AttributedString {
+    func displayMessageText(_ msg: ChatMessage) -> AttributedString {
         switch msg.format {
         case .plain:
             return AttributedString(msg.rawText)

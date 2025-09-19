@@ -9,6 +9,7 @@ import Foundation
 @testable import Zunlo
 
 final class FakeEventFetcher: EventStore {
+
     var events: [EventOccurrence]
     
     init(_ events: [EventOccurrence]) {
@@ -47,7 +48,7 @@ final class FakeEventFetcher: EventStore {
         
     }
     
-    func editSingle(parent: Zunlo.EventOccurrence, occurrence: Zunlo.EventOccurrence, with input: Zunlo.EditEventInput) async throws {
+    func editSingleOccurrence(parent: Zunlo.EventOccurrence, occurrence: Zunlo.EventOccurrence, with input: Zunlo.EditEventInput) async throws {
         
     }
     

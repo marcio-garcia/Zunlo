@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-enum AddEditEventViewMode: Identifiable, Equatable {
+enum AddEditEventViewMode: Identifiable, Equatable, Hashable {
     case add
     case editAll(event: EventOccurrence, recurrenceRule: RecurrenceRule?)
-    case editSingle(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
+    case editSingleOccurrence(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, occurrence: EventOccurrence)
     case editOverride(override: EventOverride)
     case editFuture(parentEvent: EventOccurrence, recurrenceRule: RecurrenceRule?, startingFrom: EventOccurrence)
 
@@ -23,11 +23,11 @@ enum AddEditEventViewMode: Identifiable, Equatable {
         case .editAll(let event, _):
             return "editAll-\(event.id)"
             
-        case .editSingle(let parent, _, let occurrence):
+        case .editSingleOccurrence(let parent, _, let occurrence):
             return "editSingle-\(parent.id)-\(occurrence.startDate.timeIntervalSince1970)"
             
         case .editOverride(let override):
-            return "editOverride-\(override.id ?? UUID())"
+            return "editOverride-\(override.id)"
             
         case .editFuture(let parent, _, let from):
             return "editFuture-\(parent.id)-\(from.startDate.timeIntervalSince1970)"
@@ -69,7 +69,7 @@ final class EventEditHandler: ObservableObject {
     
     func selectEditOnlyThisOccurrence() -> AddEditEventViewMode? {
         guard let ctx = editChoiceContext else { return nil }
-        editMode = .editSingle(parentEvent: ctx.parentEvent, recurrenceRule: ctx.rule, occurrence: ctx.occurrence)
+        editMode = .editSingleOccurrence(parentEvent: ctx.parentEvent, recurrenceRule: ctx.rule, occurrence: ctx.occurrence)
         showEditChoiceDialog = false
         editChoiceContext = nil
         return editMode

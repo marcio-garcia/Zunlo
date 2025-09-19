@@ -7,7 +7,7 @@
 
 import Foundation
 import SmartParseKit
-import Zunlo
+@testable import Zunlo
 
 /// A test double for `ActionTools` (actually for the `Tools` protocol).
 /// - Records calls & arguments
@@ -24,6 +24,8 @@ public final class MockActionTools: Tools {
     public private(set) var rescheduleEventCalls: [ParseResult] = []
     public private(set) var updateTaskCalls: [ParseResult] = []
     public private(set) var updateEventCalls: [ParseResult] = []
+    public private(set) var cancelTaskCalls: [ParseResult] = []
+    public private(set) var cancelEventCalls: [ParseResult] = []
     public private(set) var planWeekCalls: [ParseResult] = []
     public private(set) var planDayCalls: [ParseResult] = []
     public private(set) var showAgendaCalls: [ParseResult] = []
@@ -38,6 +40,8 @@ public final class MockActionTools: Tools {
     public var rescheduleEventQueue: [ToolResult] = []
     public var updateTaskQueue: [ToolResult] = []
     public var updateEventQueue: [ToolResult] = []
+    public var cancelTaskQueue: [ToolResult] = []
+    public var cancelEventQueue: [ToolResult] = []
     public var planWeekQueue: [ToolResult] = []
     public var planDayQueue: [ToolResult] = []
     public var showAgendaQueue: [ToolResult] = []
@@ -50,6 +54,8 @@ public final class MockActionTools: Tools {
     public var onRescheduleEvent: ((_ cmd: ParseResult) async -> ToolResult)?
     public var onUpdateTask: ((_ cmd: ParseResult) async -> ToolResult)?
     public var onUpdateEvent: ((_ cmd: ParseResult) async -> ToolResult)?
+    public var onCancelTask: ((_ cmd: ParseResult) async -> ToolResult)?
+    public var onCancelEvent: ((_ cmd: ParseResult) async -> ToolResult)?
     public var onPlanWeek: ((_ cmd: ParseResult) async -> ToolResult)?
     public var onPlanDay: ((_ cmd: ParseResult) async -> ToolResult)?
     public var onShowAgenda: ((_ cmd: ParseResult) async -> ToolResult)?
@@ -102,6 +108,20 @@ public final class MockActionTools: Tools {
         return defaultResult(for: cmd)
     }
 
+    public func cancelTask(_ cmd: Zunlo.ParseResult) async -> Zunlo.ToolResult {
+        cancelTaskCalls.append(cmd)
+        if let f = onCancelTask { return await f(cmd) }
+        if !cancelTaskQueue.isEmpty { return cancelTaskQueue.removeFirst() }
+        return defaultResult(for: cmd)
+    }
+    
+    public func cancelEvent(_ cmd: Zunlo.ParseResult) async -> Zunlo.ToolResult {
+        cancelEventCalls.append(cmd)
+        if let f = onCancelEvent { return await f(cmd) }
+        if !cancelEventQueue.isEmpty { return cancelEventQueue.removeFirst() }
+        return defaultResult(for: cmd)
+    }
+    
     public func planWeek(_ cmd: ParseResult) async -> ToolResult {
         planWeekCalls.append(cmd)
         if let f = onPlanWeek { return await f(cmd) }

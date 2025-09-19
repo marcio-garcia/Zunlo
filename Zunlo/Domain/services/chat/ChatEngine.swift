@@ -50,7 +50,7 @@ public actor ChatEngine {
     private var toolResults: [ToolResult] = []
     private let calendar: Calendar
     
-    public init(
+    init(
         conversationId: UUID,
         ai: AIChatService,
         nlpService: NLProcessing,
@@ -69,11 +69,11 @@ public actor ChatEngine {
     }
 
     // Load history via repo actor
-    public func loadHistory(limit: Int? = 200) async throws -> [ChatMessage] {
+    func loadHistory(limit: Int? = 200) async throws -> [ChatMessage] {
         try await repo.loadMessages(conversationId: conversationId, limit: limit)
     }
     
-    public func run(history: [ChatMessage], userMessage: ChatMessage, chatEvent: (ChatEngineEvent) -> Void) async {
+    func run(history: [ChatMessage], userMessage: ChatMessage, chatEvent: (ChatEngineEvent) -> Void) async {
         let lower = userMessage.rawText.lowercased()
         do {
             // Handle locally with NLP
@@ -127,7 +127,7 @@ public actor ChatEngine {
         }
     }
     
-    public func processNlpResult(result: ToolResult) -> AsyncStream<ChatEngineEvent> {
+    func processNlpResult(result: ToolResult) -> AsyncStream<ChatEngineEvent> {
         cancelCurrentStreamIfAny()
         
         return AsyncStream<ChatEngineEvent> { continuation in
@@ -139,7 +139,7 @@ public actor ChatEngine {
                         // Persist + echo the user message (keeps repo in sync with UI snapshot)
                         let userMessage = await self.userMessage
                         try await self.repo.upsert(userMessage)
-                        continuation.yield(.messageAppended(userMessage))
+                        continuation.yield(ChatEngineEvent.messageAppended(userMessage))
 
                         // Build the assistant message from NLP result
                         let assistant = await self.createAssistantMessage(
@@ -182,7 +182,7 @@ public actor ChatEngine {
     }
 
     // Start a new turn: persists the user message, then streams the assistant
-    public func startStream(history: [ChatMessage], userMessage: ChatMessage, output: [ToolOutput] = []) -> AsyncStream<ChatEngineEvent> {
+    func startStream(history: [ChatMessage], userMessage: ChatMessage, output: [ToolOutput] = []) -> AsyncStream<ChatEngineEvent> {
         cancelCurrentStreamIfAny()
 
         return AsyncStream<ChatEngineEvent> { continuation in
@@ -466,7 +466,7 @@ public actor ChatEngine {
         guard let intentAmbiguity = parse.intentAmbiguity else {
             // Fallback for non-ambiguous case (shouldn't happen)
             let label = parse.label(calendar: calendar)
-            let options = [ChatMessageActionAlternative(id: UUID(), parseResultId: parse.id, intentOption: parse.intent, label: label)]
+            let options = [ChatMessageActionAlternative(id: UUID(), parseResultId: parse.id, intentOption: parse.intent, editEventMode: nil, label: label)]
             return ToolResult(
                 intent: parse.intent,
                 action: ToolAction.info(message: "Proceeding with single option"),
@@ -480,7 +480,7 @@ public actor ChatEngine {
         // Create options for each intent prediction
         let options = intentAmbiguity.predictions.map { prediction in
             let label = parse.labelForIntent(prediction.intent, confidence: prediction.confidence, calendar: calendar)
-            return ChatMessageActionAlternative(id: prediction.id, parseResultId: parse.id, intentOption: prediction.intent, label: label)
+            return ChatMessageActionAlternative(id: prediction.id, parseResultId: parse.id, intentOption: prediction.intent, editEventMode: nil, label: label)
         }
 
         let message = parse.createDisambiguationText()
@@ -496,7 +496,7 @@ public actor ChatEngine {
     }
 
     /// Handle user selection of a disambiguation option
-    public func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
+    func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
         // Find the original parse result
         guard let originalParse = nlpResult.first(where: { $0.id == parseResultId }),
               let intentAmbiguity = originalParse.intentAmbiguity else {
@@ -508,6 +508,7 @@ public actor ChatEngine {
         // Create a new ParseResult with the selected intent
         let resolvedParse = ParseResult(
             id: UUID(), // New ID for the resolved parse
+            originalText: originalParse.originalText,
             title: originalParse.title,
             intent: selectedIntent,
             context: originalParse.context,
@@ -538,8 +539,8 @@ public actor ChatEngine {
         case .updateTask: return await localTools.updateTask(cmd)
         case .rescheduleTask: return await localTools.rescheduleTask(cmd)
         case .rescheduleEvent: return await localTools.rescheduleEvent(cmd)
-        case .cancelTask: return ToolResult(intent: .cancelTask)
-        case .cancelEvent: return ToolResult(intent: .cancelEvent)
+        case .cancelTask: return await localTools.cancelTask(cmd)
+        case .cancelEvent: return await localTools.cancelEvent(cmd)
         case .plan: return await localTools.planWeek(cmd)
         case .view: return await localTools.showAgenda(cmd)
         case .unknown: return await localTools.unknown(cmd)

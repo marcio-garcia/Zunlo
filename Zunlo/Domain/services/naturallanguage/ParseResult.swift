@@ -11,14 +11,16 @@ import SmartParseKit
 
 public struct ParseResult: Identifiable {
     public let id: UUID
+    public let originalText: String
     public let title: String
     public let intent: Intent
     public let context: TemporalContext
     public let metadataTokens: [MetadataToken]
     public let intentAmbiguity: IntentAmbiguity?
 
-    public init(id: UUID, title: String, intent: Intent, context: TemporalContext, metadataTokens: [MetadataToken] = [], intentAmbiguity: IntentAmbiguity? = nil) {
+    public init(id: UUID, originalText: String, title: String, intent: Intent, context: TemporalContext, metadataTokens: [MetadataToken] = [], intentAmbiguity: IntentAmbiguity? = nil) {
         self.id = id
+        self.originalText = originalText
         self.title = title
         self.intent = intent
         self.context = context

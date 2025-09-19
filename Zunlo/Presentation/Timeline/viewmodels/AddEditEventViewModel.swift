@@ -71,7 +71,7 @@ final class AddEditEventViewModel: ObservableObject {
         switch mode {
         case .add: return String(localized: "Add event")
         case .editAll: return String(localized: "Edit")
-        case .editSingle: return String(localized: "Edit")
+        case .editSingleOccurrence: return String(localized: "Edit")
         case .editOverride: return String(localized: "Edit")
         case .editFuture: return String(localized: "Edit")
         }
@@ -87,7 +87,7 @@ final class AddEditEventViewModel: ObservableObject {
     var showsCancelSection: Bool { true }
     
     var isEditingSingleOrOverride: Bool {
-        if case .editSingle = mode { return true }
+        if case .editSingleOccurrence = mode { return true }
         if case .editOverride = mode { return true }
         return false
     }
@@ -150,7 +150,7 @@ final class AddEditEventViewModel: ObservableObject {
                 until = nil
                 count = ""
             }
-        case .editSingle(let parent, _, let occurrence):
+        case .editSingleOccurrence(let parent, _, let occurrence):
             title = parent.title
             notes = parent.notes ?? ""
             startDate = occurrence.startDate
@@ -192,8 +192,8 @@ final class AddEditEventViewModel: ObservableObject {
                 try await repo.add(makeInput())
             case .editAll(let event, let oldRule):
                 try await repo.editAll(event: event, with: makeInput(), oldRule: oldRule)
-            case .editSingle(let parent, _, let occ):
-                try await repo.editSingle(parent: parent, occurrence: occ, with: makeInput())
+            case .editSingleOccurrence(let parent, _, let occ):
+                try await repo.editSingleOccurrence(parent: parent, occurrence: occ, with: makeInput())
             case .editOverride(let ov):
                 try await repo.editOverride(ov, with: makeInput())
             case .editFuture(let parent, _, let occ):

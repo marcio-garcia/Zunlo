@@ -9,7 +9,7 @@
 
 import Foundation
 
-public enum AIEvent {
+enum AIEvent {
     case started(replyId: UUID)                  // placeholder assistant message created
     case responseCreated(responseId: String)
     case delta(replyId: UUID, text: String)      // streaming token(s)
@@ -19,7 +19,7 @@ public enum AIEvent {
     case completed(replyId: UUID)
 }
 
-public protocol AIChatService {
+protocol AIChatService {
     func generate(
         conversationId: UUID,
         history: [ChatMessage],

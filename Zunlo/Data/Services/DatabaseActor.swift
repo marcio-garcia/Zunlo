@@ -1006,7 +1006,7 @@ extension DatabaseActor {
     }
 
     /// Create or update a message (idempotent). Also updates the conversation row.
-    public func upsertChatMessage(_ message: ChatMessage) throws {
+    func upsertChatMessage(_ message: ChatMessage) throws {
         let realm = try openRealm()
         try ensureConversationExists(id: message.conversationId) // safety
         try realm.write {

@@ -46,6 +46,15 @@ public enum UserTaskPriority: Int, CaseIterable, Codable, CustomStringConvertibl
         }
     }
     
+    public static func fromParseResult(priority: TaskPriority) -> UserTaskPriority {
+        switch priority {
+        case .low: return UserTaskPriority.low
+        case .medium: return UserTaskPriority.medium
+        case .high: return UserTaskPriority.high
+        case .urgent: return UserTaskPriority.high
+        }
+    }
+    
     // Strategy knob you can set on JSONEncoder.userInfo
     public enum Encoding: Sendable { case int, string }
 

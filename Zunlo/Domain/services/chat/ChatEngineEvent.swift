@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum ChatEngineEvent {
+enum ChatEngineEvent {
     case messageAppended(ChatMessage)                 // new message persisted/emitted (user/assistant/tool)
     case messageDelta(messageId: UUID, delta: String) // assistant token delta
     case messageStatusUpdated(messageId: UUID, status: ChatMessageStatus, error: String?)

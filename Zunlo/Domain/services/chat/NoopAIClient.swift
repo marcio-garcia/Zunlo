@@ -8,13 +8,13 @@
 import Foundation
 
 // Offline/demo stub; swap for a real provider later.
-public final class NoopAIClient: AIChatService {
+final class NoopAIClient: AIChatService {
     private var cancelled = false
-    public init() {}
+    init() {}
 
-    public func cancelCurrentGeneration() { cancelled = true }
+    func cancelCurrentGeneration() { cancelled = true }
 
-    public func generate(
+    func generate(
         conversationId: UUID,
         history: [ChatMessage],
         output: [ToolOutput],

@@ -67,7 +67,7 @@ public final class SupabaseAIChatClient: AIChatService {
         currentTask = nil
     }
 
-    public func generate(
+    func generate(
         conversationId: UUID,
         history: [ChatMessage],
         output: [ToolOutput],

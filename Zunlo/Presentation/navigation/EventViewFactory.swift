@@ -96,7 +96,7 @@ struct EventViewFactory: EventViews {
                 title = String(localized: "Delete all series")
             }
             
-        case .editSingle:
+        case .editSingleOccurrence:
             title = String(localized: "Delete this event")
         case .editOverride:
             title = String(localized: "Delete this event")

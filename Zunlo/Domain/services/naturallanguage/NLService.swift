@@ -14,7 +14,7 @@ public protocol NLProcessing {
 }
 
 extension NLProcessing {
-    func process(text: String, referenceDate: Date = Date()) async throws -> [ParseResult] {
+    func process(text: String, referenceDate: Date) async throws -> [ParseResult] {
         try await process(text: text, referenceDate: referenceDate)
     }
 }
@@ -71,6 +71,7 @@ public final class NLService: NLProcessing {
                 
                 let parseResult = ParseResult(
                     id: UUID(),
+                    originalText: text,
                     title: metadataResult.title,
                     intent: intent,
                     context: context,

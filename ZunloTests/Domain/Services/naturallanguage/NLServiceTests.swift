@@ -13,7 +13,8 @@ import NaturalLanguage
 final class NLServiceTests: XCTestCase {
     private var nlService: NLService!
     private var calendar: Calendar!
-
+    private var now = Date()
+    
     override func setUp() {
         super.setUp()
         calendar = TestUtil.calendarSP()
@@ -31,7 +32,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Basic Temporal Parsing Tests
 
     func testNextWeekAt11() async throws {
-        let results = try await nlService.process(text: "add event graduation ceremony next week at 11:00")
+        let results = try await nlService.process(text: "add event graduation ceremony next week at 11:00", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -41,7 +42,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testNextFriday() async throws {
-        let results = try await nlService.process(text: "move game to next Friday")
+        let results = try await nlService.process(text: "move game to next Friday", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -60,7 +61,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testSpecificDateWithTime() async throws {
-        let results = try await nlService.process(text: "push dentist appointment to october 15th 7pm")
+        let results = try await nlService.process(text: "push dentist appointment to october 15th 7pm", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -70,7 +71,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testRelativeDayAndTime() async throws {
-        let results = try await nlService.process(text: "schedule client meeting for 10am tomorrow")
+        let results = try await nlService.process(text: "schedule client meeting for 10am tomorrow", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -80,7 +81,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testWeekendAnchor() async throws {
-        let results = try await nlService.process(text: "push back do laundry to weekend")
+        let results = try await nlService.process(text: "push back do laundry to weekend", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -101,7 +102,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Metadata Extraction Tests
 
     func testSimpleTagExtraction() async throws {
-        let results = try await nlService.process(text: "Add tag home to pay bills tomorrow")
+        let results = try await nlService.process(text: "Add tag home to pay bills tomorrow", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -122,7 +123,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testMultipleTagsExtraction() async throws {
-        let results = try await nlService.process(text: "Create task with tags work,urgent for the presentation")
+        let results = try await nlService.process(text: "Create task with tags work,urgent for the presentation", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -133,7 +134,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPriorityHighExtraction() async throws {
-        let results = try await nlService.process(text: "Create high priority task for client meeting")
+        let results = try await nlService.process(text: "Create high priority task for client meeting", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -144,7 +145,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testUrgentPriorityExtraction() async throws {
-        let results = try await nlService.process(text: "Add urgent task to fix server issue")
+        let results = try await nlService.process(text: "Add urgent task to fix server issue", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -157,7 +158,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testReminderTimeOffsetExtraction() async throws {
-        let results = try await nlService.process(text: "Remind me 30 minutes before the dentist appointment")
+        let results = try await nlService.process(text: "Remind me 30 minutes before the dentist appointment", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -171,7 +172,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testLocationAtPattern() async throws {
-        let results = try await nlService.process(text: "Schedule meeting at the office tomorrow")
+        let results = try await nlService.process(text: "Schedule meeting at the office tomorrow", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -182,7 +183,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testNotesColonPattern() async throws {
-        let results = try await nlService.process(text: "Add note: Remember to bring documents for the meeting")
+        let results = try await nlService.process(text: "Add note: Remember to bring documents for the meeting", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -195,7 +196,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Complex Integration Tests
 
     func testComplexMetadataExtraction() async throws {
-        let results = try await nlService.process(text: "Add high priority tag work task at home with reminder 1 hour before: Complete quarterly report")
+        let results = try await nlService.process(text: "Add high priority tag work task at home with reminder 1 hour before: Complete quarterly report", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -227,7 +228,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Portuguese Tests
 
     func testPT_NextWeekFri1100() async throws {
-        let results = try await nlService.process(text: "remarcar reunião para próxima semana sex 11:00")
+        let results = try await nlService.process(text: "remarcar reunião para próxima semana sex 11:00", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -237,7 +238,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_TerceaAs10() async throws {
-        let results = try await nlService.process(text: "marcar café terça às 10h")
+        let results = try await nlService.process(text: "marcar café terça às 10h", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -247,7 +248,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_DaquiAUmMes() async throws {
-        let results = try await nlService.process(text: "daqui a um mês às 11h")
+        let results = try await nlService.process(text: "daqui a um mês às 11h", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -255,7 +256,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_NextFriday() async throws {
-        let results = try await nlService.process(text: "Mova jogo para próxima sexta")
+        let results = try await nlService.process(text: "Mova jogo para próxima sexta", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -274,7 +275,7 @@ final class NLServiceTests: XCTestCase {
     }
     
     func testPT_TuesdayAfternoon() async throws {
-        let results = try await nlService.process(text: "Criar reunião terça à tarde")
+        let results = try await nlService.process(text: "Criar reunião terça à tarde", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -299,7 +300,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_TagAddition() async throws {
-        let results = try await nlService.process(text: "Adicionar tag trabalho para tarefa")
+        let results = try await nlService.process(text: "Adicionar tag trabalho para tarefa", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -309,7 +310,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_PriorityExtraction() async throws {
-        let results = try await nlService.process(text: "Criar tarefa alta prioridade para reunião")
+        let results = try await nlService.process(text: "Criar tarefa alta prioridade para reunião", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -319,7 +320,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_LocationExtraction() async throws {
-        let results = try await nlService.process(text: "Agendar reunião no escritório amanhã")
+        let results = try await nlService.process(text: "Agendar reunião no escritório amanhã", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -329,7 +330,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_OrdinalDayAndTimeRange() async throws {
-        let results = try await nlService.process(text: "Crie evento standup 25th 9-10:30am")
+        let results = try await nlService.process(text: "Crie evento standup 25th 9-10:30am", referenceDate: now)
 
         // Clear, well-structured input should have higher confidence
         XCTAssertEqual(results.count, 1)
@@ -348,7 +349,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Spanish Tests
 
     func testES_NextWeekFri1100() async throws {
-        let results = try await nlService.process(text: "reprogramar reunión para la próxima semana vie 11:00")
+        let results = try await nlService.process(text: "reprogramar reunión para la próxima semana vie 11:00", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -358,7 +359,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testES_MartesALas10() async throws {
-        let results = try await nlService.process(text: "programar café para el martes a las 10:00")
+        let results = try await nlService.process(text: "programar café para el martes a las 10:00", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -368,7 +369,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testES_DeAquiAUnMes() async throws {
-        let results = try await nlService.process(text: "de aquí a un mes a las 11h")
+        let results = try await nlService.process(text: "de aquí a un mes a las 11h", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -376,7 +377,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testES_TagAddition() async throws {
-        let results = try await nlService.process(text: "Añadir etiqueta casa a tarea")
+        let results = try await nlService.process(text: "Añadir etiqueta casa a tarea", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -386,7 +387,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testES_PriorityExtraction() async throws {
-        let results = try await nlService.process(text: "Crear tarea urgente para arreglar servidor")
+        let results = try await nlService.process(text: "Crear tarea urgente para arreglar servidor", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -396,7 +397,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testES_LocationExtraction() async throws {
-        let results = try await nlService.process(text: "Programar reunión en la oficina mañana")
+        let results = try await nlService.process(text: "Programar reunión en la oficina mañana", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -408,19 +409,19 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Edge Cases and Error Handling
 
     func testEmptyInput() async throws {
-        let results = try await nlService.process(text: "")
+        let results = try await nlService.process(text: "", referenceDate: now)
 
         XCTAssertEqual(results.count, 0)
     }
 
     func testInputWithOnlyWhitespace() async throws {
-        let results = try await nlService.process(text: "   \t  \n  ")
+        let results = try await nlService.process(text: "   \t  \n  ", referenceDate: now)
 
         XCTAssertEqual(results.count, 0)
     }
 
     func testInputWithSpecialCharacters() async throws {
-        let results = try await nlService.process(text: "Add tag @work to #meeting task!")
+        let results = try await nlService.process(text: "Add tag @work to #meeting task!", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -432,7 +433,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Intent Detection Tests
 
     func testCreateTaskIntent() async throws {
-        let results = try await nlService.process(text: "create task buy groceries")
+        let results = try await nlService.process(text: "create task buy groceries", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -441,7 +442,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testCreateEventIntent() async throws {
-        let results = try await nlService.process(text: "schedule meeting with team")
+        let results = try await nlService.process(text: "schedule meeting with team", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -450,7 +451,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testViewIntent() async throws {
-        let results = try await nlService.process(text: "show agenda for next week")
+        let results = try await nlService.process(text: "show agenda for next week", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -459,7 +460,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testCancelIntent() async throws {
-        let results = try await nlService.process(text: "cancel dentist appointment")
+        let results = try await nlService.process(text: "cancel dentist appointment", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -470,7 +471,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Time Range Tests
 
     func testInlineTimeRange() async throws {
-        let results = try await nlService.process(text: "block Wed 09:00-11:30")
+        let results = try await nlService.process(text: "block Wed 09:00-11:30", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -481,7 +482,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testFromToTimeFormat() async throws {
-        let results = try await nlService.process(text: "meeting from 10:00 to 11:30")
+        let results = try await nlService.process(text: "meeting from 10:00 to 11:30", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -494,7 +495,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Conflict Detection Tests
 
     func testPriorityConflictDetection() async throws {
-        let results = try await nlService.process(text: "Add high priority urgent task")
+        let results = try await nlService.process(text: "Add high priority urgent task", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -505,7 +506,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testConflictingTimes() async throws {
-        let results = try await nlService.process(text: "dinner with parents tonight 8pm at 7pm")
+        let results = try await nlService.process(text: "dinner with parents tonight 8pm at 7pm", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -519,7 +520,7 @@ final class NLServiceTests: XCTestCase {
 
     func testOptimizedIntentDetection() async throws {
         // This test verifies that intent detection leverages already-extracted metadata tokens
-        let results = try await nlService.process(text: "Add tag work for meeting task")
+        let results = try await nlService.process(text: "Add tag work for meeting task", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -532,7 +533,7 @@ final class NLServiceTests: XCTestCase {
 
     func testTemporalRangeExclusion() async throws {
         // Test case where a metadata pattern could potentially overlap with a temporal pattern
-        let results = try await nlService.process(text: "Add tag work and remind me 30 minutes before")
+        let results = try await nlService.process(text: "Add tag work and remind me 30 minutes before", referenceDate: now)
 
         // 2 clauses: "Add tag work" - "remind me 30 minutes before"
         XCTAssertEqual(results.count, 2)
@@ -565,12 +566,12 @@ final class NLServiceTests: XCTestCase {
 
     func testMultipleLanguageDetection() async throws {
         // English input should be processed correctly
-        let englishResults = try await nlService.process(text: "schedule meeting tomorrow at 3pm")
+        let englishResults = try await nlService.process(text: "schedule meeting tomorrow at 3pm", referenceDate: now)
         XCTAssertEqual(englishResults.count, 1)
         XCTAssertEqual(englishResults[0].intent, .createEvent)
 
         // Portuguese input should be processed correctly
-        let portugueseResults = try await nlService.process(text: "agendar reunião amanhã às 15h")
+        let portugueseResults = try await nlService.process(text: "agendar reunião amanhã às 15h", referenceDate: now)
         XCTAssertEqual(portugueseResults.count, 1)
         XCTAssertEqual(portugueseResults[0].intent, .createEvent)
     }
@@ -578,7 +579,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Title Extraction and Cleaning Tests
 
     func testTitleExtractionWithMetadata() async throws {
-        let results = try await nlService.process(text: "move game to next Friday")
+        let results = try await nlService.process(text: "move game to next Friday", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -588,7 +589,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testTitleExtractionWithComplexMetadata() async throws {
-        let results = try await nlService.process(text: "add movie today 20h")
+        let results = try await nlService.process(text: "add movie today 20h", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -599,7 +600,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testRenameTaskTitle() async throws {
-        let results = try await nlService.process(text: "Rename buy food to buy groceries")
+        let results = try await nlService.process(text: "Rename buy food to buy groceries", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -629,7 +630,7 @@ final class NLServiceTests: XCTestCase {
 
     func testAmbiguousCreateVsUpdate() async throws {
         // "task" could be creating new task or updating existing task
-        let results = try await nlService.process(text: "task urgent")
+        let results = try await nlService.process(text: "task urgent", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -667,7 +668,7 @@ final class NLServiceTests: XCTestCase {
 
     func testAmbiguousWithMetadata() async throws {
         // Priority metadata without clear intent verb
-        let results = try await nlService.process(text: "urgent meeting preparation")
+        let results = try await nlService.process(text: "urgent meeting preparation", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -684,7 +685,7 @@ final class NLServiceTests: XCTestCase {
 
     func testAmbiguousRescheduleVsCancel() async throws {
         // "move" could mean reschedule or cancel depending on context
-        let results = try await nlService.process(text: "move meeting")
+        let results = try await nlService.process(text: "move meeting", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -698,7 +699,7 @@ final class NLServiceTests: XCTestCase {
 
     func testAmbiguousLanguageDetection() async throws {
         // Mixed language keywords that could be interpreted differently
-        let results = try await nlService.process(text: "add tarefa importante")
+        let results = try await nlService.process(text: "add tarefa importante", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -715,7 +716,7 @@ final class NLServiceTests: XCTestCase {
 
     func testClearIntentNotAmbiguous() async throws {
         // Clear, unambiguous intent should not trigger disambiguation
-        let results = try await nlService.process(text: "create new task buy groceries tomorrow")
+        let results = try await nlService.process(text: "create new task buy groceries tomorrow", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -732,7 +733,7 @@ final class NLServiceTests: XCTestCase {
 
     func testAmbiguousWithComplexMetadata() async throws {
         // Complex input with multiple metadata types but unclear intent
-        let results = try await nlService.process(text: "high priority tag work reminder 30 minutes report")
+        let results = try await nlService.process(text: "high priority tag work reminder 30 minutes report", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -753,7 +754,7 @@ final class NLServiceTests: XCTestCase {
 
     func testAmbiguousTemporalContext() async throws {
         // Temporal information without clear action verb
-        let results = try await nlService.process(text: "meeting tomorrow 3pm")
+        let results = try await nlService.process(text: "meeting tomorrow 3pm", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -767,7 +768,7 @@ final class NLServiceTests: XCTestCase {
 
     func testConfidenceScoring() async throws {
         // Test that confidence scores make sense for ambiguous cases
-        let results = try await nlService.process(text: "urgent task")
+        let results = try await nlService.process(text: "urgent task", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -788,7 +789,7 @@ final class NLServiceTests: XCTestCase {
 
     func testReasoningProvided() async throws {
         // Test that reasoning is provided for ambiguous intents
-        let results = try await nlService.process(text: "deadline project")
+        let results = try await nlService.process(text: "deadline project", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -808,7 +809,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Portuguese Ambiguous Tests
 
     func testPT_AmbiguousCreateVsUpdate() async throws {
-        let results = try await nlService.process(text: "tarefa urgente")
+        let results = try await nlService.process(text: "tarefa urgente", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -820,7 +821,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testPT_AmbiguousEventVsTask() async throws {
-        let results = try await nlService.process(text: "reunião importante amanhã")
+        let results = try await nlService.process(text: "reunião importante amanhã", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -841,7 +842,7 @@ final class NLServiceTests: XCTestCase {
     // MARK: - Spanish Ambiguous Tests
 
     func testES_AmbiguousCreateVsUpdate() async throws {
-        let results = try await nlService.process(text: "tarea urgente")
+        let results = try await nlService.process(text: "tarea urgente", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -853,7 +854,7 @@ final class NLServiceTests: XCTestCase {
     }
 
     func testES_AmbiguousEventVsTask() async throws {
-        let results = try await nlService.process(text: "reunión importante mañana")
+        let results = try await nlService.process(text: "reunión importante mañana", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -876,7 +877,7 @@ final class NLServiceTests: XCTestCase {
     func testNoAmbiguityForUnknownIntent() async throws {
         // Completely unclear input should result in unknown intent, not ambiguity
         let input = "xyz abc def"
-        let results = try await nlService.process(text: input)
+        let results = try await nlService.process(text: input, referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -886,7 +887,7 @@ final class NLServiceTests: XCTestCase {
 
     func testNoAmbiguityForView() async throws {
         // View intent should typically be clear and not ambiguous
-        let results = try await nlService.process(text: "show my agenda for next week")
+        let results = try await nlService.process(text: "show my agenda for next week", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
@@ -902,7 +903,7 @@ final class NLServiceTests: XCTestCase {
 
     func testMinimalAmbiguityThreshold() async throws {
         // Test that ambiguity threshold works correctly
-        let results = try await nlService.process(text: "buy milk")
+        let results = try await nlService.process(text: "buy milk", referenceDate: now)
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]

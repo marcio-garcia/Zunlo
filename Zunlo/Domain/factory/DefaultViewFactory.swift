@@ -83,9 +83,11 @@ final class DefaultViewFactory: ViewFactory {
         let parser = TemporalComposer(prefs: Preferences(calendar: calendar))
         let nlpService = NLService(parser: parser, intentDetector: intentDetector, calendar: calendar)
         
-        let tools = ActionTools(events: appState.eventRepository!,
-                                tasks: appState.userTaskRepository!,
-                                calendar: calendar)
+        let tools = ToolCoordinator(events: appState.eventRepository!,
+                                    tasks: appState.userTaskRepository!,
+                                    userId: appState.authManager!.userId!,
+                                    referenceDate: Date(),
+                                    calendar: calendar)
 
         let aiChatEngine = ChatEngine(
             conversationId: cid,

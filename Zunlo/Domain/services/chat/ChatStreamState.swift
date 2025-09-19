@@ -7,14 +7,14 @@
 
 import Foundation
 
-public enum ChatStreamState: Equatable {
+enum ChatStreamState: Equatable {
     case idle
     case streaming(assistantId: UUID, continuation: AsyncStream<ChatEngineEvent>.Continuation?)
     case awaitingTools(responseId: String, assistantId: UUID?)
     case failed(String)
     case stopped(assistantId: UUID?)
     
-    public static func == (lhs: ChatStreamState, rhs: ChatStreamState) -> Bool {
+    static func == (lhs: ChatStreamState, rhs: ChatStreamState) -> Bool {
         switch lhs {
         case .idle:
             if rhs == .idle {

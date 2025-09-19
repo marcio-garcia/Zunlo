@@ -7,9 +7,6 @@
     "–" : {
 
     },
-    "(no title)" : {
-
-    },
     "%@ (Device)" : {
 
     },
@@ -148,6 +145,7 @@
       }
     },
     "All in series" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -1299,9 +1297,6 @@
         }
       }
     },
-    "Pick a due date for ‘%@’." : {
-      "comment" : "disambig message"
-    },
     "Pick a new time for '%@'." : {
 
     },
@@ -1873,12 +1868,6 @@
         }
       }
     },
-    "This and future" : {
-
-    },
-    "This occurrence" : {
-
-    },
     "Time Zone" : {
       "localizations" : {
         "pt-BR" : {
@@ -2051,9 +2040,6 @@
           }
         }
       }
-    },
-    "What time should ‘%@’ be?" : {
-
     },
     "Which event do you want to update?" : {
 

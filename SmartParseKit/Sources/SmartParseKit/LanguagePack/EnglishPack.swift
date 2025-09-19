@@ -97,7 +97,7 @@ public struct EnglishPack: DateLanguagePack {
     }
 
     public func intentCreateRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(create|add|schedule|book|set\s*up)\b"#) }
-    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reschedul|rebook|postpone|push|push\s*back|delay|move|change|modify)\b"#) }
+    public func intentRescheduleRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(reschedul\S+|rebook|postpone|push|push\s*back|delay|move|change|modify)\b"#) }
     public func intentCancelRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(delete|remove|cancel|don't\s+schedule|do\s+not\s+schedule)\b"#) }
     public func intentViewRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(display|show|view|what's\s+on|agenda|my\s+schedule|calendar)\b"#) }
     public func intentPlanRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(plan|organize|structure|map\s+out)\b"#) }

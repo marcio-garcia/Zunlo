@@ -8,16 +8,18 @@
 import Foundation
 import SmartParseKit
 
-public struct ChatMessageActionAlternative: Identifiable, Equatable, Hashable {
-    public var id: UUID
-    public var parseResultId: UUID
-    public var intentOption: Intent
-    public var label: AttributedString
+struct ChatMessageActionAlternative: Identifiable, Equatable, Hashable {
+    var id: UUID
+    var parseResultId: UUID
+    var intentOption: Intent
+    var editEventMode: AddEditEventViewMode?
+    var label: AttributedString
 
-    public init(id: UUID, parseResultId: UUID, intentOption: Intent, label: AttributedString) {
+    init(id: UUID, parseResultId: UUID, intentOption: Intent, editEventMode: AddEditEventViewMode?, label: AttributedString) {
         self.id = id
         self.parseResultId = parseResultId
         self.intentOption = intentOption
+        self.editEventMode = editEventMode
         self.label = label
     }
     
@@ -25,6 +27,7 @@ public struct ChatMessageActionAlternative: Identifiable, Equatable, Hashable {
         self.id = UUID()
         self.parseResultId = UUID()
         self.intentOption = .unknown
+        self.editEventMode = nil
         self.label = label
     }
 }

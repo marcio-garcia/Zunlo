@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol ChatLocalStore {
+protocol ChatLocalStore {
     func fetch(conversationId: UUID, limit: Int?) async throws -> [ChatMessageLocal]
     func upsert(_ message: ChatMessage) async throws
     func append(messageId: UUID, delta: String, status: ChatMessageStatus) async throws

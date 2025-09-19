@@ -25,20 +25,20 @@ public enum ChatMessageFormat: String, Codable {
     case rich        // use provided AttributedString
 }
 
-public struct ChatMessage: Identifiable, Hashable {
-    public let id: UUID
-    public let conversationId: UUID
-    public let role: ChatRole
-    public var rawText: String
-    public var richText: AttributedString?
-    public let createdAt: Date
-    public var status: ChatMessageStatus
-    public var format: ChatMessageFormat
-    public var userId: UUID?
-    public var attachments: [ChatAttachment]
-    public var actions: [ChatMessageActionAlternative]
-    public var parentId: UUID?
-    public var errorDescription: String?
+struct ChatMessage: Identifiable, Hashable {
+    let id: UUID
+    let conversationId: UUID
+    let role: ChatRole
+    var rawText: String
+    var richText: AttributedString?
+    let createdAt: Date
+    var status: ChatMessageStatus
+    var format: ChatMessageFormat
+    var userId: UUID?
+    var attachments: [ChatAttachment]
+    var actions: [ChatMessageActionAlternative]
+    var parentId: UUID?
+    var errorDescription: String?
 }
 
 extension ChatMessage {

@@ -20,6 +20,7 @@ public final class MockNLService: NLProcessing {
         let range = DateInterval(start: today, end: tomorrow)
         return [ParseResult(
             id: UUID(),
+            originalText: text,
             title: "This is your agenda",
                             intent: .view,
                             context: TemporalContext(finalDate: today,
