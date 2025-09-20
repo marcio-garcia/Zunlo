@@ -217,7 +217,29 @@ final class TemporalComposerTests: XCTestCase {
             TemporalToken(range: NSRange(location: 22, length: 9), text: "next week", kind: .relativeWeek(.nextWeek(count: 1)))
         ])
     }
+    
+    func testRelativeDayAndTimeWithH() {
+        let pack = EnglishPack(calendar: calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("add movie today 20h", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
 
+        XCTAssertEqual(result.0, .createEvent)
+        XCTAssertEqual(result.1[0].text, "today"); XCTAssertEqual(result.1[0].kind, .relativeDay(.today));
+        XCTAssertEqual(result.1[1].text, "20h"); XCTAssertEqual(result.1[1].kind, .absoluteTime(DateComponents(hour: 20, minute: 0)));
+    }
+
+    func testWeekday() async throws {
+        let pack = EnglishPack(calendar: calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("reschedule submit assignment task to Friday", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+
+        XCTAssertEqual(result.0, .rescheduleTask)
+        XCTAssertEqual(result.1[0].text, "Friday");
+        XCTAssertEqual(result.1[0].kind, .weekday(dayIndex: 6, modifier: nil))
+    }
+    
     // --- Portuguese (BR) ---
     func testPT_NextWeekFri1100() {
         let pack = PortugueseBRPack(calendar: calendarSP())
@@ -245,19 +267,8 @@ final class TemporalComposerTests: XCTestCase {
             return false
         })
     }
-    
-    func testRelativeDayAndTimeWithH() {
-        let pack = EnglishPack(calendar: calendarSP())
-        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
-        let now = makeNow()
-        let result = composer.parse("add movie today 20h", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
 
-        XCTAssertEqual(result.0, .createEvent)
-        XCTAssertEqual(result.1[0].text, "today"); XCTAssertEqual(result.1[0].kind, .relativeDay(.today));
-        XCTAssertEqual(result.1[1].text, "20h"); XCTAssertEqual(result.1[1].kind, .absoluteTime(DateComponents(hour: 20, minute: 0)));
-    }
-
-    func testPT_TerceaAs10() {
+    func testPT_TercaAs10() {
         let pack = PortugueseBRPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()

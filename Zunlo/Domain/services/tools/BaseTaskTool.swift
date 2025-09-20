@@ -12,12 +12,14 @@ import SmartParseKit
 
 /// Base class for task-related tools with shared functionality
 class BaseTaskTool {
-    internal let tasks: TaskStore
-    internal let calendar: Calendar
+    let tasks: TaskStore
+    let referenceDate: Date
+    let calendar: Calendar
 
-    init(tasks: TaskStore, calendar: Calendar = .appDefault) {
+    init(tasks: TaskStore, referenceDate: Date, calendar: Calendar = .appDefault) {
         self.tasks = tasks
         self.calendar = calendar
+        self.referenceDate = referenceDate
     }
 
     // MARK: - Common Task Filtering
@@ -26,10 +28,10 @@ class BaseTaskTool {
         _ tasks: [UserTask],
         command: ParseResult,
         excludeCompleted: Bool = true,
-        allowPastTasks: Bool = false
+        allowPastTasks: Bool = false,
+        referenceDate: Date
     ) -> [UserTask] {
 
-        let now = Date()
         let context = command.context
 
         return tasks.filter { task in
@@ -48,7 +50,7 @@ class BaseTaskTool {
 
             // 3. Handle past tasks
             if let dueDate = task.dueDate {
-                if !allowPastTasks && dueDate < now {
+                if !allowPastTasks && dueDate < referenceDate {
                     return false
                 }
             }

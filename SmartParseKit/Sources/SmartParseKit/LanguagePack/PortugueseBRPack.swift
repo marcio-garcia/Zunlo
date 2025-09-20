@@ -221,6 +221,8 @@ public struct PortugueseBRPack: DateLanguagePack {
 
     // MARK: - Metadata Pattern Implementation
 
+    public func titleTokenRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"\b(titulo|título)\b"#) }
+    
     public func tagPatternRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"""
         (?ix)

@@ -67,6 +67,8 @@ public protocol DateLanguagePack {
 
     // MARK: - Metadata Detection Patterns
 
+    func titleTokenRegex() -> NSRegularExpression
+    
     // Tag patterns: "tag work", "add tag home to", "with tag personal"
     func tagPatternRegex() -> NSRegularExpression?
 

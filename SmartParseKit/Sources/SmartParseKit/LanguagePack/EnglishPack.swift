@@ -133,7 +133,7 @@ public struct EnglishPack: DateLanguagePack {
     }
 
     public func eventKeywordsRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(event)\b"#)
+        BaseLanguagePack.regex(#"\b(event)\b"#)
     }
 
     // Metadata addition detection patterns
@@ -211,6 +211,8 @@ public struct EnglishPack: DateLanguagePack {
 
     // MARK: - Metadata Pattern Implementation
 
+    public func titleTokenRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"\b(title)\b"#) }
+    
     public func tagPatternRegex() -> NSRegularExpression? {
         BaseLanguagePack.regex(#"""
         (?ix)

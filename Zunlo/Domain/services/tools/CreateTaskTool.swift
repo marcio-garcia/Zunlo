@@ -14,9 +14,9 @@ import SmartParseKit
 final class CreateTaskTool: BaseTaskTool, ActionTool {
     private let userId: UUID
     
-    init(tasks: TaskStore, userId: UUID, calendar: Calendar = .appDefault) {
+    init(tasks: TaskStore, userId: UUID, referenceDate: Date, calendar: Calendar = .appDefault) {
         self.userId = userId
-        super.init(tasks: tasks, calendar: calendar)
+        super.init(tasks: tasks, referenceDate: referenceDate, calendar: calendar)
     }
 
     // MARK: - ActionTool Conformance

@@ -13,10 +13,6 @@ import SmartParseKit
 /// Tool for updating existing tasks
 final class UpdateTaskTool: BaseTaskTool, ActionTool {
 
-    override init(tasks: TaskStore, calendar: Calendar = .appDefault) {
-        super.init(tasks: tasks, calendar: calendar)
-    }
-
     // MARK: - ActionTool Conformance
 
     func perform(_ command: ParseResult) async -> ToolResult {
@@ -29,7 +25,8 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
                 allTasks,
                 command: command,
                 excludeCompleted: false,
-                allowPastTasks: true
+                allowPastTasks: true,
+                referenceDate: referenceDate
             )
 
             // 3. Handle selection and perform update

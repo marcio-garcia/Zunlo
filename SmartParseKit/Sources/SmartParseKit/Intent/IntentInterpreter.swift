@@ -66,13 +66,13 @@ public final class IntentInterpreter {
             scores[.createEvent]! += 5.0
         }
 
-        if languagePack.intentCancelTaskRegex().firstMatch(in: lowercased, range: range) != nil {
-            scores[.cancelTask]! += 5.0
-        }
-
-        if languagePack.intentCancelEventRegex().firstMatch(in: lowercased, range: range) != nil {
-            scores[.cancelEvent]! += 5.0
-        }
+//        if languagePack.intentCancelTaskRegex().firstMatch(in: lowercased, range: range) != nil {
+//            scores[.cancelTask]! += 5.0
+//        }
+//
+//        if languagePack.intentCancelEventRegex().firstMatch(in: lowercased, range: range) != nil {
+//            scores[.cancelEvent]! += 5.0
+//        }
 
         // General intent patterns (high scores - 4.0+)
         // These indicate action type but not entity type

@@ -13,10 +13,6 @@ import SmartParseKit
 /// Tool for rescheduling tasks to new due dates
 final class RescheduleTaskTool: BaseTaskTool, ActionTool {
 
-    override init(tasks: TaskStore, calendar: Calendar = .appDefault) {
-        super.init(tasks: tasks, calendar: calendar)
-    }
-
     // MARK: - ActionTool Conformance
 
     func perform(_ command: ParseResult) async -> ToolResult {
@@ -29,7 +25,8 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
                 allTasks,
                 command: command,
                 excludeCompleted: true,
-                allowPastTasks: true
+                allowPastTasks: true,
+                referenceDate: referenceDate
             )
 
             // 3. Handle selection and perform reschedule

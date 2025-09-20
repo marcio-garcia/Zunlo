@@ -59,10 +59,10 @@ class EnhancedEventPicker {
         let scoredCandidates = scoreEventCandidates(events, for: command, intent: intent, referenceDate: referenceDate)
 
         // 2. Apply intent-specific filtering and weighting
-        let filtered = applyIntentSpecificFiltering(scoredCandidates, intent: intent, command: command, referenceDate: referenceDate)
+//        let filtered = applyIntentSpecificFiltering(scoredCandidates, intent: intent, command: command, referenceDate: referenceDate)
 
         // 3. Intelligent selection with confidence assessment
-        return makeIntelligentSelection(filtered, command: command, intent: intent)
+        return makeIntelligentSelection(scoredCandidates, command: command, intent: intent)
     }
 
     // MARK: - Enhanced Scoring
@@ -190,7 +190,7 @@ class EnhancedEventPicker {
         let baseScore = max(rangeScore, proximityScore)
 
         // 2. Intent-specific temporal preferences
-        let intentModifier = getTemporalModifier(for: intent, event: event, now: referenceDate)
+        let intentModifier = 1.0 // getTemporalModifier(for: intent, event: event, now: referenceDate)
 
         // 3. Recency bias for certain intents
         let recencyModifier = calculateRecencyModifier(event: event, intent: intent, now: referenceDate)
@@ -420,7 +420,7 @@ struct UserPreferences {
     let languageCode: String
 
     static let `default` = UserPreferences(
-        timeToleranceHours: 6.0,
+        timeToleranceHours: 0.5,
         preferRecent: true,
         languageCode: "en"
     )

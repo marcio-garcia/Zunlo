@@ -382,13 +382,14 @@ public struct MetadataExtractor {
         if let partOfDayRegex = pack.partOfDayRegex() {
             result = partOfDayRegex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
         }
-
+        
+        result = pack.titleTokenRegex().stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
+        
         // Detect title renaming using connector tokens (before removing connectors)
         let titleRenamingResult = detectTitleRenaming(in: result, originalText: text, connectorTokens: pack.connectorTokens)
 
         // If title renaming was detected, clean title should only be the part before the connector
-        if titleRenamingResult.newTitle != nil,
-           let originalParts = titleRenamingResult.originalParts {
+        if titleRenamingResult.newTitle != nil, let originalParts = titleRenamingResult.originalParts {
             // Use only the original title (before connector) as clean title
             result = originalParts.beforeConnector
         } else {
@@ -403,10 +404,7 @@ public struct MetadataExtractor {
         }
 
         // Normalize whitespace & punctuation for clean title
-        result = result.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"^[\s,;:.\-!?'/*&%$#@+=<>|\\~`_]+"#, with: "", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"[\s,;:.\-!?'/*&%$#@+=<>|\\~`_]+$"#, with: "", options: .regularExpression)
-        result = result.trimmingCharacters(in: .whitespacesAndNewlines)
+        result = trimTitle(result)
 
         return TitleExtractionResult(
             cleanTitle: result,
@@ -459,8 +457,10 @@ public struct MetadataExtractor {
         }
 
         // Split the text around the connector
-        let beforeConnector = String(cleanedText[..<connRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-        let afterConnector = String(cleanedText[connRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        var beforeConnector = String(cleanedText[..<connRange.lowerBound])
+        beforeConnector = trimTitle(beforeConnector)
+        var afterConnector = String(cleanedText[connRange.upperBound...])
+        afterConnector = trimTitle(afterConnector)
 
         // Validate that both parts have meaningful content
         guard !beforeConnector.isEmpty,
@@ -505,6 +505,16 @@ public struct MetadataExtractor {
         return TitleRenamingResult(newTitle: newTitleInfo, originalParts: titleParts)
     }
 
+    private func trimTitle(_ title: String) -> String {
+        // Normalize whitespace & punctuation for clean title
+        var result = title
+        result = result.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"^[\s,;:.\-!?'"/*&%$#@+=<>|\\~`_]+"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"[\s,;:.\-!?'"/*&%$#@+=<>|\\~`_]+$"#, with: "", options: .regularExpression)
+        result = result.trimmingCharacters(in: .whitespacesAndNewlines)
+        return result
+    }
+    
     private func calculateTitleRenamingConfidence(originalTitle: String, newTitle: String, connector: String) -> Float {
         var confidence: Float = 0.8 // Base confidence for valid renaming pattern
 
