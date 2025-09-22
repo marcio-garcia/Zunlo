@@ -382,18 +382,21 @@ struct TodayView: View {
     
     func lowResName(for weather: WeatherInfo?) -> String {
         let name = backgroundImageName
+        var finalName = ""
+        
         if name == "bg_default" {
             if Theme.isDarkMode {
-                return "\(name)_low_dark"
+                finalName = "\(name)_low_dark"
             }
-            return "\(name)_low_light"
+            finalName =  "\(name)_low_light"
         }
-        return "\(name)_low"
+        finalName = "\(name)_low"
+        
+        return finalName
     }
     
     func remoteName(for weather: WeatherInfo?) -> String? {
-        let name = backgroundImageName
-        return name == "bg_default" ? nil : "\(name).heic"
+        return backgroundImageName == "bg_default" ? nil : "\(backgroundImageName).heic"
     }
     
     private var backgroundImageName: String {
