@@ -52,11 +52,12 @@ class EnhancedEventPicker {
         from events: [EventOccurrence],
         for command: ParseResult,
         intent: Intent,
-        referenceDate: Date
+        referenceDate: Date,
+        searchWindow: DateInterval? = nil
     ) -> CandidateSelection<EventOccurrence> {
 
         // 1. Score all candidates with enhanced metrics
-        let scoredCandidates = scoreEventCandidates(events, for: command, intent: intent, referenceDate: referenceDate)
+        let scoredCandidates = scoreEventCandidates(events, for: command, intent: intent, referenceDate: referenceDate, searchWindow: searchWindow)
 
         // 2. Apply intent-specific filtering and weighting
 //        let filtered = applyIntentSpecificFiltering(scoredCandidates, intent: intent, command: command, referenceDate: referenceDate)
@@ -71,11 +72,12 @@ class EnhancedEventPicker {
         _ events: [EventOccurrence],
         for command: ParseResult,
         intent: Intent,
-        referenceDate: Date
+        referenceDate: Date,
+        searchWindow: DateInterval?
     ) -> [ScoredCandidate<EventOccurrence>] {
 
         return events.compactMap { event in
-            let score = calculateEnhancedScore(event: event, command: command, intent: intent, referenceDate: referenceDate)
+            let score = calculateEnhancedScore(event: event, command: command, intent: intent, referenceDate: referenceDate, searchWindow: searchWindow)
             return ScoredCandidate(candidate: event, score: score)
         }.sorted { $0.score.total > $1.score.total }
     }
@@ -84,7 +86,8 @@ class EnhancedEventPicker {
         event: EventOccurrence,
         command: ParseResult,
         intent: Intent,
-        referenceDate: Date
+        referenceDate: Date,
+        searchWindow: DateInterval?
     ) -> EventScore {
 
         // 1. Title/Text Similarity (enhanced with semantic understanding)
@@ -99,7 +102,8 @@ class EnhancedEventPicker {
             event: event,
             command: command,
             intent: intent,
-            referenceDate: referenceDate
+            referenceDate: referenceDate,
+            searchWindow: searchWindow
         )
 
         // 3. Contextual Factors
@@ -176,11 +180,12 @@ class EnhancedEventPicker {
         event: EventOccurrence,
         command: ParseResult,
         intent: Intent,
-        referenceDate: Date
+        referenceDate: Date,
+        searchWindow: DateInterval?
     ) -> Double {
 
         // 1. Check if event falls within specified date range (for "hoje", "amanha", etc.)
-        let rangeScore = calculateDateRangeScore(event: event, command: command)
+        let rangeScore = calculateDateRangeScore(event: event, command: command, searchWindow: searchWindow)
 
         // 2. Base time proximity (for specific times)
         let anchor = command.context.dateRange?.start ?? command.context.finalDate
@@ -488,16 +493,22 @@ extension EnhancedEventPicker {
         return min(1.0, score)
     }
 
-    private func calculateDateRangeScore(event: EventOccurrence, command: ParseResult) -> Double {
-        let context = command.context
-        let startOfFinalDate = context.finalDate.startOfDay(calendar: calendar)
-        var startOfNextDay = startOfFinalDate.startOfNextDay(calendar: calendar)
-        startOfNextDay = calendar.date(byAdding: .second, value: -1, to: startOfNextDay) ?? startOfNextDay
+    private func calculateDateRangeScore(event: EventOccurrence, command: ParseResult, searchWindow: DateInterval?) -> Double {
+        var dateRange: DateInterval
         
-        let dateRange = context.dateRange ?? DateInterval(
-            start: startOfFinalDate,
-            end: startOfNextDay
-        )
+        if let interval = searchWindow {
+            dateRange = interval
+        } else {
+            let context = command.context
+            let startOfFinalDate = context.finalDate.startOfDay(calendar: calendar)
+            var startOfNextDay = startOfFinalDate.startOfNextDay(calendar: calendar)
+            startOfNextDay = calendar.date(byAdding: .second, value: -1, to: startOfNextDay) ?? startOfNextDay
+            
+            dateRange = context.dateRange ?? DateInterval(
+                start: startOfFinalDate,
+                end: startOfNextDay
+            )
+        }
 
         // Check if event overlaps with the specified date range
         let eventStart = event.startDate

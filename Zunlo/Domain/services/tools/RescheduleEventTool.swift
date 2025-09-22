@@ -28,13 +28,15 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
             let allEvents = try await events.fetchOccurrences()
 
             // 2. Pre-filter events for reschedule context
+            let searchWindow = DateInterval(start: referenceDate, end: command.context.finalDate)
             let relevantEvents = filterEventsForOperation(
                 allEvents,
                 command: command,
                 excludeCancelled: true,
                 allowPastEvents: true,
                 pastEventToleranceHours: 1.0,
-                referenceDate: referenceDate
+                referenceDate: referenceDate,
+                searchWindow: searchWindow
             )
 
             // 3. Use enhanced picker for better candidate selection
@@ -42,7 +44,8 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
                 from: relevantEvents,
                 for: command,
                 intent: .rescheduleEvent,
-                referenceDate: referenceDate
+                referenceDate: referenceDate,
+                searchWindow: searchWindow
             )
 
             // 4. Handle selection based on confidence
@@ -53,7 +56,7 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
         } catch {
             return ToolResult(
                 intent: command.intent,
-                action: .none,
+                action: .info(message: "Error"),
                 needsDisambiguation: false,
                 options: [],
                 message: error.localizedDescription
@@ -73,7 +76,7 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
             guard let newTiming = extractNewTiming(from: command, originalEvent: event) else {
                 return ToolResult(
                     intent: command.intent,
-                    action: .none,
+                    action: .info(message: "More info"),
                     needsDisambiguation: false,
                     options: [],
                     message: "Please specify the new date or time for the event.".localized
@@ -120,13 +123,18 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
                     action: .rescheduledEvent(eventId: event.id, start: newTiming, end: newEndDate),
                     needsDisambiguation: false,
                     options: [],
-                    message: String(format: "Rescheduled '%@' to %@.".localized, event.title, formatEventTime(newTiming, newEndDate))
+                    message: String(
+                        format: "Rescheduled '%@' to %@ %@.".localized,
+                        event.title,
+                        formatDay(event.startDate),
+                        formatTimeRange(newTiming, newEndDate)
+                    )
                 )
             }
         } catch {
             return ToolResult(
                 intent: command.intent,
-                action: .none,
+                action: .info(message: "More info"),
                 needsDisambiguation: false,
                 options: [],
                 message: "Failed to reschedule event: \(error.localizedDescription)"
@@ -140,9 +148,9 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
         let context = command.context
 
         // If there's a specific new date in the context, use it
-        if let dateRange = context.dateRange {
-            return dateRange.start
-        }
+//        if let dateRange = context.dateRange {
+//            return dateRange.start
+//        }
 
         // Use the final date from context
         if context.finalDate != originalEvent.startDate {
@@ -151,11 +159,4 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
 
         return nil
     }
-
-    // MARK: - Helper Methods
-
-    private func formatEventTime(_ start: Date, _ end: Date) -> String {
-        return formatRange(start, end)
-    }
-    
 }

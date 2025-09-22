@@ -142,7 +142,7 @@ public actor ChatEngine {
                         continuation.yield(ChatEngineEvent.messageAppended(userMessage))
 
                         // Build the assistant message from NLP result
-                        let assistant = await self.createAssistantMessage(
+                        var assistant = await self.createAssistantMessage(
                             conversationId: self.conversationId,
                             rawText: result.message,
                             richText: result.richText,
@@ -150,13 +150,17 @@ public actor ChatEngine {
                             actions: result.options
                         )
 
-                        // Persist + stream events to the UI
-                        try await self.repo.upsert(assistant)
+                        // Stream events to the UI
                         continuation.yield(.messageAppended(assistant))
                         
                         try await Task.sleep(for: .seconds(2))
                         
+                        assistant.status = .sent
                         continuation.yield(.messageStatusUpdated(messageId: assistant.id, status: .sent, error: nil))
+                        
+                        // Persist message
+                        try await self.repo.upsert(assistant)
+                        
                         continuation.yield(.completed(messageId: assistant.id))
 
                         // 4) Return engine to idle so the UI stops the spinner
@@ -498,11 +502,16 @@ public actor ChatEngine {
     /// Handle user selection of a disambiguation option
     func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
         // Find the original parse result
-        guard let originalParse = nlpResult.first(where: { $0.id == parseResultId }),
-              let intentAmbiguity = originalParse.intentAmbiguity else {
-            return
+        guard let originalParse = nlpResult.first(where: { $0.id == parseResultId }) else { return }
+        
+        if let intentAmbiguity = originalParse.intentAmbiguity {
+            await handleIntentDisambiguation(originalParse: originalParse, intentAmbiguity: intentAmbiguity, selectedOptionId: selectedOptionId, chatEvent: chatEvent)
+        } else {
+            handleToolDisambiguation(selectedOptionId: selectedOptionId)
         }
-
+    }
+    
+    func handleIntentDisambiguation(originalParse: ParseResult, intentAmbiguity: IntentAmbiguity, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
         let selectedIntent = intentAmbiguity.predictions.first(where: { $0.id == selectedOptionId })?.intent ?? .unknown
         
         // Create a new ParseResult with the selected intent
@@ -514,17 +523,30 @@ public actor ChatEngine {
             context: originalParse.context,
             metadataTokens: originalParse.metadataTokens,
             intentAmbiguity: nil // Clear ambiguity since user has decided
+            //****************** incluir toolResult aqui para poder executar com a escolha feita
         )
+        
+        nlpResult.append(resolvedParse)
 
         // Execute the resolved parse
         do {
             let result = try await execute(resolvedParse)
-            await processResults(toolResults: [result], chatEvent: chatEvent)
+            self.toolResults.removeAll()
+            self.toolResults.append(result)
+            await processResults(toolResults: self.toolResults, chatEvent: chatEvent)
         } catch {
             // If NLP fails, just use the normal AI streaming path
             let asyncStream = startStream(history: history, userMessage: userMessage)
             for await ev in asyncStream {
                 chatEvent(ev)
+            }
+        }
+    }
+    
+    func handleToolDisambiguation(selectedOptionId: UUID) {
+        for result in self.toolResults {
+            if let option = result.options.first(where: { $0.id == selectedOptionId }) {
+                
             }
         }
     }

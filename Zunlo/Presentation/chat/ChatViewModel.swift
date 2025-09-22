@@ -242,7 +242,9 @@ extension ChatViewModel {
         print("selected: \(action.label)")
         Task {
             await engine.handleDisambiguationSelection(parseResultId: action.parseResultId, selectedOptionId: action.id) { chatEvent in
-                Task { await self.consume(chatEvent) }
+                Task {
+                    await self.consume(chatEvent)
+                }
             }
         }
 //        switch action {

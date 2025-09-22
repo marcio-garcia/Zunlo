@@ -150,18 +150,18 @@ class BaseTaskTool {
     func taskLabel(_ task: UserTask) -> String {
         let title = !task.title.isEmpty ? task.title : "(no title)".localized
         if let dueDate = task.dueDate {
-            return "\(title) — due \(formatDate(dueDate))"
+            return "\(title) — due \(formatDay(dueDate))"
         } else {
             return title
         }
     }
-
-    func formatDate(_ date: Date) -> String {
+    
+    func formatDay(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
         formatter.dateStyle = .medium
-        formatter.timeStyle = .short
+        formatter.timeStyle = .none
         return formatter.string(from: date)
     }
 

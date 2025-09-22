@@ -74,8 +74,8 @@ final class ActionToolsTests: XCTestCase {
 
     func testCancelEventTool() async throws {
         // Setup test data
-        let testEvent = createTestEvent(title: "Team Meeting", startHour: 14, referenceDate: now)
-        mockEventStore.mockEvents = [testEvent]
+        let testEvent = mockEventStore.createTestEvent(title: "Team Meeting", startHour: 14, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [testEvent]
 
         // Get parse result
         let parseResults = try await nlService.process(text: "cancel team meeting today", referenceDate: now)
@@ -93,8 +93,8 @@ final class ActionToolsTests: XCTestCase {
 
     func testRescheduleEventTool() async throws {
         // Setup test data
-        let testEvent = createTestEvent(title: "Doctor Appointment", startHour: 10, referenceDate: now)
-        mockEventStore.mockEvents = [testEvent]
+        let testEvent = mockEventStore.createTestEvent(title: "Doctor Appointment", startHour: 10, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [testEvent]
 
         // Get parse result
         let parseResults = try await nlService.process(text: "reschedule doctor appointment to 3pm", referenceDate: now)
@@ -113,11 +113,73 @@ final class ActionToolsTests: XCTestCase {
             XCTFail("Expected rescheduledEvent action")
         }
     }
+    
+    func testRescheduleEventToWeekday() async throws {
+        // Setup test data
+        let testEvent = mockEventStore.createTestEvent(title: "Doctor Appointment", startHour: 10, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [testEvent]
+
+        // Get parse result
+        let parseResults = try await nlService.process(text: "reschedule doctor appointment to Monday", referenceDate: now)
+        XCTAssertEqual(parseResults.count, 1)
+        let parseResult = parseResults[0]
+
+        // Test the tool
+        let result = await rescheduleEventTool.perform(parseResult)
+
+        XCTAssertEqual(result.intent, .rescheduleEvent)
+        XCTAssertFalse(result.needsDisambiguation)
+        if case .rescheduledEvent(let eventId, let start, _) = result.action {
+            XCTAssertEqual(eventId, testEvent.id)
+            XCTAssertEqual(calendar.component(.hour, from: start), 10)
+        } else {
+            XCTFail("Expected rescheduledEvent action")
+        }
+    }
+    
+    func testPT_CreateAndRescheduleEventTomorrow() async throws {
+
+        var eventId = UUID()
+        
+        // Create event
+        let createParseResults = try await nlService.process(text: "crie reuniao amanha", referenceDate: now)
+        
+        XCTAssertEqual(createParseResults.count, 1)
+        let createParseResult = createParseResults[0]
+        let createToolResult = await createEventTool.perform(createParseResult)
+        
+        XCTAssertEqual(createToolResult.intent, .createEvent)
+        if case .createdEvent(let id) = createToolResult.action {
+            eventId = id
+        } else {
+            XCTFail("Expected createdEvent action")
+        }
+        XCTAssertFalse(createToolResult.needsDisambiguation)
+        XCTAssertTrue(createToolResult.message?.contains("Created event") == true)
+        
+
+        // Reschedule event
+        let parseResults = try await nlService.process(text: "mova reuniao de amanha para as 11h", referenceDate: now)
+        XCTAssertEqual(parseResults.count, 1)
+        let parseResult = parseResults[0]
+
+        // Test the tool
+        let result = await rescheduleEventTool.perform(parseResult)
+
+        XCTAssertEqual(result.intent, .rescheduleEvent)
+        XCTAssertFalse(result.needsDisambiguation)
+        if case .rescheduledEvent(let id, let start, _) = result.action {
+            XCTAssertEqual(id, eventId)
+            XCTAssertEqual(calendar.component(.hour, from: start), 11)
+        } else {
+            XCTFail("Expected rescheduledEvent action")
+        }
+    }
 
     func testUpdateEventTool() async throws {
         // Setup test data
-        let testEvent = createTestEvent(title: "Project Review", startHour: 9, referenceDate: now)
-        mockEventStore.mockEvents = [testEvent]
+        let testEvent = mockEventStore.createTestEvent(title: "Project Review", startHour: 9, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [testEvent]
 
         // Get parse result
         let parseResults = try await nlService.process(text: "update project review title to 'Sprint Review'", referenceDate: now)
@@ -238,8 +300,8 @@ final class ActionToolsTests: XCTestCase {
 
     func testPlanDayTool() async throws {
         // Setup test data
-        let testEvent = createTestEvent(title: "Morning Standup", startHour: 9, referenceDate: now)
-        mockEventStore.mockEvents = [testEvent]
+        let testEvent = mockEventStore.createTestEvent(title: "Morning Standup", startHour: 9, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [testEvent]
 
         // Get parse result
         let parseResults = try await nlService.process(text: "plan my day today", referenceDate: now)
@@ -261,8 +323,8 @@ final class ActionToolsTests: XCTestCase {
 
     func testPlanWeekTool() async throws {
         // Setup test data
-        let testEvent = createTestEvent(title: "Weekly Review", startHour: 15, referenceDate: now)
-        mockEventStore.mockEvents = [testEvent]
+        let testEvent = mockEventStore.createTestEvent(title: "Weekly Review", startHour: 15, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [testEvent]
 
         // Get parse result
         let parseResults = try await nlService.process(text: "show my week plan", referenceDate: now)
@@ -284,8 +346,8 @@ final class ActionToolsTests: XCTestCase {
 
     func testShowAgendaTool() async throws {
         // Setup test data
-        let testEvent = createTestEvent(title: "Client Call", startHour: 11, referenceDate: now)
-        mockEventStore.mockEvents = [testEvent]
+        let testEvent = mockEventStore.createTestEvent(title: "Client Call", startHour: 11, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [testEvent]
 
         // Get parse result
         let parseResults = try await nlService.process(text: "show my agenda for today", referenceDate: now)
@@ -309,9 +371,9 @@ final class ActionToolsTests: XCTestCase {
 
     func testMoreInfoTool() async throws {
         // Setup test data
-        let testEvent = createTestEvent(title: "Team Building", startHour: 14, referenceDate: now)
+        let testEvent = mockEventStore.createTestEvent(title: "Team Building", startHour: 14, referenceDate: now, calendar: calendar)
         let testTask = createTestTask(title: "Prepare Presentation", referenceDate: now)
-        mockEventStore.mockEvents = [testEvent]
+        mockEventStore.mockOccurrences = [testEvent]
         mockTaskStore.mockTasks = [testTask]
 
         // Get parse result
@@ -353,9 +415,9 @@ final class ActionToolsTests: XCTestCase {
 
     func testEventDisambiguation() async throws {
         // Setup multiple events with similar titles
-        let event1 = createTestEvent(title: "Meeting", startHour: 9, referenceDate: now)
-        let event2 = createTestEvent(title: "Meeting", startHour: 14, referenceDate: now)
-        mockEventStore.mockEvents = [event1, event2]
+        let event1 = mockEventStore.createTestEvent(title: "Meeting", startHour: 9, referenceDate: now, calendar: calendar)
+        let event2 = mockEventStore.createTestEvent(title: "Meeting", startHour: 14, referenceDate: now, calendar: calendar)
+        mockEventStore.mockOccurrences = [event1, event2]
 
         // Get parse result
         let parseResults = try await nlService.process(text: "cancel meeting today", referenceDate: now)
@@ -391,7 +453,93 @@ final class ActionToolsTests: XCTestCase {
 
     // MARK: - Helper Methods
 
-    private func createTestEvent(title: String, startHour: Int, referenceDate: Date) -> EventOccurrence {
+    private func createTestTask(title: String, referenceDate: Date) -> UserTask {
+        return UserTask(
+            id: UUID(),
+            userId: UUID(),
+            title: title,
+            notes: nil,
+            isCompleted: false,
+            createdAt: referenceDate,
+            updatedAt: referenceDate,
+            dueDate: referenceDate.addingTimeInterval(86400),
+            priority: .medium
+        )
+    }
+}
+
+// MARK: - Mock Stores
+
+class MockEventStore: EventStore {
+    var mockOccurrences: [EventOccurrence] = []
+    var mockEvents: [Event] = []
+    var mockRules: [RecurrenceRule] = []
+    var mockOverrides: [EventOverride] = []
+    
+    func makeEvent(title: String, start: Date, end: Date) -> Event? {
+        return nil
+    }
+
+    func fetchEvent(by id: UUID) async throws -> Event? {
+        return nil
+    }
+
+    func fetchOccurrences() async throws -> [EventOccurrence] {
+        return mockOccurrences
+    }
+
+    func fetchOccurrences(id: UUID) async throws -> EventOccurrence? {
+        return mockOccurrences.first { $0.id == id }
+    }
+
+    func fetchOccurrences(in range: Range<Date>) async throws -> [EventOccurrence] {
+        return mockOccurrences.filter { event in
+            range.contains(event.startDate) || range.contains(event.endDate)
+        }
+    }
+
+    func upsert(_ event: Event) async throws {}
+
+    func add(_ input: AddEventInput) async throws {
+        let occ = EventOccurrence(
+            id: input.id,
+            userId: input.userId,
+            eventId: input.id,
+            title: input.title,
+            notes: input.notes,
+            startDate: input.startDate,
+            endDate: input.endDate,
+            isRecurring: input.isRecurring,
+            location: input.location,
+            color: input.color,
+            reminderTriggers: input.reminderTriggers,
+            isOverride: false,
+            isCancelled: input.isCancelled,
+            updatedAt: Date(),
+            createdAt: Date(),
+            overrides: [],
+            recurrence_rules: [],
+            deletedAt: nil,
+            needsSync: true,
+            isFakeOccForEmptyToday: false,
+            version: nil
+        )
+        mockOccurrences.append(occ)
+    }
+
+    func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws {}
+
+    func editSingleOccurrence(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws {}
+
+    func editOverride(_ override: EventOverride, with input: EditEventInput) async throws {}
+
+    func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws {}
+
+    func delete(id: UUID) async throws {
+        mockOccurrences.removeAll { $0.id == id }
+    }
+    
+    func createTestEvent(title: String, startHour: Int, referenceDate: Date, calendar: Calendar) -> EventOccurrence {
         let startOfDay = referenceDate.startOfDay(calendar: calendar)
         let startDate = calendar.date(byAdding: .hour, value: startHour, to: startOfDay)!
         let endDate = calendar.date(byAdding: .hour, value: 1, to: startDate)!
@@ -419,64 +567,6 @@ final class ActionToolsTests: XCTestCase {
             isFakeOccForEmptyToday: false,
             version: nil
         )
-    }
-
-    private func createTestTask(title: String, referenceDate: Date) -> UserTask {
-        return UserTask(
-            id: UUID(),
-            userId: UUID(),
-            title: title,
-            notes: nil,
-            isCompleted: false,
-            createdAt: referenceDate,
-            updatedAt: referenceDate,
-            dueDate: referenceDate.addingTimeInterval(86400),
-            priority: .medium
-        )
-    }
-}
-
-// MARK: - Mock Stores
-
-class MockEventStore: EventStore {
-    var mockEvents: [EventOccurrence] = []
-
-    func makeEvent(title: String, start: Date, end: Date) -> Event? {
-        return nil
-    }
-
-    func fetchEvent(by id: UUID) async throws -> Event? {
-        return nil
-    }
-
-    func fetchOccurrences() async throws -> [EventOccurrence] {
-        return mockEvents
-    }
-
-    func fetchOccurrences(id: UUID) async throws -> EventOccurrence? {
-        return mockEvents.first { $0.id == id }
-    }
-
-    func fetchOccurrences(in range: Range<Date>) async throws -> [EventOccurrence] {
-        return mockEvents.filter { event in
-            range.contains(event.startDate) || range.contains(event.endDate)
-        }
-    }
-
-    func upsert(_ event: Event) async throws {}
-
-    func add(_ input: AddEventInput) async throws {}
-
-    func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws {}
-
-    func editSingleOccurrence(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws {}
-
-    func editOverride(_ override: EventOverride, with input: EditEventInput) async throws {}
-
-    func editFuture(parent: EventOccurrence, startingFrom occurrence: EventOccurrence, with input: EditEventInput) async throws {}
-
-    func delete(id: UUID) async throws {
-        mockEvents.removeAll { $0.id == id }
     }
 }
 

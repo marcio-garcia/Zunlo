@@ -31,30 +31,38 @@ class BaseEventTool {
         excludeCancelled: Bool = true,
         allowPastEvents: Bool = false,
         pastEventToleranceHours: Double = 1.0,
-        referenceDate: Date
+        referenceDate: Date,
+        searchWindow: DateInterval? = nil
     ) -> [EventOccurrence] {
 
         let now = referenceDate
         let context = command.context
-        let startOfFinalDate = context.finalDate.startOfDay(calendar: calendar)
-        var startOfNextDay = startOfFinalDate.startOfNextDay(calendar: calendar)
-        startOfNextDay = calendar.date(byAdding: .second, value: -1, to: startOfNextDay) ?? startOfNextDay
-
-        let searchWindow = context.dateRange ?? DateInterval(
-            start: startOfFinalDate,
-            end: startOfNextDay
-        )
+        var window: DateInterval
+        
+        if let interval = searchWindow {
+            window = interval
+        } else {
+            
+            let startOfFinalDate = context.finalDate.startOfDay(calendar: calendar)
+            var startOfNextDay = startOfFinalDate.startOfNextDay(calendar: calendar)
+            startOfNextDay = calendar.date(byAdding: .second, value: -1, to: startOfNextDay) ?? startOfNextDay
+            
+            window = context.dateRange ?? DateInterval(
+                start: startOfFinalDate,
+                end: startOfNextDay
+            )
+        }
 
         return events.filter { event in
             // 1. Optionally exclude already cancelled events
-            if excludeCancelled && event.isCancelled {
+            if excludeCancelled && event.isCancelled && event.deletedAt == nil {
                 return false
             }
 
             // 2. Focus on events within reasonable time window
-            let eventInWindow = searchWindow.contains(event.startDate) ||
-                              searchWindow.contains(event.endDate) ||
-                              (event.startDate < searchWindow.start && event.endDate > searchWindow.end)
+            let eventInWindow = window.contains(event.startDate)
+            || window.contains(event.endDate)
+            || (event.startDate < window.start && event.endDate > window.end)
 
             // 3. Optionally allow recent past events
             let isRecentPast = allowPastEvents &&
@@ -107,7 +115,7 @@ class BaseEventTool {
 
         return ToolResult(
             intent: command.intent,
-            action: .none,
+            action: .info(message: "More info"),
             needsDisambiguation: true,
             options: [],
             message: "I couldn't determine which event to \(getActionVerb(for: intent)). Please be more specific.".localized
@@ -135,7 +143,7 @@ class BaseEventTool {
 
         return ToolResult(
             intent: command.intent,
-            action: .none,
+            action: .info(message: "Disambiguation"),
             needsDisambiguation: true,
             options: options,
             message: message
@@ -151,7 +159,7 @@ class BaseEventTool {
 
         return ToolResult(
             intent: command.intent,
-            action: .none,
+            action: .info(message: "No match"),
             needsDisambiguation: true,
             options: [],
             message: intelligentMessage
@@ -213,10 +221,28 @@ class BaseEventTool {
 
     func eventLabel(_ occ: EventOccurrence) -> String {
         let title = !occ.title.isEmpty ? occ.title : "(no title)".localized
-        return "\(title) — \(formatRange(occ.startDate, occ.endDate))"
+        return "\(title) — \(formatTimeRange(occ.startDate, occ.endDate))"
     }
 
-    func formatRange(_ start: Date, _ end: Date) -> String {
+    func formatDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+    
+    func formatDay(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+    
+    func formatTimeRange(_ start: Date, _ end: Date) -> String {
         let df = DateIntervalFormatter()
         df.calendar = calendar
         df.timeZone = calendar.timeZone

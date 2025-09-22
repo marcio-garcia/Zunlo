@@ -80,7 +80,7 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
                 action: .rescheduledTask(id: task.id, due: newDueDate),
                 needsDisambiguation: false,
                 options: [],
-                message: String(format: "Rescheduled task '%@' to %@.".localized, task.title, formatDate(newDueDate))
+                message: String(format: "Rescheduled task '%@' to %@.".localized, task.title, formatDay(newDueDate))
             )
 
         } catch {

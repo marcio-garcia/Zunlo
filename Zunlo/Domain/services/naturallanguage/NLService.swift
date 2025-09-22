@@ -75,8 +75,7 @@ public final class NLService: NLProcessing {
                     title: metadataResult.title,
                     intent: intent,
                     context: context,
-                    metadataTokens: metadataResult.tokens,
-                    intentAmbiguity: metadataResult.intentAmbiguity
+                    metadataTokens: metadataResult.tokens
                 )
                 log("parse result: \(parseResult)")
                 results.append(parseResult)

@@ -82,14 +82,12 @@ public struct MetadataExtractionResult {
     public let title: String
     public let confidence: Float
     public let conflicts: [MetadataConflict]
-    public let intentAmbiguity: IntentAmbiguity?
 
-    public init(tokens: [MetadataToken], title: String, confidence: Float, conflicts: [MetadataConflict] = [], intentAmbiguity: IntentAmbiguity? = nil) {
+    public init(tokens: [MetadataToken], title: String, confidence: Float, conflicts: [MetadataConflict] = []) {
         self.tokens = tokens
         self.title = title
         self.confidence = confidence
         self.conflicts = conflicts
-        self.intentAmbiguity = intentAmbiguity
     }
 
     /// Extract tokens of a specific kind

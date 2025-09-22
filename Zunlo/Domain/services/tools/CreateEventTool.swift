@@ -51,7 +51,7 @@ final class CreateEventTool: BaseEventTool, ActionTool {
 
             return ToolResult(
                 intent: command.intent,
-                action: .createdEvent(id: UUID()), // Note: AddEventInput doesn't return ID
+                action: .createdEvent(id: eventInput.id),
                 needsDisambiguation: false,
                 options: [],
                 message: String(format: "Created event '%@'.".localized, eventInfo.title)
@@ -89,6 +89,7 @@ final class CreateEventTool: BaseEventTool, ActionTool {
 
     private func extractEventInfo(from command: ParseResult) -> EventInfo {
         let context = command.context
+        var newTitle: String?
         var notes: String?
         var location: String?
         var reminderTriggers: [ReminderTrigger] = []
@@ -96,6 +97,8 @@ final class CreateEventTool: BaseEventTool, ActionTool {
         // Extract metadata from metadataTokens
         for token in command.metadataTokens {
             switch token.kind {
+            case .newTitle(let title, _):
+                newTitle = title
             case .notes(let noteText, _):
                 notes = noteText
             case .location(let name, _):
@@ -122,23 +125,28 @@ final class CreateEventTool: BaseEventTool, ActionTool {
 
         // Extract timing
         let startDate: Date
-        let endDate: Date
+        var endDate: Date
 
-        if let dateRange = context.dateRange {
-            startDate = dateRange.start
-            endDate = dateRange.end
-        } else {
-            startDate = context.finalDate
-            // Default to 1 hour duration
-            endDate = startDate.addingTimeInterval(3600)
+//        if let dateRange = context.dateRange {
+//            startDate = dateRange.start
+//            endDate = dateRange.end
+//        } else {
+        startDate = context.finalDate
+        endDate = startDate.addingTimeInterval(3600) // Default to 1 hour duration
+        if let duration = context.finalDateDuration {
+            endDate = startDate.addingTimeInterval(duration)
         }
+//        }
 
         // Extract recurrence if present
         let recurrence: RecurrenceRule? = nil
         let isRecurring = recurrence != nil
 
         // Use title from command or fallback
-        let title = !command.title.isEmpty ? command.title : "New Event".localized
+        var title: String = command.title
+        if let t = newTitle {
+            title = t
+        }
 
         return EventInfo(
             title: title,

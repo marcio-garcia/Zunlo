@@ -114,8 +114,7 @@ public final class TemporalComposer: InputParser {
             tokens: metadataResult.tokens,
             title: metadataResult.title,
             confidence: metadataResult.confidence,
-            conflicts: metadataResult.conflicts,
-            intentAmbiguity: intentAmbiguity.isAmbiguous ? intentAmbiguity : nil
+            conflicts: metadataResult.conflicts
         )
 
         return (intentAmbiguity.primaryIntent, temporalTokens, enhancedMetadataResult)
