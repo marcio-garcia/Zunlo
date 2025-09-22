@@ -150,8 +150,8 @@ class EnhancedEventPicker {
     private func enhancedTitleScore(query: String, eventTitle: String, intent: Intent) -> Double {
         guard !query.isEmpty && !eventTitle.isEmpty else { return 0.0 }
 
-        let normalizedQuery = normalize(query)
-        let normalizedTitle = normalize(eventTitle)
+        let normalizedQuery = normalize(query, locale: calendar.locale ?? .current)
+        let normalizedTitle = normalize(eventTitle, locale: calendar.locale ?? .current)
 
         // 1. Exact match bonus
         if query.lowercased() == eventTitle.lowercased() {
@@ -435,11 +435,12 @@ struct UserPreferences {
 
 extension EnhancedEventPicker {
 
-    private func normalize(_ s: String) -> [String] {
+    private func normalize(_ s: String, locale: Locale) -> [String] {
         let separators = CharacterSet.alphanumerics.inverted
-        return s.lowercased()
-            .components(separatedBy: separators)
-            .filter { !$0.isEmpty }
+        // Remove diacritics (á, à, ã, ç, ê, …) and do case-insensitive folding.
+        let folded = s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: locale)
+        return folded.components(separatedBy: separators)
+                     .filter { !$0.isEmpty }
     }
 
     private func calculateSubstringScore(_ query: [String], _ title: [String]) -> Double {

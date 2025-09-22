@@ -6,7 +6,9 @@
 //
 
 import Foundation
+import SwiftUI
 import SmartParseKit
+import GlowUI
 
 // MARK: - Base Task Tool
 
@@ -100,7 +102,7 @@ class BaseTaskTool {
                 parseResultId: context.id,
                 intentOption: intent,
                 editEventMode: nil,
-                label: AttributedString(taskLabel(task))
+                label: taskLabel(task)
             )
         }
 
@@ -147,13 +149,38 @@ class BaseTaskTool {
         }
     }
 
-    func taskLabel(_ task: UserTask) -> String {
+    func taskLabel(_ task: UserTask) -> AttributedString {
+        var attributedLabel = AttributedString()
+
+        // Task title (bold, primary text color)
         let title = !task.title.isEmpty ? task.title : "(no title)".localized
+        var titleText = AttributedString(title)
+        titleText.font = AppFontStyle.body.weight(.bold).uiFont()
+        titleText.foregroundColor = UIColor(Color.theme.text)
+        attributedLabel += titleText
+
+        // Due date if available
         if let dueDate = task.dueDate {
-            return "\(title) — due \(formatDay(dueDate))"
-        } else {
-            return title
+            // Separator
+            var separator = AttributedString(" — ")
+            separator.font = AppFontStyle.body.weight(.semibold).uiFont()
+            separator.foregroundColor = UIColor(Color.theme.secondaryText)
+            attributedLabel += separator
+
+            // "due" label (caption, secondary text color)
+            var dueLabel = AttributedString("due ")
+            dueLabel.font = AppFontStyle.caption.uiFont()
+            dueLabel.foregroundColor = UIColor(Color.theme.secondaryText)
+            attributedLabel += dueLabel
+
+            // Due date (medium weight, secondary text color)
+            var dateText = AttributedString(formatDay(dueDate))
+            dateText.font = AppFontStyle.body.weight(.medium).uiFont()
+            dateText.foregroundColor = UIColor(Color.theme.secondaryText)
+            attributedLabel += dateText
         }
+
+        return attributedLabel
     }
     
     func formatDay(_ date: Date) -> String {

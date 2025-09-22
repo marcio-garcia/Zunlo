@@ -6,7 +6,9 @@
 //
 
 import Foundation
+import SwiftUI
 import SmartParseKit
+import GlowUI
 
 // MARK: - Base Event Tool
 
@@ -25,7 +27,7 @@ class BaseEventTool {
     // MARK: - Common Event Filtering
 
     /// Filter events based on temporal context and basic criteria
-    func filterEventsForOperation(
+    func filterEventsByDate(
         _ events: [EventOccurrence],
         context: CommandContext,
         excludeCancelled: Bool = true,
@@ -137,7 +139,7 @@ class BaseEventTool {
                 parseResultId: context.id,
                 intentOption: intent,
                 editEventMode: nil,
-                label: AttributedString(eventLabel(event))
+                label: eventLabel(event)
             )
         }
 
@@ -219,9 +221,35 @@ class BaseEventTool {
 
     // MARK: - Common Helper Methods
 
-    func eventLabel(_ occ: EventOccurrence) -> String {
+    func eventLabel(_ occ: EventOccurrence) -> AttributedString {
+        var attributedLabel = AttributedString()
+
+        // Event title (bold, primary text color)
         let title = !occ.title.isEmpty ? occ.title : "(no title)".localized
-        return "\(title) — \(formatTimeRange(occ.startDate, occ.endDate))"
+        var titleText = AttributedString(title)
+        titleText.font = AppFontStyle.body.weight(.bold).uiFont()
+        titleText.foregroundColor = UIColor(Color.theme.text)
+        attributedLabel += titleText
+
+        // Separator
+        var separator = AttributedString(" — ")
+        separator.font = AppFontStyle.body.weight(.semibold).uiFont()
+        separator.foregroundColor = UIColor(Color.theme.secondaryText)
+        attributedLabel += separator
+
+        // Date (medium weight, secondary text color)
+        var dateText = AttributedString(formatDay(occ.startDate))
+        dateText.font = AppFontStyle.body.weight(.medium).uiFont()
+        dateText.foregroundColor = UIColor(Color.theme.secondaryText)
+        attributedLabel += dateText
+
+        // Time range (caption, secondary text color)
+        var timeText = AttributedString(" \(formatTimeRange(occ.startDate, occ.endDate))")
+        timeText.font = AppFontStyle.caption.uiFont()
+        timeText.foregroundColor = UIColor(Color.theme.secondaryText)
+        attributedLabel += timeText
+
+        return attributedLabel
     }
 
     func formatDateTime(_ date: Date) -> String {

@@ -40,13 +40,25 @@ public final class NLService: NLProcessing {
         cal.locale = Locale(identifier: language.rawValue)
 
         // Build language packs based on calendar
-        var packs: [DateLanguagePack]
-        if language.rawValue == "pt" {
-            packs = [PortugueseBRPack(calendar: cal)]
-        } else if language.rawValue == "es" {
-            packs = [SpanishPack(calendar: cal)]
-        } else {
-            packs = [EnglishPack(calendar: cal)]
+        var packs: [DateLanguagePack] = [
+            PortugueseBRPack(calendar: cal),
+            SpanishPack(calendar: cal),
+            EnglishPack(calendar: cal)
+        ]
+        
+        var languagePack: DateLanguagePack = EnglishPack(calendar: cal)
+            
+        for (index, value) in packs.enumerated() {
+            let regexList = packs[index].commandPrefixRegex()
+            for regex in regexList {
+                if let match = regex.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)),
+                   match.range.location == 0, match.range.length > 0,
+                   let range = Range(match.range(at: 1), in: text) {
+                    
+                    languagePack = packs[index]
+                    
+                }
+            }
         }
         
         log("raw text: \(text), calendar: \(cal)")
@@ -57,35 +69,33 @@ public final class NLService: NLProcessing {
         
         var results: [ParseResult] = []
         for clause in splittedClauses {
-            for pack in packs {
-                let (temporalTokens, metadataResult) = parser.parse(clause.text, now: referenceDate, pack: pack, intentDetector: AppleIntentDetector.bundled())
-                
-                log("parsed temporal tokens: \(temporalTokens.map({ $0.kind }))")
-                log("parsed metadata tokens: \(metadataResult.tokens.map { "\($0.kind)" })")
+            let (temporalTokens, metadataResult) = parser.parse(clause.text, now: referenceDate, pack: languagePack)
+            
+            log("parsed temporal tokens: \(temporalTokens.map({ $0.kind }))")
+            log("parsed metadata tokens: \(metadataResult.tokens.map { "\($0.kind)" })")
 
-                // Use new intent interpreter for classification
-                let intentInterpreter = IntentInterpreter()
-                let intentAmbiguity = intentInterpreter.classify(inputText: text, metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens, languagePack: pack)
-                log("parsed intent: \(intentAmbiguity.primaryIntent)")
+            // Use new intent interpreter for classification
+            let intentInterpreter = IntentInterpreter()
+            let intentAmbiguity = intentInterpreter.classify(inputText: text, metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens, languagePack: languagePack)
+            log("parsed intent: \(intentAmbiguity.primaryIntent)")
 
-                let interpreter = TemporalTokenInterpreter(calendar: calendar, referenceDate: referenceDate)
-                let context = interpreter.interpret(temporalTokens)
+            let interpreter = TemporalTokenInterpreter(calendar: calendar, referenceDate: referenceDate)
+            let context = interpreter.interpret(temporalTokens)
 
-                log("command context: \(context)")
-                log("metadata: \(metadataResult)")
-                
-                let parseResult = ParseResult(
-                    id: UUID(),
-                    originalText: text,
-                    title: metadataResult.title,
-                    intent: intentAmbiguity.primaryIntent,
-                    context: context,
-                    metadataTokens: metadataResult.tokens,
-                    intentAmbiguity: intentAmbiguity
-                )
-                log("parse result: \(parseResult)")
-                results.append(parseResult)
-            }
+            log("command context: \(context)")
+            log("metadata: \(metadataResult)")
+            
+            let parseResult = ParseResult(
+                id: UUID(),
+                originalText: text,
+                title: metadataResult.title,
+                intent: intentAmbiguity.primaryIntent,
+                context: context,
+                metadataTokens: metadataResult.tokens,
+                intentAmbiguity: intentAmbiguity
+            )
+            log("parse result: \(parseResult)")
+            results.append(parseResult)
         }
         return results
     }

@@ -116,11 +116,11 @@ final class ActionToolsTests: XCTestCase {
     
     func testRescheduleEventToWeekday() async throws {
         // Setup test data
-        let testEvent = mockEventStore.createTestEvent(title: "Doctor Appointment", startHour: 10, referenceDate: now, calendar: calendar)
+        let testEvent = mockEventStore.createTestEvent(title: "reuniao", startHour: 10, referenceDate: now, calendar: calendar)
         mockEventStore.mockOccurrences = [testEvent]
 
         // Get parse result
-        let parseResults = try await nlService.process(text: "reschedule doctor appointment to Monday", referenceDate: now)
+        let parseResults = try await nlService.process(text: "reschedule reunião to Monday", referenceDate: now)
         XCTAssertEqual(parseResults.count, 1)
         let parseResult = parseResults[0]
 

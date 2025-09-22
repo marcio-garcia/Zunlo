@@ -27,8 +27,13 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
 
+            // Check if user selected a specific entity
+            if let id = command.selectedEntityId, let event = allEvents.first(where: { $0.id == id }) {
+                return await self.performEventUpdate(event, command: command)
+            }
+
             // 2. Pre-filter events for update context
-            let relevantEvents = filterEventsForOperation(
+            let relevantEvents = filterEventsByDate(
                 allEvents,
                 context: command,
                 excludeCancelled: true,

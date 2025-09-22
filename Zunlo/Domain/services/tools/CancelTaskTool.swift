@@ -20,6 +20,11 @@ final class CancelTaskTool: BaseTaskTool, ActionTool {
             // 1. Fetch all tasks
             let allTasks = try await tasks.fetchAll()
 
+            // Check if user selected a specific entity
+            if let id = context.selectedEntityId, let task = allTasks.first(where: { $0.id == id }) {
+                return await self.performTaskCancellation(task, command: context)
+            }
+
             // 2. Filter tasks for cancel context
             let relevantTasks = filterTasksForOperation(
                 allTasks,

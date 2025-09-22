@@ -24,12 +24,18 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
 
     func perform(_ command: CommandContext) async -> ToolResult {
         do {
+            
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
 
+            // Check if user selected a specific entity
+            if let id = command.selectedEntityId, let event = allEvents.first(where: { $0.id == id }) {
+                return await self.performEventReschedule(event, command: command)
+            }
+
             // 2. Pre-filter events for reschedule context
             let searchWindow = DateInterval(start: referenceDate, end: command.temporalContext.finalDate)
-            let relevantEvents = filterEventsForOperation(
+            let relevantEvents = filterEventsByDate(
                 allEvents,
                 context: command,
                 excludeCancelled: true,
@@ -126,7 +132,7 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
                     message: String(
                         format: "Rescheduled '%@' to %@ %@.".localized,
                         event.title,
-                        formatDay(event.startDate),
+                        formatDay(newTiming),
                         formatTimeRange(newTiming, newEndDate)
                     )
                 )

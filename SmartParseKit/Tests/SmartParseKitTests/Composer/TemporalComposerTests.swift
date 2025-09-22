@@ -30,7 +30,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("add event graduation ceremony next week at 11:00", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("add event graduation ceremony next week at 11:00", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 30, length: 9), text: "next week", kind: .relativeWeek(.nextWeek(count: 1))),
@@ -42,7 +42,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("move game to next Friday", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("move game to next Friday", now: now, pack: pack)
 
         let temporalRetult = result.0
 
@@ -54,7 +54,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("rebook team meeting for next week Fri 11:00", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("rebook team meeting for next week Fri 11:00", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 24, length: 9), text: "next week", kind: .relativeWeek(.nextWeek(count: 1))),
@@ -67,7 +67,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("move team meeting to next Friday 3pm", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("move team meeting to next Friday 3pm", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 21, length: 11), text: "next Friday", kind: .weekday(dayIndex: 6, modifier: .next)),
@@ -79,7 +79,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("move oil change to next week noon", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("move oil change to next week noon", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 19, length: 9), text: "next week", kind: .relativeWeek(.nextWeek(count: 1))),
@@ -91,7 +91,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("push dentist appointment to october 15th 7pm", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("push dentist appointment to october 15th 7pm", now: now, pack: pack)
         
         XCTAssertEqual(result.0[1], TemporalToken(range: NSRange(location: 36, length: 4), text: "15th", kind: .ordinalDay(15)))
         XCTAssertEqual(result.0[2], TemporalToken(range: NSRange(location: 41, length: 3), text: "7pm", kind: .absoluteTime(DateComponents(hour: 19, minute: 0))))
@@ -111,7 +111,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("dinner with parents tonight 8pm at 7pm", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("dinner with parents tonight 8pm at 7pm", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 20, length: 7), text: "tonight", kind: .relativeDay(.tonight)),
@@ -124,7 +124,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("a month from now 11am", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("a month from now 11am", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 0, length: 16), text: "a month from now", kind: .durationOffset(value: 1, unit: .month, mode: .fromNow)),
@@ -136,7 +136,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("change write report task to next tue", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleTask))
+        let result = composer.parse("change write report task to next tue", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 28, length: 8), text: "next tue", kind: .weekday(dayIndex: 3, modifier: .next))
@@ -147,7 +147,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("push back do laundry to weekend", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleTask))
+        let result = composer.parse("push back do laundry to weekend", now: now, pack: pack)
 
         let temporalRetult = result.0
         XCTAssertEqual(temporalRetult, [
@@ -159,7 +159,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("show agenda for next Thursday morning", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .view))
+        let result = composer.parse("show agenda for next Thursday morning", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 16, length: 13), text: "next Thursday", kind: .weekday(dayIndex: 5, modifier: .next)),
@@ -171,7 +171,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("schedule client meeting for 10am tomorrow", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("schedule client meeting for 10am tomorrow", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 28, length: 4), text: "10am", kind: .absoluteTime(DateComponents(hour: 10, minute: 0))),
@@ -183,7 +183,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("what is my agenda for next week", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .view))
+        let result = composer.parse("what is my agenda for next week", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 22, length: 9), text: "next week", kind: .relativeWeek(.nextWeek(count: 1)))
@@ -194,7 +194,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("add movie today 20h", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("add movie today 20h", now: now, pack: pack)
 
         let temporalRetult = result.0
         XCTAssertEqual(temporalRetult[0].text, "today"); XCTAssertEqual(temporalRetult[0].kind, .relativeDay(.today));
@@ -205,7 +205,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("reschedule submit assignment task to Friday", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("reschedule submit assignment task to Friday", now: now, pack: pack)
 
         XCTAssertEqual(result.0[0].text, "Friday");
         XCTAssertEqual(result.0[0].kind, .weekday(dayIndex: 6, modifier: nil))
@@ -216,7 +216,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = PortugueseBRPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("remarcar reunião para próxima semana sex 11:00", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .portuguese, intent: .createEvent))
+        let result = composer.parse("remarcar reunião para próxima semana sex 11:00", now: now, pack: pack)
 
         XCTAssertTrue(result.0.contains { token in
             if case .relativeWeek(.nextWeek(count: 1)) = token.kind, token.text == "próxima semana" {
@@ -242,7 +242,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = PortugueseBRPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("marcar café terça às 10h", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .portuguese, intent: .createEvent))
+        let result = composer.parse("marcar café terça às 10h", now: now, pack: pack)
 
         XCTAssertTrue(result.0.contains { token in
             if case .weekday(dayIndex: 3, modifier: nil) = token.kind {
@@ -262,7 +262,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = PortugueseBRPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("daqui a um mês às 11h", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .portuguese, intent: .createEvent))
+        let result = composer.parse("daqui a um mês às 11h", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 0, length: 14), text: "daqui a um mês", kind: .durationOffset(value: 1, unit: .month, mode: .fromNow)),
@@ -274,7 +274,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = PortugueseBRPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("Mova jogo para próxima sexta", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("Mova jogo para próxima sexta", now: now, pack: pack)
 
         let temporalRetult = result.0
         XCTAssertEqual(temporalRetult[0].text, "próxima sexta")
@@ -285,7 +285,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = PortugueseBRPack(calendar: TestUtil.calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("Criar reunião terça `a tarde", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("Criar reunião terça `a tarde", now: now, pack: pack)
 
         let temporalRetult = result.0
         XCTAssertEqual(temporalRetult[0].text, "terça")
@@ -299,7 +299,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = PortugueseBRPack(calendar: TestUtil.calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("Crie evento standup 25th 9-10:30am", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .rescheduleEvent))
+        let result = composer.parse("Crie evento standup 25th 9-10:30am", now: now, pack: pack)
 
         let temporalRetult = result.0
         let metadataResult = result.1
@@ -318,7 +318,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = SpanishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("reprogramar reunión para la próxima semana vie 11:00", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .spanish, intent: .createEvent))
+        let result = composer.parse("reprogramar reunión para la próxima semana vie 11:00", now: now, pack: pack)
 
         let temporalRetult = result.0
         
@@ -346,7 +346,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = SpanishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("programar café para el martes a las 10:00", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .spanish, intent: .createEvent))
+        let result = composer.parse("programar café para el martes a las 10:00", now: now, pack: pack)
 
         XCTAssertTrue(result.0.contains { token in
             if case .weekday(dayIndex: 3, modifier: nil) = token.kind {
@@ -366,7 +366,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = SpanishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("de aquí a un mes a las 11h", now: now, pack: pack, intentDetector: AppleIntentDetector())
+        let result = composer.parse("de aquí a un mes a las 11h", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 0, length: 16), text: "de aquí a un mes", kind: .durationOffset(value: 1, unit: .month, mode: .fromNow)),
@@ -378,7 +378,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("schedule coffee on Tuesday 10:00", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("schedule coffee on Tuesday 10:00", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 19, length: 7), text: "Tuesday", kind: .weekday(dayIndex: 3, modifier: nil)),
@@ -390,7 +390,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("block Wed 09:00-11:30", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("block Wed 09:00-11:30", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 6, length: 3), text: "Wed", kind: .weekday(dayIndex: 4, modifier: nil)),
@@ -404,7 +404,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("display calendar for the 24th", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .view))
+        let result = composer.parse("display calendar for the 24th", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 21, length: 8), text: "the 24th", kind: .ordinalDay(24))
@@ -415,7 +415,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = PortugueseBRPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("mostrar agenda do dia 11º", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .portuguese, intent: .view))
+        let result = composer.parse("mostrar agenda do dia 11º", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 18, length: 7), text: "dia 11º", kind: .ordinalDay(11))
@@ -427,7 +427,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .unknown))
+        let result = composer.parse("", now: now, pack: pack)
 
         XCTAssertLessThanOrEqual(result.1.confidence, 0.1)
         XCTAssertEqual(result.0.count, 0)
@@ -437,7 +437,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("meeting at 3pm", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createEvent))
+        let result = composer.parse("meeting at 3pm", now: now, pack: pack)
 
         XCTAssertEqual(result.0, [
             TemporalToken(range: NSRange(location: 11, length: 3), text: "3pm", kind: .absoluteTime(DateComponents(hour: 15, minute: 0)))
@@ -448,7 +448,7 @@ final class TemporalComposerTests: XCTestCase {
         let pack = EnglishPack(calendar: calendarSP())
         let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
         let now = makeNow()
-        let result = composer.parse("call tomorrow", now: now, pack: pack, intentDetector: MockIntentDetector(languge: .english, intent: .createTask))
+        let result = composer.parse("call tomorrow", now: now, pack: pack)
 
         let temporalRetult = result.0
         let metadataResult = result.1

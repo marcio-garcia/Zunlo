@@ -20,6 +20,11 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
             // 1. Fetch all tasks
             let allTasks = try await tasks.fetchAll()
 
+            // Check if user selected a specific entity
+            if let id = command.selectedEntityId, let task = allTasks.first(where: { $0.id == id }) {
+                return await self.performTaskUpdate(task, command: command)
+            }
+
             // 2. Filter tasks for update context
             let relevantTasks = filterTasksForOperation(
                 allTasks,

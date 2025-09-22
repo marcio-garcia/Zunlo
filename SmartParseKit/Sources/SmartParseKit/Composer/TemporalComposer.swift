@@ -79,7 +79,7 @@ public enum ResolvedTemporal {
 }
 
 public protocol InputParser {
-    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> ([TemporalToken], MetadataExtractionResult)
+    func parse(_ text: String, now: Date, pack: DateLanguagePack) -> ([TemporalToken], MetadataExtractionResult)
 }
 
 // MARK: - Composer
@@ -95,7 +95,7 @@ public final class TemporalComposer: InputParser {
     }
 
     // Entry point
-    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> ([TemporalToken], MetadataExtractionResult) {
+    public func parse(_ text: String, now: Date, pack: DateLanguagePack) -> ([TemporalToken], MetadataExtractionResult) {
         let temporalTokens = detectTokens(in: text, now: now, pack: pack)
 
         // Extract metadata using the new MetadataExtractor
