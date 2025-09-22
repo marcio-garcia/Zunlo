@@ -54,7 +54,7 @@ struct EventRow: View {
     
     func titleColor(occurrence: EventOccurrence) -> Color {
         if occurrence.isFakeOccForEmptyToday || occurrence.isCancelled {
-            return Color.theme.tertiaryText
+            return Color.theme.secondaryText
         } else {
             return Color.theme.text
         }
