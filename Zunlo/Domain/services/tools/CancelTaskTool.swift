@@ -15,7 +15,7 @@ final class CancelTaskTool: BaseTaskTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ context: CommandContext) async -> ToolResult {
         do {
             // 1. Fetch all tasks
             let allTasks = try await tasks.fetchAll()
@@ -23,20 +23,20 @@ final class CancelTaskTool: BaseTaskTool, ActionTool {
             // 2. Filter tasks for cancel context
             let relevantTasks = filterTasksForOperation(
                 allTasks,
-                command: command,
+                context: context,
                 excludeCompleted: true,
                 allowPastTasks: true,
                 referenceDate: referenceDate
             )
 
             // 3. Handle selection and perform cancellation
-            return await handleTaskSelection(relevantTasks, command: command, intent: .cancelTask) { task in
-                await self.performTaskCancellation(task, command: command)
+            return await handleTaskSelection(relevantTasks, context: context, intent: .cancelTask) { task in
+                await self.performTaskCancellation(task, command: context)
             }
 
         } catch {
             return ToolResult(
-                intent: command.intent,
+                intent: context.intent,
                 action: .none,
                 needsDisambiguation: false,
                 options: [],
@@ -49,7 +49,7 @@ final class CancelTaskTool: BaseTaskTool, ActionTool {
 
     private func performTaskCancellation(
         _ task: UserTask,
-        command: ParseResult
+        command: CommandContext
     ) async -> ToolResult {
 
         do {

@@ -26,13 +26,13 @@ class BaseTaskTool {
 
     func filterTasksForOperation(
         _ tasks: [UserTask],
-        command: ParseResult,
+        context: CommandContext,
         excludeCompleted: Bool = true,
         allowPastTasks: Bool = false,
         referenceDate: Date
     ) -> [UserTask] {
 
-        let context = command.context
+        let temporalContext = context.temporalContext
 
         return tasks.filter { task in
             // 1. Optionally exclude completed tasks
@@ -41,8 +41,8 @@ class BaseTaskTool {
             }
 
             // 2. Basic title matching if provided
-            if !command.title.isEmpty {
-                let titleMatch = task.title.localizedCaseInsensitiveContains(command.title)
+            if !context.title.isEmpty {
+                let titleMatch = task.title.localizedCaseInsensitiveContains(context.title)
                 if !titleMatch {
                     return false
                 }
@@ -63,13 +63,13 @@ class BaseTaskTool {
 
     func handleTaskSelection(
         _ candidates: [UserTask],
-        command: ParseResult,
+        context: CommandContext,
         intent: Intent,
         performAction: (UserTask) async -> ToolResult
     ) async -> ToolResult {
 
         if candidates.isEmpty {
-            return createNoMatchResult(command: command, intent: intent)
+            return createNoMatchResult(context: context, intent: intent)
         }
 
         if candidates.count == 1 {
@@ -79,7 +79,7 @@ class BaseTaskTool {
         // Multiple candidates - need disambiguation
         return createDisambiguationResult(
             alternatives: candidates,
-            command: command,
+            context: context,
             intent: intent,
             message: "I found multiple tasks. Which one would you like to \(getActionVerb(for: intent))?".localized
         )
@@ -89,7 +89,7 @@ class BaseTaskTool {
 
     func createDisambiguationResult(
         alternatives: [UserTask],
-        command: ParseResult,
+        context: CommandContext,
         intent: Intent,
         message: String
     ) -> ToolResult {
@@ -97,7 +97,7 @@ class BaseTaskTool {
         let options = alternatives.map { task in
             ChatMessageActionAlternative(
                 id: task.id,
-                parseResultId: command.id,
+                parseResultId: context.id,
                 intentOption: intent,
                 editEventMode: nil,
                 label: AttributedString(taskLabel(task))
@@ -105,7 +105,7 @@ class BaseTaskTool {
         }
 
         return ToolResult(
-            intent: command.intent,
+            intent: context.intent,
             action: .none,
             needsDisambiguation: true,
             options: options,
@@ -114,21 +114,21 @@ class BaseTaskTool {
     }
 
     func createNoMatchResult(
-        command: ParseResult,
+        context: CommandContext,
         intent: Intent
     ) -> ToolResult {
 
         let actionVerb = getActionVerb(for: intent)
         let message: String
 
-        if command.title.isEmpty {
+        if context.title.isEmpty {
             message = "Please specify which task you'd like to \(actionVerb).".localized
         } else {
-            message = String(format: "I couldn't find a task matching '%@' to \(actionVerb). Could you be more specific?".localized, command.title)
+            message = String(format: "I couldn't find a task matching '%@' to \(actionVerb). Could you be more specific?".localized, context.title)
         }
 
         return ToolResult(
-            intent: command.intent,
+            intent: context.intent,
             action: .none,
             needsDisambiguation: true,
             options: [],

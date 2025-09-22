@@ -83,7 +83,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await cancelEventTool.perform(parseResult)
+        let result = await cancelEventTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertTrue(parseResult.isAmbiguous)
         XCTAssertEqual(result.action, .canceledEvent(id: testEvent.id))
@@ -102,7 +102,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await rescheduleEventTool.perform(parseResult)
+        let result = await rescheduleEventTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .rescheduleEvent)
         XCTAssertFalse(result.needsDisambiguation)
@@ -125,7 +125,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await rescheduleEventTool.perform(parseResult)
+        let result = await rescheduleEventTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .rescheduleEvent)
         XCTAssertFalse(result.needsDisambiguation)
@@ -146,7 +146,7 @@ final class ActionToolsTests: XCTestCase {
         
         XCTAssertEqual(createParseResults.count, 1)
         let createParseResult = createParseResults[0]
-        let createToolResult = await createEventTool.perform(createParseResult)
+        let createToolResult = await createEventTool.perform(CommandContext.from(parseResult: createParseResult))
         
         XCTAssertEqual(createToolResult.intent, .createEvent)
         if case .createdEvent(let id) = createToolResult.action {
@@ -164,7 +164,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await rescheduleEventTool.perform(parseResult)
+        let result = await rescheduleEventTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .rescheduleEvent)
         XCTAssertFalse(result.needsDisambiguation)
@@ -187,7 +187,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await updateEventTool.perform(parseResult)
+        let result = await updateEventTool.perform(CommandContext.from(parseResult: parseResult))
 
         if !parseResult.isAmbiguous {
             XCTAssertEqual(result.intent, .updateEvent)
@@ -203,7 +203,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await createEventTool.perform(parseResult)
+        let result = await createEventTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .createEvent)
         if case .createdEvent = result.action {
@@ -224,7 +224,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await createTaskTool.perform(parseResult)
+        let result = await createTaskTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .createTask)
         if case .createdTask = result.action {
@@ -247,7 +247,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await cancelTaskTool.perform(parseResult)
+        let result = await cancelTaskTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .cancelTask)
         XCTAssertEqual(result.action, .canceledTask(id: testTask.id))
@@ -266,7 +266,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await updateTaskTool.perform(parseResult)
+        let result = await updateTaskTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .updateTask)
         XCTAssertEqual(result.action, .updatedTask(id: testTask.id))
@@ -284,7 +284,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await rescheduleTaskTool.perform(parseResult)
+        let result = await rescheduleTaskTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .rescheduleTask)
         if case .rescheduledTask(let taskId, let dueDate) = result.action {
@@ -309,7 +309,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await planDayTool.perform(parseResult)
+        let result = await planDayTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .plan)
         if case .plannedDay(let range, let occurrences) = result.action {
@@ -332,7 +332,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await planWeekTool.perform(parseResult)
+        let result = await planWeekTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertTrue(parseResult.isAmbiguous)
         if case .plannedWeek(let range, let occurrences) = result.action {
@@ -355,7 +355,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await showAgendaTool.perform(parseResult)
+        let result = await showAgendaTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .view)
         if case .agenda(let range, let occurrences) = result.action {
@@ -382,7 +382,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await moreInfoTool.perform(parseResult)
+        let result = await moreInfoTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .unknown)
         if case .info(let message) = result.action {
@@ -400,7 +400,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await unknownTool.perform(parseResult)
+        let result = await unknownTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .unknown)
         if case .info(let message) = result.action {
@@ -425,7 +425,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await cancelEventTool.perform(parseResult)
+        let result = await cancelEventTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertTrue(parseResult.isAmbiguous)
         XCTAssertTrue(result.needsDisambiguation)
@@ -444,7 +444,7 @@ final class ActionToolsTests: XCTestCase {
         let parseResult = parseResults[0]
 
         // Test the tool
-        let result = await cancelTaskTool.perform(parseResult)
+        let result = await cancelTaskTool.perform(CommandContext.from(parseResult: parseResult))
 
         XCTAssertEqual(result.intent, .cancelTask)
         XCTAssertTrue(result.needsDisambiguation)

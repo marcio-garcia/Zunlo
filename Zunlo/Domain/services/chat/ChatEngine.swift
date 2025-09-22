@@ -19,635 +19,250 @@ import Foundation
 import SwiftUI
 import SmartParseKit
 import LoggingKit
+import GlowUI
 
-// MARK: - ChatEngine (orchestrates streaming/tooling/persistence)
+// LocalProcessor - Handles local NLP processing and tool execution
+// MessagePersistence - Handles message persistence with debounced delta buffering
+// StreamManager - Handles AI streaming and remote tool calls
+// ChatEngine - Main coordinator that orchestrates the components
 
 public actor ChatEngine {
     public let conversationId: UUID
-    private let ai: AIChatService
-    private let tools: ToolRouter
-    private let repo: ChatRepository
-    private let localTools: Tools
-    private let nlpService: NLProcessing
-    
+
+    // Component dependencies
+    private let localProcessor: LocalProcessor
+    private let streamManager: StreamManager
+    private let persistence: MessagePersistence
+
+    // State management
     private(set) var state: ChatStreamState = .idle
-    private var currentStreamTask: Task<Void, Never>? = nil
+    private var currentStreamTask: Task<Void, Never>?
+    private var currentChatEvent: ((ChatEngineEvent) -> Void)?
 
-    // Debounced delta buffers per assistant message
-    private var deltaBuffers: [UUID: String] = [:]
-    private var deltaFlushTasks: [UUID: Task<Void, Never>] = [:]
-    private let deltaFlushNs: UInt64 = 150_000_000 // 150ms
-
-    private var pendingStreamedToolOutputs: [ToolOutput] = []
-    private var emittedText = Set<UUID>()      // assistant ids that streamed any text
-    private var toolingAssistantId: UUID?      // the draft bubble we turned into a "processing" placeholder
-    private var mdDetectors: [UUID: MarkdownFormatDetector] = [:]
-    
-    private var history: [ChatMessage] = []
-    private var userMessage = ChatMessage(conversationId: UUID(), role: .system, plain: "")
-    
-    private var nlpResult: [ParseResult] = []
+    // Active command processing context
+    private var commandContexts: [CommandContext] = []
     private var toolResults: [ToolResult] = []
-    private let calendar: Calendar
-    
+
     init(
         conversationId: UUID,
         ai: AIChatService,
         nlpService: NLProcessing,
-        tools: ToolRouter,
         repo: ChatRepository,
         localTools: Tools,
         calendar: Calendar
     ) {
         self.conversationId = conversationId
-        self.ai = ai
-        self.nlpService = nlpService
-        self.tools = tools
-        self.repo = repo
-        self.localTools = localTools
-        self.calendar = calendar
+        self.persistence = MessagePersistence(repo: repo)
+        self.localProcessor = LocalProcessor(nlpService: nlpService, localTools: localTools, calendar: calendar)
+        self.streamManager = StreamManager(ai: ai, persistence: persistence, localTools: localTools, conversationId: conversationId)
     }
 
-    // Load history via repo actor
+    // Load history via persistence layer
     func loadHistory(limit: Int? = 200) async throws -> [ChatMessage] {
-        try await repo.loadMessages(conversationId: conversationId, limit: limit)
+        try await persistence.loadMessages(conversationId: conversationId, limit: limit)
     }
     
-    func run(history: [ChatMessage], userMessage: ChatMessage, chatEvent: (ChatEngineEvent) -> Void) async {
-        let lower = userMessage.rawText.lowercased()
+    /// Main entry point: Try local processing first, fallback to AI streaming
+    func run(history: [ChatMessage], userMessage: ChatMessage, chatEvent: @escaping (ChatEngineEvent) -> Void) async {
+        // Store the chat event callback for state communication
+        currentChatEvent = chatEvent
+
+        // Start with a placeholder UUID for streaming state
+        let placeholderAssistantId = UUID()
+        setState(.streaming(assistantId: placeholderAssistantId))
+
         do {
-            // Handle locally with NLP
-            nlpResult = try await nlpService.process(text: lower, referenceDate: Date())
+            // LOCAL PATH: Try processing with NLP + local tools first
+            commandContexts = try await localProcessor.processInput(userMessage.rawText.lowercased())
 
-            // Process NLP result through local tools
-            for result in nlpResult {
-                if result.isAmbiguous {
-                    let res = createDisambiguationMessage(parse: result)
-                    toolResults.append(res)
+            for context in commandContexts {
+                if context.hasIntentAmbiguity {
+                    // Handle intent disambiguation
+                    let result = await localProcessor.createIntentDisambiguationMessage(context: context)
+                    toolResults.append(result)
                 } else {
-                    let res = try await execute(result)
-                    log("command result: \(res)")
-                    toolResults.append(res)
+                    // Execute through local tools
+                    let result = try await localProcessor.execute(context)
+                    log("Local tool result: \(result)")
+                    toolResults.append(result)
                 }
             }
 
-            self.history = history
-            self.userMessage = userMessage
-            
-            await processResults(toolResults: toolResults) { event in
-                chatEvent(event)
-            }
-            
+            // Stream local results to UI
+            await processLocalResults(toolResults: toolResults, userMessage: userMessage, chatEvent: chatEvent)
+
         } catch {
-            // If NLP fails, just use the normal AI streaming path
-            let asyncStream = startStream(history: history, userMessage: userMessage)
-            for await ev in asyncStream {
-                chatEvent(ev)
-            }
+            // REMOTE PATH: Local processing failed, fallback to AI streaming
+            log("Local processing failed, falling back to AI: \(error)")
+            await fallbackToAIStream(history: history, userMessage: userMessage, chatEvent: chatEvent)
         }
     }
     
-    private func processResults(toolResults: [ToolResult], chatEvent: (ChatEngineEvent) -> Void) async {
+    /// Process local tool results and stream to UI
+    private func processLocalResults(toolResults: [ToolResult], userMessage: ChatMessage, chatEvent: (ChatEngineEvent) -> Void) async {
         for result in toolResults {
-            var asyncStream: AsyncStream<ChatEngineEvent>
-            
-                switch result.action {
-                case .none:
-                    // No local handling → use regular AI streaming path
-                    asyncStream = startStream(history: history, userMessage: userMessage)
-                
-                default:
-                    // Stream local processing result to the ViewModel
-                    asyncStream = processNlpResult(result: result)
+            switch result.action {
+            case .none:
+                // No local result → fallback to AI streaming
+                await fallbackToAIStream(history: [], userMessage: userMessage, chatEvent: chatEvent)
+            default:
+                // Stream local processing result to UI
+                let stream = createLocalResultStream(result: result, userMessage: userMessage)
+                for await event in stream {
+                    chatEvent(event)
                 }
-            
-            for await ev in asyncStream {
-                chatEvent(ev)
             }
+        }
+    }
+
+    /// Fallback to AI streaming when local processing fails or is not applicable
+    private func fallbackToAIStream(history: [ChatMessage], userMessage: ChatMessage, chatEvent: (ChatEngineEvent) -> Void) async {
+        let stream = await streamManager.startStream(history: history, userMessage: userMessage)
+        for await event in stream {
+            chatEvent(event)
         }
     }
     
-    func processNlpResult(result: ToolResult) -> AsyncStream<ChatEngineEvent> {
-        cancelCurrentStreamIfAny()
-        
-        return AsyncStream<ChatEngineEvent> { continuation in
-            // Run the work on the actor, keep a handle for cancellation symmetry
-            self.setCurrentStreamTask(
-                Task { [weak self] in
-                    guard let self else { return }
-                    do {
-                        // Persist + echo the user message (keeps repo in sync with UI snapshot)
-                        let userMessage = await self.userMessage
-                        try await self.repo.upsert(userMessage)
-                        continuation.yield(ChatEngineEvent.messageAppended(userMessage))
-
-                        // Build the assistant message from NLP result
-                        var assistant = await self.createAssistantMessage(
-                            conversationId: self.conversationId,
-                            rawText: result.message,
-                            richText: result.richText,
-                            status: .streaming,
-                            actions: result.options
-                        )
-
-                        // Stream events to the UI
-                        continuation.yield(.messageAppended(assistant))
-                        
-                        try await Task.sleep(for: .seconds(2))
-                        
-                        assistant.status = .sent
-                        continuation.yield(.messageStatusUpdated(messageId: assistant.id, status: .sent, error: nil))
-                        
-                        // Persist message
-                        try await self.repo.upsert(assistant)
-                        
-                        continuation.yield(.completed(messageId: assistant.id))
-
-                        // 4) Return engine to idle so the UI stops the spinner
-                        await self.setState(.idle, continuation: continuation)
-                    } catch is CancellationError {
-                        await self.setState(.failed("Chat cancelled"), continuation: continuation)
-                    } catch {
-                        // If anything goes wrong in local handling, fall back to normal AI streaming
-                        let stream = await self.startStream(history: history, userMessage: userMessage)
-                        for await ev in stream {
-                            continuation.yield(ev)
-                        }
-                    }
-                    continuation.finish()
-                }
-            )
-
-            // Ensure underlying task is torn down if the consumer stops early
-            continuation.onTermination = { [weak self] _ in
-                Task { await self?.cancelCurrentStreamTask() }
-            }
-        }
-    }
-
-    // Start a new turn: persists the user message, then streams the assistant
-    func startStream(history: [ChatMessage], userMessage: ChatMessage, output: [ToolOutput] = []) -> AsyncStream<ChatEngineEvent> {
+    /// Create a stream for local tool results (simulates AI streaming for consistency)
+    private func createLocalResultStream(result: ToolResult, userMessage: ChatMessage) -> AsyncStream<ChatEngineEvent> {
         cancelCurrentStreamIfAny()
 
         return AsyncStream<ChatEngineEvent> { continuation in
-            // spawn the stream task ON the actor
             currentStreamTask = Task { [weak self] in
                 guard let self else { return }
-                await self.runStreamChain(history: history,
-                                          userMessage: userMessage,
-                                          continuation: continuation)
+                do {
+                    // Persist + echo the user message
+                    try await self.persistence.upsert(userMessage)
+                    continuation.yield(.messageAppended(userMessage))
+
+                    // Build the assistant message from local tool result
+                    var assistant = await self.createAssistantMessage(
+                        conversationId: self.conversationId,
+                        rawText: result.message,
+                        richText: result.richText,
+                        status: .streaming,
+                        actions: result.options
+                    )
+
+                    // Stream events to the UI
+                    continuation.yield(.messageAppended(assistant))
+
+                    // Simulate brief processing delay for better UX
+                    try await Task.sleep(for: .seconds(1))
+
+                    assistant.status = .sent
+                    continuation.yield(.messageStatusUpdated(messageId: assistant.id, status: .sent, error: nil))
+
+                    // Persist final message
+                    try await self.persistence.upsert(assistant)
+
+                    continuation.yield(.completed(messageId: assistant.id))
+
+                    // Return engine to idle
+                    await self.setState(.idle)
+
+                } catch is CancellationError {
+                    await self.setState(.failed("Chat cancelled"))
+                } catch {
+                    log("Local result streaming error: \(error)")
+                    await self.setState(.failed("\(error)"))
+                }
+                continuation.finish()
             }
 
-            // tear down ON the actor
+            // Cleanup on termination
             continuation.onTermination = { [weak self] _ in
-                Task { await self?.cancelCurrentStreamTask() }
+                Task { await self?.cancelCurrentStreamIfAny() }
             }
         }
+    }
+
+    /// Public API for starting AI streaming (delegates to StreamManager)
+    func startStream(history: [ChatMessage], userMessage: ChatMessage, output: [ToolOutput] = []) async -> AsyncStream<ChatEngineEvent> {
+        return await streamManager.startStream(history: history, userMessage: userMessage, output: output)
     }
 
     public func stop() async {
-        // Best-effort: mark last streaming assistant as sent (if we can infer it)
-        if case .streaming(let assistantId, let continuation) = state {
-            // Flush any pending deltas and mark as sent
-            await flushDeltaNow(assistantId)
-            if emittedText.contains(assistantId) {
-                try? await repo.setStatus(messageId: assistantId, status: .sent, error: nil)
-            } else {
-                try? await repo.delete(messageId: assistantId)
-            }
-            emittedText.remove(assistantId)
-            if toolingAssistantId == assistantId { toolingAssistantId = nil }
-            await setState(.stopped(assistantId: assistantId), continuation: continuation)
-        } else {
-            state = .idle
-        }
+        // Cancel current processing
         cancelCurrentStreamIfAny()
-        ai.cancelCurrentGeneration()
+
+        // Delegate streaming cancellation to StreamManager
+        await streamManager.cancelCurrentGeneration()
+
+        // Update state
+        setState(.idle)
     }
 
-    // MARK: - Internals
+    // MARK: - Disambiguation Handling
 
-    private func runStreamChain(history: [ChatMessage],
-                                userMessage: ChatMessage,
-                                continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
+    /// Handle user selection of a disambiguation option
+    func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: @escaping (ChatEngineEvent) -> Void) async {
+        // Store the chat event callback for state communication
+        currentChatEvent = chatEvent
+
+        guard let originalContext = commandContexts.first(where: { $0.id == parseResultId }) else { return }
+
+        if originalContext.hasIntentAmbiguity {
+            await handleIntentDisambiguation(originalContext: originalContext, selectedOptionId: selectedOptionId, chatEvent: chatEvent)
+        } else {
+            await handleEntityDisambiguation(contextId: parseResultId, selectedOptionId: selectedOptionId, chatEvent: chatEvent)
+        }
+    }
+
+    private func handleIntentDisambiguation(originalContext: CommandContext, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
+        guard let intentAmbiguity = originalContext.intentAmbiguity,
+              let selectedIntent = intentAmbiguity.predictions.first(where: { $0.id == selectedOptionId })?.intent else { return }
+
+        let resolvedContext = originalContext.withSelectedIntent(selectedIntent)
+        commandContexts.append(resolvedContext)
+
         do {
-            try await repo.upsert(userMessage)
-            continuation.yield(.messageAppended(userMessage))
-            
-            let baseHistory = history + [userMessage]
-            try await consumeStream(history: baseHistory, outputs: [], continuation: continuation)
-            
-            while true {
-                let outs = drainPendingStreamedToolOutputs()   // no await needed; we’re on the actor
-                if outs.isEmpty { break }
-                let hist = try await repo.loadMessages(conversationId: conversationId, limit: nil)
-                try await consumeStream(history: hist, outputs: outs, continuation: continuation)
-            }
-        } catch is CancellationError {
-            if let id = currentAssistantIdIfAny() {
-                await flushDeltaNow(id)
-                try? await repo.setStatus(messageId: id, status: .failed, error: "Cancelled")
-                continuation.yield(.messageStatusUpdated(messageId: id, status: .failed, error: "Cancelled"))
-                emittedText.remove(id)
-                if toolingAssistantId == id { toolingAssistantId = nil }
-            }
-            await setState(.failed("Chat cancelled"), continuation: continuation)
+            let result = try await localProcessor.execute(resolvedContext)
+            self.toolResults = [result]
+            await processLocalResults(toolResults: self.toolResults, userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
         } catch {
-            if let id = currentAssistantIdIfAny() {
-                await flushDeltaNow(id)
-                try? await repo.setStatus(messageId: id, status: .failed, error: "\(error)")
-                continuation.yield(.messageStatusUpdated(messageId: id, status: .failed, error: "\(error)"))
-                emittedText.remove(id)
-                if toolingAssistantId == id { toolingAssistantId = nil }
-            }
-            await setState(.failed("\(error)"), continuation: continuation)
-        }
-        continuation.finish()
-    }
-    
-    private func consumeStream(history: [ChatMessage],
-                               outputs: [ToolOutput],
-                               continuation: AsyncStream<ChatEngineEvent>.Continuation) async throws {
-        let stream = try ai.generate(conversationId: conversationId,
-                                     history: history,
-                                     output: outputs,
-                                     supportsTools: true)
-        for try await event in stream {
-            try Task.checkCancellation()
-            await self.handleAIEvent(event, continuation: continuation)
+            await fallbackToAIStream(history: [], userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
         }
     }
-    
+
+    private func handleEntityDisambiguation(contextId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
+        guard let originalContext = commandContexts.first(where: { $0.id == contextId }),
+              let toolResult = toolResults.first(where: { result in
+                  result.options.contains { $0.parseResultId == contextId }
+              }),
+              let selectedOption = toolResult.options.first(where: { $0.id == selectedOptionId }) else {
+            return
+        }
+
+        let resolvedContext = originalContext.withSelectedEntity(selectedOption.id, editMode: selectedOption.editEventMode)
+        commandContexts.append(resolvedContext)
+
+        do {
+            let result = try await localProcessor.execute(resolvedContext)
+            self.toolResults = [result]
+            await processLocalResults(toolResults: self.toolResults, userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
+        } catch {
+            await fallbackToAIStream(history: [], userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
+        }
+    }
+
+    // MARK: - Internal Helpers
+
     private func cancelCurrentStreamIfAny() {
         currentStreamTask?.cancel()
         currentStreamTask = nil
     }
 
-    private func handleAIEvent(_ event: AIEvent, continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
-        switch event {
-        case .started(let id):
-            // If we were awaiting tools and left an ephemeral bubble, drop it now.
-            if case .awaitingTools = state, let prior = toolingAssistantId, !emittedText.contains(prior) {
-                try? await repo.delete(messageId: prior)
-                continuation.yield(.messageStatusUpdated(messageId: prior, status: .deleted, error: nil))
-                toolingAssistantId = nil
-            }
-            
-            // Create assistant placeholder
-            let assistant = createAssistantMessage(
-                conversationId: conversationId,
-                id: id,
-                rawText: "",
-                status: .streaming,
-                actions: []
-            )
-            mdDetectors[id] = MarkdownFormatDetector()
-            
-            try? await repo.upsert(assistant)
-            continuation.yield(.messageAppended(assistant))
-            await setState(.streaming(assistantId: id, continuation: continuation), continuation: continuation)
-
-        case .delta(let id, let delta):
-            // Yield to UI and debounce persistence
-            continuation.yield(.messageDelta(messageId: id, delta: delta))
-            emittedText.insert(id)
-            await bufferDelta(id: id, delta: delta)
-
-            if let det = mdDetectors[id], det.feed(delta) {
-                mdDetectors[id] = det
-                continuation.yield(.messageFormatUpdated(messageId: id, format: .markdown))
-                try? await repo.setFormat(messageId: id, format: .markdown)
-            }
-
-        case .toolCall(let responseId, let name, let argsJSON):
-            // If you track the last response id, use it here
-            await setState(.awaitingTools(responseId: responseId.uuidString,
-                                          assistantId: currentAssistantIdIfAny()),
-                           continuation: continuation)
-            await runSingleTool(name: name, argsJSON: argsJSON, continuation: continuation)
-
-        case .toolBatch(let calls):
-            // Flip to awaiting-tools as soon as we know tools are in play
-            if let first = calls.first {
-                await setState(.awaitingTools(responseId: first.responseId,
-                                              assistantId: currentAssistantIdIfAny()),
-                               continuation: continuation)
-            }
-            if let a = currentAssistantIdIfAny(), !emittedText.contains(a) {
-                let toolNames = calls.map { $0.name }.joined(separator: ", ")
-                var awaitingText = ""
-                if EnvConfig.shared.environment == .dev {
-                    awaitingText = "⏳ Using \(toolNames)…"
-                } else {
-                    awaitingText = "⏳ Thinking..."
-                }
-                continuation.yield(.messageDelta(messageId: a, delta: awaitingText))
-                toolingAssistantId = a
-            }
-            await runToolBatch(calls, continuation: continuation)
-
-        case .suggestions(let chips):
-            continuation.yield(.suggestions(chips))
-
-        case .completed(let id):
-            // If this turn called tools and produced no text, keep the placeholder alive.
-            if toolingAssistantId == id && !emittedText.contains(id) {
-                // Do NOT flush/mark .sent or .idle; we're still awaiting tools.
-                continuation.yield(.completed(messageId: id)) // optional; safe to keep/omit
-                return
-            }
-            
-            // Final chance to promote (in case last chunk tipped it over and repo call didn’t run)
-            if let det = mdDetectors[id], det.decided {
-                try? await repo.setFormat(messageId: id, format: .markdown)
-                continuation.yield(.messageFormatUpdated(messageId: id, format: .markdown))
-            }
-            
-            // Normal text-only path: Final flush + mark sent
-            await flushDeltaNow(id)
-            try? await repo.setStatus(messageId: id, status: .sent, error: nil)
-            continuation.yield(.messageStatusUpdated(messageId: id, status: .sent, error: nil))
-            continuation.yield(.completed(messageId: id))
-            
-            mdDetectors[id] = nil
-            emittedText.remove(id)
-            if toolingAssistantId == id { toolingAssistantId = nil }
-            await setState(.idle, continuation: continuation)
-
-        case .responseCreated(let rid):
-            continuation.yield(.responseCreated(rid))
-        }
-    }
-    
-    private func drainPendingStreamedToolOutputs() -> [ToolOutput] {
-        let outs = pendingStreamedToolOutputs
-        pendingStreamedToolOutputs.removeAll()
-        return outs
+    private func setState(_ newState: ChatStreamState) {
+        state = newState
+        currentChatEvent?(.stateChanged(newState))
     }
 
-    private func currentAssistantIdIfAny() -> UUID? {
-        switch state {
-        case .idle:
-            return nil
-        case .streaming(let assistantId, _):
-            return assistantId
-        case .awaitingTools(_, let assistantId):
-            return assistantId
-        case .stopped(let assistantId):
-            return assistantId
-        case .failed:
-            return nil
-        }
-    }
-
-    private func setState(_ new: ChatStreamState, continuation: AsyncStream<ChatEngineEvent>.Continuation?) async {
-        state = new
-        continuation?.yield(.stateChanged(new))
-    }
-    
-    private func setCurrentStreamTask(_ task: Task<Void, Never>?) {
-        currentStreamTask = task
-    }
-
-    private func cancelCurrentStreamTask() {
-        currentStreamTask?.cancel()
-        currentStreamTask = nil
-    }
-
-    private func createAssistantMessage(
-        conversationId: UUID,
-        id: UUID? = nil,
-        rawText: String? = nil,
-        richText: AttributedString? = nil,
-        status: ChatMessageStatus,
-        actions: [ChatMessageActionAlternative]
-    ) -> ChatMessage {
+    private func createAssistantMessage(conversationId: UUID, id: UUID? = nil, rawText: String? = nil, richText: AttributedString? = nil, status: ChatMessageStatus, actions: [ChatMessageActionAlternative]) -> ChatMessage {
         if let rich = richText {
-            return ChatMessage(
-                id: id ?? UUID(),
-                conversationId: conversationId,
-                role: .assistant,
-                attributed: rich,
-                createdAt: Date(),
-                status: status,
-                actions: actions
-            )
+            return ChatMessage(id: id ?? UUID(), conversationId: conversationId, role: .assistant, attributed: rich, createdAt: Date(), status: status, actions: actions)
         } else {
-            return ChatMessage(
-                id: id ?? UUID(),
-                conversationId: conversationId,
-                role: .assistant,
-                plain: rawText ?? "",
-                createdAt: Date(),
-                status: status,
-                actions: actions
-            )
+            return ChatMessage(id: id ?? UUID(), conversationId: conversationId, role: .assistant, plain: rawText ?? "", createdAt: Date(), status: status, actions: actions)
         }
     }
-    
-    // Debounce persistence of deltas to reduce I/O
-    private func bufferDelta(id: UUID, delta: String) async {
-        deltaBuffers[id, default: ""].append(delta)
-        if deltaFlushTasks[id] == nil {
-            deltaFlushTasks[id] = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: self?.deltaFlushNs ?? 150_000_000)
-                await self?.flushDeltaNow(id)
-            }
-        }
-    }
-
-    private func flushDeltaNow(_ id: UUID) async {
-        deltaFlushTasks[id]?.cancel()
-        deltaFlushTasks[id] = nil
-        guard let buf = deltaBuffers[id], !buf.isEmpty else { deltaBuffers[id] = nil; return }
-        deltaBuffers[id] = ""
-        try? await repo.appendDelta(messageId: id, delta: buf, status: .streaming)
-    }
-
-    // MARK: Disambiguation
-    
-    private func createDisambiguationMessage(parse: ParseResult) -> ToolResult {
-        guard let intentAmbiguity = parse.intentAmbiguity else {
-            // Fallback for non-ambiguous case (shouldn't happen)
-            let label = parse.label(calendar: calendar)
-            let options = [ChatMessageActionAlternative(id: UUID(), parseResultId: parse.id, intentOption: parse.intent, editEventMode: nil, label: label)]
-            return ToolResult(
-                intent: parse.intent,
-                action: ToolAction.info(message: "Proceeding with single option"),
-                needsDisambiguation: false,
-                options: options,
-                message: "Processing your request...",
-                richText: nil
-            )
-        }
-
-        // Create options for each intent prediction
-        let options = intentAmbiguity.predictions.map { prediction in
-            let label = parse.labelForIntent(prediction.intent, confidence: prediction.confidence, calendar: calendar)
-            return ChatMessageActionAlternative(id: prediction.id, parseResultId: parse.id, intentOption: prediction.intent, editEventMode: nil, label: label)
-        }
-
-        let message = parse.createDisambiguationText()
-
-        return ToolResult(
-            intent: .unknown,
-            action: ToolAction.info(message: "Please choose what you'd like to do"),
-            needsDisambiguation: true,
-            options: options,
-            message: message,
-            richText: nil
-        )
-    }
-
-    /// Handle user selection of a disambiguation option
-    func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
-        // Find the original parse result
-        guard let originalParse = nlpResult.first(where: { $0.id == parseResultId }) else { return }
-        
-        if let intentAmbiguity = originalParse.intentAmbiguity {
-            await handleIntentDisambiguation(originalParse: originalParse, intentAmbiguity: intentAmbiguity, selectedOptionId: selectedOptionId, chatEvent: chatEvent)
-        } else {
-            handleToolDisambiguation(selectedOptionId: selectedOptionId)
-        }
-    }
-    
-    func handleIntentDisambiguation(originalParse: ParseResult, intentAmbiguity: IntentAmbiguity, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
-        let selectedIntent = intentAmbiguity.predictions.first(where: { $0.id == selectedOptionId })?.intent ?? .unknown
-        
-        // Create a new ParseResult with the selected intent
-        let resolvedParse = ParseResult(
-            id: UUID(), // New ID for the resolved parse
-            originalText: originalParse.originalText,
-            title: originalParse.title,
-            intent: selectedIntent,
-            context: originalParse.context,
-            metadataTokens: originalParse.metadataTokens,
-            intentAmbiguity: nil // Clear ambiguity since user has decided
-            //****************** incluir toolResult aqui para poder executar com a escolha feita
-        )
-        
-        nlpResult.append(resolvedParse)
-
-        // Execute the resolved parse
-        do {
-            let result = try await execute(resolvedParse)
-            self.toolResults.removeAll()
-            self.toolResults.append(result)
-            await processResults(toolResults: self.toolResults, chatEvent: chatEvent)
-        } catch {
-            // If NLP fails, just use the normal AI streaming path
-            let asyncStream = startStream(history: history, userMessage: userMessage)
-            for await ev in asyncStream {
-                chatEvent(ev)
-            }
-        }
-    }
-    
-    func handleToolDisambiguation(selectedOptionId: UUID) {
-        for result in self.toolResults {
-            if let option = result.options.first(where: { $0.id == selectedOptionId }) {
-                
-            }
-        }
-    }
-
-    // MARK: Tools
-
-    private func execute(_ cmd: ParseResult) async throws -> ToolResult {
-        switch cmd.intent {
-        case .createTask: return await localTools.createTask(cmd)
-        case .createEvent: return await localTools.createEvent(cmd)
-        case .updateEvent: return await localTools.updateEvent(cmd)
-        case .updateTask: return await localTools.updateTask(cmd)
-        case .rescheduleTask: return await localTools.rescheduleTask(cmd)
-        case .rescheduleEvent: return await localTools.rescheduleEvent(cmd)
-        case .cancelTask: return await localTools.cancelTask(cmd)
-        case .cancelEvent: return await localTools.cancelEvent(cmd)
-        case .plan: return await localTools.planWeek(cmd)
-        case .view: return await localTools.showAgenda(cmd)
-        case .unknown: return await localTools.unknown(cmd)
-        }
-    }
-    
-    private func runSingleTool(name: String, argsJSON: String, continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
-        do {
-            let env = AIToolEnvelope(name: name, argsJSON: argsJSON)
-            let result = try await tools.dispatch(env)
-            let toolMsg = ChatMessage(
-                conversationId: conversationId,
-                role: .tool,
-                plain: result.note,
-                createdAt: Date(),
-                status: .sent
-            )
-            try? await repo.upsert(toolMsg)
-            continuation.yield(.messageAppended(toolMsg))
-        } catch {
-            let toolMsg = ChatMessage(
-                conversationId: conversationId,
-                role: .tool,
-                plain: "Tool error: \(error.localizedDescription)",
-                createdAt: Date(),
-                status: .sent
-            )
-            try? await repo.upsert(toolMsg)
-            continuation.yield(.messageAppended(toolMsg))
-        }
-    }
-
-    private func runToolBatch(_ calls: [ToolCallRequest], continuation: AsyncStream<ChatEngineEvent>.Continuation) async {
-        var outputs: [ToolOutput] = []
-        var inserts: [ChatInsert] = []
-
-        for c in calls {
-            do {
-                let env = AIToolEnvelope(name: c.name, argsJSON: c.argumentsJSON)
-                let result = try await tools.dispatch(env)
-                if let ui = result.ui { inserts.append(ui) }
-                outputs.append(ToolOutput(
-                    previous_response_id: c.responseId,
-                    tool_call_id: c.callId,
-                    output: result.note
-                ))
-            } catch {
-                let fail = "• \(c.name) failed: \(error.localizedDescription)"
-                outputs.append(ToolOutput(
-                    previous_response_id: c.responseId,
-                    tool_call_id: c.callId,
-                    output: fail
-                ))
-            }
-        }
-
-        if let required = calls.first(where: { $0.origin == .requiredAction }) {
-            // Exactly-once submit to required-action response id
-            do {
-                try await ai.submitToolOutputs(responseId: required.responseId, outputs: outputs)
-            } catch {
-                let m = ChatMessage(conversationId: conversationId, role: .tool, plain: "⚠️ Submit tool outputs failed: \(error.localizedDescription)", createdAt: Date(), status: .sent)
-                try? await repo.upsert(m)
-                continuation.yield(.messageAppended(m))
-            }
-            await setState(.awaitingTools(responseId: required.responseId, assistantId: currentAssistantIdIfAny()), continuation: continuation)
-        } else {
-            // Streamed function_call path → accumulate outputs for a follow-up turn,
-            // and (optionally) show a compact tool bubble now.
-            pendingStreamedToolOutputs.append(contentsOf: outputs)
-        }
-    }
-}
-
-// MARK: - Debouncer for UI (MainActor)
-
-@MainActor
-final class Debouncer {
-    private var task: Task<Void, Never>?
-    func schedule(afterNs: UInt64 = 120_000_000, _ block: @escaping @MainActor () -> Void) {
-        task?.cancel()
-        task = Task { [block] in
-            try? await Task.sleep(nanoseconds: afterNs)
-            block()
-        }
-    }
-    func cancel() { task?.cancel(); task = nil }
 }

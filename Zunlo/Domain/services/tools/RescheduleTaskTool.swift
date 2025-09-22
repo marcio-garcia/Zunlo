@@ -15,7 +15,7 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             // 1. Fetch all tasks
             let allTasks = try await tasks.fetchAll()
@@ -23,14 +23,14 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
             // 2. Filter tasks for reschedule context
             let relevantTasks = filterTasksForOperation(
                 allTasks,
-                command: command,
+                context: command,
                 excludeCompleted: true,
                 allowPastTasks: true,
                 referenceDate: referenceDate
             )
 
             // 3. Handle selection and perform reschedule
-            return await handleTaskSelection(relevantTasks, command: command, intent: .rescheduleTask) { task in
+            return await handleTaskSelection(relevantTasks, context: command, intent: .rescheduleTask) { task in
                 await self.performTaskReschedule(task, command: command)
             }
 
@@ -49,7 +49,7 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
 
     private func performTaskReschedule(
         _ task: UserTask,
-        command: ParseResult
+        command: CommandContext
     ) async -> ToolResult {
 
         do {
@@ -96,8 +96,8 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
 
     // MARK: - Due Date Extraction
 
-    private func extractNewDueDate(from command: ParseResult, originalTask: UserTask) -> Date? {
-        let context = command.context
+    private func extractNewDueDate(from command: CommandContext, originalTask: UserTask) -> Date? {
+        let context = command.temporalContext
 
         // If there's a specific new date in the context, use it
         if let dateRange = context.dateRange {

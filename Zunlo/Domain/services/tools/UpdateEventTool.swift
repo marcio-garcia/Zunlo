@@ -22,7 +22,7 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
@@ -30,7 +30,7 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
             // 2. Pre-filter events for update context
             let relevantEvents = filterEventsForOperation(
                 allEvents,
-                command: command,
+                context: command,
                 excludeCancelled: true,
                 allowPastEvents: true,
                 pastEventToleranceHours: 24.0,
@@ -46,7 +46,7 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
             )
 
             // 4. Handle selection based on confidence
-            return await handleEventSelection(selection, command: command, intent: .updateEvent) { event in
+            return await handleEventSelection(selection, context: command, intent: .updateEvent) { event in
                 await self.performEventUpdate(event, command: command)
             }
 
@@ -65,7 +65,7 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
 
     private func performEventUpdate(
         _ event: EventOccurrence,
-        command: ParseResult
+        command: CommandContext
     ) async -> ToolResult {
 
         do {
@@ -139,8 +139,8 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
         let newReminders: [ReminderTrigger]?
     }
 
-    private func extractUpdateInfo(from command: ParseResult, originalEvent: EventOccurrence) -> UpdateInfo {
-        let context = command.context
+    private func extractUpdateInfo(from command: CommandContext, originalEvent: EventOccurrence) -> UpdateInfo {
+        let context = command.temporalContext
         var newTitle: String?
         var newLocation: String?
         var newReminders: [ReminderTrigger] = []

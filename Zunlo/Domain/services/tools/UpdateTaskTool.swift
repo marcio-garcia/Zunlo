@@ -15,7 +15,7 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             // 1. Fetch all tasks
             let allTasks = try await tasks.fetchAll()
@@ -23,14 +23,14 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
             // 2. Filter tasks for update context
             let relevantTasks = filterTasksForOperation(
                 allTasks,
-                command: command,
+                context: command,
                 excludeCompleted: false,
                 allowPastTasks: true,
                 referenceDate: referenceDate
             )
 
             // 3. Handle selection and perform update
-            return await handleTaskSelection(relevantTasks, command: command, intent: .updateTask) { task in
+            return await handleTaskSelection(relevantTasks, context: command, intent: .updateTask) { task in
                 await self.performTaskUpdate(task, command: command)
             }
 
@@ -49,7 +49,7 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
 
     private func performTaskUpdate(
         _ task: UserTask,
-        command: ParseResult
+        command: CommandContext
     ) async -> ToolResult {
 
         do {
@@ -101,8 +101,8 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
         let newPriority: TaskPriority?
     }
 
-    private func extractUpdateInfo(from command: ParseResult, originalTask: UserTask) -> UpdateInfo {
-        let context = command.context
+    private func extractUpdateInfo(from command: CommandContext, originalTask: UserTask) -> UpdateInfo {
+        let context = command.temporalContext
         var newTitle: String?
         var newNotes: String?
         var newPriority: TaskPriority?

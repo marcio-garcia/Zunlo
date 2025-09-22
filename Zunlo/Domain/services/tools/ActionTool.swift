@@ -12,8 +12,8 @@ import SmartParseKit
 
 /// Protocol for individual action tools that perform specific operations
 protocol ActionTool {
-    /// Perform the tool's action with the given command
-    func perform(_ command: ParseResult) async -> ToolResult
+    /// Perform the tool's action with the given command context
+    func perform(_ context: CommandContext) async -> ToolResult
 }
 
 // MARK: - Supporting Types

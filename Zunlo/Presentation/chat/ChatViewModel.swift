@@ -184,7 +184,7 @@ final class ChatViewModel: ObservableObject {
             case .idle:
                 print("IDLE:")
                 isGenerating = false
-            case .streaming(let assistantId, _):
+            case .streaming(let assistantId):
                 print("STREAMING - assistent id: \(assistantId)")
                 isGenerating = true
             case .awaitingTools(let responseId, let assistantId):
@@ -299,4 +299,19 @@ extension ChatViewModel {
         )
     }
 
+}
+
+// MARK: - Debouncer for UI (MainActor)
+
+@MainActor
+final class Debouncer {
+    private var task: Task<Void, Never>?
+    func schedule(afterNs: UInt64 = 120_000_000, _ block: @escaping @MainActor () -> Void) {
+        task?.cancel()
+        task = Task { [block] in
+            try? await Task.sleep(nanoseconds: afterNs)
+            block()
+        }
+    }
+    func cancel() { task?.cancel(); task = nil }
 }

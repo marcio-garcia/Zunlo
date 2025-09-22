@@ -22,16 +22,16 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
 
             // 2. Pre-filter events for reschedule context
-            let searchWindow = DateInterval(start: referenceDate, end: command.context.finalDate)
+            let searchWindow = DateInterval(start: referenceDate, end: command.temporalContext.finalDate)
             let relevantEvents = filterEventsForOperation(
                 allEvents,
-                command: command,
+                context: command,
                 excludeCancelled: true,
                 allowPastEvents: true,
                 pastEventToleranceHours: 1.0,
@@ -49,7 +49,7 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
             )
 
             // 4. Handle selection based on confidence
-            return await handleEventSelection(selection, command: command, intent: .rescheduleEvent) { event in
+            return await handleEventSelection(selection, context: command, intent: .rescheduleEvent) { event in
                 await self.performEventReschedule(event, command: command)
             }
 
@@ -68,7 +68,7 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
 
     private func performEventReschedule(
         _ event: EventOccurrence,
-        command: ParseResult
+        command: CommandContext
     ) async -> ToolResult {
 
         do {
@@ -144,8 +144,8 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
 
     // MARK: - Timing Extraction
 
-    private func extractNewTiming(from command: ParseResult, originalEvent: EventOccurrence) -> Date? {
-        let context = command.context
+    private func extractNewTiming(from command: CommandContext, originalEvent: EventOccurrence) -> Date? {
+        let context = command.temporalContext
 
         // If there's a specific new date in the context, use it
 //        if let dateRange = context.dateRange {

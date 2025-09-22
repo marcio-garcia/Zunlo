@@ -79,7 +79,7 @@ public enum ResolvedTemporal {
 }
 
 public protocol InputParser {
-    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], MetadataExtractionResult)
+    func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> ([TemporalToken], MetadataExtractionResult)
 }
 
 // MARK: - Composer
@@ -95,7 +95,7 @@ public final class TemporalComposer: InputParser {
     }
 
     // Entry point
-    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> (Intent, [TemporalToken], MetadataExtractionResult) {
+    public func parse(_ text: String, now: Date, pack: DateLanguagePack, intentDetector: IntentDetector) -> ([TemporalToken], MetadataExtractionResult) {
         let temporalTokens = detectTokens(in: text, now: now, pack: pack)
 
         // Extract metadata using the new MetadataExtractor
@@ -104,11 +104,7 @@ public final class TemporalComposer: InputParser {
             temporalRanges: temporalTokens.compactMap({ Range($0.range, in: text) }),
             pack: pack
         )
-
-        // Use new intent interpreter for classification
-        let intentInterpreter = IntentInterpreter()
-        let intentAmbiguity = intentInterpreter.classify(inputText: text, metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens, languagePack: pack)
-
+        
         // Create enhanced metadata result with intent ambiguity
         let enhancedMetadataResult = MetadataExtractionResult(
             tokens: metadataResult.tokens,
@@ -117,7 +113,7 @@ public final class TemporalComposer: InputParser {
             conflicts: metadataResult.conflicts
         )
 
-        return (intentAmbiguity.primaryIntent, temporalTokens, enhancedMetadataResult)
+        return (temporalTokens, enhancedMetadataResult)
     }
 
     // MARK: - Detection

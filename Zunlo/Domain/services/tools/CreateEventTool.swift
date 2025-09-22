@@ -23,9 +23,9 @@ final class CreateEventTool: BaseEventTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ context: CommandContext) async -> ToolResult {
         do {
-            let eventInfo = extractEventInfo(from: command)
+            let eventInfo = extractEventInfo(from: context)
 
             let eventInput = AddEventInput(
                 id: UUID(),
@@ -50,7 +50,7 @@ final class CreateEventTool: BaseEventTool, ActionTool {
             try await events.add(eventInput)
 
             return ToolResult(
-                intent: command.intent,
+                intent: context.intent,
                 action: .createdEvent(id: eventInput.id),
                 needsDisambiguation: false,
                 options: [],
@@ -59,7 +59,7 @@ final class CreateEventTool: BaseEventTool, ActionTool {
 
         } catch {
             return ToolResult(
-                intent: command.intent,
+                intent: context.intent,
                 action: .none,
                 needsDisambiguation: false,
                 options: [],
@@ -87,15 +87,15 @@ final class CreateEventTool: BaseEventTool, ActionTool {
         let count: Int?
     }
 
-    private func extractEventInfo(from command: ParseResult) -> EventInfo {
-        let context = command.context
+    private func extractEventInfo(from context: CommandContext) -> EventInfo {
+        let temporalContext = context.temporalContext
         var newTitle: String?
         var notes: String?
         var location: String?
         var reminderTriggers: [ReminderTrigger] = []
 
         // Extract metadata from metadataTokens
-        for token in command.metadataTokens {
+        for token in context.metadataTokens {
             switch token.kind {
             case .newTitle(let title, _):
                 newTitle = title
@@ -111,7 +111,7 @@ final class CreateEventTool: BaseEventTool, ActionTool {
                 case .timeOffset(let offset):
                     timeBeforeDue = offset
                 case .absoluteTime(let time):
-                    timeBeforeDue = time.timeIntervalSince(context.finalDate)
+                    timeBeforeDue = time.timeIntervalSince(context.temporalContext.finalDate)
                 case .location(let loc):
                     message = loc
                 }
@@ -131,9 +131,9 @@ final class CreateEventTool: BaseEventTool, ActionTool {
 //            startDate = dateRange.start
 //            endDate = dateRange.end
 //        } else {
-        startDate = context.finalDate
+        startDate = context.temporalContext.finalDate
         endDate = startDate.addingTimeInterval(3600) // Default to 1 hour duration
-        if let duration = context.finalDateDuration {
+        if let duration = context.temporalContext.finalDateDuration {
             endDate = startDate.addingTimeInterval(duration)
         }
 //        }
@@ -142,8 +142,8 @@ final class CreateEventTool: BaseEventTool, ActionTool {
         let recurrence: RecurrenceRule? = nil
         let isRecurring = recurrence != nil
 
-        // Use title from command or fallback
-        var title: String = command.title
+        // Use title from context or fallback
+        var title: String = context.title
         if let t = newTitle {
             title = t
         }

@@ -27,7 +27,7 @@ class BaseEventTool {
     /// Filter events based on temporal context and basic criteria
     func filterEventsForOperation(
         _ events: [EventOccurrence],
-        command: ParseResult,
+        context: CommandContext,
         excludeCancelled: Bool = true,
         allowPastEvents: Bool = false,
         pastEventToleranceHours: Double = 1.0,
@@ -36,18 +36,18 @@ class BaseEventTool {
     ) -> [EventOccurrence] {
 
         let now = referenceDate
-        let context = command.context
+        let temporalContext = context.temporalContext
         var window: DateInterval
-        
+
         if let interval = searchWindow {
             window = interval
         } else {
-            
-            let startOfFinalDate = context.finalDate.startOfDay(calendar: calendar)
+
+            let startOfFinalDate = temporalContext.finalDate.startOfDay(calendar: calendar)
             var startOfNextDay = startOfFinalDate.startOfNextDay(calendar: calendar)
             startOfNextDay = calendar.date(byAdding: .second, value: -1, to: startOfNextDay) ?? startOfNextDay
-            
-            window = context.dateRange ?? DateInterval(
+
+            window = temporalContext.dateRange ?? DateInterval(
                 start: startOfFinalDate,
                 end: startOfNextDay
             )
@@ -77,7 +77,7 @@ class BaseEventTool {
 
     func handleEventSelection(
         _ selection: CandidateSelection<EventOccurrence>,
-        command: ParseResult,
+        context: CommandContext,
         intent: Intent,
         performAction: (EventOccurrence) async -> ToolResult
     ) async -> ToolResult {
@@ -94,7 +94,7 @@ class BaseEventTool {
             } else {
                 return createDisambiguationResult(
                     alternatives: selection.alternatives,
-                    command: command,
+                    context: context,
                     intent: intent,
                     message: createIntelligentDisambiguationMessage(selection, intent: intent)
                 )
@@ -102,11 +102,11 @@ class BaseEventTool {
 
         case .low, .ambiguous:
             if selection.alternatives.isEmpty {
-                return createNoMatchResult(command: command, intent: intent)
+                return createNoMatchResult(context: context, intent: intent)
             } else {
                 return createDisambiguationResult(
                     alternatives: selection.alternatives,
-                    command: command,
+                    context: context,
                     intent: intent,
                     message: createIntelligentDisambiguationMessage(selection, intent: intent)
                 )
@@ -114,7 +114,7 @@ class BaseEventTool {
         }
 
         return ToolResult(
-            intent: command.intent,
+            intent: context.intent,
             action: .info(message: "More info"),
             needsDisambiguation: true,
             options: [],
@@ -126,7 +126,7 @@ class BaseEventTool {
 
     func createDisambiguationResult(
         alternatives: [EventOccurrence],
-        command: ParseResult,
+        context: CommandContext,
         intent: Intent,
         message: String
     ) -> ToolResult {
@@ -134,7 +134,7 @@ class BaseEventTool {
         let options = alternatives.map { event in
             ChatMessageActionAlternative(
                 id: event.id,
-                parseResultId: command.id,
+                parseResultId: context.id,
                 intentOption: intent,
                 editEventMode: nil,
                 label: AttributedString(eventLabel(event))
@@ -142,7 +142,7 @@ class BaseEventTool {
         }
 
         return ToolResult(
-            intent: command.intent,
+            intent: context.intent,
             action: .info(message: "Disambiguation"),
             needsDisambiguation: true,
             options: options,
@@ -151,14 +151,14 @@ class BaseEventTool {
     }
 
     func createNoMatchResult(
-        command: ParseResult,
+        context: CommandContext,
         intent: Intent
     ) -> ToolResult {
 
-        let intelligentMessage = createNoMatchMessage(for: command, intent: intent)
+        let intelligentMessage = createNoMatchMessage(for: context, intent: intent)
 
         return ToolResult(
-            intent: command.intent,
+            intent: context.intent,
             action: .info(message: "No match"),
             needsDisambiguation: true,
             options: [],
@@ -195,16 +195,16 @@ class BaseEventTool {
     }
 
     func createNoMatchMessage(
-        for command: ParseResult,
+        for context: CommandContext,
         intent: Intent
     ) -> String {
 
         let actionVerb = getActionVerb(for: intent)
 
-        if command.title.isEmpty {
+        if context.title.isEmpty {
             return "Please specify which event you'd like to \(actionVerb).".localized
         } else {
-            return String(format: "I couldn't find an event matching '%@' to \(actionVerb). Could you be more specific?".localized, command.title, actionVerb)
+            return String(format: "I couldn't find an event matching '%@' to \(actionVerb). Could you be more specific?".localized, context.title, actionVerb)
         }
     }
 

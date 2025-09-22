@@ -22,7 +22,7 @@ final class ShowAgendaTool: ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             let timeRange = extractTimeRange(from: command)
             let occurrences = try await events.fetchOccurrences(in: timeRange)
@@ -48,8 +48,8 @@ final class ShowAgendaTool: ActionTool {
 
     // MARK: - Helper Methods
 
-    private func extractTimeRange(from command: ParseResult) -> Range<Date> {
-        let context = command.context
+    private func extractTimeRange(from command: CommandContext) -> Range<Date> {
+        let context = command.temporalContext
 
         if let dateRange = context.dateRange {
             return dateRange.start..<dateRange.end

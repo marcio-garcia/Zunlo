@@ -21,9 +21,9 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ context: CommandContext) async -> ToolResult {
         do {
-            let taskInfo = extractTaskInfo(from: command)
+            let taskInfo = extractTaskInfo(from: context)
 
             var tags: [Tag] = []
             if let tag = taskInfo.tag {
@@ -44,7 +44,7 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
             try await tasks.upsert(task)
 
             return ToolResult(
-                intent: command.intent,
+                intent: context.intent,
                 action: .createdTask(id: task.id),
                 needsDisambiguation: false,
                 options: [],
@@ -53,7 +53,7 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
 
         } catch {
             return ToolResult(
-                intent: command.intent,
+                intent: context.intent,
                 action: .none,
                 needsDisambiguation: false,
                 options: [],
@@ -72,14 +72,14 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
         let tag: String?
     }
 
-    private func extractTaskInfo(from command: ParseResult) -> TaskInfo {
-        let context = command.context
+    private func extractTaskInfo(from context: CommandContext) -> TaskInfo {
+        let temporalContext = context.temporalContext
         var notes: String?
         var priority: TaskPriority = .medium
         var tag: String?
 
         // Extract metadata from metadataTokens
-        for token in command.metadataTokens {
+        for token in context.metadataTokens {
             switch token.kind {
             case .notes(let noteText, _):
                 notes = noteText
@@ -94,11 +94,11 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
             }
         }
 
-        // Use title from command or fallback
-        let title = !command.title.isEmpty ? command.title : "New Task".localized
+        // Use title from context or fallback
+        let title = !context.title.isEmpty ? context.title : "New Task".localized
 
         // Extract due date from context
-        let dueDate = context.dateRange?.start ?? context.finalDate
+        let dueDate = temporalContext.dateRange?.start ?? temporalContext.finalDate
 
         return TaskInfo(
             title: title,

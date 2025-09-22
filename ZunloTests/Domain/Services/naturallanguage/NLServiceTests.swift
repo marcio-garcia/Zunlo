@@ -464,8 +464,19 @@ final class NLServiceTests: XCTestCase {
 
         XCTAssertEqual(results.count, 1)
         let result = results[0]
-        XCTAssertEqual(result.intent, .cancelEvent)
         XCTAssertTrue(result.title.contains("dentist appointment"))
+        
+        // Should detect ambiguity between createTask and updateTask
+        XCTAssertTrue(result.isAmbiguous, "Should detect ambiguity")
+        XCTAssertGreaterThan(result.intentAmbiguity?.predictions.count ?? 0, 1, "Should have multiple intent alternatives")
+
+        // Should contain both createTask and updateTask as alternatives
+        let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
+        XCTAssertTrue(intentAlternatives.contains(.cancelEvent), "Should include cancelEvent as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.cancelTask), "Should include cancelTask as alternative")
+
+        // Should have reasonable confidence scores
+        XCTAssertTrue(result.intentAmbiguity?.predictions.allSatisfy { $0.confidence > 0.3 } == true, "All alternatives should have reasonable confidence")
     }
 
     // MARK: - Time Range Tests

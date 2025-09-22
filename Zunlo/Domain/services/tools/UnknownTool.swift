@@ -17,11 +17,11 @@ final class UnknownTool: ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
-        let message = generateHelpfulMessage(for: command)
+    func perform(_ context: CommandContext) async -> ToolResult {
+        let message = generateHelpfulMessage(for: context)
 
         return ToolResult(
-            intent: command.intent,
+            intent: context.intent,
             action: .info(message: message),
             needsDisambiguation: false,
             options: [],
@@ -31,8 +31,8 @@ final class UnknownTool: ActionTool {
 
     // MARK: - Message Generation
 
-    private func generateHelpfulMessage(for command: ParseResult) -> String {
-        let userInput = command.originalText
+    private func generateHelpfulMessage(for context: CommandContext) -> String {
+        let userInput = context.originalText
 
         if userInput.isEmpty {
             return "I'm not sure what you'd like me to do. Try asking me to create an event, schedule a task, or check your agenda.".localized

@@ -22,7 +22,7 @@ final class CancelEventTool: BaseEventTool, ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
@@ -30,7 +30,7 @@ final class CancelEventTool: BaseEventTool, ActionTool {
             // 2. Pre-filter events for cancellation context
             let relevantEvents = filterEventsForOperation(
                 allEvents,
-                command: command,
+                context: command,
                 excludeCancelled: true,
                 allowPastEvents: true,
                 pastEventToleranceHours: 1.0,
@@ -46,7 +46,7 @@ final class CancelEventTool: BaseEventTool, ActionTool {
             )
 
             // 4. Handle selection based on confidence
-            return await handleEventSelection(selection, command: command, intent: .cancelEvent) { event in
+            return await handleEventSelection(selection, context: command, intent: .cancelEvent) { event in
                 await self.performEventCancellation(event, command: command)
             }
 
@@ -65,7 +65,7 @@ final class CancelEventTool: BaseEventTool, ActionTool {
 
     private func performEventCancellation(
         _ event: EventOccurrence,
-        command: ParseResult
+        command: CommandContext
     ) async -> ToolResult {
 
         do {

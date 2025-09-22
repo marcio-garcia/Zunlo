@@ -58,10 +58,15 @@ public final class NLService: NLProcessing {
         var results: [ParseResult] = []
         for clause in splittedClauses {
             for pack in packs {
-                let (intent, temporalTokens, metadataResult) = parser.parse(clause.text, now: referenceDate, pack: pack, intentDetector: AppleIntentDetector.bundled())
-                log("parsed intent: \(intent)")
+                let (temporalTokens, metadataResult) = parser.parse(clause.text, now: referenceDate, pack: pack, intentDetector: AppleIntentDetector.bundled())
+                
                 log("parsed temporal tokens: \(temporalTokens.map({ $0.kind }))")
                 log("parsed metadata tokens: \(metadataResult.tokens.map { "\($0.kind)" })")
+
+                // Use new intent interpreter for classification
+                let intentInterpreter = IntentInterpreter()
+                let intentAmbiguity = intentInterpreter.classify(inputText: text, metadataTokens: metadataResult.tokens, temporalTokens: temporalTokens, languagePack: pack)
+                log("parsed intent: \(intentAmbiguity.primaryIntent)")
 
                 let interpreter = TemporalTokenInterpreter(calendar: calendar, referenceDate: referenceDate)
                 let context = interpreter.interpret(temporalTokens)
@@ -73,9 +78,10 @@ public final class NLService: NLProcessing {
                     id: UUID(),
                     originalText: text,
                     title: metadataResult.title,
-                    intent: intent,
+                    intent: intentAmbiguity.primaryIntent,
                     context: context,
-                    metadataTokens: metadataResult.tokens
+                    metadataTokens: metadataResult.tokens,
+                    intentAmbiguity: intentAmbiguity
                 )
                 log("parse result: \(parseResult)")
                 results.append(parseResult)

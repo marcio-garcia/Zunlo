@@ -93,7 +93,6 @@ final class DefaultViewFactory: ViewFactory {
             conversationId: cid,
             ai: aiChatService,
             nlpService: nlpService,
-            tools: aiToolRouter,
             repo: appState.chatRepository!,
             localTools: tools,
             calendar: calendar)

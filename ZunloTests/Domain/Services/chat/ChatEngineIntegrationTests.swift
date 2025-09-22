@@ -20,14 +20,12 @@ final class ChatEngineIntegrationTests: XCTestCase {
         ]
         let ai = SupabaseAIChatClient(streamer: streamer, auth: MockAuthProvider())
         let repo = InMemoryChatRepositoryActor()
-        let tools = MockToolRouter()
         let localTools = MockActionTools()
         let nlp = MockNLService()
         let engine = ChatEngine(
             conversationId: UUID(),
             ai: ai,
             nlpService: nlp,
-            tools: tools,
             repo: repo,
             localTools: localTools,
             calendar: TestUtil.calendarSP()
@@ -61,14 +59,12 @@ final class ChatEngineIntegrationTests: XCTestCase {
         ]
         let ai = SupabaseAIChatClient(streamer: streamer, auth: MockAuthProvider())
         let repo = InMemoryChatRepositoryActor()
-        let tools = MockToolRouter()
         let localTools = MockActionTools()
         let nlp = MockNLService()
         let engine = ChatEngine(
             conversationId: UUID(),
             ai: ai,
             nlpService: nlp,
-            tools: tools,
             repo: repo,
             localTools: localTools,
             calendar: TestUtil.calendarSP()

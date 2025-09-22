@@ -22,7 +22,7 @@ final class PlanDayTool: ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             let targetDate = extractTargetDate(from: command)
             let dayRange = createDayRange(for: targetDate)
@@ -50,8 +50,8 @@ final class PlanDayTool: ActionTool {
 
     // MARK: - Helper Methods
 
-    private func extractTargetDate(from command: ParseResult) -> Date {
-        let context = command.context
+    private func extractTargetDate(from command: CommandContext) -> Date {
+        let context = command.temporalContext
 
         if let dateRange = context.dateRange {
             return dateRange.start

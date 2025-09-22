@@ -11,19 +11,19 @@ import SmartParseKit
 // MARK: - Tool Coordinator
 
 protocol Tools {
-    func createTask(_ cmd: ParseResult) async -> ToolResult
-    func createEvent(_ cmd: ParseResult) async -> ToolResult
-    func rescheduleTask(_ cmd: ParseResult) async -> ToolResult
-    func rescheduleEvent(_ cmd: ParseResult) async -> ToolResult
-    func updateTask(_ cmd: ParseResult) async -> ToolResult
-    func updateEvent(_ cmd: ParseResult) async -> ToolResult
-    func cancelTask(_ cmd: ParseResult) async -> ToolResult
-    func cancelEvent(_ cmd: ParseResult) async -> ToolResult
-    func planWeek(_ cmd: ParseResult) async -> ToolResult
-    func planDay(_ cmd: ParseResult) async -> ToolResult
-    func showAgenda(_ cmd: ParseResult) async -> ToolResult
-    func moreInfo(_ cmd: ParseResult) async -> ToolResult
-    func unknown(_ cmd: ParseResult) async -> ToolResult
+    func createTask(_ context: CommandContext) async -> ToolResult
+    func createEvent(_ context: CommandContext) async -> ToolResult
+    func rescheduleTask(_ context: CommandContext) async -> ToolResult
+    func rescheduleEvent(_ context: CommandContext) async -> ToolResult
+    func updateTask(_ context: CommandContext) async -> ToolResult
+    func updateEvent(_ context: CommandContext) async -> ToolResult
+    func cancelTask(_ context: CommandContext) async -> ToolResult
+    func cancelEvent(_ context: CommandContext) async -> ToolResult
+    func planWeek(_ context: CommandContext) async -> ToolResult
+    func planDay(_ context: CommandContext) async -> ToolResult
+    func showAgenda(_ context: CommandContext) async -> ToolResult
+    func moreInfo(_ context: CommandContext) async -> ToolResult
+    func unknown(_ context: CommandContext) async -> ToolResult
 }
 
 /// Coordinator that manages individual ActionTool instances and routes commands to the appropriate tool
@@ -70,55 +70,55 @@ final class ToolCoordinator: Tools {
 
     // MARK: - Tools Protocol Conformance
 
-    func createTask(_ cmd: ParseResult) async -> ToolResult {
-        return await createTaskTool.perform(cmd)
+    func createTask(_ context: CommandContext) async -> ToolResult {
+        return await createTaskTool.perform(context)
     }
 
-    func createEvent(_ cmd: ParseResult) async -> ToolResult {
-        return await createEventTool.perform(cmd)
+    func createEvent(_ context: CommandContext) async -> ToolResult {
+        return await createEventTool.perform(context)
     }
 
-    func rescheduleTask(_ cmd: ParseResult) async -> ToolResult {
-        return await rescheduleTaskTool.perform(cmd)
+    func rescheduleTask(_ context: CommandContext) async -> ToolResult {
+        return await rescheduleTaskTool.perform(context)
     }
 
-    func rescheduleEvent(_ cmd: ParseResult) async -> ToolResult {
-        return await rescheduleEventTool.perform(cmd)
+    func rescheduleEvent(_ context: CommandContext) async -> ToolResult {
+        return await rescheduleEventTool.perform(context)
     }
 
-    func updateTask(_ cmd: ParseResult) async -> ToolResult {
-        return await updateTaskTool.perform(cmd)
+    func updateTask(_ context: CommandContext) async -> ToolResult {
+        return await updateTaskTool.perform(context)
     }
 
-    func updateEvent(_ cmd: ParseResult) async -> ToolResult {
-        return await updateEventTool.perform(cmd)
+    func updateEvent(_ context: CommandContext) async -> ToolResult {
+        return await updateEventTool.perform(context)
     }
 
-    func cancelTask(_ cmd: ParseResult) async -> ToolResult {
-        return await cancelTaskTool.perform(cmd)
+    func cancelTask(_ context: CommandContext) async -> ToolResult {
+        return await cancelTaskTool.perform(context)
     }
 
-    func cancelEvent(_ cmd: ParseResult) async -> ToolResult {
-        return await cancelEventTool.perform(cmd)
+    func cancelEvent(_ context: CommandContext) async -> ToolResult {
+        return await cancelEventTool.perform(context)
     }
 
-    func planWeek(_ cmd: ParseResult) async -> ToolResult {
-        return await planWeekTool.perform(cmd)
+    func planWeek(_ context: CommandContext) async -> ToolResult {
+        return await planWeekTool.perform(context)
     }
 
-    func planDay(_ cmd: ParseResult) async -> ToolResult {
-        return await planDayTool.perform(cmd)
+    func planDay(_ context: CommandContext) async -> ToolResult {
+        return await planDayTool.perform(context)
     }
 
-    func showAgenda(_ cmd: ParseResult) async -> ToolResult {
-        return await showAgendaTool.perform(cmd)
+    func showAgenda(_ context: CommandContext) async -> ToolResult {
+        return await showAgendaTool.perform(context)
     }
 
-    func moreInfo(_ cmd: ParseResult) async -> ToolResult {
-        return await moreInfoTool.perform(cmd)
+    func moreInfo(_ context: CommandContext) async -> ToolResult {
+        return await moreInfoTool.perform(context)
     }
 
-    func unknown(_ cmd: ParseResult) async -> ToolResult {
-        return await unknownTool.perform(cmd)
+    func unknown(_ context: CommandContext) async -> ToolResult {
+        return await unknownTool.perform(context)
     }
 }

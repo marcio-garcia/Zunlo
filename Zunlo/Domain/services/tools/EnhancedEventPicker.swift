@@ -50,7 +50,7 @@ class EnhancedEventPicker {
     /// Main entry point for enhanced candidate selection
     func selectEventCandidate(
         from events: [EventOccurrence],
-        for command: ParseResult,
+        for command: CommandContext,
         intent: Intent,
         referenceDate: Date,
         searchWindow: DateInterval? = nil
@@ -70,7 +70,7 @@ class EnhancedEventPicker {
 
     private func scoreEventCandidates(
         _ events: [EventOccurrence],
-        for command: ParseResult,
+        for command: CommandContext,
         intent: Intent,
         referenceDate: Date,
         searchWindow: DateInterval?
@@ -84,7 +84,7 @@ class EnhancedEventPicker {
 
     private func calculateEnhancedScore(
         event: EventOccurrence,
-        command: ParseResult,
+        command: CommandContext,
         intent: Intent,
         referenceDate: Date,
         searchWindow: DateInterval?
@@ -178,7 +178,7 @@ class EnhancedEventPicker {
 
     private func enhancedTemporalScore(
         event: EventOccurrence,
-        command: ParseResult,
+        command: CommandContext,
         intent: Intent,
         referenceDate: Date,
         searchWindow: DateInterval?
@@ -188,7 +188,7 @@ class EnhancedEventPicker {
         let rangeScore = calculateDateRangeScore(event: event, command: command, searchWindow: searchWindow)
 
         // 2. Base time proximity (for specific times)
-        let anchor = command.context.dateRange?.start ?? command.context.finalDate
+        let anchor = command.temporalContext.dateRange?.start ?? command.temporalContext.finalDate
         let proximityScore = calculateTimeProximity(event.startDate, anchor: anchor)
 
         // Use the better of range score or proximity score
@@ -210,7 +210,7 @@ class EnhancedEventPicker {
 
     private func calculateContextualScore(
         event: EventOccurrence,
-        command: ParseResult,
+        command: CommandContext,
         intent: Intent
     ) -> Double {
 
@@ -237,7 +237,7 @@ class EnhancedEventPicker {
 
     private func calculateBehavioralScore(
         event: EventOccurrence,
-        command: ParseResult,
+        command: CommandContext,
         intent: Intent
     ) -> Double {
 
@@ -250,7 +250,7 @@ class EnhancedEventPicker {
 
     private func calculateSemanticScore(
         event: EventOccurrence,
-        command: ParseResult,
+        command: CommandContext,
         intent: Intent
     ) -> Double {
 
@@ -268,7 +268,7 @@ class EnhancedEventPicker {
     private func applyIntentSpecificFiltering(
         _ candidates: [ScoredCandidate<EventOccurrence>],
         intent: Intent,
-        command: ParseResult,
+        command: CommandContext,
         referenceDate: Date
     ) -> [ScoredCandidate<EventOccurrence>] {
 
@@ -292,7 +292,7 @@ class EnhancedEventPicker {
 
     private func makeIntelligentSelection(
         _ candidates: [ScoredCandidate<EventOccurrence>],
-        command: ParseResult,
+        command: CommandContext,
         intent: Intent
     ) -> CandidateSelection<EventOccurrence> {
 
@@ -493,13 +493,13 @@ extension EnhancedEventPicker {
         return min(1.0, score)
     }
 
-    private func calculateDateRangeScore(event: EventOccurrence, command: ParseResult, searchWindow: DateInterval?) -> Double {
+    private func calculateDateRangeScore(event: EventOccurrence, command: CommandContext, searchWindow: DateInterval?) -> Double {
         var dateRange: DateInterval
         
         if let interval = searchWindow {
             dateRange = interval
         } else {
-            let context = command.context
+            let context = command.temporalContext
             let startOfFinalDate = context.finalDate.startOfDay(calendar: calendar)
             var startOfNextDay = startOfFinalDate.startOfNextDay(calendar: calendar)
             startOfNextDay = calendar.date(byAdding: .second, value: -1, to: startOfNextDay) ?? startOfNextDay
@@ -595,7 +595,7 @@ extension EnhancedEventPicker {
         return max(0.5, 1.0 - daysSinceCreated * 0.02) // Small bonus for recent events
     }
 
-    private func calculateDayPatternModifier(event: EventOccurrence, command: ParseResult) -> Double {
+    private func calculateDayPatternModifier(event: EventOccurrence, command: CommandContext) -> Double {
         // Could implement day-of-week pattern matching
         return 1.0
     }
@@ -609,27 +609,27 @@ extension EnhancedEventPicker {
         }
     }
 
-    private func calculateRecurrenceRelevance(event: EventOccurrence, command: ParseResult, intent: Intent) -> Double? {
+    private func calculateRecurrenceRelevance(event: EventOccurrence, command: CommandContext, intent: Intent) -> Double? {
         // Could analyze recurrence patterns vs command context
         return nil
     }
 
-    private func calculateDurationRelevance(event: EventOccurrence, command: ParseResult) -> Double {
+    private func calculateDurationRelevance(event: EventOccurrence, command: CommandContext) -> Double {
         // Could match expected duration patterns
         return 1.0
     }
 
-    private func calculateLocationContextScore(event: EventOccurrence, command: ParseResult) -> Double {
+    private func calculateLocationContextScore(event: EventOccurrence, command: CommandContext) -> Double {
         // Could match location/context information
         return 1.0
     }
 
-    private func calculateCategoryMatch(event: EventOccurrence, command: ParseResult) -> Double {
+    private func calculateCategoryMatch(event: EventOccurrence, command: CommandContext) -> Double {
         // Could implement category/type classification
         return 0.5
     }
 
-    private func calculateLocaleRelevance(event: EventOccurrence, command: ParseResult) -> Double {
+    private func calculateLocaleRelevance(event: EventOccurrence, command: CommandContext) -> Double {
         // Could implement language/locale awareness
         return 1.0
     }

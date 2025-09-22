@@ -9,7 +9,7 @@ import Foundation
 
 enum ChatStreamState: Equatable {
     case idle
-    case streaming(assistantId: UUID, continuation: AsyncStream<ChatEngineEvent>.Continuation?)
+    case streaming(assistantId: UUID)
     case awaitingTools(responseId: String, assistantId: UUID?)
     case failed(String)
     case stopped(assistantId: UUID?)
@@ -22,8 +22,8 @@ enum ChatStreamState: Equatable {
             } else {
                 return false
             }
-        case .streaming(let assistantId, _):
-            if case .streaming(let id, _) = rhs, assistantId == id {
+        case .streaming(let assistantId):
+            if case .streaming(let id) = rhs, assistantId == id {
                 return true
             } else {
                 return false

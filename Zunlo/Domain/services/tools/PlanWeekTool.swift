@@ -22,9 +22,9 @@ final class PlanWeekTool: ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
-            guard let weekRange = command.context.dateRange, command.context.isRangeQuery else {
+            guard let weekRange = command.temporalContext.dateRange, command.temporalContext.isRangeQuery else {
                 return ToolResult(
                     intent: command.intent,
                     action: .none,

@@ -24,7 +24,7 @@ final class MoreInfoTool: ActionTool {
 
     // MARK: - ActionTool Conformance
 
-    func perform(_ command: ParseResult) async -> ToolResult {
+    func perform(_ command: CommandContext) async -> ToolResult {
         do {
             let infoMessage = try await generateInfoMessage(for: command)
 
@@ -49,8 +49,8 @@ final class MoreInfoTool: ActionTool {
 
     // MARK: - Info Generation
 
-    private func generateInfoMessage(for command: ParseResult) async throws -> String {
-        let context = command.context
+    private func generateInfoMessage(for command: CommandContext) async throws -> String {
+        let context = command.temporalContext
 
         if !command.title.isEmpty {
             // User asked about a specific item - try to find it
