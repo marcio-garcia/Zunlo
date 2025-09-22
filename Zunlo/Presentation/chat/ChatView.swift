@@ -72,8 +72,7 @@ struct ChatView: View {
         .onTapGesture {
             focused = false
         }
-        .swipeToDismiss(isPresented: $showChat, threshold: 300, predictedThreshold: 300, minOpacity: 0.7)
-        .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: showChat)
+        .swipeToDismiss(isPresented: $showChat, threshold: 300, predictedThreshold: 300, minOpacity: 1.0)
     }
 
     private var header: some View {
@@ -197,13 +196,20 @@ struct ChatView: View {
                 focused = false
                 Task { await viewModel.send() }
             } label: {
-                Image(systemName: "paperplane.fill").font(.title3)
+                Image(systemName: "paperplane.fill")
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.accentColor)
+                            .matchedGeometryEffect(id: "chatMorph", in: namespace, isSource: showChat)
+                    )
             }
             .disabled(viewModel.input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isGenerating)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .matchedGeometryEffect(id: "chatMorph", in: namespace, isSource: showChat)
     }
 
     private struct DaySeparator: View {

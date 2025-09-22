@@ -36,27 +36,20 @@ struct MainView: View {
                 GeometryReader { geo in
                     VStack{
                         ZStack {
-                            Color.black.opacity(0.3)
-                                .ignoresSafeArea()
-                                .transition(.opacity)
-                                .blur(radius: 10)
-                            
                             TodayView(namespace: animationNamespace,
                                       showChat: $isShowingChat,
                                       appState: viewModel.appState)
                             .environmentObject(viewModel.appState.authManager!)
                             .environmentObject(upgradeFlowManager)
-                            
-                            if isShowingChat {
-                                Color.black.opacity(0.3)
-                                    .ignoresSafeArea()
-                                    .transition(.opacity)
-                                    .blur(radius: 10)
-                                
-                                ChatView(namespace: animationNamespace,
-                                         showChat: $isShowingChat,
-                                         factory: factory)
-                            }
+                            .opacity(isShowingChat ? 0.5 : 1.0)
+                            .blur(radius: isShowingChat ? 1 : 0)
+                            .allowsHitTesting(!isShowingChat)
+
+                            ChatView(namespace: animationNamespace,
+                                     showChat: $isShowingChat,
+                                     factory: factory)
+                            .offset(x: isShowingChat ? 0 : UIScreen.main.bounds.width)
+                            .opacity(isShowingChat ? 1.0 : 0.0)
                         }
                         .animation(.spring(response: 0.6, dampingFraction: 0.90), value: isShowingChat)
                         
