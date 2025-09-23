@@ -73,64 +73,12 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
         command: CommandContext
     ) async -> ToolResult {
 
-        do {
-            let updateInfo = extractUpdateInfo(from: command, originalEvent: event)
+        let updateInfo = extractUpdateInfo(from: command, originalEvent: event)
 
-            if event.isRecurring {
-                // For recurring events, always ask for scope clarification
-                let parent = try await fetchParentOccurrence(for: event)
-                let opts = try buildScopeOptions(
-                    for: event,
-                    parent: parent,
-                    parseResultId: command.id,
-                    intent: command.intent,
-                    actionLabels: (
-                        single: "Update only this occurrence".localized,
-                        future: "Update this and future occurrences".localized,
-                        all: "Update all occurrences".localized
-                    )
-                )
-
-                return ToolResult(
-                    intent: command.intent,
-                    action: .targetEventOccurrence(eventId: event.id, start: event.startDate),
-                    needsDisambiguation: true,
-                    options: opts,
-                    message: "Do you want to update just this occurrence or the entire series?".localized
-                )
-            } else {
-                // Single event - update directly
-                let editInput = buildEditInput(
-                    from: event,
-                    newStart: updateInfo.newStart ?? event.startDate,
-                    newEnd: updateInfo.newEnd ?? event.endDate,
-                    newTitle: updateInfo.newTitle,
-                    newLocation: updateInfo.newLocation,
-                    newReminders: updateInfo.newReminders
-                )
-
-                try await events.editAll(
-                    event: event,
-                    with: editInput,
-                    oldRule: nil
-                )
-
-                return ToolResult(
-                    intent: command.intent,
-                    action: .updatedEvent(id: event.id),
-                    needsDisambiguation: false,
-                    options: [],
-                    message: String(format: "Updated '%@'.".localized, updateInfo.newTitle ?? event.title)
-                )
-            }
-        } catch {
-            return ToolResult(
-                intent: command.intent,
-                action: .none,
-                needsDisambiguation: false,
-                options: [],
-                message: "Failed to update event: \(error.localizedDescription)"
-            )
+        if event.isRecurring {
+            return await handleRecurringEventUpdate(event, updateInfo: updateInfo, command: command)
+        } else {
+            return await handleSingleEventUpdate(event, updateInfo: updateInfo, command: command)
         }
     }
 
@@ -201,6 +149,82 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
             newStart: newStart,
             newEnd: newEnd,
             newReminders: newReminders.isEmpty ? nil : newReminders
+        )
+    }
+
+    // MARK: - Recurring Event Handling
+
+    private func handleRecurringEventUpdate(
+        _ event: EventOccurrence,
+        updateInfo: UpdateInfo,
+        command: CommandContext
+    ) async -> ToolResult {
+        return await handleRecurringEventOperation(
+            event,
+            command: command,
+            actionLabels: (
+                single: "Update only this occurrence".localized,
+                future: "Update this and future occurrences".localized,
+                all: "Update all occurrences".localized
+            ),
+            disambiguationMessage: "Do you want to update just this occurrence or the entire series?".localized,
+            operationName: "Update",
+            editInputBuilder: {
+                return self.buildEditInput(
+                    from: event,
+                    newStart: updateInfo.newStart ?? event.startDate,
+                    newEnd: updateInfo.newEnd ?? event.endDate,
+                    newTitle: updateInfo.newTitle,
+                    newLocation: updateInfo.newLocation,
+                    newReminders: updateInfo.newReminders
+                )
+            },
+            successResultBuilder: {
+                return self.createUpdateSuccessResult(for: event, updateInfo: updateInfo, command: command)
+            }
+        )
+    }
+
+    // MARK: - Single Event Handling
+
+    private func handleSingleEventUpdate(
+        _ event: EventOccurrence,
+        updateInfo: UpdateInfo,
+        command: CommandContext
+    ) async -> ToolResult {
+        return await handleSingleEventOperation(
+            event,
+            command: command,
+            operationName: "Update",
+            editInputBuilder: {
+                return self.buildEditInput(
+                    from: event,
+                    newStart: updateInfo.newStart ?? event.startDate,
+                    newEnd: updateInfo.newEnd ?? event.endDate,
+                    newTitle: updateInfo.newTitle,
+                    newLocation: updateInfo.newLocation,
+                    newReminders: updateInfo.newReminders
+                )
+            },
+            successResultBuilder: {
+                return self.createUpdateSuccessResult(for: event, updateInfo: updateInfo, command: command)
+            }
+        )
+    }
+
+    // MARK: - Common Result Creation
+
+    private func createUpdateSuccessResult(
+        for event: EventOccurrence,
+        updateInfo: UpdateInfo,
+        command: CommandContext
+    ) -> ToolResult {
+        return ToolResult(
+            intent: command.intent,
+            action: .updatedEvent(id: event.id),
+            needsDisambiguation: false,
+            options: [],
+            message: String(format: "Updated '%@'.".localized, updateInfo.newTitle ?? event.title)
         )
     }
 }

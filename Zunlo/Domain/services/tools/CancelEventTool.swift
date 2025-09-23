@@ -80,7 +80,7 @@ final class CancelEventTool: BaseEventTool, ActionTool {
                 let opts = try buildScopeOptions(
                     for: event,
                     parent: parent,
-                    parseResultId: command.id,
+                    commandContextId: command.id,
                     intent: command.intent,
                     actionLabels: (
                         single: "Cancel only this occurrence".localized,

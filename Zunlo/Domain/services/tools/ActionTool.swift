@@ -44,10 +44,12 @@ struct ToolResult: Equatable {
 
 public enum ToolError: Error, LocalizedError {
     case parentNotFound
+    case unsupportedEditMode(String)
 
-    var localizedDescription: String {
+    public var errorDescription: String? {
         switch self {
         case .parentNotFound: return "Occurrence does not have a base event".localized
+        case .unsupportedEditMode(let operation): return "Unsupported edit mode for \(operation.lowercased())".localized
         }
     }
 }

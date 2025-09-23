@@ -296,7 +296,7 @@ class BaseEventTool {
     func buildScopeOptions(
         for occ: EventOccurrence,
         parent: EventOccurrence?,
-        parseResultId: UUID,
+        commandContextId: UUID,
         intent: Intent,
         actionLabels: (single: String, future: String, all: String)
     ) throws -> [ChatMessageActionAlternative] {
@@ -307,7 +307,7 @@ class BaseEventTool {
 
         opts.append(ChatMessageActionAlternative(
             id: UUID(),
-            commandContextId: parseResultId,
+            commandContextId: commandContextId,
             intentOption: intent,
             editEventMode: .editSingleOccurrence(parentEvent: parent, recurrenceRule: parent.recurrence_rules.first, occurrence: occ),
             label: scopeLabel(actionLabels.single),
@@ -317,7 +317,7 @@ class BaseEventTool {
         if occ.isRecurring {
             opts.append(ChatMessageActionAlternative(
                 id: UUID(),
-                commandContextId: parseResultId,
+                commandContextId: commandContextId,
                 intentOption: intent,
                 editEventMode: .editFuture(parentEvent: parent, recurrenceRule: parent.recurrence_rules.first, startingFrom: occ),
                 label: scopeLabel(actionLabels.future),
@@ -325,7 +325,7 @@ class BaseEventTool {
             ))
             opts.append(ChatMessageActionAlternative(
                 id: UUID(),
-                commandContextId: parseResultId,
+                commandContextId: commandContextId,
                 intentOption: intent,
                 editEventMode: .editAll(event: parent, recurrenceRule: parent.recurrence_rules.first),
                 label: scopeLabel(actionLabels.all),
@@ -361,5 +361,112 @@ class BaseEventTool {
             count: rule?.count,
             isCancelled: occ.isCancelled
         )
+    }
+
+    // MARK: - Generic Event Edit Operations
+
+    /// Generic method to execute edit mode operations on recurring events
+    func executeEditMode(
+        _ editMode: AddEditEventViewMode,
+        with editInput: EditEventInput,
+        operationName: String
+    ) async throws {
+        switch editMode {
+        case .editAll(let event, let recurrenceRule):
+            try await events.editAll(event: event, with: editInput, oldRule: recurrenceRule)
+        case .editSingleOccurrence(let parentEvent, _, let occurrence):
+            try await events.editSingleOccurrence(parent: parentEvent, occurrence: occurrence, with: editInput)
+        case .editOverride(let override):
+            try await events.editOverride(override, with: editInput)
+        case .editFuture(let parentEvent, _, let startingFrom):
+            try await events.editFuture(parent: parentEvent, startingFrom: startingFrom, with: editInput)
+        default:
+            throw ToolError.unsupportedEditMode(operationName)
+        }
+    }
+
+    /// Generic method to create scope disambiguation result
+    func createGenericScopeDisambiguationResult(
+        for event: EventOccurrence,
+        parent: EventOccurrence?,
+        command: CommandContext,
+        actionLabels: (single: String, future: String, all: String),
+        disambiguationMessage: String
+    ) throws -> ToolResult {
+        let opts = try buildScopeOptions(
+            for: event,
+            parent: parent,
+            commandContextId: command.id,
+            intent: command.intent,
+            actionLabels: actionLabels
+        )
+
+        return ToolResult(
+            intent: command.intent,
+            action: .targetEventOccurrence(eventId: event.id, start: event.startDate),
+            needsDisambiguation: true,
+            options: opts,
+            message: disambiguationMessage
+        )
+    }
+
+    /// Generic method to handle recurring event operations
+    func handleRecurringEventOperation(
+        _ event: EventOccurrence,
+        command: CommandContext,
+        actionLabels: (single: String, future: String, all: String),
+        disambiguationMessage: String,
+        operationName: String,
+        editInputBuilder: () -> EditEventInput,
+        successResultBuilder: () -> ToolResult
+    ) async -> ToolResult {
+        do {
+            let parent = try await fetchParentOccurrence(for: event)
+
+            if let editMode = command.editEventMode {
+                let editInput = editInputBuilder()
+                try await executeEditMode(editMode, with: editInput, operationName: operationName)
+                return successResultBuilder()
+            } else {
+                return try createGenericScopeDisambiguationResult(
+                    for: event,
+                    parent: parent,
+                    command: command,
+                    actionLabels: actionLabels,
+                    disambiguationMessage: disambiguationMessage
+                )
+            }
+        } catch {
+            return ToolResult(
+                intent: command.intent,
+                action: .info(message: "Error"),
+                needsDisambiguation: false,
+                options: [],
+                message: "Failed to \(operationName.lowercased()) recurring event: \(error.localizedDescription)"
+            )
+        }
+    }
+
+    /// Generic method to handle single event operations
+    func handleSingleEventOperation(
+        _ event: EventOccurrence,
+        command: CommandContext,
+        operationName: String,
+        editInputBuilder: () -> EditEventInput,
+        successResultBuilder: () -> ToolResult
+    ) async -> ToolResult {
+        do {
+            let editInput = editInputBuilder()
+            try await events.editAll(event: event, with: editInput, oldRule: nil)
+            return successResultBuilder()
+        } catch {
+            return ToolResult(
+                intent: command.intent,
+                action: .info(message: "Error"),
+                needsDisambiguation: false,
+                options: [],
+                message: "Failed to \(operationName.lowercased()) single event: \(error.localizedDescription)"
+            )
+        }
     }
 }
