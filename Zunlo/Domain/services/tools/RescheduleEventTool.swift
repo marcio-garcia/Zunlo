@@ -27,16 +27,17 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
             
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
+            let searchWindow = DateInterval(start: referenceDate, end: command.temporalContext.finalDate)
+            let allOccurrences = try EventOccurrenceService.generate(rawOccurrences: allEvents, in: searchWindow.toDateRange())
 
             // Check if user selected a specific entity
-            if let id = command.selectedEntityId, let event = allEvents.first(where: { $0.id == id }) {
+            if let id = command.selectedEntityId, let event = allOccurrences.first(where: { $0.id == id }) {
                 return await self.performEventReschedule(event, command: command)
             }
 
             // 2. Pre-filter events for reschedule context
-            let searchWindow = DateInterval(start: referenceDate, end: command.temporalContext.finalDate)
             let relevantEvents = filterEventsByDate(
-                allEvents,
+                allOccurrences,
                 context: command,
                 excludeCancelled: true,
                 allowPastEvents: true,

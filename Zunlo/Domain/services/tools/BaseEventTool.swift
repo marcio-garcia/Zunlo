@@ -251,6 +251,19 @@ class BaseEventTool {
 
         return attributedLabel
     }
+    
+    func scopeLabel(_ text: String) -> AttributedString {
+        var attributedLabel = AttributedString()
+
+        // Event title (bold, primary text color)
+        let title = !text.isEmpty ? text : "(no title)".localized
+        var titleText = AttributedString(title)
+        titleText.font = AppFontStyle.body.weight(.bold).uiFont()
+        titleText.foregroundColor = UIColor(Color.theme.text)
+        attributedLabel += titleText
+
+        return attributedLabel
+    }
 
     func formatDateTime(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -296,7 +309,7 @@ class BaseEventTool {
             parseResultId: parseResultId,
             intentOption: intent,
             editEventMode: .editSingleOccurrence(parentEvent: parent, recurrenceRule: parent.recurrence_rules.first, occurrence: occ),
-            label: AttributedString(actionLabels.single)
+            label: scopeLabel(actionLabels.single)
         ))
 
         if occ.isRecurring {
@@ -305,14 +318,14 @@ class BaseEventTool {
                 parseResultId: parseResultId,
                 intentOption: intent,
                 editEventMode: .editFuture(parentEvent: parent, recurrenceRule: parent.recurrence_rules.first, startingFrom: occ),
-                label: AttributedString(actionLabels.future)
+                label: scopeLabel(actionLabels.future)
             ))
             opts.append(ChatMessageActionAlternative(
                 id: UUID(),
                 parseResultId: parseResultId,
                 intentOption: intent,
                 editEventMode: .editAll(event: parent, recurrenceRule: parent.recurrence_rules.first),
-                label: AttributedString(actionLabels.all)
+                label: scopeLabel(actionLabels.all)
             ))
         }
         return opts
