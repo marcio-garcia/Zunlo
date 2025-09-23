@@ -23,6 +23,7 @@ struct CommandContext: Identifiable {
     // Disambiguation state
     let intentAmbiguity: IntentAmbiguity?
     let selectedEntityId: UUID?
+    let selectedEventOccurrence: EventOccurrence?  // Store the full occurrence for recurring events
     let editEventMode: AddEditEventViewMode?
 
     // Processing metadata
@@ -38,6 +39,7 @@ struct CommandContext: Identifiable {
         metadataTokens: [MetadataToken] = [],
         intentAmbiguity: IntentAmbiguity? = nil,
         selectedEntityId: UUID? = nil,
+        selectedEventOccurrence: EventOccurrence? = nil,
         editEventMode: AddEditEventViewMode? = nil,
         createdAt: Date = Date()
     ) {
@@ -49,9 +51,10 @@ struct CommandContext: Identifiable {
         self.metadataTokens = metadataTokens
         self.intentAmbiguity = intentAmbiguity
         self.selectedEntityId = selectedEntityId
+        self.selectedEventOccurrence = selectedEventOccurrence
         self.editEventMode = editEventMode
         self.createdAt = createdAt
-        self.isResolved = intentAmbiguity == nil && selectedEntityId != nil
+        self.isResolved = intentAmbiguity == nil && (selectedEntityId != nil || selectedEventOccurrence != nil)
     }
 
     /// Create CommandContext from ParseResult
@@ -78,6 +81,7 @@ struct CommandContext: Identifiable {
             metadataTokens: metadataTokens,
             intentAmbiguity: nil, // Clear ambiguity
             selectedEntityId: selectedEntityId,
+            selectedEventOccurrence: selectedEventOccurrence,
             editEventMode: editEventMode,
             createdAt: createdAt
         )
@@ -94,6 +98,24 @@ struct CommandContext: Identifiable {
             metadataTokens: metadataTokens,
             intentAmbiguity: nil, // Clear ambiguity
             selectedEntityId: entityId,
+            selectedEventOccurrence: selectedEventOccurrence,
+            editEventMode: editMode ?? editEventMode,
+            createdAt: createdAt
+        )
+    }
+
+    /// Create a resolved context with selected event occurrence
+    public func withSelectedEventOccurrence(_ occurrence: EventOccurrence, editMode: AddEditEventViewMode? = nil) -> CommandContext {
+        return CommandContext(
+            id: UUID(),
+            originalText: originalText,
+            title: title,
+            intent: intent,
+            temporalContext: temporalContext,
+            metadataTokens: metadataTokens,
+            intentAmbiguity: nil, // Clear ambiguity
+            selectedEntityId: occurrence.id,
+            selectedEventOccurrence: occurrence,
             editEventMode: editMode ?? editEventMode,
             createdAt: createdAt
         )
@@ -110,7 +132,12 @@ extension CommandContext {
 
     /// Check if this context needs entity selection
     public var needsEntitySelection: Bool {
-        return !hasIntentAmbiguity && selectedEntityId == nil
+        return !hasIntentAmbiguity && !hasSelectedEntity
+    }
+
+    /// Check if any entity is selected (either task ID or event occurrence)
+    public var hasSelectedEntity: Bool {
+        return selectedEntityId != nil || selectedEventOccurrence != nil
     }
 
     /// Extract tags with their confidence scores

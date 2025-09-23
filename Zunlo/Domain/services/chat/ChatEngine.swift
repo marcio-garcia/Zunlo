@@ -196,16 +196,16 @@ public actor ChatEngine {
     // MARK: - Disambiguation Handling
 
     /// Handle user selection of a disambiguation option
-    func handleDisambiguationSelection(parseResultId: UUID, selectedOptionId: UUID, chatEvent: @escaping (ChatEngineEvent) -> Void) async {
+    func handleDisambiguationSelection(commandContextId: UUID, selectedOptionId: UUID, chatEvent: @escaping (ChatEngineEvent) -> Void) async {
         // Store the chat event callback for state communication
         currentChatEvent = chatEvent
 
-        guard let originalContext = commandContexts.first(where: { $0.id == parseResultId }) else { return }
+        guard let originalContext = commandContexts.first(where: { $0.id == commandContextId }) else { return }
 
         if originalContext.hasIntentAmbiguity {
             await handleIntentDisambiguation(originalContext: originalContext, selectedOptionId: selectedOptionId, chatEvent: chatEvent)
         } else {
-            await handleEntityDisambiguation(contextId: parseResultId, selectedOptionId: selectedOptionId, chatEvent: chatEvent)
+            await handleEntityDisambiguation(contextId: commandContextId, selectedOptionId: selectedOptionId, chatEvent: chatEvent)
         }
     }
 
@@ -228,13 +228,24 @@ public actor ChatEngine {
     private func handleEntityDisambiguation(contextId: UUID, selectedOptionId: UUID, chatEvent: (ChatEngineEvent) -> Void) async {
         guard let originalContext = commandContexts.first(where: { $0.id == contextId }),
               let toolResult = toolResults.first(where: { result in
-                  result.options.contains { $0.parseResultId == contextId }
+                  result.options.contains { $0.commandContextId == contextId }
               }),
               let selectedOption = toolResult.options.first(where: { $0.id == selectedOptionId }) else {
             return
         }
 
-        let resolvedContext = originalContext.withSelectedEntity(selectedOption.id, editMode: selectedOption.editEventMode)
+        // For events, we need to store the entire occurrence since IDs are not persistent for recurring events
+        let resolvedContext: CommandContext
+        if let eventOccurrence = selectedOption.eventOccurrence {
+            // For events, store the full occurrence in the context
+            resolvedContext = originalContext.withSelectedEventOccurrence(eventOccurrence, editMode: selectedOption.editEventMode)
+        } else if let taskId = selectedOption.taskId {
+            // For tasks, we can use the persistent ID directly
+            resolvedContext = originalContext.withSelectedEntity(taskId, editMode: selectedOption.editEventMode)
+        } else {
+            // Fallback to the option ID
+            resolvedContext = originalContext.withSelectedEntity(selectedOption.id, editMode: selectedOption.editEventMode)
+        }
         commandContexts.append(resolvedContext)
 
         do {

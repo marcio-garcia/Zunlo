@@ -98,11 +98,12 @@ class BaseTaskTool {
 
         let options = alternatives.map { task in
             ChatMessageActionAlternative(
-                id: task.id,
-                parseResultId: context.id,
+                id: UUID(),  // Generate new UUID for disambiguation choice
+                commandContextId: context.id,
                 intentOption: intent,
                 editEventMode: nil,
-                label: taskLabel(task)
+                label: taskLabel(task),
+                taskId: task.id  // Store the task ID
             )
         }
 

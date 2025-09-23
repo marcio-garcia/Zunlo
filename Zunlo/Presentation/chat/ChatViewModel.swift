@@ -241,7 +241,7 @@ extension ChatViewModel {
     func handleBubbleAction(_ action: ChatMessageActionAlternative, message: ChatMessage) {
         print("selected: \(action.label)")
         Task {
-            await engine.handleDisambiguationSelection(parseResultId: action.parseResultId, selectedOptionId: action.id) { chatEvent in
+            await engine.handleDisambiguationSelection(commandContextId: action.commandContextId, selectedOptionId: action.id) { chatEvent in
                 Task {
                     await self.consume(chatEvent)
                 }

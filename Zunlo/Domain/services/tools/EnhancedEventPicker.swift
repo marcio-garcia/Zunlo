@@ -317,6 +317,11 @@ class EnhancedEventPicker {
         let confidence = calculateSelectionConfidence(scores: topScores, intent: intent)
         let scoreGap = topScores.count > 1 ? topScores[0] - topScores[1] : 1.0
 
+        var alternatives = candidates.filter { $0.score.total > 0.6 }.map { $0.candidate }
+        if alternatives.count == 0 {
+            alternatives = candidates.prefix(5).map({ $0.candidate })
+        }
+        
         // Determine selection strategy based on confidence
         switch confidence {
         case .high:
@@ -335,7 +340,7 @@ class EnhancedEventPicker {
         case .medium:
             return CandidateSelection(
                 single: topScore > 0.8 ? candidates.first?.candidate : nil,
-                alternatives: Array(candidates.prefix(3).map { $0.candidate }),
+                alternatives: alternatives,
                 confidence: confidence,
                 reasoning: SelectionReasoning(
                     primaryFactor: determinePrimaryFactor(candidates.first?.score),
@@ -348,7 +353,7 @@ class EnhancedEventPicker {
         case .low, .ambiguous:
             return CandidateSelection(
                 single: nil,
-                alternatives: Array(candidates.prefix(5).map { $0.candidate }),
+                alternatives: alternatives,
                 confidence: confidence,
                 reasoning: SelectionReasoning(
                     primaryFactor: "Multiple similar candidates",

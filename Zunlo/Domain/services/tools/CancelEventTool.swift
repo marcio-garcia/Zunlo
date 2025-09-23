@@ -27,9 +27,9 @@ final class CancelEventTool: BaseEventTool, ActionTool {
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
 
-            // Check if user selected a specific entity
-            if let id = command.selectedEntityId, let event = allEvents.first(where: { $0.id == id }) {
-                return await self.performEventCancellation(event, command: command)
+            // Check if user selected a specific entity occurrence
+            if let selectedOccurrence = command.selectedEventOccurrence {
+                return await self.performEventCancellation(selectedOccurrence, command: command)
             }
 
             // 2. Pre-filter events for cancellation context

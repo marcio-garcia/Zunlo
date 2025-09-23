@@ -24,16 +24,17 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
 
     func perform(_ command: CommandContext) async -> ToolResult {
         do {
-            
+
+            // Check if user selected a specific entity occurrence
+            if let selectedOccurrence = command.selectedEventOccurrence {
+                return await self.performEventReschedule(selectedOccurrence, command: command)
+            }
+
             // 1. Fetch all events
             let allEvents = try await events.fetchOccurrences()
-            let searchWindow = DateInterval(start: referenceDate, end: command.temporalContext.finalDate)
+            let searchWindow = DateInterval(start: referenceDate.startOfDay(calendar: calendar),
+                                            end: command.temporalContext.finalDate.startOfNextDay(calendar: calendar))
             let allOccurrences = try EventOccurrenceService.generate(rawOccurrences: allEvents, in: searchWindow.toDateRange())
-
-            // Check if user selected a specific entity
-            if let id = command.selectedEntityId, let event = allOccurrences.first(where: { $0.id == id }) {
-                return await self.performEventReschedule(event, command: command)
-            }
 
             // 2. Pre-filter events for reschedule context
             let relevantEvents = filterEventsByDate(
@@ -93,6 +94,37 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
             if event.isRecurring {
                 // For recurring events, always ask for scope clarification
                 let parent = try await fetchParentOccurrence(for: event)
+                
+                if let editMode = command.editEventMode {
+                    let duration = event.endDate.timeIntervalSince(event.startDate)
+                    let newEndDate = newTiming.addingTimeInterval(duration)
+                    let editInput = buildEditInput(from: event, newStart: newTiming, newEnd: newEndDate)
+
+                    switch editMode {
+                    case .add: break                        
+                    case .editAll(let event, let recurrenceRule):
+                        try await events.editAll(event: event, with: editInput, oldRule: recurrenceRule)
+                    case .editSingleOccurrence(let parentEvent, _, let occurrence):
+                        try await events.editSingleOccurrence(parent: parentEvent, occurrence: occurrence, with: editInput)
+                    case .editOverride(let override):
+                        try await events.editOverride(override, with: editInput)
+                    case .editFuture(let parentEvent, _, let startingFrom):
+                        try await events.editFuture(parent: parentEvent, startingFrom: startingFrom, with: editInput)
+                    }
+                    
+                    return ToolResult(
+                        intent: command.intent,
+                        action: .rescheduledEvent(eventId: event.id, start: newTiming, end: newEndDate),
+                        needsDisambiguation: false,
+                        options: [],
+                        message: String(
+                            format: "Rescheduled '%@' to %@ %@.".localized,
+                            event.title,
+                            formatDay(newTiming),
+                            formatTimeRange(newTiming, newEndDate)
+                        ))
+                }
+                
                 let opts = try buildScopeOptions(
                     for: event,
                     parent: parent,

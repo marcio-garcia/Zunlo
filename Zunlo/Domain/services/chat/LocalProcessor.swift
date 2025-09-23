@@ -50,7 +50,7 @@ actor LocalProcessor {
     func createIntentDisambiguationMessage(context: CommandContext) -> ToolResult {
         guard let intentAmbiguity = context.intentAmbiguity else {
             let label = createContextLabel(context: context)
-            let options = [ChatMessageActionAlternative(id: UUID(), parseResultId: context.id, intentOption: context.intent, editEventMode: nil, label: label)]
+            let options = [ChatMessageActionAlternative(id: UUID(), commandContextId: context.id, intentOption: context.intent, editEventMode: nil, label: label)]
             return ToolResult(
                 intent: context.intent,
                 action: ToolAction.info(message: "Proceeding with single option"),
@@ -63,7 +63,7 @@ actor LocalProcessor {
 
         let options = intentAmbiguity.predictions.map { prediction in
             let label = createLabelForIntent(prediction.intent, confidence: prediction.confidence, context: context)
-            return ChatMessageActionAlternative(id: prediction.id, parseResultId: context.id, intentOption: prediction.intent, editEventMode: nil, label: label)
+            return ChatMessageActionAlternative(id: prediction.id, commandContextId: context.id, intentOption: prediction.intent, editEventMode: nil, label: label)
         }
 
         let message = createDisambiguationText(context: context)

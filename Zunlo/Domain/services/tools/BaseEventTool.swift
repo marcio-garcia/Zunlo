@@ -135,11 +135,12 @@ class BaseEventTool {
 
         let options = alternatives.map { event in
             ChatMessageActionAlternative(
-                id: event.id,
-                parseResultId: context.id,
+                id: UUID(),  // Generate new UUID for disambiguation choice
+                commandContextId: context.id,
                 intentOption: intent,
                 editEventMode: nil,
-                label: eventLabel(event)
+                label: eventLabel(event),
+                eventOccurrence: event  // Store the full occurrence
             )
         }
 
@@ -306,26 +307,29 @@ class BaseEventTool {
 
         opts.append(ChatMessageActionAlternative(
             id: UUID(),
-            parseResultId: parseResultId,
+            commandContextId: parseResultId,
             intentOption: intent,
             editEventMode: .editSingleOccurrence(parentEvent: parent, recurrenceRule: parent.recurrence_rules.first, occurrence: occ),
-            label: scopeLabel(actionLabels.single)
+            label: scopeLabel(actionLabels.single),
+            eventOccurrence: occ
         ))
 
         if occ.isRecurring {
             opts.append(ChatMessageActionAlternative(
                 id: UUID(),
-                parseResultId: parseResultId,
+                commandContextId: parseResultId,
                 intentOption: intent,
                 editEventMode: .editFuture(parentEvent: parent, recurrenceRule: parent.recurrence_rules.first, startingFrom: occ),
-                label: scopeLabel(actionLabels.future)
+                label: scopeLabel(actionLabels.future),
+                eventOccurrence: occ
             ))
             opts.append(ChatMessageActionAlternative(
                 id: UUID(),
-                parseResultId: parseResultId,
+                commandContextId: parseResultId,
                 intentOption: intent,
                 editEventMode: .editAll(event: parent, recurrenceRule: parent.recurrence_rules.first),
-                label: scopeLabel(actionLabels.all)
+                label: scopeLabel(actionLabels.all),
+                eventOccurrence: parent  // Use parent for "all" scope
             ))
         }
         return opts
