@@ -72,6 +72,10 @@ public actor ChatEngine {
         setState(.streaming(assistantId: placeholderAssistantId))
 
         do {
+            // Echo user message first
+            try await persistence.upsert(userMessage)
+            chatEvent(.messageAppended(userMessage))
+
             // LOCAL PATH: Try processing with NLP + local tools first
             commandContexts = try await localProcessor.processInput(userMessage.rawText.lowercased())
 
@@ -89,7 +93,7 @@ public actor ChatEngine {
             }
 
             // Stream local results to UI
-            await processLocalResults(toolResults: toolResults, userMessage: userMessage, chatEvent: chatEvent)
+            await processLocalResults(toolResults: toolResults, chatEvent: chatEvent)
 
         } catch {
             // REMOTE PATH: Local processing failed, fallback to AI streaming
@@ -99,15 +103,16 @@ public actor ChatEngine {
     }
     
     /// Process local tool results and stream to UI
-    private func processLocalResults(toolResults: [ToolResult], userMessage: ChatMessage, chatEvent: (ChatEngineEvent) -> Void) async {
+    private func processLocalResults(toolResults: [ToolResult], chatEvent: (ChatEngineEvent) -> Void) async {
         for result in toolResults {
             switch result.action {
             case .none:
-                // No local result → fallback to AI streaming
-                await fallbackToAIStream(history: [], userMessage: userMessage, chatEvent: chatEvent)
+                // No local result → would need to fallback to AI streaming
+                // Note: This case shouldn't happen in normal disambiguation flow
+                log("Warning: Tool result with .none action in local processing")
             default:
                 // Stream local processing result to UI
-                let stream = createLocalResultStream(result: result, userMessage: userMessage)
+                let stream = createLocalResultStream(result: result)
                 for await event in stream {
                     chatEvent(event)
                 }
@@ -124,17 +129,13 @@ public actor ChatEngine {
     }
     
     /// Create a stream for local tool results (simulates AI streaming for consistency)
-    private func createLocalResultStream(result: ToolResult, userMessage: ChatMessage) -> AsyncStream<ChatEngineEvent> {
+    private func createLocalResultStream(result: ToolResult) -> AsyncStream<ChatEngineEvent> {
         cancelCurrentStreamIfAny()
 
         return AsyncStream<ChatEngineEvent> { continuation in
             currentStreamTask = Task { [weak self] in
                 guard let self else { return }
                 do {
-                    // Persist + echo the user message
-                    try await self.persistence.upsert(userMessage)
-                    continuation.yield(.messageAppended(userMessage))
-
                     // Build the assistant message from local tool result
                     var assistant = await self.createAssistantMessage(
                         conversationId: self.conversationId,
@@ -219,9 +220,11 @@ public actor ChatEngine {
         do {
             let result = try await localProcessor.execute(resolvedContext)
             self.toolResults = [result]
-            await processLocalResults(toolResults: self.toolResults, userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
+            await processLocalResults(toolResults: self.toolResults, chatEvent: chatEvent)
         } catch {
-            await fallbackToAIStream(history: [], userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
+            // Create user message for AI fallback
+            let userMessage = ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText)
+            await fallbackToAIStream(history: [], userMessage: userMessage, chatEvent: chatEvent)
         }
     }
 
@@ -251,9 +254,11 @@ public actor ChatEngine {
         do {
             let result = try await localProcessor.execute(resolvedContext)
             self.toolResults = [result]
-            await processLocalResults(toolResults: self.toolResults, userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
+            await processLocalResults(toolResults: self.toolResults, chatEvent: chatEvent)
         } catch {
-            await fallbackToAIStream(history: [], userMessage: ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText), chatEvent: chatEvent)
+            // Create user message for AI fallback
+            let userMessage = ChatMessage(conversationId: conversationId, role: .user, plain: originalContext.originalText)
+            await fallbackToAIStream(history: [], userMessage: userMessage, chatEvent: chatEvent)
         }
     }
 
