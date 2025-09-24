@@ -24,6 +24,10 @@ class ErrorHandler: ObservableObject {
             message = error.localizedDescription
         }
     }
+    
+    func handle(_ message: String) {
+        self.message = message
+    }
 
     func clear() {
         message = nil

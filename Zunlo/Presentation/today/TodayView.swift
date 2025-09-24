@@ -240,7 +240,7 @@ struct TodayView: View {
             await appState.adManager?.loadInterstitial(for: .openCalendar)
             await appState.adManager?.loadRewarded(for: .chat)
         }
-        .errorAlert(viewModel.errorHandler)
+        .errorToast(viewModel.errorHandler)
     }
     
     private var showBannerSection: some View {

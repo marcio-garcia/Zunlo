@@ -24,7 +24,7 @@ public struct DeepLinkParser {
             switch host {
             case "supabase":
                 switch path.removeFirst() {
-                case "magic-link":
+                case "magic-link", "magiclink":
                     return .magicLink(url)
                 default:
                     return nil

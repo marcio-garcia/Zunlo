@@ -9,12 +9,12 @@ import SwiftUI
 import GlowUI
 
 extension View {
-    func errorAlert(_ handler: ErrorHandler) -> some View {
-        self.modifier(ErrorAlertModifier(handler: handler))
+    func errorToast(_ handler: ErrorHandler) -> some View {
+        self.modifier(ErrorToastModifier(handler: handler))
     }
 }
 
-struct ErrorAlertModifier: ViewModifier {
+struct ErrorToastModifier: ViewModifier {
     @ObservedObject var handler: ErrorHandler
     @State private var toast: Toast?    // stable instance while shown
 

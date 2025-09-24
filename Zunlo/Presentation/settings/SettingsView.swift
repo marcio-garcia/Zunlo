@@ -82,7 +82,7 @@ struct SettingsView: View {
                     dismiss()
                 }
             }
-            .errorAlert(viewModel.errorHandler)
+            .errorToast(viewModel.errorHandler)
             .confirmationDialog(
                 "You're using a guest account. Logging out will delete your tasks unless you create an account",
                 isPresented: $viewModel.showLogoutPrompt,

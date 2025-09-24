@@ -19,6 +19,17 @@
     " for \"%@\"" : {
 
     },
+    "---------------- or -----------------" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "---------------- ou -----------------"
+          }
+        }
+      }
+    },
     "–" : {
 
     },
@@ -270,6 +281,7 @@
       }
     },
     "Authenticating…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -452,6 +464,9 @@
     "Copy Realm file path" : {
 
     },
+    "Create a new account with your email and password" : {
+
+    },
     "Create account" : {
       "localizations" : {
         "pt-BR" : {
@@ -471,6 +486,9 @@
           }
         }
       }
+    },
+    "Create an account" : {
+
     },
     "Create event" : {
 
@@ -767,6 +785,7 @@
       }
     },
     "Email" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -775,6 +794,9 @@
           }
         }
       }
+    },
+    "Email address" : {
+
     },
     "Enable push notifications to get reminders and updates." : {
       "localizations" : {
@@ -816,6 +838,9 @@
         }
       }
     },
+    "Enter your email address to sign in" : {
+
+    },
     "Enter your email and we’ll send you a magic link to upgrade your account. No password needed." : {
       "localizations" : {
         "pt-BR" : {
@@ -825,6 +850,9 @@
           }
         }
       }
+    },
+    "Enter your password" : {
+
     },
     "Errands shifted" : {
       "localizations" : {
@@ -1176,6 +1204,9 @@
         }
       }
     },
+    "Magic Link Sent" : {
+
+    },
     "medium" : {
       "localizations" : {
         "pt-BR" : {
@@ -1358,6 +1389,9 @@
     "Occurrence does not have a base event" : {
 
     },
+    "OK" : {
+
+    },
     "Open Settings" : {
       "localizations" : {
         "pt-BR" : {
@@ -1367,6 +1401,9 @@
           }
         }
       }
+    },
+    "or" : {
+
     },
     "Partly cloudy" : {
       "localizations" : {
@@ -1421,6 +1458,9 @@
         }
       }
     },
+    "Please check your email for a confirmation link to sign in." : {
+
+    },
     "Please enable location in Settings to use this app." : {
       "localizations" : {
         "pt-BR" : {
@@ -1430,6 +1470,15 @@
           }
         }
       }
+    },
+    "Please enter a valid email address" : {
+
+    },
+    "Please enter your email address" : {
+
+    },
+    "Please enter your password" : {
+
     },
     "Please specify the new date or time for the event." : {
 
@@ -1763,6 +1812,9 @@
         }
       }
     },
+    "Send a magic link to your email address" : {
+
+    },
     "Send Magic Link" : {
       "localizations" : {
         "pt-BR" : {
@@ -1823,6 +1875,9 @@
         }
       }
     },
+    "Sign in" : {
+
+    },
     "Sign In" : {
       "localizations" : {
         "pt-BR" : {
@@ -1832,6 +1887,9 @@
           }
         }
       }
+    },
+    "Sign in with magic link" : {
+
     },
     "Sign in with Magic Link" : {
       "localizations" : {
@@ -1843,7 +1901,11 @@
         }
       }
     },
+    "Sign in with your email and password" : {
+
+    },
     "Sign Up" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

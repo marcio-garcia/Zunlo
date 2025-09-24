@@ -96,7 +96,7 @@ struct AddEditEventView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .errorAlert(viewModel.errorHandler)
+            .errorToast(viewModel.errorHandler)
         }
     }
 

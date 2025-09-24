@@ -6,90 +6,181 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct AuthView: View {
     @EnvironmentObject var authManager: AuthManager
     @State private var email = ""
     @State private var password = ""
-    @State private var error: String?
     @State private var isLoading = false
+    @State private var currentAction: String?
+    @State private var showMagicLinkSent = false
+    let errorHandler = ErrorHandler()
+
+    private var areFieldsEmpty: Bool {
+        email.isEmpty || password.isEmpty
+    }
+
+    private var isMagicLinkFieldEmpty: Bool {
+        email.isEmpty
+    }
+
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+
+    private func validateForm(requirePassword: Bool = true) -> Bool {
+        errorHandler.clear()
+
+        if email.isEmpty {
+            errorHandler.handle(String(localized: "Please enter your email address"))
+            return false
+        }
+
+        if !isValidEmail(email) {
+            errorHandler.handle(String(localized: "Please enter a valid email address"))
+            return false
+        }
+
+        if requirePassword && password.isEmpty {
+            errorHandler.handle(String(localized: "Please enter your password"))
+            return false
+        }
+
+        return true
+    }
     
     var body: some View {
         ZStack {
-            VStack(spacing: 24) {
+            VStack(spacing: 30) {
                 Text("Zunlo")
                     .themedTitle()
-                TextField("Email", text: $email)
+                Spacer()
+                PrimaryTextField("Email", text: $email)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
                     .autocapitalization(.none)
-                    .textFieldStyle(.roundedBorder)
                     .themedBody()
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
-                    .themedBody()
-                
-                HStack {
-                    Button("Sign Up") {
-                        isLoading = true
-                        defer { isLoading = false }
-                        Task {
-                            do {
-                                try await authManager.signUp(email: email, password: password)
-                            } catch {
-                                self.error = error.localizedDescription
-                            }
-                        }
+                    .accessibilityLabel("Email address")
+                    .accessibilityHint("Enter your email address to sign in")
+                    .onChange(of: email) { _, _ in
+                        errorHandler.clear()
                     }
-                    .themedPrimaryButton()
-                    .disabled(isLoading)
-                    
+
+                PrimarySecureField("Password", text: $password)
+                    .textFieldStyle(.roundedBorder)
+                    .themedBody()
+                    .accessibilityLabel("Password")
+                    .accessibilityHint("Enter your password")
+                    .onChange(of: password) { _, _ in
+                        errorHandler.clear()
+                    }
+                
+                VStack(spacing: 20) {
                     Button("Sign In") {
-                        isLoading = true
-                        defer { isLoading = false }
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        guard validateForm() else { return }
                         Task {
+                            isLoading = true
+                            currentAction = "Signing in"
                             do {
                                 try await authManager.signIn(email: email, password: password)
                             } catch {
-                                self.error = error.localizedDescription
+                                errorHandler.handle(error)
                             }
+                            isLoading = false
+                            currentAction = nil
+                        }
+                    }
+                    .frame(minWidth: 230, minHeight: 38)
+                    .background(Color.theme.accent)
+                    .foregroundColor(.white)
+                    .appFont(.button)
+                    .cornerRadius(8)
+                    .disabled(isLoading || areFieldsEmpty)
+                    .accessibilityLabel("Sign in")
+                    .accessibilityHint("Sign in with your email and password")
+                    
+                    Button("Sign in with Magic Link") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        guard validateForm(requirePassword: false) else { return }
+                        Task {
+                            isLoading = true
+                            currentAction = "Sending magic link"
+                            do {
+                                try await authManager.signInWithOTP(email: email)
+                                showMagicLinkSent = true
+                            } catch {
+                                errorHandler.handle(error)
+                            }
+                            isLoading = false
+                            currentAction = nil
+                        }
+                    }
+                    .frame(minWidth: 230, minHeight: 38)
+                    .background(Color.theme.accent)
+                    .foregroundColor(.white)
+                    .appFont(.button)
+                    .cornerRadius(8)
+                    .disabled(isLoading || isMagicLinkFieldEmpty)
+                    .accessibilityLabel("Sign in with magic link")
+                    .accessibilityHint("Send a magic link to your email address")
+                    
+                    
+                    HStack {
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color.theme.accent.opacity(0.3))
+                        Text("or")
+                            .themedCaption()
+                            .padding(.horizontal, 8)
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color.theme.accent.opacity(0.3))
+                    }
+                    .padding(.vertical, 10)
+                    
+                    Button("Create an account") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        guard validateForm() else { return }
+                        Task {
+                            isLoading = true
+                            currentAction = "Creating account"
+                            do {
+                                try await authManager.signUp(email: email, password: password)
+                            } catch {
+                                errorHandler.handle(error)
+                            }
+                            isLoading = false
+                            currentAction = nil
                         }
                     }
                     .themedSecondaryButton()
-                    .disabled(isLoading)
+                    .disabled(isLoading || areFieldsEmpty)
+                    .accessibilityLabel("Create account")
+                    .accessibilityHint("Create a new account with your email and password")
                 }
-                
-                Button("Sign in with Magic Link") {
-                    Task {
-                        do {
-                            isLoading = true
-                            defer { isLoading = false }
-                            try await authManager.signInWithOTP(email: email)
-                        } catch {
-                            self.error = error.localizedDescription
-                        }
-                    }
-                }
-                .themedSecondaryButton()
-                
-                if let error = error {
-                    Text(error)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 8)
-                        .themedCaption()
-                        .foregroundColor(.red)
-                }
-                
-                if isLoading {
-                    ProgressView("Authenticating…")
-                        .padding()
-                        .themedBody()
-                }
+                .padding(.vertical, 30)
                 
                 Spacer()
             }
             .padding()
+            
+            if isLoading {
+                Color.theme.background.opacity(0.5)
+                ProgressView(currentAction ?? "Loading…")
+                    .padding()
+                    .themedBody()
+            }
         }
         .defaultBackground()
+        .errorToast(errorHandler)
+        .alert("Magic Link Sent", isPresented: $showMagicLinkSent) {
+            Button("OK") { }
+        } message: {
+            Text("Please check your email for a confirmation link to sign in.")
+        }
     }
 }

@@ -79,7 +79,7 @@ struct AddEditTaskView: View {
                     }
                 }
                 .themedBody()
-                .errorAlert(viewModel.errorHandler)
+                .errorToast(viewModel.errorHandler)
         }
     }
     
