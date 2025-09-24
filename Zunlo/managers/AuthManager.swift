@@ -30,6 +30,7 @@ protocol UserStorage {
 
 enum AuthProvidingError: Error {
     case unauthorized
+    case unableToSignUp(String)
 }
 
 public protocol AuthProviding {
@@ -132,10 +133,10 @@ final class AuthManager: ObservableObject, AuthProviding {
     }
     
     func signUp(email: String, password: String) async throws {
-        let auth = try await authService.signUpAttempt(email: email, password: password)
+        let auth = try await authService.signUp(email: email, password: password)
         guard let authToken = auth.token else {
             await unauthenticated()
-            return
+            throw AuthProvidingError.unableToSignUp(String(localized: "Unable to create account. This email may already be registered - try signing in instead."))
         }
         try await authenticated(authToken)
     }

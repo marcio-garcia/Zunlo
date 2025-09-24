@@ -97,13 +97,13 @@ public struct ParseResult: Identifiable {
 
 extension ParseResult {
     func createDisambiguationText() -> String {
-        var message = "I found multiple ways to interpret your request".localized
+        var message = String(localized: "I found multiple ways to interpret your request")
 
         if !self.title.isEmpty {
-            message += " for \"\(self.title)\"".localized
+            message += String(localized: " for \"\(self.title)\"")
         }
 
-        message += ". Please choose what you'd like to do:".localized
+        message += String(localized: ". Please choose what you'd like to do:")
 
         return message
     }
@@ -111,36 +111,6 @@ extension ParseResult {
     func label(calendar: Calendar) -> AttributedString {
         return labelForIntent(self.intent, confidence: 1.0, calendar: calendar)
     }
-
-//    func labelForIntent(_ intent: Intent, confidence: Float, calendar: Calendar) -> String {
-//        var label = ""
-//
-//        // Add intent action
-//        label = intent.localizedDescription
-//
-//        // Add title if available
-//        if !self.title.isEmpty {
-//            label += ": \"\(self.title)\""
-//        }
-//
-//        // Add temporal context if available
-//        if self.context.finalDate != .distantPast {
-//            let dateStr = self.context.finalDate.formattedDate(
-//                dateFormat: .long,
-//                calendar: calendar,
-//                timeZone: calendar.timeZone
-//            )
-//            label += " on \(dateStr)".localized
-//        }
-//
-//        // Add confidence indicator for ambiguous cases
-//        if confidence < 1.0 {
-//            let percentageConfidence = Int(confidence * 100)
-//            label += " (\(percentageConfidence)%)"
-//        }
-//
-//        return label
-//    }
     
     func labelForIntent(_ intent: Intent, confidence: Float, calendar: Calendar) -> AttributedString {
         var attributedLabel = AttributedString()

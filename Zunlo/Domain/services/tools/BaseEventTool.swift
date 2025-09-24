@@ -120,7 +120,7 @@ class BaseEventTool {
             action: .info(message: "More info"),
             needsDisambiguation: true,
             options: [],
-            message: "I couldn't determine which event to \(getActionVerb(for: intent)). Please be more specific.".localized
+            message: String(localized: "I couldn't determine which event to \(getActionVerb(for: intent)). Please be more specific.")
         )
     }
 
@@ -180,20 +180,20 @@ class BaseEventTool {
 
         switch selection.confidence {
         case .high:
-            return "I found a matching event to \(actionVerb):".localized
+            return String(localized: "I found a matching event to \(actionVerb):")
 
         case .medium:
             if selection.reasoning.scoreGap < 0.1 {
-                return "I found several similar events. Which one would you like to \(actionVerb)?".localized
+                return String(localized: "I found several similar events. Which one would you like to \(actionVerb)?")
             } else {
-                return "I found a likely match, but want to confirm which event to \(actionVerb):".localized
+                return String(localized: "I found a likely match, but want to confirm which event to \(actionVerb):")
             }
 
         case .low:
-            return "I found some possible matches. Which event would you like to \(actionVerb)?".localized
+            return String(localized: "I found some possible matches. Which event would you like to \(actionVerb)?")
 
         case .ambiguous:
-            return "I found multiple events that could match. Please choose which one to \(actionVerb):".localized
+            return String(localized: "I found multiple events that could match. Please choose which one to \(actionVerb):")
         }
     }
 
@@ -205,18 +205,18 @@ class BaseEventTool {
         let actionVerb = getActionVerb(for: intent)
 
         if context.title.isEmpty {
-            return "Please specify which event you'd like to \(actionVerb).".localized
+            return String(localized: "Please specify which event you'd like to \(actionVerb).")
         } else {
-            return String(format: "I couldn't find an event matching '%@' to \(actionVerb). Could you be more specific?".localized, context.title, actionVerb)
+            return String(format: String(localized: "I couldn't find an event matching '%@' to \(actionVerb). Could you be more specific?"), context.title, actionVerb)
         }
     }
 
     private func getActionVerb(for intent: Intent) -> String {
         switch intent {
-        case .cancelEvent: return "cancel"
-        case .updateEvent: return "update"
-        case .rescheduleEvent: return "reschedule"
-        default: return "modify"
+        case .cancelEvent: return String(localized: "cancel")
+        case .updateEvent: return String(localized: "update")
+        case .rescheduleEvent: return String(localized: "reschedule")
+        default: return String(localized: "modify")
         }
     }
 
@@ -226,7 +226,7 @@ class BaseEventTool {
         var attributedLabel = AttributedString()
 
         // Event title (bold, primary text color)
-        let title = !occ.title.isEmpty ? occ.title : "(no title)".localized
+        let title = !occ.title.isEmpty ? occ.title : String(localized: "(no title)")
         var titleText = AttributedString(title)
         titleText.font = AppFontStyle.body.weight(.bold).uiFont()
         titleText.foregroundColor = UIColor(Color.theme.text)
@@ -257,7 +257,7 @@ class BaseEventTool {
         var attributedLabel = AttributedString()
 
         // Event title (bold, primary text color)
-        let title = !text.isEmpty ? text : "(no title)".localized
+        let title = !text.isEmpty ? text : String(localized: "(no title)")
         var titleText = AttributedString(title)
         titleText.font = AppFontStyle.body.weight(.bold).uiFont()
         titleText.foregroundColor = UIColor(Color.theme.text)

@@ -17,7 +17,7 @@ struct AuthView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 24) {
-                Text("Supabase Auth Demo")
+                Text("Zunlo")
                     .themedTitle()
                 TextField("Email", text: $email)
                     .keyboardType(.emailAddress)

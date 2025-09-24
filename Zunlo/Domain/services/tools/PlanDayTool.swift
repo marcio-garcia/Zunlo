@@ -75,7 +75,7 @@ final class PlanDayTool: ActionTool {
         let dayName = formatter.string(from: date)
 
         if occurrences.isEmpty {
-            return String(format: "No events scheduled for %@.".localized, dayName)
+            return String(format: String(localized: "No events scheduled for %@."), dayName)
         }
 
         let sortedEvents = occurrences.sorted { $0.startDate < $1.startDate }
@@ -89,6 +89,6 @@ final class PlanDayTool: ActionTool {
             return "• \(timeString): \(event.title)"
         }.joined(separator: "\n")
 
-        return String(format: "Schedule for %@:\n%@".localized, dayName, eventList)
+        return String(format: String(localized: "Schedule for %@:\n%@"), dayName, eventList)
     }
 }

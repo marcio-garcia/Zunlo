@@ -11,7 +11,6 @@ import Supabase
 
 protocol AuthServicing {
     func signUp(email: String, password: String) async throws -> AuthSession
-    func signUpAttempt(email: String, password: String) async throws -> AuthSession
     func signIn(email: String, password: String) async throws -> AuthToken
     func signInAnonymously() async throws -> AuthToken
     func refreshToken(_ refreshToken: String) async throws -> AuthToken
@@ -34,24 +33,12 @@ class AuthService: AuthServicing {
     init(supabase: SupabaseClient) {
         self.supabase = supabase
     }
-    
+
     func signUp(email: String, password: String) async throws -> AuthSession {
         let authResponse = try await supabase.auth.signUp(email: email, password: password)
         return authResponse.toDomain()
     }
-    
-    func signUpAttempt(email: String, password: String) async throws -> AuthSession {
-        do {
-            // First, try to sign in
-            let session = try await signIn(email: email, password: password)
-            let user = try await supabase.auth.user()
-            return AuthSession(token: session, user: user.toDomain())
-        } catch {
-            // Sign in failed, so try to sign up
-            return try await signUp(email: email, password: password)
-        }
-    }
-    
+        
     func signIn(email: String, password: String) async throws -> AuthToken {
         let session = try await supabase.auth.signIn(email: email, password: password)
         return session.toDomain()

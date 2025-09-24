@@ -10,17 +10,17 @@ import SmartParseKit
 extension Intent {
     var localizedDescription: String {
         switch self {
-        case .createTask: return "Create task".localized
-        case .createEvent: return "Create event".localized
-        case .updateTask: return "Update task".localized
-        case .updateEvent: return "Update event".localized
-        case .rescheduleTask: return "Reschedule task".localized
-        case .rescheduleEvent: return "Reschedule event".localized
-        case .cancelTask: return "Cancel task".localized
-        case .cancelEvent: return "Cancel event".localized
-        case .view: return "View".localized
-        case .plan: return "Plan".localized
-        case .unknown:  return "Process request".localized
+        case .createTask: return String(localized: "Create task")
+        case .createEvent: return String(localized: "Create event")
+        case .updateTask: return String(localized: "Update task")
+        case .updateEvent: return String(localized: "Update event")
+        case .rescheduleTask: return String(localized: "Reschedule task")
+        case .rescheduleEvent: return String(localized: "Reschedule event")
+        case .cancelTask: return String(localized: "Cancel task")
+        case .cancelEvent: return String(localized: "Cancel event")
+        case .view: return String(localized: "View")
+        case .plan: return String(localized: "Plan")
+        case .unknown:  return String(localized: "Process request")
         }
     }
 }

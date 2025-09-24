@@ -79,11 +79,11 @@ actor LocalProcessor {
     }
 
     private func createDisambiguationText(context: CommandContext) -> String {
-        var message = "I found multiple ways to interpret your request".localized
+        var message = String(localized: "I found multiple ways to interpret your request")
         if !context.title.isEmpty {
-            message += " for \"\(context.title)\"".localized
+            message += String(localized: " for \"\(context.title)\"")
         }
-        message += ". Please choose what you'd like to do:".localized
+        message += String(localized: ". Please choose what you'd like to do:")
         return message
     }
 

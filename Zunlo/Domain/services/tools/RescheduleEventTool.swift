@@ -96,7 +96,7 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
                 action: .info(message: "More info"),
                 needsDisambiguation: false,
                 options: [],
-                message: "Please specify the new date or time for the event.".localized
+                message: String(localized: "Please specify the new date or time for the event.")
             )
         }
 
@@ -136,11 +136,11 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
             event,
             command: command,
             actionLabels: (
-                single: "Reschedule only this occurrence".localized,
-                future: "Reschedule this and future occurrences".localized,
-                all: "Reschedule all occurrences".localized
+                single: String(localized: "Reschedule only this occurrence"),
+                future: String(localized: "Reschedule this and future occurrences"),
+                all: String(localized: "Reschedule all occurrences")
             ),
-            disambiguationMessage: "Do you want to reschedule just this occurrence or the entire series?".localized,
+            disambiguationMessage: String(localized: "Do you want to reschedule just this occurrence or the entire series?"),
             operationName: "Reschedule",
             editInputBuilder: {
                 let newEndDate = self.calculateNewEndDate(from: event, newStart: newTiming)
@@ -189,7 +189,7 @@ final class RescheduleEventTool: BaseEventTool, ActionTool {
             needsDisambiguation: false,
             options: [],
             message: String(
-                format: "Rescheduled '%@' to %@ %@.".localized,
+                format: String(localized: "Rescheduled '%@' to %@ %@."),
                 event.title,
                 formatDay(newTiming),
                 formatTimeRange(newTiming, newEndDate)

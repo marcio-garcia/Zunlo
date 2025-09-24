@@ -83,7 +83,7 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
                 action: .updatedTask(id: task.id),
                 needsDisambiguation: false,
                 options: [],
-                message: String(format: "Updated task '%@'.".localized, updateInfo.newTitle ?? task.title)
+                message: String(format: String(localized: "Updated task '%@'."), updateInfo.newTitle ?? task.title)
             )
 
         } catch {
@@ -92,7 +92,7 @@ final class UpdateTaskTool: BaseTaskTool, ActionTool {
                 action: .none,
                 needsDisambiguation: false,
                 options: [],
-                message: "Failed to update task: \(error.localizedDescription)"
+                message: String(localized: "Failed to update task: \(error.localizedDescription)")
             )
         }
     }

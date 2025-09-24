@@ -48,8 +48,8 @@ public enum ToolError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .parentNotFound: return "Occurrence does not have a base event".localized
-        case .unsupportedEditMode(let operation): return "Unsupported edit mode for \(operation.lowercased())".localized
+        case .parentNotFound: return String(localized: "Occurrence does not have a base event")
+        case .unsupportedEditMode(let operation): return String(localized: "Unsupported edit mode for \(operation.lowercased())")
         }
     }
 }

@@ -76,7 +76,7 @@ final class ShowAgendaTool: ActionTool {
             "\(startDate) - \(endDate)"
 
         if occurrences.isEmpty {
-            return String(format: "No events in your agenda for %@.".localized, rangeText)
+            return String(format: String(localized: "No events in your agenda for %@."), rangeText)
         }
 
         let sortedEvents = occurrences.sorted { $0.startDate < $1.startDate }
@@ -92,7 +92,7 @@ final class ShowAgendaTool: ActionTool {
                 formatEventForAgenda(event)
             }.joined(separator: "\n")
 
-            return String(format: "Agenda for %@:\n\n%@".localized, rangeText, eventList)
+            return String(format: String(localized: "Agenda for %@:\n\n%@"), rangeText, eventList)
         } else {
             // Multiple days - group by date
             let sortedDays = groupedEvents.keys.sorted()
@@ -112,7 +112,7 @@ final class ShowAgendaTool: ActionTool {
                 return "\(dayName):\n\(eventList)"
             }.joined(separator: "\n\n")
 
-            return String(format: "Agenda (%@):\n\n%@".localized, rangeText, dayAgendas)
+            return String(format: String(localized: "Agenda (%@):\n\n%@"), rangeText, dayAgendas)
         }
     }
 
@@ -132,7 +132,7 @@ final class ShowAgendaTool: ActionTool {
         }
 
         if event.isCancelled {
-            eventText += " (Cancelled)".localized
+            eventText += String(localized: " (Cancelled)")
         }
 
         return eventText

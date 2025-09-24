@@ -83,9 +83,9 @@ final class CancelEventTool: BaseEventTool, ActionTool {
                     commandContextId: command.id,
                     intent: command.intent,
                     actionLabels: (
-                        single: "Cancel only this occurrence".localized,
-                        future: "Cancel this and future occurrences".localized,
-                        all: "Cancel all occurrences".localized
+                        single: String(localized: "Cancel only this occurrence"),
+                        future: String(localized: "Cancel this and future occurrences"),
+                        all: String(localized: "Cancel all occurrences")
                     )
                 )
 
@@ -94,7 +94,7 @@ final class CancelEventTool: BaseEventTool, ActionTool {
                     action: .targetEventOccurrence(eventId: event.id, start: event.startDate),
                     needsDisambiguation: true,
                     options: opts,
-                    message: "Do you want to cancel just this occurrence or the entire series?".localized
+                    message: String(localized: "Do you want to cancel just this occurrence or the entire series?")
                 )
             } else {
                 // Single event - cancel directly
@@ -104,7 +104,7 @@ final class CancelEventTool: BaseEventTool, ActionTool {
                     action: .canceledEvent(id: event.id),
                     needsDisambiguation: false,
                     options: [],
-                    message: String(format: "Cancelled '%@'.".localized, event.title)
+                    message: String(format: String(localized: "Cancelled '%@'."), event.title)
                 )
             }
         } catch {

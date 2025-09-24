@@ -86,7 +86,7 @@ final class PlanWeekTool: ActionTool {
         let weekRange = "\(formatter.string(from: weekStart)) - \(formatter.string(from: weekEnd))"
 
         if occurrences.isEmpty {
-            return String(format: "No events scheduled for the week of %@.".localized, weekRange)
+            return String(format: String(localized: "No events scheduled for the week of %@."), weekRange)
         }
 
         // Group events by day
@@ -117,6 +117,6 @@ final class PlanWeekTool: ActionTool {
             return "\(dayName):\n\(eventList)"
         }.joined(separator: "\n\n")
 
-        return String(format: "Week plan (%@):\n\n%@".localized, weekRange, dayPlans)
+        return String(format: String(localized: "Week plan (%@):\n\n%@"), weekRange, dayPlans)
     }
 }

@@ -35,26 +35,26 @@ final class UnknownTool: ActionTool {
         let userInput = context.originalText
 
         if userInput.isEmpty {
-            return "I'm not sure what you'd like me to do. Try asking me to create an event, schedule a task, or check your agenda.".localized
+            return String(localized: "I'm not sure what you'd like me to do. Try asking me to create an event, schedule a task, or check your agenda.")
         }
 
         // Provide contextual suggestions based on keywords
         let lowercaseInput = userInput.lowercased()
 
         if containsEventKeywords(lowercaseInput) {
-            return "It looks like you want to work with events. Try phrases like:\n• 'Create meeting tomorrow at 2pm'\n• 'Cancel my 3pm appointment'\n• 'Show me today's schedule'".localized
+            return String(localized: "It looks like you want to work with events. Try phrases like:\n• 'Create meeting tomorrow at 2pm'\n• 'Cancel my 3pm appointment'\n• 'Show me today's schedule'")
         }
 
         if containsTaskKeywords(lowercaseInput) {
-            return "It seems you want to manage tasks. You can try:\n• 'Create task to buy groceries'\n• 'Mark task as done'\n• 'Reschedule homework to Friday'".localized
+            return String(localized: "It seems you want to manage tasks. You can try:\n• 'Create task to buy groceries'\n• 'Mark task as done'\n• 'Reschedule homework to Friday'")
         }
 
         if containsScheduleKeywords(lowercaseInput) {
-            return "To view your schedule, try:\n• 'Show my agenda for today'\n• 'What's my schedule this week?'\n• 'Plan my day'".localized
+            return String(localized: "To view your schedule, try:\n• 'Show my agenda for today'\n• 'What's my schedule this week?'\n• 'Plan my day'")
         }
 
         // Generic helpful message
-        return String(format: "I'm not sure how to help with '%@'. Here are some things I can do:\n\n• Create and manage events\n• Create and manage tasks\n• Show your schedule and agenda\n• Reschedule appointments\n\nTry being more specific about what you'd like me to do.".localized, userInput)
+        return String(format: String(localized: "I'm not sure how to help with '%@'. Here are some things I can do:\n\n• Create and manage events\n• Create and manage tasks\n• Show your schedule and agenda\n• Reschedule appointments\n\nTry being more specific about what you'd like me to do."), userInput)
     }
 
     // MARK: - Keyword Detection

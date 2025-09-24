@@ -75,7 +75,7 @@ final class MoreInfoTool: ActionTool {
         }
 
         if matchingEvents.isEmpty && matchingTasks.isEmpty {
-            return String(format: "I couldn't find any events or tasks matching '%@'.".localized, title)
+            return String(format: String(localized: "I couldn't find any events or tasks matching '%@'."), title)
         }
 
         var infoComponents: [String] = []
@@ -84,14 +84,14 @@ final class MoreInfoTool: ActionTool {
             let eventInfos = matchingEvents.prefix(3).map { event in
                 formatEventInfo(event)
             }
-            infoComponents.append("Events:\n" + eventInfos.joined(separator: "\n"))
+            infoComponents.append(String(localized: "Events:\n") + eventInfos.joined(separator: "\n"))
         }
 
         if !matchingTasks.isEmpty {
             let taskInfos = matchingTasks.prefix(3).map { task in
                 formatTaskInfo(task)
             }
-            infoComponents.append("Tasks:\n" + taskInfos.joined(separator: "\n"))
+            infoComponents.append(String(localized: "Tasks:\n") + taskInfos.joined(separator: "\n"))
         }
 
         return infoComponents.joined(separator: "\n\n")
@@ -117,18 +117,18 @@ final class MoreInfoTool: ActionTool {
 
         // Today's summary
         if todayEvents.isEmpty {
-            infoComponents.append("No events scheduled for \(dateString).")
+            infoComponents.append(String(localized: "No events scheduled for \(dateString)."))
         } else {
-            infoComponents.append("Today (\(dateString)): \(todayEvents.count) event(s)")
+            infoComponents.append(String(localized: "Today (\(dateString)): \(todayEvents.count) event(s)"))
         }
 
         // Week summary
         let weekEventCount = weekEvents.count
-        infoComponents.append("This week: \(weekEventCount) event(s)")
+        infoComponents.append(String(localized: "This week: \(weekEventCount) event(s)"))
 
         // Task summary
         if pendingTasks.isEmpty {
-            infoComponents.append("No pending tasks")
+            infoComponents.append(String(localized: "No pending tasks"))
         } else {
             let overdueTasks = pendingTasks.filter { task in
                 guard let dueDate = task.dueDate else { return false }
@@ -136,9 +136,9 @@ final class MoreInfoTool: ActionTool {
             }
 
             if overdueTasks.isEmpty {
-                infoComponents.append("\(pendingTasks.count) pending task(s)")
+                infoComponents.append(String(localized: "\(pendingTasks.count) pending task(s)"))
             } else {
-                infoComponents.append("\(pendingTasks.count) pending task(s) (\(overdueTasks.count) overdue)")
+                infoComponents.append(String(localized: "\(pendingTasks.count) pending task(s) (\(overdueTasks.count) overdue)"))
             }
         }
 
@@ -175,11 +175,11 @@ final class MoreInfoTool: ActionTool {
         }
 
         if let notes = event.notes, !notes.isEmpty {
-            info += "\n  Notes: \(notes)"
+            info += String(localized: "\n  Notes: \(notes)")
         }
 
         if event.isRecurring {
-            info += "\n  Recurring event"
+            info += String(localized: "\n  Recurring event")
         }
 
         return info
@@ -194,7 +194,7 @@ final class MoreInfoTool: ActionTool {
             formatter.dateStyle = .medium
             formatter.timeStyle = .short
 
-            info += " - Due: \(formatter.string(from: dueDate))"
+            info += String(localized: " - Due: \(formatter.string(from: dueDate))")
         }
 
         if task.isCompleted {
@@ -202,7 +202,7 @@ final class MoreInfoTool: ActionTool {
         }
 
         if let notes = task.notes, !notes.isEmpty {
-            info += "\n  Notes: \(notes)"
+            info += String(localized: "\n  Notes: \(notes)")
         }
 
         return info

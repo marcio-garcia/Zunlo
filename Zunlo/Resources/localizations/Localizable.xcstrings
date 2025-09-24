@@ -4,7 +4,28 @@
     "" : {
 
     },
+    "\n  Notes: %@" : {
+
+    },
+    "\n  Recurring event" : {
+
+    },
+    " - Due: %@" : {
+
+    },
+    " (Cancelled)" : {
+
+    },
+    " for \"%@\"" : {
+
+    },
     "–" : {
+
+    },
+    ". Please choose what you'd like to do:" : {
+
+    },
+    "(no title)" : {
 
     },
     "%@ (Device)" : {
@@ -35,6 +56,19 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld min"
+          }
+        }
+      }
+    },
+    "%lld pending task(s)" : {
+
+    },
+    "%lld pending task(s) (%lld overdue)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld pending task(s) (%2$lld overdue)"
           }
         }
       }
@@ -140,6 +174,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crie sue primeira tarefa"
+          }
+        }
+      }
+    },
+    "Agenda (%@):\n\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Agenda (%1$@):\n\n%2$@"
+          }
+        }
+      }
+    },
+    "Agenda for %@:\n\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Agenda for %1$@:\n\n%2$@"
           }
         }
       }
@@ -275,6 +329,9 @@
         }
       }
     },
+    "cancel" : {
+
+    },
     "Cancel" : {
       "localizations" : {
         "pt-BR" : {
@@ -285,6 +342,21 @@
         }
       }
     },
+    "Cancel all occurrences" : {
+
+    },
+    "Cancel event" : {
+
+    },
+    "Cancel only this occurrence" : {
+
+    },
+    "Cancel task" : {
+
+    },
+    "Cancel this and future occurrences" : {
+
+    },
     "Cancelled" : {
       "localizations" : {
         "pt-BR" : {
@@ -294,6 +366,12 @@
           }
         }
       }
+    },
+    "Cancelled '%@'." : {
+
+    },
+    "Cancelled task '%@'." : {
+
     },
     "Clean closure lowers stress" : {
 
@@ -394,6 +472,9 @@
         }
       }
     },
+    "Create event" : {
+
+    },
     "Create plan" : {
       "localizations" : {
         "pt-BR" : {
@@ -403,6 +484,15 @@
           }
         }
       }
+    },
+    "Create task" : {
+
+    },
+    "Created event '%@'." : {
+
+    },
+    "Created task '%@'." : {
+
     },
     "daily" : {
       "extractionState" : "manual",
@@ -565,6 +655,15 @@
       }
     },
     "Details" : {
+
+    },
+    "Do you want to cancel just this occurrence or the entire series?" : {
+
+    },
+    "Do you want to reschedule just this occurrence or the entire series?" : {
+
+    },
+    "Do you want to update just this occurrence or the entire series?" : {
 
     },
     "Drizzle" : {
@@ -797,6 +896,21 @@
         }
       }
     },
+    "Events:\n" : {
+
+    },
+    "Failed to cancel task: %@" : {
+
+    },
+    "Failed to create event: %@" : {
+
+    },
+    "Failed to create task: %@" : {
+
+    },
+    "Failed to update task: %@" : {
+
+    },
     "Fast capture reduces mental load." : {
       "localizations" : {
         "pt-BR" : {
@@ -907,6 +1021,39 @@
         }
       }
     },
+    "I couldn't determine which event to %@. Please be more specific." : {
+
+    },
+    "I couldn't find a task matching '%%@' to %@. Could you be more specific?" : {
+
+    },
+    "I couldn't find an event matching '%%@' to %@. Could you be more specific?" : {
+
+    },
+    "I couldn't find any events or tasks matching '%@'." : {
+
+    },
+    "I found a likely match, but want to confirm which event to %@:" : {
+
+    },
+    "I found a matching event to %@:" : {
+
+    },
+    "I found multiple events that could match. Please choose which one to %@:" : {
+
+    },
+    "I found multiple tasks. Which one would you like to %@?" : {
+
+    },
+    "I found multiple ways to interpret your request" : {
+
+    },
+    "I found several similar events. Which one would you like to %@?" : {
+
+    },
+    "I found some possible matches. Which event would you like to %@?" : {
+
+    },
     "I want to keep my tasks" : {
       "localizations" : {
         "pt-BR" : {
@@ -927,6 +1074,12 @@
         }
       }
     },
+    "I'm not sure how to help with '%@'. Here are some things I can do:\n\n• Create and manage events\n• Create and manage tasks\n• Show your schedule and agenda\n• Reschedule appointments\n\nTry being more specific about what you'd like me to do." : {
+
+    },
+    "I'm not sure what you'd like me to do. Try asking me to create an event, schedule a task, or check your agenda." : {
+
+    },
     "Interval: %lld" : {
       "localizations" : {
         "pt-BR" : {
@@ -936,6 +1089,12 @@
           }
         }
       }
+    },
+    "It looks like you want to work with events. Try phrases like:\n• 'Create meeting tomorrow at 2pm'\n• 'Cancel my 3pm appointment'\n• 'Show me today's schedule'" : {
+
+    },
+    "It seems you want to manage tasks. You can try:\n• 'Create task to buy groceries'\n• 'Mark task as done'\n• 'Reschedule homework to Friday'" : {
+
     },
     "Kick off your day" : {
       "localizations" : {
@@ -1057,6 +1216,9 @@
         }
       }
     },
+    "modify" : {
+
+    },
     "monthly" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1118,6 +1280,9 @@
         }
       }
     },
+    "New Task" : {
+
+    },
     "Night 22–6" : {
       "localizations" : {
         "pt-BR" : {
@@ -1128,6 +1293,15 @@
         }
       }
     },
+    "No events in your agenda for %@." : {
+
+    },
+    "No events scheduled for %@." : {
+
+    },
+    "No events scheduled for the week of %@." : {
+
+    },
     "No Events Yet" : {
       "localizations" : {
         "pt-BR" : {
@@ -1137,6 +1311,9 @@
           }
         }
       }
+    },
+    "No pending tasks" : {
+
     },
     "No tasks for today." : {
       "localizations" : {
@@ -1178,6 +1355,9 @@
         }
       }
     },
+    "Occurrence does not have a base event" : {
+
+    },
     "Open Settings" : {
       "localizations" : {
         "pt-BR" : {
@@ -1218,6 +1398,9 @@
         }
       }
     },
+    "Plan" : {
+
+    },
     "Plan my day" : {
       "localizations" : {
         "pt-BR" : {
@@ -1247,6 +1430,18 @@
           }
         }
       }
+    },
+    "Please specify the new date or time for the event." : {
+
+    },
+    "Please specify the new due date for the task." : {
+
+    },
+    "Please specify which event you'd like to %@." : {
+
+    },
+    "Please specify which task you'd like to %@." : {
+
     },
     "Prep" : {
       "localizations" : {
@@ -1338,6 +1533,9 @@
         }
       }
     },
+    "Process request" : {
+
+    },
     "Quick wins reduce today's pressure:\n%@" : {
       "localizations" : {
         "pt-BR" : {
@@ -1427,6 +1625,44 @@
         }
       }
     },
+    "reschedule" : {
+
+    },
+    "Reschedule all occurrences" : {
+
+    },
+    "Reschedule event" : {
+
+    },
+    "Reschedule only this occurrence" : {
+
+    },
+    "Reschedule task" : {
+
+    },
+    "Reschedule this and future occurrences" : {
+
+    },
+    "Rescheduled '%@' to %@ %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rescheduled '%1$@' to %2$@ %3$@."
+          }
+        }
+      }
+    },
+    "Rescheduled task '%@' to %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rescheduled task '%1$@' to %2$@."
+          }
+        }
+      }
+    },
     "Reset Upgrade Reminder" : {
       "localizations" : {
         "pt-BR" : {
@@ -1493,6 +1729,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salve suas tarefas permanentemente"
+          }
+        }
+      }
+    },
+    "Schedule for %@:\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Schedule for %1$@:\n%2$@"
           }
         }
       }
@@ -1727,9 +1973,6 @@
         }
       }
     },
-    "Supabase Auth Demo" : {
-
-    },
     "Task Detail for %@" : {
       "localizations" : {
         "pt-BR" : {
@@ -1769,6 +2012,12 @@
           }
         }
       }
+    },
+    "Tasks:\n" : {
+
+    },
+    "This week: %lld event(s)" : {
+
     },
     "Time Zone" : {
       "localizations" : {
@@ -1811,7 +2060,6 @@
       }
     },
     "Title is required." : {
-      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -1821,12 +2069,25 @@
         }
       }
     },
+    "To view your schedule, try:\n• 'Show my agenda for today'\n• 'What's my schedule this week?'\n• 'Plan my day'" : {
+
+    },
     "today" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "hoje"
+          }
+        }
+      }
+    },
+    "Today (%@): %lld event(s)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Today (%1$@): %2$lld event(s)"
           }
         }
       }
@@ -1852,6 +2113,43 @@
       }
     },
     "Try “Buy gift for Ana • %@ • High”." : {
+
+    },
+    "Unable to create account. This email may already be registered - try signing in instead." : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível criar a conta. Este email pode já estar cadastrado - tente entrar na sua conta."
+          }
+        }
+      }
+    },
+    "Unsupported edit mode for %@" : {
+
+    },
+    "update" : {
+
+    },
+    "Update all occurrences" : {
+
+    },
+    "Update event" : {
+
+    },
+    "Update only this occurrence" : {
+
+    },
+    "Update task" : {
+
+    },
+    "Update this and future occurrences" : {
+
+    },
+    "Updated '%@'." : {
+
+    },
+    "Updated task '%@'." : {
 
     },
     "Upgrade Reminder" : {
@@ -1893,6 +2191,9 @@
     "UTC" : {
 
     },
+    "View" : {
+
+    },
     "We need your location to show local content." : {
       "localizations" : {
         "pt-BR" : {
@@ -1909,6 +2210,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clima"
+          }
+        }
+      }
+    },
+    "Week plan (%@):\n\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Week plan (%1$@):\n\n%2$@"
           }
         }
       }

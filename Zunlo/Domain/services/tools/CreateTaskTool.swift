@@ -48,7 +48,7 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
                 action: .createdTask(id: task.id),
                 needsDisambiguation: false,
                 options: [],
-                message: String(format: "Created task '%@'.".localized, taskInfo.title)
+                message: String(format: String(localized: "Created task '%@'."), taskInfo.title)
             )
 
         } catch {
@@ -57,7 +57,7 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
                 action: .none,
                 needsDisambiguation: false,
                 options: [],
-                message: "Failed to create task: \(error.localizedDescription)"
+                message: String(localized: "Failed to create task: \(error.localizedDescription)")
             )
         }
     }
@@ -95,7 +95,7 @@ final class CreateTaskTool: BaseTaskTool, ActionTool {
         }
 
         // Use title from context or fallback
-        let title = !context.title.isEmpty ? context.title : "New Task".localized
+        let title = !context.title.isEmpty ? context.title : String(localized: "New Task")
 
         // Extract due date from context
         let dueDate = temporalContext.dateRange?.start ?? temporalContext.finalDate

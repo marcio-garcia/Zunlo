@@ -163,11 +163,11 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
             event,
             command: command,
             actionLabels: (
-                single: "Update only this occurrence".localized,
-                future: "Update this and future occurrences".localized,
-                all: "Update all occurrences".localized
+                single: String(localized: "Update only this occurrence"),
+                future: String(localized: "Update this and future occurrences"),
+                all: String(localized: "Update all occurrences")
             ),
-            disambiguationMessage: "Do you want to update just this occurrence or the entire series?".localized,
+            disambiguationMessage: String(localized: "Do you want to update just this occurrence or the entire series?"),
             operationName: "Update",
             editInputBuilder: {
                 return self.buildEditInput(
@@ -224,7 +224,7 @@ final class UpdateEventTool: BaseEventTool, ActionTool {
             action: .updatedEvent(id: event.id),
             needsDisambiguation: false,
             options: [],
-            message: String(format: "Updated '%@'.".localized, updateInfo.newTitle ?? event.title)
+            message: String(format: String(localized: "Updated '%@'."), updateInfo.newTitle ?? event.title)
         )
     }
 }

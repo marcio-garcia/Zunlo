@@ -65,7 +65,7 @@ final class CancelTaskTool: BaseTaskTool, ActionTool {
                 action: .canceledTask(id: task.id),
                 needsDisambiguation: false,
                 options: [],
-                message: String(format: "Cancelled task '%@'.".localized, task.title)
+                message: String(format: String(localized: "Cancelled task '%@'."), task.title)
             )
 
         } catch {
@@ -74,7 +74,7 @@ final class CancelTaskTool: BaseTaskTool, ActionTool {
                 action: .none,
                 needsDisambiguation: false,
                 options: [],
-                message: "Failed to cancel task: \(error.localizedDescription)"
+                message: String(localized: "Failed to cancel task: \(error.localizedDescription)")
             )
         }
     }

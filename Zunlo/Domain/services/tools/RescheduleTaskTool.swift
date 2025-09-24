@@ -64,7 +64,7 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
                     action: .none,
                     needsDisambiguation: false,
                     options: [],
-                    message: "Please specify the new due date for the task.".localized
+                    message: String(localized: "Please specify the new due date for the task.")
                 )
             }
 
@@ -85,7 +85,7 @@ final class RescheduleTaskTool: BaseTaskTool, ActionTool {
                 action: .rescheduledTask(id: task.id, due: newDueDate),
                 needsDisambiguation: false,
                 options: [],
-                message: String(format: "Rescheduled task '%@' to %@.".localized, task.title, formatDay(newDueDate))
+                message: String(format: String(localized: "Rescheduled task '%@' to %@."), task.title, formatDay(newDueDate))
             )
 
         } catch {

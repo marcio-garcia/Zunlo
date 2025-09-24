@@ -54,7 +54,7 @@ final class CreateEventTool: BaseEventTool, ActionTool {
                 action: .createdEvent(id: eventInput.id),
                 needsDisambiguation: false,
                 options: [],
-                message: String(format: "Created event '%@'.".localized, eventInfo.title)
+                message: String(format: String(localized: "Created event '%@'."), eventInfo.title)
             )
 
         } catch {
@@ -63,7 +63,7 @@ final class CreateEventTool: BaseEventTool, ActionTool {
                 action: .none,
                 needsDisambiguation: false,
                 options: [],
-                message: "Failed to create event: \(error.localizedDescription)"
+                message: String(localized: "Failed to create event: \(error.localizedDescription)")
             )
         }
     }

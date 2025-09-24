@@ -83,7 +83,7 @@ class BaseTaskTool {
             alternatives: candidates,
             context: context,
             intent: intent,
-            message: "I found multiple tasks. Which one would you like to \(getActionVerb(for: intent))?".localized
+            message: String(localized: "I found multiple tasks. Which one would you like to \(getActionVerb(for: intent))?")
         )
     }
 
@@ -125,9 +125,9 @@ class BaseTaskTool {
         let message: String
 
         if context.title.isEmpty {
-            message = "Please specify which task you'd like to \(actionVerb).".localized
+            message = String(localized: "Please specify which task you'd like to \(actionVerb).")
         } else {
-            message = String(format: "I couldn't find a task matching '%@' to \(actionVerb). Could you be more specific?".localized, context.title)
+            message = String(format: String(localized: "I couldn't find a task matching '%@' to \(actionVerb). Could you be more specific?"), context.title)
         }
 
         return ToolResult(
@@ -154,7 +154,7 @@ class BaseTaskTool {
         var attributedLabel = AttributedString()
 
         // Task title (bold, primary text color)
-        let title = !task.title.isEmpty ? task.title : "(no title)".localized
+        let title = !task.title.isEmpty ? task.title : String(localized: "(no title)")
         var titleText = AttributedString(title)
         titleText.font = AppFontStyle.body.weight(.bold).uiFont()
         titleText.foregroundColor = UIColor(Color.theme.text)
