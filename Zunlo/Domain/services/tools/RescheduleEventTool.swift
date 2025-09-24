@@ -11,6 +11,16 @@ import SmartParseKit
 // MARK: - Reschedule Event Tool
 
 /// Tool for rescheduling events with enhanced candidate selection
+/// 1) Process input text
+/// 2) If intent is ambiguous, ask for clarification
+/// 3) Correct intent is selected
+/// 4) Process with selected intent
+/// 5) If found more than one event candidate, ask for clarification
+/// 6) Specific event is selected
+/// 7) Process rescheduling on the selected event
+/// 8) If the event is recurrent, ask if the update is for all, single or this and future
+/// 9) Edit mode is selected
+/// 10) Process rescheduling on selected occurrence with selected mode
 final class RescheduleEventTool: BaseEventTool, ActionTool {
 
     private let referenceDate: Date

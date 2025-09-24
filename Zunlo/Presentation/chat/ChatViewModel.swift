@@ -247,31 +247,6 @@ extension ChatViewModel {
                 }
             }
         }
-//        switch action {
-//        case .copyText:
-//            copyToClipboard(message.rawText)
-//
-//        case .copyAttachment(let attachmentId):
-//            guard let att = message.attachments.first(where: { $0.id == attachmentId }),
-//                  let json = att.decodedString() else { return }
-//            copyToClipboard(json)
-//
-//        case .sendAttachmentToAI(let attachmentId):
-//            guard let att = message.attachments.first(where: { $0.id == attachmentId }),
-//                  let data = Data(base64Encoded: att.dataBase64) else { return }
-//            Task {
-//                await sendAttachmentToAI(schema: att.schema, mime: att.mime, data: data)
-//            }
-//
-//        case .disambiguateIntent(let alternatives):
-//            // Present disambiguation options to user
-//            // For now, just send the first alternative as a new message
-//            if let selectedAlternative = alternatives.first {
-//                Task {
-//                    await send(text: selectedAlternative)
-//                }
-//            }
-//        }
     }
 
     private func copyToClipboard(_ text: String) {
