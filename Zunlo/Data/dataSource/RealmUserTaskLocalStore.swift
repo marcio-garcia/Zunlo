@@ -28,16 +28,16 @@ final class RealmUserTaskLocalStore: UserTaskLocalStore {
         try await db.fetchTask(id: id)
     }
     
-    func fetchAll() async throws -> [UserTask] {
-        try await db.fetchAllUserTasks()
+    func fetchAll(userId: UUID) async throws -> [UserTask] {
+        try await db.fetchAllUserTasks(userId: userId)
     }
 
-    func fetchTasks(filteredBy filter: TaskFilter? = nil) async throws -> [UserTask] {
-        try await db.fetchUserTasks(filteredBy: filter)
+    func fetchTasks(filteredBy filter: TaskFilter? = nil, userId: UUID) async throws -> [UserTask] {
+        try await db.fetchUserTasks(filteredBy: filter, userId: userId)
     }
 
-    func fetchAllUniqueTags() async throws -> [String] {
-        try await db.fetchAllUniqueTaskTags()
+    func fetchAllUniqueTags(userId: UUID) async throws -> [String] {
+        try await db.fetchAllUniqueTaskTags(userId: userId)
     }
     
     func apply(rows: [UserTaskRemote]) async throws {

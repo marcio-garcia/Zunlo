@@ -12,8 +12,8 @@ protocol UserTaskLocalStore {
     func upsert(_ domain: UserTask) async throws
     func delete(id: UUID, userId: UUID) async throws
     func fetch(id: UUID) async throws -> UserTaskLocal?
-    func fetchAll() async throws -> [UserTask]
-    func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask]
-    func fetchAllUniqueTags() async throws -> [String]
+    func fetchAll(userId: UUID) async throws -> [UserTask]
+    func fetchTasks(filteredBy filter: TaskFilter?, userId: UUID) async throws -> [UserTask]
+    func fetchAllUniqueTags(userId: UUID) async throws -> [String]
     func apply(rows: [UserTaskRemote]) async throws
 }

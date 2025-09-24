@@ -485,28 +485,28 @@ public actor DatabaseActor: ConflictDB {
         return obj
     }
     
-    func fetchAllUserTasks() throws -> [UserTask] {
+    func fetchAllUserTasks(userId: UUID) throws -> [UserTask] {
         let realm = try openRealm()
         let locals = Array(
             realm.objects(UserTaskLocal.self).sorted(by: [
                 SortDescriptor(keyPath: "priority", ascending: false),
                 SortDescriptor(keyPath: "dueDate", ascending: true)
-            ])
+            ]).filter({ $0.userId == userId })
         )
         return locals.map { $0.toDomain() }
     }
 
     // Keep NSPredicate here because the filter is complex (ANY tags, ranges, etc.)
-    func fetchUserTasks(filteredBy filter: TaskFilter?) throws -> [UserTask] {
+    func fetchUserTasks(filteredBy filter: TaskFilter?, userId: UUID) throws -> [UserTask] {
         let realm = try openRealm()
         var predicates: [NSPredicate] = []
 
+        predicates.append(NSPredicate(format: "userId == %@", userId as CVarArg))
+        
         if let tags = filter?.tags, !tags.isEmpty {
             predicates.append(NSPredicate(format: "ANY tags IN %@", tags))
         }
-        if let userId = filter?.userId {
-            predicates.append(NSPredicate(format: "userId == %@", userId as CVarArg))
-        }
+        
         if let priority = filter?.priority {
             predicates.append(NSPredicate(format: "priority == %@", NSNumber(value: priority.rawValue)))
         }
@@ -542,9 +542,9 @@ public actor DatabaseActor: ConflictDB {
         return sorted.map { $0.toDomain() }
     }
 
-    func fetchAllUniqueTaskTags() throws -> [String] {
+    func fetchAllUniqueTaskTags(userId: UUID) throws -> [String] {
         let realm = try openRealm()
-        let tasks = realm.objects(UserTaskLocal.self)
+        let tasks = realm.objects(UserTaskLocal.self).filter { $0.userId == userId }
         let allTags = tasks.flatMap { $0.tags }
         let unique = Set(allTags.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) })
         return Array(unique).sorted()

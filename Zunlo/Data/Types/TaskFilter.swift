@@ -9,7 +9,6 @@ import Foundation
 
 public struct TaskFilter {
     var tags: [String]?
-    var userId: UUID?
     var priority: UserTaskPriorityLocal?
     var isCompleted: Bool?
     var dueDateRange: Range<Date>?
@@ -18,7 +17,6 @@ public struct TaskFilter {
     
     init(
         tags: [String]? = nil,
-        userId: UUID? = nil,
         priority: UserTaskPriorityLocal? = nil,
         isCompleted: Bool? = nil,
         dueDateRange: Range<Date>? = nil,
@@ -26,7 +24,6 @@ public struct TaskFilter {
         deleted: Bool? = nil
     ) {
         self.tags = tags
-        self.userId = userId
         self.priority = priority
         self.isCompleted = isCompleted
         self.dueDateRange = dueDateRange

@@ -108,6 +108,7 @@ final class UserTaskRepository: TaskStore {
     }
     
     func fetchTask(id: UUID) async throws -> UserTask? {
+        guard try await auth.isAuthorized() else { return nil }
         guard let taskLocal = try await localStore.fetch(id: id) else {
             return nil
         }
@@ -116,18 +117,20 @@ final class UserTaskRepository: TaskStore {
     }
     
     func fetchAll() async throws -> [UserTask] {
-        let tasks = try await localStore.fetchAll()
+        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        let tasks = try await localStore.fetchAll(userId: userId)
         return tasks
     }
     
     func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
-        // Prefer local first, or merge with remote if needed
-        let tasks = try await localStore.fetchTasks(filteredBy: filter)
+        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        let tasks = try await localStore.fetchTasks(filteredBy: filter, userId: userId)
         return tasks
     }
     
     func fetchAllUniqueTags() async throws -> [String] {
-        let tags = try await localStore.fetchAllUniqueTags()
+        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        let tags = try await localStore.fetchAllUniqueTags(userId: userId)
         return tags
     }
 }
