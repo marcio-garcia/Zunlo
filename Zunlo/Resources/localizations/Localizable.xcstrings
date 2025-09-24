@@ -464,6 +464,9 @@
     "Copy Realm file path" : {
 
     },
+    "Could not open the sign in screen" : {
+
+    },
     "Create a new account with your email and password" : {
 
     },
@@ -1888,6 +1891,9 @@
         }
       }
     },
+    "Sign in with Google" : {
+
+    },
     "Sign in with magic link" : {
 
     },
@@ -1902,6 +1908,9 @@
       }
     },
     "Sign in with your email and password" : {
+
+    },
+    "Sign in with your Google account" : {
 
     },
     "Sign Up" : {

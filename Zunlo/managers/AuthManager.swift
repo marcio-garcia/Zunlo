@@ -5,7 +5,7 @@
 //  Created by Marcio Garcia on 6/25/25.
 //
 
-import Foundation
+import UIKit
 import Combine
 import RealmSwift
 import LoggingKit
@@ -31,6 +31,7 @@ protocol UserStorage {
 enum AuthProvidingError: Error {
     case unauthorized
     case unableToSignUp(String)
+    case noPresentingViewController
 }
 
 public protocol AuthProviding {
@@ -163,7 +164,12 @@ final class AuthManager: ObservableObject, AuthProviding {
         let (authToken, _) = try await authService.session(from: url)
         try await authenticated(authToken)
     }
-        
+    
+    func signInWithGoogle(viewController: UIViewController) async throws {
+        let authToken = try await authService.signInWithGoogle(viewController: viewController)
+        try await authenticated(authToken)
+    }
+    
     func signOut(preserveLocalData: Bool = true) async throws {
         do {
             // Revoke token with Supabase

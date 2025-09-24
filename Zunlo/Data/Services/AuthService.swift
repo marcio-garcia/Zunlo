@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import Supabase
+import GoogleSignIn
 
 protocol AuthServicing {
     func signUp(email: String, password: String) async throws -> AuthSession
@@ -20,6 +21,7 @@ protocol AuthServicing {
     func user(by jwt: String?) async throws -> User
     func signOut() async throws
     func signInWithOTP(email: String, redirectTo: URL?) async throws
+    func signInWithGoogle(viewController: UIViewController) async throws -> AuthToken
     func updateUser(email: String) async throws
     func getOTPType(from typeString: String) -> EmailOTPType
     func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession
@@ -99,6 +101,27 @@ class AuthService: AuthServicing {
             type: type
         )
         return authResponse.toDomain()
+    }
+    
+    @MainActor
+    func signInWithGoogle(viewController: UIViewController) async throws -> AuthToken {
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: viewController)
+        
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw NSError(domain: "zunlo", code: 99) // AuthError.noIdToken
+        }
+        
+        let accessToken = result.user.accessToken.tokenString
+        
+        // Step 2: Sign in to Supabase with Google credentials
+        let session = try await supabase.auth.signInWithIdToken(
+            credentials: OpenIDConnectCredentials(
+                provider: .google,
+                idToken: idToken,
+                accessToken: accessToken
+            )
+        )
+        return session.toDomain()
     }
     
     func getOTPType(from typeString: String) -> EmailOTPType {

@@ -13,6 +13,7 @@ import FlowNavigator
 import AdStack
 import Supabase
 import SmartParseKit
+import GoogleSignIn
 
 typealias AppNav = AppNavigationManager<SheetRoute, FullScreenRoute, DialogRoute, StackRoute>
 
@@ -33,6 +34,10 @@ struct ZunloApp: App {
     private let appState: AppState
     
     init() {
+        if !EnvConfig.shared.googleOauthClientId.isEmpty {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: EnvConfig.shared.googleOauthClientId)
+        }
+        
         setupRealm()
         
         let supabaseClient = SupabaseClient(
@@ -49,7 +54,7 @@ struct ZunloApp: App {
             functionsBaseURL: URL(string: EnvConfig.shared.apiFunctionsBaseUrl)
         )
         let supabase = SupabaseSDK(config: supabaseConfig)
-        
+                
         let firebase = FirebaseService()
         
         let pushService = PushNotificationService(
@@ -126,6 +131,11 @@ struct ZunloApp: App {
                     }
                 })
                 .onOpenURL { url in
+                    // Handle Google Sign-In URL
+                    if GIDSignIn.sharedInstance.handle(url) {
+                        return
+                    }
+                    
                     if let deepLink = DeepLinkParser.parse(url: url) {
                         deepLinkHandler?.handleDeepLink(deepLink)
                     }

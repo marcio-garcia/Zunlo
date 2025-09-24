@@ -67,4 +67,8 @@ class EnvConfig: AdEnvironmentProvider {
     let adMobRewardedID: String = {
         Bundle.main.infoDictionary?["ADMOB_REWARDED_ID"] as? String ?? ""
     }()
+    
+    let googleOauthClientId: String = {
+        Bundle.main.infoDictionary?["GOOGLE_OAUTH_CLIENT_ID"] as? String ?? ""
+    }()
 }

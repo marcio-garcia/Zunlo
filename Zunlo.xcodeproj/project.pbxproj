@@ -16,6 +16,8 @@
 		252D73142E2D5E6C002320B8 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73132E2D5E6C002320B8 /* Realtime */; };
 		252D73162E2D5E6C002320B8 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73152E2D5E6C002320B8 /* Storage */; };
 		252D73182E2D5E6C002320B8 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 252D73172E2D5E6C002320B8 /* Supabase */; };
+		2552B8602E8490810090716A /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 2552B85F2E8490810090716A /* GoogleSignIn */; };
+		2552B8622E8490810090716A /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2552B8612E8490810090716A /* GoogleSignInSwift */; };
 		255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */ = {isa = PBXBuildFile; productRef = 255B93752E1C6FFB00D8CD8A /* MiniSignalEye */; };
 		25820C9E2E651296007EAD3B /* SmartParseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 25820C9D2E651296007EAD3B /* SmartParseKit */; };
 		258212962E6B6651007EAD3B /* LoggingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 258212952E6B6651007EAD3B /* LoggingKit */; };
@@ -126,6 +128,7 @@
 				25F5BB6E2E5B660200747955 /* GlowUI in Frameworks */,
 				252D73182E2D5E6C002320B8 /* Supabase in Frameworks */,
 				252D73142E2D5E6C002320B8 /* Realtime in Frameworks */,
+				2552B8602E8490810090716A /* GoogleSignIn in Frameworks */,
 				25857B842E1C85C800676F8B /* RealmSwift in Frameworks */,
 				25FAA9712E0B6E56000AACA2 /* SupabaseSDK in Frameworks */,
 				252D730E2E2D5E6C002320B8 /* Auth in Frameworks */,
@@ -137,6 +140,7 @@
 				252D73102E2D5E6C002320B8 /* Functions in Frameworks */,
 				251483592E4102A800B59FF8 /* FlowNavigator in Frameworks */,
 				258212962E6B6651007EAD3B /* LoggingKit in Frameworks */,
+				2552B8622E8490810090716A /* GoogleSignInSwift in Frameworks */,
 				25ACE3462E25F028009F0218 /* FirebaseCore in Frameworks */,
 				252D73162E2D5E6C002320B8 /* Storage in Frameworks */,
 				255B93762E1C6FFB00D8CD8A /* MiniSignalEye in Frameworks */,
@@ -245,6 +249,8 @@
 				25F5BB722E5BB4B300747955 /* ZunloHelpers */,
 				25820C9D2E651296007EAD3B /* SmartParseKit */,
 				258212952E6B6651007EAD3B /* LoggingKit */,
+				2552B85F2E8490810090716A /* GoogleSignIn */,
+				2552B8612E8490810090716A /* GoogleSignInSwift */,
 			);
 			productName = Zunlo;
 			productReference = 25FA19FD2E0854F800E740A3 /* Zunlo.app */;
@@ -337,6 +343,7 @@
 				25ACE3442E25F028009F0218 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				25B7BDC02E424075004E1C12 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				2552B85E2E8490810090716A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 25FA19FE2E0854F800E740A3 /* Products */;
@@ -887,6 +894,14 @@
 				minimumVersion = 2.5.1;
 			};
 		};
+		2552B85E2E8490810090716A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 		255B93742E1C6FFB00D8CD8A /* XCRemoteSwiftPackageReference "MiniSignalEye" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/marcio-garcia/MiniSignalEye";
@@ -960,6 +975,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 252D730C2E2D5E6C002320B8 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		2552B85F2E8490810090716A /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2552B85E2E8490810090716A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		2552B8612E8490810090716A /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2552B85E2E8490810090716A /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 		255B93752E1C6FFB00D8CD8A /* MiniSignalEye */ = {
 			isa = XCSwiftPackageProductDependency;

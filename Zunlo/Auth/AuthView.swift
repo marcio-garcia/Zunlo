@@ -127,7 +127,34 @@ struct AuthView: View {
                     .disabled(isLoading || isMagicLinkFieldEmpty)
                     .accessibilityLabel("Sign in with magic link")
                     .accessibilityHint("Send a magic link to your email address")
-                    
+
+                    Button("Sign in with Google") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        Task {
+                            isLoading = true
+                            currentAction = "Signing in"
+                            do {
+                                guard let viewController = UIApplication.shared.rootViewController else {
+                                    errorHandler.handle(String(localized: "Could not open the sign in screen"))
+                                    return
+                                }
+                                try await authManager.signInWithGoogle(viewController: viewController)
+                            } catch {
+                                errorHandler.handle(error)
+                            }
+                            isLoading = false
+                            currentAction = nil
+                        }
+                    }
+                    .frame(minWidth: 230, minHeight: 38)
+                    .background(Color.theme.accent)
+                    .foregroundColor(.white)
+                    .appFont(.button)
+                    .cornerRadius(8)
+                    .disabled(isLoading)
+                    .accessibilityLabel("Sign in with Google")
+                    .accessibilityHint("Sign in with your Google account")
+
                     
                     HStack {
                         Rectangle()
