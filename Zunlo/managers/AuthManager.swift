@@ -132,7 +132,7 @@ final class AuthManager: ObservableObject, AuthProviding {
     }
     
     func signUp(email: String, password: String) async throws {
-        let auth = try await authService.signUp(email: email, password: password)
+        let auth = try await authService.signUpAttempt(email: email, password: password)
         guard let authToken = auth.token else {
             await unauthenticated()
             return

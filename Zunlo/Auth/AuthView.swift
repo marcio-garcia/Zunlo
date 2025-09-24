@@ -31,9 +31,9 @@ struct AuthView: View {
                 
                 HStack {
                     Button("Sign Up") {
+                        isLoading = true
+                        defer { isLoading = false }
                         Task {
-                            isLoading = true
-                            defer { isLoading = false }
                             do {
                                 try await authManager.signUp(email: email, password: password)
                             } catch {
@@ -45,10 +45,10 @@ struct AuthView: View {
                     .disabled(isLoading)
                     
                     Button("Sign In") {
+                        isLoading = true
+                        defer { isLoading = false }
                         Task {
                             do {
-                                isLoading = true
-                                defer { isLoading = false }
                                 try await authManager.signIn(email: email, password: password)
                             } catch {
                                 self.error = error.localizedDescription
