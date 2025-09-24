@@ -314,6 +314,24 @@ final class TemporalTokenInterpreterTests: XCTestCase {
         XCTAssertEqual(c.h, 10); XCTAssertEqual(c.min, 0) // same time as reference
     }
 
+    func testOrdinalDayNextMonth() {
+        let calendar = calendarSP()
+        let now = makeNow()
+        let interpreter = TemporalTokenInterpreter(calendar: calendar, referenceDate: now)
+
+        let tokens = [
+            TemporalToken(range: NSRange(location: 25, length: 7), text: "the 10th", kind: .ordinalDay(10))
+        ]
+
+        let context = interpreter.interpret(tokens)
+        let c = components(context.finalDate)
+
+        XCTAssertFalse(context.isRangeQuery)
+        // Should resolve to 24 of this month (or next if past)
+        XCTAssertEqual(c.y, 2025); XCTAssertEqual(c.m, 10); XCTAssertEqual(c.d, 10)
+        XCTAssertEqual(c.h, 10); XCTAssertEqual(c.min, 0) // same time as reference
+    }
+
     func testEmptyTokens() {
         let calendar = calendarSP()
         let now = makeNow()

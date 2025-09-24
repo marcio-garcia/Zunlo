@@ -410,6 +410,17 @@ final class TemporalComposerTests: XCTestCase {
             TemporalToken(range: NSRange(location: 21, length: 8), text: "the 24th", kind: .ordinalDay(24))
         ])
     }
+    
+    func testOrdinalDayNextMonth() {
+        let pack = EnglishPack(calendar: calendarSP())
+        let composer = TemporalComposer(prefs: Preferences(calendar: calendarSP()))
+        let now = makeNow()
+        let result = composer.parse("display calendar for the 10th", now: now, pack: pack)
+
+        XCTAssertEqual(result.0, [
+            TemporalToken(range: NSRange(location: 21, length: 8), text: "the 10th", kind: .ordinalDay(10))
+        ])
+    }
 
     func testOrdinalDayPT() {
         let pack = PortugueseBRPack(calendar: calendarSP())

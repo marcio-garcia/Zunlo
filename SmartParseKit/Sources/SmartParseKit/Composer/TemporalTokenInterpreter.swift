@@ -185,7 +185,19 @@ public class TemporalTokenInterpreter {
         // Handle ordinal days
         else if !groups.ordinalDays.isEmpty {
             if let ordinalDay = groups.ordinalDays.first {
-                resolvedComponents.day = ordinalDay.1
+                let newDay = ordinalDay.1
+                if let currentDay = resolvedComponents.day, newDay < currentDay {
+                    // move resolvedComponents.month to next month using Calendar
+                    var tmp = resolvedComponents
+                    tmp.day = 1 // avoid spillover when adding a month
+                    if let base = calendar.date(from: tmp),
+                       let next = calendar.date(byAdding: .month, value: 1, to: base) {
+                        let ym = calendar.dateComponents([.year, .month], from: next)
+                        resolvedComponents.year = ym.year
+                        resolvedComponents.month = ym.month
+                    }
+                }
+                resolvedComponents.day = newDay
             }
         }
         
