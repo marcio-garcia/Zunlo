@@ -80,7 +80,7 @@ struct ZunloApp: App {
             remoteStore: SupabaseUserTaskRemoteStore(supabase: supabase, auth: authManager)
         )
         
-        let chatRepo = DefaultChatRepository(store: RealmChatLocalStore(db: localDB))
+        let chatRepo = DefaultChatRepository(auth: authManager, store: RealmChatLocalStore(db: localDB))
         
         let eventSuggestionEngine = DefaultEventSuggestionEngine(
             auth: authManager,

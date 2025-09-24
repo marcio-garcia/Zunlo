@@ -992,10 +992,10 @@ extension DatabaseActor {
 
 extension DatabaseActor {
     /// Fetch messages for the (single) conversation, ascending by time. Optional limit.
-    public func fetchChatMessages(conversationId: UUID, limit: Int? = nil) throws -> [ChatMessageLocal] {
+    public func fetchChatMessages(conversationId: UUID, userId: UUID, limit: Int? = nil) throws -> [ChatMessageLocal] {
         let realm = try openRealm()
         let results = realm.objects(ChatMessageLocal.self)
-            .where { $0.conversationId == conversationId }
+            .where { $0.conversationId == conversationId && $0.userId == userId }
             .sorted(byKeyPath: "createdAt", ascending: true)
         if let limit, limit > 0, results.count > limit {
             let slice = results.suffix(limit)
@@ -1018,9 +1018,10 @@ extension DatabaseActor {
     }
 
     /// Append streaming delta and set status; also refresh conversation preview/updatedAt.
-    public func appendChatMessage(messageId: UUID, delta: String, status: ChatMessageStatus) throws {
+    public func appendChatMessage(messageId: UUID, delta: String, status: ChatMessageStatus, userId: UUID) throws {
         let realm = try openRealm()
-        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId),
+              obj.userId == userId else {
             throw ChatDBError.messageNotFound(messageId)
         }
         try realm.write {
@@ -1041,9 +1042,10 @@ extension DatabaseActor {
     }
 
     /// Update a message status and optional error; touch conversation timestamp.
-    public func updateChatMessageStatus(messageId: UUID, status: ChatMessageStatus, error: String?) throws {
+    public func updateChatMessageStatus(messageId: UUID, status: ChatMessageStatus, error: String?, userId: UUID) throws {
         let realm = try openRealm()
-        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId),
+              obj.userId == userId else {
             throw ChatDBError.messageNotFound(messageId)
         }
         try realm.write {
@@ -1057,21 +1059,22 @@ extension DatabaseActor {
     }
 
     /// Delete a message (no change to conversation id).
-    public func deleteChatMessage(messageId: UUID) throws {
+    public func deleteChatMessage(messageId: UUID, userId: UUID) throws {
         let realm = try openRealm()
-        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else { return }
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId),
+              obj.userId == userId else { return }
         try realm.write { realm.delete(obj) }
         // You can choose to backfill preview by reading last message; omitted for simplicity.
     }
     
     /// Delete all messages (updates conversation id).
-    public func deleteAllChatMessages(_ conversationId: UUID) throws {
+    public func deleteAllChatMessages(_ conversationId: UUID, userId: UUID) throws {
         let realm = try openRealm()
         guard let convo = realm.object(ofType: ConversationObject.self, forPrimaryKey: conversationId) else { return }
 
         // If ChatMessageLocal has a conversationId field, filter by it.
         let messagesInConversation = realm.objects(ChatMessageLocal.self)
-            .filter("conversationId == %@", conversationId)
+            .filter("conversationId == %@ AND userId == %@", conversationId, userId)
 
         try realm.write {
             realm.delete(messagesInConversation)          // delete all messages for this convo
@@ -1082,9 +1085,10 @@ extension DatabaseActor {
         }
     }
     
-    public func setFormat(messageId: UUID, format: ChatMessageFormat) async throws {
+    public func setFormat(messageId: UUID, format: ChatMessageFormat, userId: UUID) async throws {
         let realm = try openRealm()
-        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId),
+              obj.userId == userId else {
             throw ChatDBError.messageNotFound(messageId)
         }
         try realm.write {
