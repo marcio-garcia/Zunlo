@@ -17,13 +17,13 @@ struct AuthView: View {
     @State private var showMagicLinkSent = false
     let errorHandler = ErrorHandler()
 
-    private var areFieldsEmpty: Bool {
-        email.isEmpty || password.isEmpty
-    }
-
-    private var isMagicLinkFieldEmpty: Bool {
-        email.isEmpty
-    }
+//    private var areFieldsEmpty: Bool {
+//        email.isEmpty || password.isEmpty
+//    }
+//
+//    private var isMagicLinkFieldEmpty: Bool {
+//        email.isEmpty
+//    }
 
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
@@ -99,7 +99,7 @@ struct AuthView: View {
                     .foregroundColor(.white)
                     .appFont(.button)
                     .cornerRadius(8)
-                    .disabled(isLoading || areFieldsEmpty)
+                    .disabled(isLoading)
                     .accessibilityLabel("Sign in")
                     .accessibilityHint("Sign in with your email and password")
                     
@@ -124,7 +124,7 @@ struct AuthView: View {
                     .foregroundColor(.white)
                     .appFont(.button)
                     .cornerRadius(8)
-                    .disabled(isLoading || isMagicLinkFieldEmpty)
+                    .disabled(isLoading)
                     .accessibilityLabel("Sign in with magic link")
                     .accessibilityHint("Send a magic link to your email address")
 
@@ -185,7 +185,7 @@ struct AuthView: View {
                         }
                     }
                     .themedSecondaryButton()
-                    .disabled(isLoading || areFieldsEmpty)
+                    .disabled(isLoading)
                     .accessibilityLabel("Create account")
                     .accessibilityHint("Create a new account with your email and password")
                 }
@@ -208,6 +208,9 @@ struct AuthView: View {
             Button("OK") { }
         } message: {
             Text("Please check your email for a confirmation link to sign in.")
+        }
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
     }
 }

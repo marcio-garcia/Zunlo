@@ -23,11 +23,15 @@ public struct DeepLinkParser {
         case "zunloapp":
             switch host {
             case "supabase":
-                switch path.removeFirst() {
-                case "magic-link", "magiclink":
-                    return .magicLink(url)
-                default:
-                    return nil
+                if path.isEmpty {
+                    return .emailConfirmation(url)
+                } else {
+                    switch path.removeFirst() {
+                    case "magic-link", "magiclink":
+                        return .magicLink(url)
+                    default:
+                        return nil
+                    }
                 }
             case "page":
                 switch path.removeFirst() {

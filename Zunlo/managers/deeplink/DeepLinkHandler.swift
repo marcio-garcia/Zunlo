@@ -38,7 +38,7 @@ class DeepLinkHandler: ObservableObject {
         case .onboarding:
             nav.showFullScreen(.onboarding, for: UUID())
 
-        case .magicLink(let url):
+        case .magicLink(let url), .emailConfirmation(let url):
             NotificationCenter.default.post(name: .authDeepLink, object: url)
 
         case .showSettings:

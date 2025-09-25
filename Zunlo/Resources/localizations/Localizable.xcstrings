@@ -1111,6 +1111,9 @@
     "I'm not sure what you'd like me to do. Try asking me to create an event, schedule a task, or check your agenda." : {
 
     },
+    "Internal error. Please try again later" : {
+
+    },
     "Interval: %lld" : {
       "localizations" : {
         "pt-BR" : {
@@ -1891,6 +1894,9 @@
         }
       }
     },
+    "Sign in to perform this operation" : {
+
+    },
     "Sign in with Google" : {
 
     },
@@ -2187,6 +2193,7 @@
 
     },
     "Unable to create account. This email may already be registered - try signing in instead." : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

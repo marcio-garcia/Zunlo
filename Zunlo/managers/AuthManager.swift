@@ -31,6 +31,7 @@ protocol UserStorage {
 enum AuthProvidingError: Error {
     case unauthorized
     case unableToSignUp(String)
+    case confirmEmail(String)
     case noPresentingViewController
 }
 
@@ -136,8 +137,7 @@ final class AuthManager: ObservableObject, AuthProviding {
     func signUp(email: String, password: String) async throws {
         let auth = try await authService.signUp(email: email, password: password)
         guard let authToken = auth.token else {
-            await unauthenticated()
-            throw AuthProvidingError.unableToSignUp(String(localized: "Unable to create account. This email may already be registered - try signing in instead."))
+            throw AuthProvidingError.confirmEmail("Please check your email for a confirmation link")
         }
         try await authenticated(authToken)
     }
@@ -160,7 +160,7 @@ final class AuthManager: ObservableObject, AuthProviding {
         }
     }
     
-    func signInWithMagicLink(url: URL) async throws {
+    func createSession(with url: URL) async throws {
         let (authToken, _) = try await authService.session(from: url)
         try await authenticated(authToken)
     }
@@ -244,7 +244,7 @@ final class AuthManager: ObservableObject, AuthProviding {
         if let url = notification.object as? URL {
             Task {
                 do {
-                    try await self.signInWithMagicLink(url: url)
+                    try await self.createSession(with: url)
                 } catch {
                     await unauthenticated()
                 }

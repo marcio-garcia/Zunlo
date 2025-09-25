@@ -13,5 +13,6 @@ public enum DeepLink {
     case addTask
     case onboarding
     case magicLink(URL)
+    case emailConfirmation(URL)
     case showSettings
 }
