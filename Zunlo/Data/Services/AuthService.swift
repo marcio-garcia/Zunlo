@@ -10,18 +10,44 @@ import SwiftData
 import Supabase
 import GoogleSignIn
 
+enum AuthServiceError: Error {
+    case noIdToken
+    case invalidCredentials
+    case networkError(String)
+    case unsupportedSignInMethod
+
+    var localizedDescription: String {
+        switch self {
+        case .noIdToken:
+            return "Failed to retrieve ID token from Google Sign-In"
+        case .invalidCredentials:
+            return "Invalid authentication credentials"
+        case .networkError(let message):
+            return "Network error: \(message)"
+        case .unsupportedSignInMethod:
+            return "Unsupported sign-in method"
+        }
+    }
+}
+
 protocol AuthServicing {
+    // Unified sign-in method
+    func signIn(request: AuthSignInRequest) async throws -> AuthToken
+
+    // Legacy methods for backward compatibility (will be deprecated)
     func signUp(email: String, password: String) async throws -> AuthSession
     func signIn(email: String, password: String) async throws -> AuthToken
     func signInAnonymously() async throws -> AuthToken
+    func signInWithOTP(email: String, redirectTo: URL?) async throws
+    func signInWithGoogle(viewController: UIViewController) async throws -> AuthToken
+
+    // Session and token management
     func refreshToken(_ refreshToken: String) async throws -> AuthToken
-    func session(from url: URL) async throws -> (AuthToken, User)
-    func session() async throws -> (AuthToken, User)
+    func session(from url: URL) async throws -> AuthSession
+    func session() async throws -> AuthSession
     func validateToken(_ token: AuthToken) -> Bool
     func user(by jwt: String?) async throws -> User
     func signOut() async throws
-    func signInWithOTP(email: String, redirectTo: URL?) async throws
-    func signInWithGoogle(viewController: UIViewController) async throws -> AuthToken
     func updateUser(email: String) async throws
     func getOTPType(from typeString: String) -> EmailOTPType
     func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession
@@ -30,113 +56,108 @@ protocol AuthServicing {
 
 class AuthService: AuthServicing {
     
-    private var supabase: SupabaseClient
-    
+    private let supabaseProvider: AuthProvider
+    private let googleProvider: GoogleAuthProvider
+
     init(supabase: SupabaseClient) {
-        self.supabase = supabase
+        self.supabaseProvider = SupabaseAuthProvider(supabase: supabase)
+        self.googleProvider = GoogleAuthProvider(supabase: supabase)
     }
 
+    // MARK: - Unified Sign-In Method
+
+    func signIn(request: AuthSignInRequest) async throws -> AuthToken {
+        switch request.method {
+        case .emailPassword(let email, let password):
+            let session = try await supabaseProvider.signIn(email: email, password: password)
+            return session.toDomain()
+
+        case .magicLink(let email):
+            try await supabaseProvider.signInWithOTP(email: email, redirectTo: request.redirectTo)
+            throw AuthServiceError.unsupportedSignInMethod // Magic link doesn't return token immediately
+
+        case .google(let viewController):
+            let session = try await googleProvider.signInWithGoogle(viewController: viewController)
+            return session.toDomain()
+
+        case .anonymous:
+            let session = try await supabaseProvider.signInAnonymously()
+            return session.toDomain()
+        }
+    }
+
+    // MARK: - Legacy Methods (Backward Compatibility)
+
     func signUp(email: String, password: String) async throws -> AuthSession {
-        let authResponse = try await supabase.auth.signUp(email: email, password: password)
+        let authResponse = try await supabaseProvider.signUp(email: email, password: password)
         return authResponse.toDomain()
     }
-        
+
     func signIn(email: String, password: String) async throws -> AuthToken {
-        let session = try await supabase.auth.signIn(email: email, password: password)
+        let session = try await supabaseProvider.signIn(email: email, password: password)
         return session.toDomain()
     }
-    
+
+    func signInAnonymously() async throws -> AuthToken {
+        let session = try await supabaseProvider.signInAnonymously()
+        return session.toDomain()
+    }
+
+    func signInWithOTP(email: String, redirectTo: URL?) async throws {
+        try await supabaseProvider.signInWithOTP(email: email, redirectTo: redirectTo)
+    }
+
+    func signInWithGoogle(viewController: UIViewController) async throws -> AuthToken {
+        let session = try await googleProvider.signInWithGoogle(viewController: viewController)
+        return session.toDomain()
+    }
+
+    // MARK: - Session and Token Management
+
     func refreshToken(_ refreshToken: String) async throws -> AuthToken {
-        let session = try await supabase.auth.refreshSession(refreshToken: refreshToken)
+        let session = try await supabaseProvider.refreshToken(refreshToken)
         return session.toDomain()
     }
-    
+
     func validateToken(_ token: AuthToken) -> Bool {
         return !token.accessToken.isEmpty && token.expiresAt > Date()
     }
-    
-    func signOut() async throws {
-        try await supabase.auth.signOut()
-        GIDSignIn.sharedInstance.signOut()
+
+    func session(from url: URL) async throws -> AuthSession {
+        let session = try await supabaseProvider.session(from: url)
+        return AuthSession(token: session.toDomain(), user: session.user.toDomain())
     }
-    
-    func signInAnonymously() async throws -> AuthToken {
-        let session = try await supabase.auth.signInAnonymously()
-        return session.toDomain()
+
+    func session() async throws -> AuthSession {
+        let session = try await supabaseProvider.session()
+        return AuthSession(token: session.toDomain(), user: session.user.toDomain())
     }
-    
-    func updateUser(email: String) async throws {
-        try await supabase.auth.update(user: UserAttributes(email: email),
-                                       redirectTo: URL(string: "zunloapp://auth-callback"))
-    }
-    
-    func session(from url: URL) async throws -> (AuthToken, User) {
-        let session = try await supabase.auth.session(from: url)
-        return (session.toDomain(), session.user.toDomain())
-    }
-    
-    func session() async throws -> (AuthToken, User) {
-        let session = try await supabase.auth.session
-        return (session.toDomain(), session.user.toDomain())
-    }
-    
+
     func user(by jwt: String?) async throws -> User {
-        let user = try await supabase.auth.user(jwt: jwt)
+        let user = try await supabaseProvider.user(by: jwt)
         return user.toDomain()
     }
-    
-    func signInWithOTP(email: String, redirectTo: URL?) async throws {
-        try await supabase.auth.signInWithOTP(email: email,
-                                              redirectTo: redirectTo)
+
+    func signOut() async throws {
+        try await supabaseProvider.signOut()
+        googleProvider.signOut()
     }
-    
-    func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession {
-        let authResponse = try await supabase.auth.verifyOTP(tokenHash: tokenHash, type: type)
-        return authResponse.toDomain()
+
+    func updateUser(email: String) async throws {
+        try await supabaseProvider.updateUser(email: email)
     }
-    
-    func verifyOTP(email: String, token: String, type: EmailOTPType) async throws -> AuthSession {
-        let authResponse = try await supabase.auth.verifyOTP(
-            email: email,
-            token: token,
-            type: type
-        )
-        return authResponse.toDomain()
-    }
-    
-    @MainActor
-    func signInWithGoogle(viewController: UIViewController) async throws -> AuthToken {
-        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: viewController)
-        
-        guard let idToken = result.user.idToken?.tokenString else {
-            throw NSError(domain: "zunlo", code: 99) // AuthError.noIdToken
-        }
-        
-        let accessToken = result.user.accessToken.tokenString
-        
-        // Step 2: Sign in to Supabase with Google credentials
-        let session = try await supabase.auth.signInWithIdToken(
-            credentials: OpenIDConnectCredentials(
-                provider: .google,
-                idToken: idToken,
-                accessToken: accessToken
-            )
-        )
-        return session.toDomain()
-    }
-    
+
     func getOTPType(from typeString: String) -> EmailOTPType {
-        switch typeString {
-        case "email_change":
-            return .emailChange
-        case "email":
-            return .email
-        case "signup":
-            return .signup
-        case "magiclink":
-            return .magiclink
-        default:
-            return .email
-        }
+        return supabaseProvider.getOTPType(from: typeString)
+    }
+
+    func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession {
+        let authResponse = try await supabaseProvider.verifyOTP(tokenHash: tokenHash, type: type)
+        return authResponse.toDomain()
+    }
+
+    func verifyOTP(email: String, token: String, type: EmailOTPType) async throws -> AuthSession {
+        let authResponse = try await supabaseProvider.verifyOTP(email: email, token: token, type: type)
+        return authResponse.toDomain()
     }
 }

@@ -8,7 +8,7 @@
 import Foundation
 
 protocol EventStore {
-    func makeEvent(title: String, start: Date, end: Date) -> Event?
+//    func makeEvent(title: String, start: Date, end: Date) -> Event?
     func fetchEvent(by id: UUID) async throws -> Event?
     func fetchOccurrences() async throws -> [EventOccurrence]
     func fetchOccurrences(id: UUID) async throws -> EventOccurrence?
@@ -45,7 +45,7 @@ final public class EventRepository: EventStore {
     }
 
     public func fetchOccurrences() async throws -> [EventOccurrence] {
-        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        guard try await auth.isAuthorized(), let userId = await auth.userId else { return [] }
         do {
             let occurrences = try await eventLocalStore.fetchOccurrences(for: userId)
             let occ = occurrences.map { EventOccurrence(occ: $0) }
@@ -127,6 +127,7 @@ final public class EventRepository: EventStore {
 }
 
 extension EventRepository {
+    @MainActor
     public func makeEvent(title: String, start: Date, end: Date) -> Event? {
         guard let userId = auth.userId else { return nil }
         return Event(

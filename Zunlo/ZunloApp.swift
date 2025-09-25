@@ -70,14 +70,12 @@ struct ZunloApp: App {
         
         let eventRepo = EventRepositoryFactory.make(
             auth: authManager,
-            supabase: supabase,
             localDB: localDB
         )
         
         let taskRepo = UserTaskRepository(
             auth: authManager,
-            localStore: RealmUserTaskLocalStore(db: localDB),
-            remoteStore: SupabaseUserTaskRemoteStore(supabase: supabase, auth: authManager)
+            localStore: RealmUserTaskLocalStore(db: localDB)
         )
         
         let chatRepo = DefaultChatRepository(auth: authManager, store: RealmChatLocalStore(db: localDB))
@@ -98,7 +96,6 @@ struct ZunloApp: App {
         
         self.appState.authManager = authManager
         self.appState.localDB = localDB
-        self.appState.supabase = supabase
         self.appState.locationService = locationService
         self.appState.pushNotificationService = pushService
         self.appState.adManager = adManager

@@ -10,9 +10,7 @@ import Foundation
 struct AuthSession: Codable, Sendable, Equatable {
     let token: AuthToken?
     let user: User
-}
-
-extension AuthSession {
+    
     static var empty: AuthSession {
         return AuthSession(
             token: AuthToken(

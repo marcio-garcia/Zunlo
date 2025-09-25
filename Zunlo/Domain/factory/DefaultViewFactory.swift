@@ -41,8 +41,9 @@ final class DefaultViewFactory: ViewFactory {
         let calendar = Calendar.appDefault
         
         let aiChatService = SupabaseAIChatClient(
-            supabase: appState.supabaseClient!,
-            config: SupabaseAIChatConfig(responseType: .tools)
+            auth: appState.authManager!,
+            config: SupabaseAIChatConfig(responseType: .tools),
+            supabase: appState.supabaseClient!
         )
         let aiToolRepo = AIToolServiceRepository(taskRepo: appState.userTaskRepository!,
                                                  eventRepo: appState.eventRepository!)

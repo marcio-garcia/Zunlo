@@ -192,7 +192,7 @@ extension TodayViewModel {
 
 extension TodayViewModel {
     func syncDB() async {
-        guard (appState.authManager?.userId) != nil else {
+        guard (await appState.authManager?.userId) != nil else {
             state = .error("Need authentication")
             fatalError("DB sync needs authentication")
         }

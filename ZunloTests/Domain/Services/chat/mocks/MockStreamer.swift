@@ -48,10 +48,25 @@ public final class MockStreamer: EdgeFunctionStreamer {
     }
 }
 
-public struct MockAuthProvider: AuthProvider {
-    public var token: String? = "test-token"
-    public init(token: String? = "test-token") { self.token = token }
-    public func currentAccessToken() async throws -> String? { token }
+public class MockAuthProvider: AuthProviding {
+    public var userId: UUID?
+    public var accessToken: String? = "test-token"
+    public var refreshToken: String? = "refresh-token"
+    
+    public init(accessToken: String? = "test-token") {
+        self.accessToken = accessToken
+    }
+        
+    public func refreshSession(refreshToken: String?) async throws -> Zunlo.AuthToken? {
+        self.refreshToken = refreshToken
+        return AuthToken(accessToken: accessToken ?? "",
+                         refreshToken: refreshToken ?? "",
+                         expiresAt: Date())
+    }
+    
+    public func isAuthorized() async throws -> Bool {
+        return true
+    }
 }
 
 

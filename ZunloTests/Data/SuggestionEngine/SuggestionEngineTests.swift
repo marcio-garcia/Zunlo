@@ -15,6 +15,7 @@ final class SuggestionEngineTests: XCTestCase {
     let policy = SuggestionPolicy.defaultForApp()
     
     // Replace with your engine type if named differently.
+    @MainActor
     private func makeEngine(with events: [EventOccurrence]) -> DefaultEventSuggestionEngine {
         DefaultEventSuggestionEngine(
             auth: TestAuthManager(),
@@ -60,7 +61,7 @@ final class SuggestionEngineTests: XCTestCase {
     // MARK: - Free windows (full UTC day)
 
     func testFreeWindows_fullDay_min60() async throws {
-        let engine = makeEngine(with: sampleEvents())
+        let engine = await makeEngine(with: sampleEvents())
         engine.policy = fullDayUTC
         engine.policy.absorbGapsBelow = 60
         
@@ -79,7 +80,7 @@ final class SuggestionEngineTests: XCTestCase {
     // MARK: - Next event start (full UTC day)
 
     func testNextEventStart_fullDay_examples() async throws {
-        let engine = makeEngine(with: sampleEvents())
+        let engine = await makeEngine(with: sampleEvents())
 
         let s1 = await engine.nextEventStart(after: DT.d("2025-08-12 08:20"), on: sampleDate)
         XCTAssertEqual(s1, DT.d("2025-08-12 09:00"))
@@ -94,7 +95,7 @@ final class SuggestionEngineTests: XCTestCase {
     // MARK: - Conflicts (pairwise overlaps on raw, day-clamped intervals)
 
     func testConflictingItemsCount_fullDay_isTwo() async throws {
-        let engine = makeEngine(with: sampleEvents())
+        let engine = await makeEngine(with: sampleEvents())
         engine.policy = fullDayUTC
         var sampleDate: Date { DT.d("2025-08-12 01:00") }
         let count = await engine.conflictingItemsCount(on: sampleDate)
@@ -104,7 +105,7 @@ final class SuggestionEngineTests: XCTestCase {
     // MARK: - Absorb tiny gaps (swallow the 45-minute slit 08:15–09:00)
 
     func testAbsorbGaps_swallow45m_gap() async throws {
-        let engine = makeEngine(with: sampleEvents())
+        let engine = await makeEngine(with: sampleEvents())
         var policy = fullDayUTC
         policy.absorbGapsBelow = 60*60 // 60 minutes
         engine.policy = policy
@@ -119,7 +120,7 @@ final class SuggestionEngineTests: XCTestCase {
     // MARK: - Availability: São Paulo local 08:00–20:00 (UTC−3) clamps “night”
 
     func testAvailability_SaoPaulo_daytimeOnly_currentDateEarlyMorning() async throws {
-        let engine = makeEngine(with: sampleEvents())
+        let engine = await makeEngine(with: sampleEvents())
         let spTZ = TimeZone(identifier: "America/Sao_Paulo")!
 
         let policy = SuggestionPolicy(
@@ -150,7 +151,7 @@ final class SuggestionEngineTests: XCTestCase {
     }
     
     func testAvailability_SaoPaulo_daytimeOnly_currentDateMidday() async throws {
-        let engine = makeEngine(with: sampleEvents())
+        let engine = await makeEngine(with: sampleEvents())
         let spTZ = TimeZone(identifier: "America/Sao_Paulo")!
 
         let policy = SuggestionPolicy(
@@ -183,7 +184,7 @@ final class SuggestionEngineTests: XCTestCase {
     // MARK: - Padding: ensure buffers shrink free time as expected
 
     func testPadding_reducesFreeTime() async throws {
-        let engine = makeEngine(with: sampleEvents())
+        let engine = await makeEngine(with: sampleEvents())
         var policy = fullDayUTC
         policy.padBefore = 5*60
         policy.padAfter  = 5*60

@@ -19,7 +19,7 @@ final class SupabaseEdgeAIClientTests: XCTestCase {
             .init(SSE.textDelta("Hello ")), .init(SSE.textDelta("world!")),
             .init(SSE.completed())
         ]
-        let ai = SupabaseAIChatClient(streamer: streamer, auth: MockAuthProvider())
+        let ai = SupabaseAIChatClient(auth: await MockAuthProvider(), streamer: streamer)
         
         
         let events = try await collectEvents(ai: ai)
@@ -40,7 +40,7 @@ final class SupabaseEdgeAIClientTests: XCTestCase {
             .init(SSE.functionArgsDone(itemId: "item_1", argsJSON: "{\"x\":1}")),
             .init(SSE.completed())
         ]
-        let ai = SupabaseAIChatClient(streamer: streamer, auth: MockAuthProvider())
+        let ai = SupabaseAIChatClient(auth: await MockAuthProvider(), streamer: streamer)
         let events = try await collectEvents(ai: ai)
         
         
@@ -61,7 +61,7 @@ final class SupabaseEdgeAIClientTests: XCTestCase {
             .init(SSE.textDelta("after tools")),
             .init(SSE.completed())
         ]
-        let ai = SupabaseAIChatClient(streamer: streamer, auth: MockAuthProvider())
+        let ai = SupabaseAIChatClient(auth: await MockAuthProvider(), streamer: streamer)
         let events = try await collectEvents(ai: ai)
         // Verify we got a toolBatch with requiredAction origin
         let batch = events.compactMap { ev -> [ToolCallRequest]? in if case .toolBatch(let arr) = ev { return arr } else { return nil } }.first

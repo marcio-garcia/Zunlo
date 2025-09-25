@@ -13,7 +13,9 @@ final class SupabasePushTokensRemoteStore: PushTokensRemoteStore {
     private var supabase: SupabaseSDK
     private var auth: AuthProviding
 
+    @MainActor
     private var authToken: String? { auth.accessToken }
+    @MainActor
     private var database: SupabaseDatabase { supabase.database(authToken: authToken) }
 
     init(supabase: SupabaseSDK, auth: AuthProviding) {

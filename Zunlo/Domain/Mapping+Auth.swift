@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SupabaseSDK
+//import SupabaseSDK
 import Supabase
 
 extension AuthResponse {

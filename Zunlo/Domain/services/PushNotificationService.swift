@@ -100,8 +100,8 @@ final class PushNotificationService: NSObject {
     }
 
     private func registerCurrentToken(_ token: String) async throws {
-        guard let accessToken = self.getAccessToken(),
-              let userId = self.getUserId() else {
+        guard let accessToken = await self.getAccessToken(),
+              let userId = await self.getUserId() else {
             print("Missing token or user credentials.")
             return
         }
@@ -129,10 +129,12 @@ final class PushNotificationService: NSObject {
         }
     }
     
+    @MainActor
     private func getAccessToken() -> String? {
         return authManager.authToken?.accessToken
     }
 
+    @MainActor
     private func getUserId() -> UUID? {
         return authManager.user?.id
     }

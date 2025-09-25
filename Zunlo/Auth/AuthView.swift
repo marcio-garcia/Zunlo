@@ -17,14 +17,6 @@ struct AuthView: View {
     @State private var showMagicLinkSent = false
     let errorHandler = ErrorHandler()
 
-//    private var areFieldsEmpty: Bool {
-//        email.isEmpty || password.isEmpty
-//    }
-//
-//    private var isMagicLinkFieldEmpty: Bool {
-//        email.isEmpty
-//    }
-
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)

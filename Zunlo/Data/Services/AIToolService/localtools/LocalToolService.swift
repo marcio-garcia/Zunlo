@@ -19,7 +19,7 @@ final class LocalToolService: AIToolServiceAPI {
     }
     
     func createTask(_ payload: CreateTaskPayloadWire) async throws -> TaskMutationResult {
-        guard let userId = auth.userId else {
+        guard let userId = await auth.userId else {
             return TaskMutationResult(
                 ok: false, task: UserTaskRemote(input: payload.task, userId: UUID()), code: nil, message: "Not authenticated"
             )
@@ -30,7 +30,7 @@ final class LocalToolService: AIToolServiceAPI {
     }
     
     func updateTask(_ payload: UpdateTaskPayloadWire) async throws -> TaskMutationResult {
-        guard let userId = auth.userId else {
+        guard let userId = await auth.userId else {
             return TaskMutationResult(
                 ok: false, task: UserTaskRemote(input: payload.patch, userId: UUID()), code: nil, message: "Not authenticated"
             )
@@ -51,7 +51,7 @@ final class LocalToolService: AIToolServiceAPI {
     }
     
     func createEvent(_ payload: CreateEventPayloadWire) async throws -> EventMutationResult {
-        guard let userId = auth.userId else {
+        guard let userId = await auth.userId else {
             return EventMutationResult(
                 ok: false,
                 event: EventRemote(input: payload.event, userId: UUID()),
@@ -64,7 +64,7 @@ final class LocalToolService: AIToolServiceAPI {
     }
     
     func updateEvent(_ payload: UpdateEventPayloadWire) async throws -> EventMutationResult {
-        guard let userId = auth.userId else {
+        guard let userId = await auth.userId else {
             return EventMutationResult(ok: false, event: EventRemote(input: payload.patch, userId: UUID()),
                                        recurrenceRule: nil, override: nil, code: nil, message: "Not authenticated")
         }

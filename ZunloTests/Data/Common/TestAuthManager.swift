@@ -8,9 +8,7 @@
 import Foundation
 @testable import Zunlo
 
-// If you have a concrete AuthManager in prod, you can make it conform in app target:
-// extension AuthManager: AuthProviding { public var userId: UUID? { user?.id } }
-
+@MainActor
 public struct TestAuthManager: AuthProviding {
     public let userId: UUID?
     public var accessToken: String?

@@ -41,18 +41,15 @@ extension TaskStore {
 final class UserTaskRepository: TaskStore {
     private let auth: AuthProviding
     private let localStore: UserTaskLocalStore
-    private let remoteStore: UserTaskRemoteStore
     private let reminderScheduler: ReminderScheduler<UserTask>
     private let calendar = Calendar.appDefault
     
     init(
         auth: AuthProviding,
-        localStore: UserTaskLocalStore,
-        remoteStore: UserTaskRemoteStore
+        localStore: UserTaskLocalStore
     ) {
         self.auth = auth
         self.localStore = localStore
-        self.remoteStore = remoteStore
         self.reminderScheduler = ReminderScheduler()
     }
     
@@ -84,7 +81,7 @@ final class UserTaskRepository: TaskStore {
     }
     
     func insert(title: String, due: Date?) async throws -> UUID {
-        guard try await auth.isAuthorized(), let userId = auth.userId else { throw NSError() }
+        guard try await auth.isAuthorized(), let userId = await auth.userId else { throw NSError() }
         let id = UUID()
         let task = UserTask(id: id, userId: userId, title: title, dueDate: due)
         try await localStore.upsert(task)
@@ -92,13 +89,13 @@ final class UserTaskRepository: TaskStore {
     }
     
     func delete(_ task: UserTask) async throws {
-        guard try await auth.isAuthorized(), let userId = auth.userId else { return }
+        guard try await auth.isAuthorized(), let userId = await auth.userId else { return }
         try await localStore.delete(id: task.id, userId: userId)
         reminderScheduler.cancelReminders(for: task)
     }
     
     func delete(taskId: UUID) async throws {
-        guard try await auth.isAuthorized(), let userId = auth.userId else { return }
+        guard try await auth.isAuthorized(), let userId = await auth.userId else { return }
         if let task = try await localStore.fetch(id: taskId) {
             if let reminderTriggers = UserTask(local: task).reminderTriggers, !reminderTriggers.isEmpty {
                 reminderScheduler.cancelReminders(itemId: taskId, reminderTriggers: reminderTriggers)
@@ -117,19 +114,19 @@ final class UserTaskRepository: TaskStore {
     }
     
     func fetchAll() async throws -> [UserTask] {
-        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        guard try await auth.isAuthorized(), let userId = await auth.userId else { return [] }
         let tasks = try await localStore.fetchAll(userId: userId)
         return tasks
     }
     
     func fetchTasks(filteredBy filter: TaskFilter?) async throws -> [UserTask] {
-        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        guard try await auth.isAuthorized(), let userId = await auth.userId else { return [] }
         let tasks = try await localStore.fetchTasks(filteredBy: filter, userId: userId)
         return tasks
     }
     
     func fetchAllUniqueTags() async throws -> [String] {
-        guard try await auth.isAuthorized(), let userId = auth.userId else { return [] }
+        guard try await auth.isAuthorized(), let userId = await auth.userId else { return [] }
         let tags = try await localStore.fetchAllUniqueTags(userId: userId)
         return tags
     }

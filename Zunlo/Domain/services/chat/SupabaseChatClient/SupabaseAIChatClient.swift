@@ -25,14 +25,14 @@ import Supabase
 
 import Foundation
 
-public struct ChatStructuredResponse: Decodable {
+struct ChatStructuredResponse: Decodable {
     let displayText: String
     let actions: [String]
 }
 
-public final class SupabaseAIChatClient: AIChatService {
+final class SupabaseAIChatClient: AIChatService {
     private let streamer: EdgeFunctionStreamer
-    private let auth: AuthProvider
+    private let auth: AuthProviding
 
     // Keep a handle for the *current* streaming task so ChatEngine.stop() can cancel
     private var currentTask: Task<Void, Never>? = nil
@@ -41,9 +41,9 @@ public final class SupabaseAIChatClient: AIChatService {
     private let config: SupabaseAIChatConfig
 
     public init(
-        streamer: EdgeFunctionStreamer,
-        auth: AuthProvider,
-        config: SupabaseAIChatConfig = SupabaseAIChatConfig()
+        auth: AuthProviding,
+        config: SupabaseAIChatConfig = SupabaseAIChatConfig(),
+        streamer: EdgeFunctionStreamer
     ) {
         self.streamer = streamer
         self.auth = auth
@@ -52,13 +52,14 @@ public final class SupabaseAIChatClient: AIChatService {
     
     // Convenience init for production
     public convenience init(
-        supabase: SupabaseClient,
-        config: SupabaseAIChatConfig = SupabaseAIChatConfig()
+        auth: AuthProviding,
+        config: SupabaseAIChatConfig = SupabaseAIChatConfig(),
+        supabase: SupabaseClient
     ) {
         self.init(
-            streamer: SupabaseFunctionsStreamer(supabase: supabase),
-            auth: SupabaseAuthProvider(supabase: supabase),
-            config: config
+            auth: auth,
+            config: config,
+            streamer: SupabaseFunctionsStreamer(supabase: supabase)
         )
     }
 
@@ -155,7 +156,7 @@ public final class SupabaseAIChatClient: AIChatService {
         let b = Body(response_id: responseId, tool_outputs: outputs)
         
         // Ensure auth header is (re)applied
-        let token = try? await auth.currentAccessToken()
+        let token = await auth.accessToken
         if let token = token { streamer.setAuth(token: token) }
         
         _ = try await streamer.invoke(
@@ -174,7 +175,7 @@ public final class SupabaseAIChatClient: AIChatService {
         await withTaskCancellationHandler(operation: {
             do {
                 // Attach auth for Functions if available
-                let token = try? await auth.currentAccessToken()
+                let token = await auth.accessToken
                 if let token = token { streamer.setAuth(token: token) }
 
                 var sawCompleted = false

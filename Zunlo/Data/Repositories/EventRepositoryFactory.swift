@@ -7,12 +7,10 @@
 
 import Foundation
 import SwiftData
-import SupabaseSDK
 
 final class EventRepositoryFactory {
     static func make(
         auth: AuthProviding,
-        supabase: SupabaseSDK,
         localDB: DatabaseActor
     ) -> EventRepository {
         let eventLocalStore: EventLocalStore = RealmEventLocalStore(db: localDB)
