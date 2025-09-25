@@ -96,6 +96,7 @@ struct TodayView: View {
                         .refreshable {
                             Task {
                                 try? await fetchInfo()
+                                await viewModel.syncDB()
                             }
                         }
                         .background(
@@ -212,6 +213,11 @@ struct TodayView: View {
                     .ignoresSafeArea()
                     .matchedGeometryEffect(id: "chatScreen", in: namespace, isSource: !showChat)
                     .toast($toast)
+                    .onChange(of: showChat) { oldValue, newValue in
+                        if !newValue {
+                            Task { try? await fetchInfo() }
+                        }
+                    }
                 }
             case .loading:
                 VStack {
@@ -237,6 +243,7 @@ struct TodayView: View {
         .task {
             factory = try? await getNavViewFactory()
             try? await fetchInfo()
+            await viewModel.syncDB()
             await appState.adManager?.loadInterstitial(for: .openCalendar)
             await appState.adManager?.loadRewarded(for: .chat)
         }
@@ -468,7 +475,6 @@ struct TodayView: View {
         }
         await viewModel.fetchData()
         await viewModel.fetchWeather()
-        await viewModel.syncDB()
         aiContext = await AIContextBuilder().build(
             userId: userId,
             time: SystemTimeProvider(),
