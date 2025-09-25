@@ -57,6 +57,7 @@ class AuthService: AuthServicing {
     
     func signOut() async throws {
         try await supabase.auth.signOut()
+        GIDSignIn.sharedInstance.signOut()
     }
     
     func signInAnonymously() async throws -> AuthToken {
