@@ -47,6 +47,9 @@ struct TaskInboxView: View {
                 EmptyInboxView {
                     nav.showSheet(.addTask, for: viewID)
                 }
+                .sheet(item: nav.sheetBinding(for: viewID)) { route in
+                    ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
+                }
                 
             case .error(let message):
                 Text("Error: \(message)")

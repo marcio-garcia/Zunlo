@@ -389,8 +389,9 @@ struct TodayView: View {
                 finalName = "\(name)_low_dark"
             }
             finalName =  "\(name)_low_light"
+        } else {
+            finalName = "\(name)_low"
         }
-        finalName = "\(name)_low"
         
         return finalName
     }
@@ -438,8 +439,14 @@ struct TodayView: View {
             userId: userId,
             onAddEditEventDismiss: {
                 Task { await viewModel.fetchData() }
-            })
+            },
+            onEventCalendarDismiss: {
+                Task { await viewModel.fetchData() }
+            }
+        )
+        
         let settingsFactory = SettingsViewFactory(authManager: appState.authManager!)
+        
         let factory = NavigationViewFactory(
             task: taskFactory,
             event: eventFactory,

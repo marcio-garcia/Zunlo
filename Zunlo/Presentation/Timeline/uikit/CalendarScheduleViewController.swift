@@ -47,8 +47,10 @@ enum CalendarItem: Hashable {
 
 class CalendarScheduleViewController: UIViewController {
     private let topBarView = CalendarTopBarView()
+    private var contentView = UIView()
     private var collectionView: UICollectionView!
-    
+    private var emptyHostingController: UIHostingController<EmptyScheduleView>?
+
     private var dataSource: UICollectionViewDiffableDataSource<CalendarSection, CalendarItem>!
     private var didScrollToToday = false
     
@@ -72,26 +74,37 @@ class CalendarScheduleViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         setupViews()
         setupConstraints()
         setupTheme()
-        
         setupDataSource()
-        
-        viewModel.$eventOccurrences
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in
-                self?.applySnapshot()
-            }
-            .store(in: &cancellables)
-        
+
         Task {
-            await viewModel.fetchEvents()
-            await MainActor.run {
-                self.scrollTo(date: Date(), animated: true)
-            }
+            await loadAndDisplayEvents()
         }
+    }
+
+    private func loadAndDisplayEvents() async {
+        let occurrences = await viewModel.fetchEvents()
+
+        await MainActor.run {
+            updateViewState(isEmpty: occurrences.isEmpty)
+        }
+    }
+
+    private func updateViewState(isEmpty: Bool) {
+        if isEmpty {
+            showEmptyState()
+        } else {
+            showCollectionViewState()
+            applySnapshot()
+        }
+    }
+
+    // Public method to refresh data and update view state
+    func refreshEvents() async {
+        await loadAndDisplayEvents()
     }
     
     private func setupViews() {
@@ -109,43 +122,51 @@ class CalendarScheduleViewController: UIViewController {
             self?.showAddEventView(mode: .add)
         }
         
-        setupCollectionView()
+        collectionView = setupCollectionView()
         
+        view.addSubview(contentView)
         view.addSubview(topBarView)
+        contentView.addSubview(collectionView)
     }
     
     private func setupConstraints() {
         topBarView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         NSLayoutConstraint.activate([
             topBarView.topAnchor.constraint(equalTo: view.topAnchor), // includes safe area internally
             topBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            
-            collectionView.topAnchor.constraint(equalTo: view.topAnchor),
-            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+
+            contentView.topAnchor.constraint(equalTo: view.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            collectionView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            collectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
     
     private func setupTheme() {
         view.backgroundColor = UIColor(Color.theme.background)
+        contentView.backgroundColor = .clear
     }
 }
 
 extension CalendarScheduleViewController {
-    func setupCollectionView() {
-        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: createCompositionalLayout())
+    func setupCollectionView() -> UICollectionView {
+        let collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: createCompositionalLayout())
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.backgroundColor = .clear
         collectionView.delegate = self
         collectionView.register(DayEventCell.self, forCellWithReuseIdentifier: "DayEventCell")
         collectionView.register(MonthHeaderCell.self, forCellWithReuseIdentifier: "MonthHeaderCell")
         collectionView.register(EventCell.self, forCellWithReuseIdentifier: "EventCell")
-
-        view.addSubview(collectionView)
+        return collectionView
     }
 
     func createMonthSection() -> NSCollectionLayoutSection {
@@ -156,10 +177,10 @@ extension CalendarScheduleViewController {
         let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
                                                heightDimension: .estimated(50))
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-        
         group.contentInsets = NSDirectionalEdgeInsets(top: 20, leading: 20, bottom: 10, trailing: 20)
         
         let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 40, leading: 0, bottom: 0, trailing: 0)
         
         return section
     }
@@ -242,28 +263,34 @@ extension CalendarScheduleViewController {
             }
         }
     }
-  
+
     func applySnapshot() {
+        // Ensure we have data before applying snapshot
+        guard !viewModel.eventOccurrences.isEmpty else {
+            updateViewState(isEmpty: true)
+            return
+        }
+
         var snapshot = NSDiffableDataSourceSnapshot<CalendarSection, CalendarItem>()
-        
+
         snapshot.appendSections([.month])
-        
+
         let groupedByMonth = groupEventsByMonth2(events: viewModel.eventOccurrences)
-        
+
         let monthDates = groupedByMonth.keys.sorted()
         for monthDate in monthDates {
             // Add month header
             snapshot.appendItems([.month(monthDate)], toSection: .month)
-            
+
             let groupedByDay = groupEventsByDay(events: groupedByMonth[monthDate]!)
-            
+
             let dayDates = groupedByDay.keys.sorted()
             for day in dayDates {
                 snapshot.appendItems([.day(day)], toSection: .month)
-                
+
                 let events = groupedByDay[day]!
                 let sortedEvents = events.sorted { $0.startDate < $1.startDate }
-                
+
                 // Add events immediately after their day header
                 var eventItems: [CalendarItem] = []
                 for index in 0..<sortedEvents.count {
@@ -271,12 +298,18 @@ extension CalendarScheduleViewController {
                         CalendarItem.event(sortedEvents[index], index, sortedEvents.count)
                     )
                 }
-                
+
                 snapshot.appendItems(eventItems, toSection: .month)
             }
         }
 
         dataSource.apply(snapshot, animatingDifferences: true)
+
+        Task {
+            await MainActor.run {
+                self.scrollTo(date: Date(), animated: true)
+            }
+        }
     }
     
     func groupEventsByMonth2(events: [EventOccurrence]) -> [Date: [EventOccurrence]] {
@@ -434,7 +467,7 @@ extension CalendarScheduleViewController {
             viewModel: vm,
             onDismiss: { [weak self] in
                 guard let self else { return }
-                Task { await self.viewModel.fetchEvents() }
+                Task { await self.loadAndDisplayEvents() }
             })
             .environmentObject(nav)
     
@@ -481,5 +514,50 @@ extension CalendarScheduleViewController {
                 self.viewModel.eventEditHandler.showEditChoiceDialog = false
             }))
         present(sheet, animated: true)
+    }
+    
+    private func showEmptyState() {
+        // Hide collection view
+        collectionView.isHidden = true
+
+        // Show empty view if not already shown
+        if emptyHostingController == nil {
+            let emptyView = EmptyScheduleView {
+                self.showAddEventView(mode: .add)
+            }
+
+            emptyHostingController = UIHostingController(rootView: emptyView)
+            addChild(emptyHostingController!, in: contentView)
+        }
+
+        // Show empty view
+        emptyHostingController?.view.isHidden = false
+    }
+
+    private func showCollectionViewState() {
+        // Hide empty view
+        emptyHostingController?.view.isHidden = true
+
+        // Show collection view
+        collectionView.isHidden = false
+    }
+    
+    private func addChild(_ child: UIViewController, in container: UIView) {
+        addChild(child)
+        container.addSubview(child.view)
+        child.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            child.view.topAnchor.constraint(equalTo: container.topAnchor),
+            child.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            child.view.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            child.view.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        child.didMove(toParent: self)
+    }
+    
+    private func removeChild(viewController: UIViewController) {
+        viewController.willMove(toParent: nil)   // announce removal
+        viewController.view.removeFromSuperview()
+        viewController.removeFromParent()
     }
 }

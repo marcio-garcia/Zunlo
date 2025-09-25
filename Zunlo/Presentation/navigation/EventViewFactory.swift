@@ -20,17 +20,20 @@ struct EventViewFactory: EventViews {
     let nav: AppNav
     let userId: UUID
     let onAddEditEventDismiss: (() -> Void)?
+    let onEventCalendarDismiss: (() -> Void)?
     
     internal init(
         viewID: UUID,
         nav: AppNav,
         userId: UUID,
-        onAddEditEventDismiss: (() -> Void)? = nil
+        onAddEditEventDismiss: (() -> Void)? = nil,
+        onEventCalendarDismiss: (() -> Void)? = nil
     ) {
         self.viewID = viewID
         self.nav = nav
         self.userId = userId
         self.onAddEditEventDismiss = onAddEditEventDismiss
+        self.onEventCalendarDismiss = onEventCalendarDismiss
     }
     
     func buildEventCalendarView() -> AnyView {
@@ -41,12 +44,18 @@ struct EventViewFactory: EventViews {
                     eventRepo: AppState.shared.eventRepository!,
                     locationService: AppState.shared.locationService!
                 ), onTapClose: {
-                    Task { await MainActor.run { nav.pop() } }
+                    Task { await MainActor.run {
+                        nav.pop()
+                        onEventCalendarDismiss?()
+                    }}
                 }
             )
             .toolbar(.hidden, for: .navigationBar)
             .swipeToPop {
-                Task { await MainActor.run { nav.pop() } }
+                Task { await MainActor.run {
+                    nav.pop()
+                    onEventCalendarDismiss?()
+                }}
             }
             .ignoresSafeArea()
             .environmentObject(nav)

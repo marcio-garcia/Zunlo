@@ -22,8 +22,8 @@ class CalendarScheduleViewModel: ObservableObject {
     @Published var showAddSheet = false
     @Published var editChoiceContext: EditChoiceContext?
     @Published var eventEditHandler = EventEditHandler()
-    @Published var eventOccurrences: [EventOccurrence] = []
     
+    var eventOccurrences: [EventOccurrence] = []
     var allOccurrences: [EventOccurrence] = []
     
     private let weatherCache = WeatherCache()
@@ -49,26 +49,27 @@ class CalendarScheduleViewModel: ObservableObject {
     }
     
     @MainActor
-    func fetchEvents() async {
+    func fetchEvents() async -> [EventOccurrence] {
         do {
             locationService.startUpdatingLocation()
             // TODO: change to fetch occurrences filtered by date range
             let occurrences = try await eventRepo.fetchOccurrences()
             allOccurrences = occurrences
             eventEditHandler.allRecurringParentOccurrences = occurrences.filter({ $0.isRecurring })
-            handleOccurrences(occurrences, in: self.visibleRange)
+            eventOccurrences = try handleOccurrences(occurrences, in: self.visibleRange)
+            return eventOccurrences
         } catch {
             state = .error(error.localizedDescription)
-            print(error)
+            return []
         }
     }
     
-    func handleOccurrences(_ occurrences: [EventOccurrence], in range: Range<Date>) {
-        do {
-            eventOccurrences = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
-            self.state = occurrences.isEmpty ? .empty : .loaded
-        } catch {
-            state = .error(error.localizedDescription)
+    func handleOccurrences(_ occurrences: [EventOccurrence], in range: Range<Date>) throws -> [EventOccurrence] {
+        let occ = try EventOccurrenceService.generate(rawOccurrences: occurrences, in: range)
+        if occ.count == 1, let first = occ.first, first.isFakeOccForEmptyToday {
+            return []
+        } else {
+            return occ
         }
     }
     
@@ -146,7 +147,7 @@ extension CalendarScheduleViewModel {
         }
     }
     
-    func expandVisibleRange(toEarlier: Bool) {
+    func expandVisibleRange(toEarlier: Bool) throws -> [EventOccurrence] {
         let cal = Calendar.appDefault
         if toEarlier {
             let newStart = cal.date(byAdding: .month, value: -6, to: visibleRange.lowerBound)!
@@ -156,7 +157,7 @@ extension CalendarScheduleViewModel {
             let newEnd = cal.date(byAdding: .month, value: 6, to: visibleRange.upperBound)!
             visibleRange = visibleRange.lowerBound..<newEnd
         }
-        handleOccurrences(allOccurrences, in: visibleRange)
+        return try handleOccurrences(allOccurrences, in: visibleRange)
     }
 }
 

@@ -22,27 +22,23 @@ class UserTaskInboxViewModel: ObservableObject {
     
     init(taskRepo: UserTaskRepository) {
         self.taskRepo = taskRepo
-        observeTaskRepo()
     }
     
-    func observeTaskRepo() {
-//        self.taskRepo.lastTaskAction.observe(owner: self, fireNow: false) { [weak self] action in
-//            if case .fetch(let tasks) = action {
-//                guard let self else { return }
-//                self.tasks = tasks
-//                self.completeTasks = tasks.filter { $0.deletedAt == nil && $0.isCompleted }
-//                self.incompleteTasks = tasks.filter { $0.deletedAt == nil && !$0.isCompleted }
-//                self.state = .loaded
-//            }
-//        }
-    }
-
     func fetchTasks() async {
         do {
             let taskFetcher = UserTaskFetcher(repo: taskRepo)
             let tasks = try await taskFetcher.fetchTasks()
+            
             handleTasks(tasks)
+            
+            guard !tasks.isEmpty else {
+                await MainActor.run { state = .empty }
+                return
+            }
+            
             try await fetchTags()
+            await MainActor.run { state = .loaded }
+            
         } catch {
             await MainActor.run {
                 state = .error(error.localizedDescription)
@@ -53,9 +49,11 @@ class UserTaskInboxViewModel: ObservableObject {
     func fetchTags() async throws {
         let taskFetcher = UserTaskFetcher(repo: taskRepo)
         let tags = try await taskFetcher.fetchAllUniqueTags()
+        
         let tagObjects = tags.map {
             Tag(id: UUID(), text: $0, color: Theme.highlightColor(for: $0), selected: false)
         }
+        
         await MainActor.run {
             self.tags = tagObjects
         }
@@ -91,9 +89,6 @@ class UserTaskInboxViewModel: ObservableObject {
         self.tasks = tasks
         self.completeTasks = tasks.filter { $0.deletedAt == nil && $0.isCompleted }
         self.incompleteTasks = tasks.filter { $0.deletedAt == nil && !$0.isCompleted }
-        DispatchQueue.main.async {
-            self.state = .loaded
-        }
     }
     
     private func makeInput(task: UserTask) -> AddTaskInput {
