@@ -461,9 +461,6 @@
         }
       }
     },
-    "Copy Realm file path" : {
-
-    },
     "Could not open the sign in screen" : {
 
     },
@@ -582,9 +579,6 @@
         }
       }
     },
-    "Delete All %@" : {
-
-    },
     "Delete all messages" : {
       "localizations" : {
         "pt-BR" : {
@@ -674,9 +668,6 @@
           }
         }
       }
-    },
-    "Details" : {
-
     },
     "Do you want to cancel just this occurrence or the entire series?" : {
 
@@ -1611,9 +1602,6 @@
         }
       }
     },
-    "Realm Browser" : {
-
-    },
     "Realm debug browser" : {
 
     },
@@ -1636,9 +1624,6 @@
           }
         }
       }
-    },
-    "Refresh" : {
-
     },
     "Reminders" : {
       "localizations" : {
@@ -1719,6 +1704,7 @@
       }
     },
     "Reset Upgrade Reminder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -1809,6 +1795,7 @@
       }
     },
     "Search properties" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
