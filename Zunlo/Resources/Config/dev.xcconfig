@@ -1,4 +1,5 @@
 #include "Base.xcconfig"
+PRODUCT_BUNDLE_DISPLAY_NAME = Zunlo dev
 ENVIRONMENT = DEVELOPMENT
 API_BASE_URL = vfogikyoxhkubtjnztke.supabase.co
 API_FUNCTIONS_BASE_URL = vfogikyoxhkubtjnztke.functions.supabase.co

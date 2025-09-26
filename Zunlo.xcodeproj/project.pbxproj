@@ -492,7 +492,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zunlo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Zunlo;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para mostrar conteúdo personalizado.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -694,7 +693,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zunlo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Zunlo;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para mostrar conteúdo personalizado.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -730,7 +728,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zunlo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Zunlo;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para mostrar conteúdo personalizado.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
