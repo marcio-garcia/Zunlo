@@ -12,12 +12,13 @@ struct EmptyScheduleView: View {
 
     var body: some View {
         VStack(spacing: 24) {
+            Spacer()
+            
             Image(systemName: "calendar.badge.plus")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 64, height: 64)
                 .foregroundColor(Color.theme.accent)
-                .padding(.top, 60)
 
             Text("No Events Yet")
                 .themedHeadline()

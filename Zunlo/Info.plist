@@ -24,14 +24,14 @@
 				<string>zunloapp</string>
 			</array>
 		</dict>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>GoogleSignIn</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>$(GOOGLE_URL_SCHEME)</string>
-            </array>
-        </dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_URL_SCHEME)</string>
+			</array>
+		</dict>
 	</array>
 	<key>ENVIRONMENT</key>
 	<string>$(ENVIRONMENT)</string>
@@ -44,16 +44,16 @@
 		<string>Quicksand-SemiBold.ttf</string>
 		<string>Quicksand-Bold.ttf</string>
 		<string>Quicksand-Light.ttf</string>
-        <string>Nunito-Bold.ttf</string>
-        <string>Nunito-BoldItalic.ttf</string>
-        <string>Nunito-Light.ttf</string>
-        <string>Nunito-LightItalic.ttf</string>
-        <string>Nunito-Medium.ttf</string>
-        <string>Nunito-MediumItalic.ttf</string>
-        <string>Nunito-Regular.ttf</string>
-        <string>Nunito-RegularItalic.ttf</string>
-        <string>Nunito-SemiBold.ttf</string>
-        <string>Nunito-SemiBoldItalic.ttf</string>
+		<string>Nunito-Bold.ttf</string>
+		<string>Nunito-BoldItalic.ttf</string>
+		<string>Nunito-Light.ttf</string>
+		<string>Nunito-LightItalic.ttf</string>
+		<string>Nunito-Medium.ttf</string>
+		<string>Nunito-MediumItalic.ttf</string>
+		<string>Nunito-Regular.ttf</string>
+		<string>Nunito-RegularItalic.ttf</string>
+		<string>Nunito-SemiBold.ttf</string>
+		<string>Nunito-SemiBoldItalic.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
@@ -66,7 +66,11 @@
 		<key>UIColorName</key>
 		<string>Background</string>
 	</dict>
-    <key>GIDClientID</key>
-    <string>$(GOOGLE_OAUTH_CLIENT_ID)</string>
+	<key>GIDClientID</key>
+	<string>$(GOOGLE_OAUTH_CLIENT_ID)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 </dict>
 </plist>

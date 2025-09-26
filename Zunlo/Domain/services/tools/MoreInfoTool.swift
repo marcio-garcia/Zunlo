@@ -168,18 +168,18 @@ final class MoreInfoTool: ActionTool {
         let startTime = timeFormatter.string(from: event.startDate)
         let endTime = timeFormatter.string(from: event.endDate)
 
-        var info = "• \(event.title) - \(startTime) to \(endTime)"
+        var info = "• \(event.title) - \(startTime) " + String(localized: "to", comment: "hour range preposition: 4 to 5pm") + " \(endTime)"
 
         if let location = event.location, !location.isEmpty {
             info += " @ \(location)"
         }
 
         if let notes = event.notes, !notes.isEmpty {
-            info += String(localized: "\n  Notes: \(notes)")
+            info += "\n  " + String(localized: "Notes: \(notes)")
         }
 
         if event.isRecurring {
-            info += String(localized: "\n  Recurring event")
+            info += "\n  " + String(localized: "Recurring event")
         }
 
         return info
@@ -194,7 +194,7 @@ final class MoreInfoTool: ActionTool {
             formatter.dateStyle = .medium
             formatter.timeStyle = .short
 
-            info += String(localized: " - Due: \(formatter.string(from: dueDate))")
+            info += " - " + String(localized: "Due: \(formatter.string(from: dueDate))")
         }
 
         if task.isCompleted {
@@ -202,7 +202,7 @@ final class MoreInfoTool: ActionTool {
         }
 
         if let notes = task.notes, !notes.isEmpty {
-            info += String(localized: "\n  Notes: \(notes)")
+            info += "\n  " + String(localized: "Notes: \(notes)")
         }
 
         return info

@@ -12,7 +12,9 @@ struct EmptyInboxView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Image(systemName: "calendar.badge.plus")
+            Spacer()
+            
+            Image(systemName: "note.text.badge.plus")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 64, height: 64)

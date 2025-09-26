@@ -125,7 +125,7 @@ private struct DynamicObjectsListView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Button(role: .destructive) { deleteAll() } label: {
-                        Label("Delete All \(schema.className)", systemImage: "trash")
+                        Label("Delete all \(schema.className)", systemImage: "trash")
                     }
                     Button { observer.refresh() } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")

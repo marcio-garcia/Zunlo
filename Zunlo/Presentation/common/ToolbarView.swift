@@ -26,26 +26,38 @@ struct ToolbarView<Leading: View, Center: View, Trailing: View>: View {
     }
 
     var body: some View {
-        ZStack {
-            if let style = blurStyle {
-                BlurView(style: style)
-                    .edgesIgnoringSafeArea(.all)
+        VStack(spacing: 0) {
+            ZStack {
+                if let style = blurStyle {
+                    BlurView(style: style)
+                        .edgesIgnoringSafeArea(.all)
+                }
+                
+                VStack {
+                    Spacer()
+                    ZStack {
+                        HStack {
+                            leading
+                            Spacer()
+                            trailing
+                        }
+                        .padding(.horizontal)
+                        
+                        HStack {
+                            Spacer()
+                            center
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                    }
+                    .frame(height: 44)
+                }
             }
-
-            HStack {
-                leading
-                Spacer()
-                trailing
-            }
-            .padding(.horizontal)
+            .frame(height: 88)
+            .ignoresSafeArea()
+            .shadow(color: .black.opacity(0.1), radius: 12)
             
-            HStack {
-                Spacer()
-                center
-                Spacer()
-            }
-            .padding(.horizontal)
+            Spacer()
         }
-        .frame(height: 44)
     }
 }

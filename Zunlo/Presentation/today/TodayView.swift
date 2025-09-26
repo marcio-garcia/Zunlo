@@ -155,41 +155,37 @@ struct TodayView: View {
                             }
                         })
                         
-                        VStack(spacing: 0) {
-                            ToolbarView(blurStyle: .systemUltraThinMaterial /*Theme.isDarkMode ? .dark : .light*/) {
-                                Button(action: { nav.showSheet(.settings, for: viewID) }) {
-                                    Image(systemName: "slider.horizontal.3")
+                        ToolbarView(blurStyle: .systemUltraThinMaterial /*Theme.isDarkMode ? .dark : .light*/) {
+                            Button(action: { nav.showSheet(.settings, for: viewID) }) {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.system(size: 22, weight: .regular))
+                            }
+                        } center: {
+                            Text("Zunlo")
+                                .themedHeadline()
+                        } trailing: {
+                            HStack(alignment: .center, spacing: 16) {
+                                Button(action: { nav.showSheet(.addTask, for: viewID) }) {
+                                    Image(systemName: "note.text.badge.plus")
                                         .font(.system(size: 22, weight: .regular))
                                 }
-                            } center: {
-                                Text("Zunlo")
-                                    .themedHeadline()
-                            } trailing: {
-                                HStack(alignment: .center, spacing: 16) {
-                                    Button(action: { nav.showSheet(.addTask, for: viewID) }) {
-                                        Image(systemName: "note.text.badge.plus")
-                                            .font(.system(size: 22, weight: .regular))
-                                    }
-                                    .background(
-                                        Color.clear
-                                            .frame(width: 44, height: 44)
-                                            .contentShape(Rectangle())
-                                    )
-                                    
-                                    Button(action: { nav.showSheet(.addEvent, for: viewID) }) {
-                                        Image(systemName: "calendar.badge.plus")
-                                            .font(.system(size: 22, weight: .regular))
-                                    }
-                                    .background(
-                                        Color.clear
-                                            .frame(width: 44, height: 44)
-                                            .contentShape(Rectangle())
-                                    )
+                                .background(
+                                    Color.clear
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Rectangle())
+                                )
+                                
+                                Button(action: { nav.showSheet(.addEvent, for: viewID) }) {
+                                    Image(systemName: "calendar.badge.plus")
+                                        .font(.system(size: 22, weight: .regular))
                                 }
+                                .background(
+                                    Color.clear
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Rectangle())
+                                )
                             }
-                            Spacer()
                         }
-                        .padding(.top, 44)
                         
                         Button(action: { showChat = true }) {
                             Image(systemName: "bubble.left.and.bubble.right.fill")

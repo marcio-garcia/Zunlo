@@ -34,7 +34,7 @@ struct TaskInboxView: View {
         )
         let factory = NavigationViewFactory(task: taskViewFactory)
         
-        Group {
+        ZStack {
             switch viewModel.state {
             case .loading:
                 VStack {
@@ -89,40 +89,43 @@ struct TaskInboxView: View {
                         }
                         .padding()
                     }
-                    .navigationBarTitleDisplayMode(.inline)
-                    .navigationBarBackButtonHidden()
-                    .toolbar {
-                        ToolbarItem(placement: .principal) {
-                            Text("Task inbox")
-                                .themedSubtitle()
-                        }
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button(action: {
-                                onDismiss?()
-                                dismiss()
-                                nav.pop()
-                            }) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 18, weight: .regular))
-                            }
-                            .themedSecondaryButton()
-                        }
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button {
-                                nav.showSheet(.addTask, for: viewID)
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 20, weight: .regular))
-                            }
-                        }
-                    }
                     .sheet(item: nav.sheetBinding(for: viewID)) { route in
                         ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
                     }
                 }
-                .defaultBackground()
+            }
+            
+            ToolbarView(blurStyle: .systemUltraThinMaterial) {
+                Button(action: {
+                    onDismiss?()
+                    dismiss()
+                    nav.pop()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 22, weight: .regular))
+                }
+            } center: {
+                Text("Task inbox")
+                    .themedHeadline()
+            } trailing: {
+                HStack(alignment: .center, spacing: 16) {
+                    Button(action: {
+                        nav.showSheet(.addTask, for: viewID)
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .regular))
+                    }
+                    .background(
+                        Color.clear
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    )
+                }
             }
         }
+        .defaultBackground()
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("")
         .task {
             await viewModel.fetchTasks()
         }
