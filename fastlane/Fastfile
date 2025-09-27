@@ -1,0 +1,64 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Generate screenshots"
+  lane :screenshots do
+    capture_screenshots
+  end
+
+  desc "Run tests"
+  lane :test do
+    run_tests(
+      scheme: "Zunlo - debug",
+      devices: ["iPhone 15 Pro (17.4)"]
+    )
+  end
+
+  desc "Run tests on all devices"
+  lane :test_all_devices do
+    run_tests(
+      scheme: "Zunlo - debug",
+      devices: [
+        "iPhone 15 Pro (17.4)",
+        "iPhone 15 Pro Max (17.4)",
+        "iPhone 15 (17.4)",
+        "iPhone SE (3rd generation) (17.4)",
+        "iPad Pro (12.9-inch) (6th generation) (17.4)"
+      ]
+    )
+  end
+
+  desc "Build for testing"
+  lane :build_for_testing do
+    build_app(
+      scheme: "Zunlo - debug",
+      configuration: "Debug",
+      build_for_testing: true
+    )
+  end
+
+  desc "Generate screenshots and upload to App Store Connect"
+  lane :screenshots_and_upload do
+    capture_screenshots
+    deliver(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      force: true
+    )
+  end
+end

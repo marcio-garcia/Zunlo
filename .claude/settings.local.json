@@ -6,7 +6,8 @@
       "Bash(xcodebuild build:*)",
       "Bash(xcodebuild:*)",
       "Bash(swift build:*)",
-      "Bash(swift test:*)"
+      "Bash(swift test:*)",
+      "Read(//Users/marciogarcia/Library/Logs/snapshot/**)"
     ],
     "deny": [],
     "ask": []
