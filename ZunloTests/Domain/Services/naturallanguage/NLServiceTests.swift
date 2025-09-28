@@ -13,7 +13,7 @@ import NaturalLanguage
 final class NLServiceTests: XCTestCase {
     private var nlService: NLService!
     private var calendar: Calendar!
-    private var now = Date()
+    private var now = TestUtil.makeNow()
     
     override func setUp() {
         super.setUp()
@@ -295,7 +295,7 @@ final class NLServiceTests: XCTestCase {
         XCTAssertEqual(result.title, "reunião")
         
         let comps = result.context.finalDate.components()
-        XCTAssertEqual(comps.year, 2025); XCTAssertEqual(comps.month, 9); XCTAssertEqual(comps.day, 23)
+        XCTAssertEqual(comps.year, 2025); XCTAssertEqual(comps.month, 9); XCTAssertEqual(comps.day, 16)
         XCTAssertEqual(comps.hour, 14); XCTAssertEqual(comps.minute, 0)
     }
 
@@ -721,7 +721,7 @@ final class NLServiceTests: XCTestCase {
 
         // Should contain alternatives
         let intentAlternatives = result.intentAmbiguity?.predictions.map { $0.intent } ?? []
-        XCTAssertTrue(intentAlternatives.contains(.updateTask), "Should include updateTask as alternative")
+        XCTAssertTrue(intentAlternatives.contains(.createEvent), "Should include createEvent as alternative")
         XCTAssertTrue(intentAlternatives.contains(.createTask), "Should include createTask as alternative")
     }
 

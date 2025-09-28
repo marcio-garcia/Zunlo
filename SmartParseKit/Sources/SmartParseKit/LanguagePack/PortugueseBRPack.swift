@@ -22,6 +22,22 @@ public struct PortugueseBRPack: DateLanguagePack {
         self.weekdayMap = BaseLanguagePack.makeWeekdayMap(calendar: cal)
     }
 
+    public func allRegex() -> [NSRegularExpression] {
+        let commands = commandPrefixRegex()
+        
+        let all = [
+            weekdayPhraseRegex(),
+            weekMainRegex(),
+            weekBareRegex(),
+            inlineTimeRangeRegex(),
+            fromToTimeRegex(),
+            
+            
+        ]
+        
+        return commands + all
+    }
+
     public func weekdayPhraseRegex() -> NSRegularExpression {
         let thisAlt = thisTokens.map(NSRegularExpression.escapedPattern).joined(separator: "|")
         let nextAlt = nextTokens.map(NSRegularExpression.escapedPattern).joined(separator: "|")
@@ -170,28 +186,24 @@ public struct PortugueseBRPack: DateLanguagePack {
     public func metadataAdditionDirectRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(adicionar|adicione|definir|defina|colocar|coloque)\s+(tag|prioridade|lembrete|nota|local|localização)\s+\S+.*\b.*?\b"#)
     }
-
-    public func taskEventReferenceRegex() -> NSRegularExpression {
-        BaseLanguagePack.regex(#"(?ix)\b(tarefa|evento|reunião|compromisso|item|atividade)\b"#)
-    }
     
-    public func weekendRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:(?:este|esta|proximo|próximo|seguinte)\s+)?fim\s*de\s*semana\b"#) }
-    public func relativeDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:hoje|amanh[ãa]|esta\s+noite)\b"#) }
-    public func partOfDayRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:manh[ãa]|tarde|noite|meio\s*dia|meia\s*noite)\b"#) }
-    public func ordinalDayRegex() -> NSRegularExpression? {
+    public func weekendRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:(?:este|esta|proximo|próximo|seguinte)\s+)?fim\s*de\s*semana\b"#) }
+    public func relativeDayRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:hoje|amanh[ãa]|esta\s+noite)\b"#) }
+    public func partOfDayRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:manh[ãa]|tarde|noite|meio\s*dia|meia\s*noite)\b"#) }
+    public func ordinalDayRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"\b(?:dia\s*)?([012]?\d|3[01])(?:º|ª|o|a|st|nd|rd|th)?\b"#)
     }
-    public func timeOnlyRegex() -> NSRegularExpression? {
+    public func timeOnlyRegex() -> NSRegularExpression {
         return BaseLanguagePack.regex(#"\b(?:meio(?:-|\s*)dia|meia(?:-|\s*)noite|\#(BaseLanguagePack.timeToken))\b"#)
     }
-    public func betweenTimeRegex() -> NSRegularExpression? {
+    public func betweenTimeRegex() -> NSRegularExpression {
         return BaseLanguagePack.regex(#"(?ix)\b entre \s+ (\#(BaseLanguagePack.timeToken)) \s+ (?:e|-|a|até) \s+ (\#(BaseLanguagePack.timeToken)) \b"#)
     }
-    public func inFromNowRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:em|dentro\s+de)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|dias?|semanas?|meses?)\b"#) }
-    public func articleFromNowRegex() -> NSRegularExpression? {
+    public func inFromNowRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:em|dentro\s+de)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|dias?|semanas?|meses?)\b"#) }
+    public func articleFromNowRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:daqui\s+a\s+)?(uma?|um)\s+(minuto|hora|dia|semana|mês|ano)s?(?:\s+a\s+partir\s+de\s+agora)?\b"#)
     }
-    public func byOffsetRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\b(?:adiar|postergar)\s+em\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|dias?|semanas?|meses?)\b"#) }
+    public func byOffsetRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\b(?:adiar|postergar)\s+em\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|dias?|semanas?|meses?)\b"#) }
 
     public func nextRepetitionCount(in s: String) -> Int {
         let l = s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: calendar.locale ?? .current)
@@ -223,7 +235,7 @@ public struct PortugueseBRPack: DateLanguagePack {
 
     public func titleTokenRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"\b(titulo|título)\b"#) }
     
-    public func tagPatternRegex() -> NSRegularExpression? {
+    public func tagPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:adicionar\s+)?(?:com\s+)?(?:tag|etiqueta)\s+([a-zA-Z0-9_-]+)(?:\s+(?:para|em))?\b
@@ -234,7 +246,7 @@ public struct PortugueseBRPack: DateLanguagePack {
         """#) // groups 1, 2, or 3 = tag name(s)
     }
 
-    public func reminderPatternRegex() -> NSRegularExpression? {
+    public func reminderPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:me\s+lembrar|lembrete\s+(?:em|para|às)|alerta\s+em|adicion\S+\s+lembr\S+|adicion\S+\s+alerta|adicion\S+\s+aviso)
@@ -245,7 +257,7 @@ public struct PortugueseBRPack: DateLanguagePack {
         """#) // groups: 1=number, 2=unit, 3=time, 4=offset_number, 5=offset_unit
     }
 
-    public func priorityPatternRegex() -> NSRegularExpression? {
+    public func priorityPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:(?:definir\s+)?prioridade\s+(?:como\s+|para\s+)?
@@ -257,7 +269,7 @@ public struct PortugueseBRPack: DateLanguagePack {
         """#) // groups 1 or 2 = priority level
     }
 
-    public func locationPatternRegex() -> NSRegularExpression? {
+    public func locationPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:em|na|no|local\s*[:=]?)\s+
@@ -268,7 +280,7 @@ public struct PortugueseBRPack: DateLanguagePack {
         """#) // groups 1 or 2 = location name
     }
 
-    public func notesPatternRegex() -> NSRegularExpression? {
+    public func notesPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:notas?|comentários?|comentarios?|descrição|descricao)

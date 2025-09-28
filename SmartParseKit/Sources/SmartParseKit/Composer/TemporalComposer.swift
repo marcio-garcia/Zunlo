@@ -364,8 +364,8 @@ public final class TemporalComposer: InputParser {
             let range = NSRange(location: 0, length: (s as NSString).length)
             if pack.weekdayPhraseRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
             if pack.weekMainRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
-            if let r = pack.relativeDayRegex(), r.firstMatch(in: s, options: [], range: range) != nil { return true }
-            if let r = pack.partOfDayRegex(), r.firstMatch(in: s, options: [], range: range) != nil { return true }
+            if pack.relativeDayRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
+            if pack.partOfDayRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
             return false
         }
 
@@ -374,13 +374,11 @@ public final class TemporalComposer: InputParser {
             dd.enumerateMatches(in: text, range: NSRange(location: 0, length: ns.length)) { m in
                 guard let date = m.date else { return }
                 let substr = ns.substring(with: m.range)
-                if let tre = pack.timeOnlyRegex() {
-                    let full = NSRange(location: 0, length: (substr as NSString).length)
-                    if let mm = tre.firstMatch(in: substr, options: [], range: full), mm.range.length == full.length {
-                        if let comps = parseTime(substr, pack: pack) {
-                            tokens.append(TemporalToken(range: m.range, text: substr, kind: .absoluteTime(comps)))
-                            return
-                        }
+                let full = NSRange(location: 0, length: (substr as NSString).length)
+                if let mm = pack.timeOnlyRegex().firstMatch(in: substr, options: [], range: full), mm.range.length == full.length {
+                    if let comps = parseTime(substr, pack: pack) {
+                        tokens.append(TemporalToken(range: m.range, text: substr, kind: .absoluteTime(comps)))
+                        return
                     }
                 }
                 if hasRelativeCues(substr) { return }
@@ -523,8 +521,8 @@ public final class TemporalComposer: InputParser {
         let range = NSRange(location: 0, length: (s as NSString).length)
         if pack.weekdayPhraseRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
         if pack.weekMainRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
-        if let r = pack.relativeDayRegex(), r.firstMatch(in: s, options: [], range: range) != nil { return true }
-        if let r = pack.partOfDayRegex(), r.firstMatch(in: s, options: [], range: range) != nil { return true }
+        if pack.relativeDayRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
+        if pack.partOfDayRegex().firstMatch(in: s, options: [], range: range) != nil { return true }
         return false
     }
 }

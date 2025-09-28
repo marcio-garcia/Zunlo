@@ -97,14 +97,13 @@ public struct MetadataExtractor {
     // MARK: - Token Extraction Methods
 
     private func extractTagTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
-        guard let tagRegex = pack.tagPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         // Check for command words first using existing intent detection
         let hasCommandWord = hasCommandWord(in: text, pack: pack)
 
         let nsText = text as NSString
-        tagRegex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
+        pack.tagPatternRegex().enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
 
             // Skip matches that overlap with temporal tokens
@@ -158,11 +157,10 @@ public struct MetadataExtractor {
     }
 
     private func extractReminderTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
-        guard let regex = pack.reminderPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
-        regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
+        pack.reminderPatternRegex().enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
 
             // Skip matches that overlap with temporal tokens
@@ -204,11 +202,10 @@ public struct MetadataExtractor {
     }
 
     private func extractPriorityTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
-        guard let regex = pack.priorityPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
-        regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
+        pack.priorityPatternRegex().enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
 
             // Skip matches that overlap with temporal tokens
@@ -239,11 +236,10 @@ public struct MetadataExtractor {
     }
 
     private func extractLocationTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
-        guard let regex = pack.locationPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
-        regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
+        pack.locationPatternRegex().enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
 
             // Skip matches that overlap with temporal tokens
@@ -274,11 +270,10 @@ public struct MetadataExtractor {
     }
 
     private func extractNotesTokens(from text: String, excludingRanges: [Range<String.Index>], pack: DateLanguagePack) -> [MetadataToken] {
-        guard let regex = pack.notesPatternRegex() else { return [] }
         var tokens: [MetadataToken] = []
 
         let nsText = text as NSString
-        regex.enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
+        pack.notesPatternRegex().enumerateMatches(in: text, options: [], range: NSRange(location: 0, length: nsText.length)) { match, _, _ in
             guard let match = match else { return }
 
             // Skip matches that overlap with temporal tokens
@@ -375,13 +370,9 @@ public struct MetadataExtractor {
         }
 
         // Strip common temporal keywords that might not be captured as temporal tokens
-        if let relativeDayRegex = pack.relativeDayRegex() {
-            result = relativeDayRegex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
-        }
+        result = pack.relativeDayRegex().stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
 
-        if let partOfDayRegex = pack.partOfDayRegex() {
-            result = partOfDayRegex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
-        }
+        result = pack.partOfDayRegex().stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
         
         result = pack.titleTokenRegex().stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: " ")
         

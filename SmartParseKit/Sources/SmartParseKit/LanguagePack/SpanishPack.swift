@@ -185,31 +185,31 @@ public struct SpanishPack: DateLanguagePack {
     }
     
     // Optionals
-    public func weekendRegex() -> NSRegularExpression? {
+    public func weekendRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:(?:este|esta|pr[óo]ximo|siguiente|que\s+viene)\s+)?fin\s+de\s+semana\b"#)
     }
-    public func relativeDayRegex() -> NSRegularExpression? {
+    public func relativeDayRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:hoy|mañana|manana|esta\s+noche)\b"#)
     }
-    public func partOfDayRegex() -> NSRegularExpression? {
+    public func partOfDayRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:(?:por|de|en)\s+la\s+mañana|tarde|noche|mediod[ií]a|medianoche)\b"#)
     }
-    public func ordinalDayRegex() -> NSRegularExpression? {
-        BaseLanguagePack.regex(#"(?ix)\b(?:d[ií]a\s+)?([12]?\d|3[01])(?:º|o)?\b"#)
+    public func ordinalDayRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"\b(?:d[ií]a\s+)?([012]?\d|3[01])(?:º|o)?\b"#)
     }
-    public func timeOnlyRegex() -> NSRegularExpression? {
+    public func timeOnlyRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:mediod[ií]a|medianoche|(?:[01]?\d|2[0-3])(?::\d{2})?\s*(?:h)?(?:\s*(?:am|pm))?)\b"#)
     }
-    public func betweenTimeRegex() -> NSRegularExpression? {
+    public func betweenTimeRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b entre \s+ ([0-2]?\d(?::\d{2})?) \s+ (?:y|a|-|hasta) \s+ ([0-2]?\d(?::\d{2})?) \b"#)
     }
-    public func inFromNowRegex() -> NSRegularExpression? {
+    public func inFromNowRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:en|dentro\s+de)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|d[ií]as?|semanas?|mes(?:es)?)\b"#)
     }
-    public func articleFromNowRegex() -> NSRegularExpression? {
+    public func articleFromNowRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:dentro\s+de\s+|de\s+aquí\s+a\s+)?(una?|un)\s+(minuto|hora|d[ií]a|semana|mes|año)s?(?:\s+desde\s+ahora)?\b"#)
     }
-    public func byOffsetRegex() -> NSRegularExpression? {
+    public func byOffsetRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:en|por)\s+(\d+)\s+(minutos?|mins?|horas?|hrs?|d[ií]as?|semanas?|mes(?:es)?)\b"#)
     }
 
@@ -244,7 +244,7 @@ public struct SpanishPack: DateLanguagePack {
 
     public func titleTokenRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"\b(titulo|título)\b"#) }
     
-    public func tagPatternRegex() -> NSRegularExpression? {
+    public func tagPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:añadir\s+)?(?:con\s+)?(?:etiqueta|tag)\s+([a-zA-Z0-9_-]+)(?:\s+(?:para|en|a))?\b
@@ -255,7 +255,7 @@ public struct SpanishPack: DateLanguagePack {
         """#) // groups 1, 2, or 3 = tag name(s)
     }
 
-    public func reminderPatternRegex() -> NSRegularExpression? {
+    public func reminderPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:recordarme|recordatorio\s+(?:en|para|a\s+las)|aviso\s+en|adicion\S+\s+record\S+)
@@ -266,7 +266,7 @@ public struct SpanishPack: DateLanguagePack {
         """#) // groups: 1=number, 2=unit, 3=time, 4=offset_number, 5=offset_unit
     }
 
-    public func priorityPatternRegex() -> NSRegularExpression? {
+    public func priorityPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:(?:establecer\s+)?prioridad\s+(?:como\s+|a\s+)?
@@ -278,7 +278,7 @@ public struct SpanishPack: DateLanguagePack {
         """#) // groups 1 or 2 = priority level
     }
 
-    public func locationPatternRegex() -> NSRegularExpression? {
+    public func locationPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:en|en\s+el|en\s+la|ubicaci[óo]n\s*[:=]?)\s+
@@ -289,7 +289,7 @@ public struct SpanishPack: DateLanguagePack {
         """#) // groups 1 or 2 = location name
     }
 
-    public func notesPatternRegex() -> NSRegularExpression? {
+    public func notesPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:notas?|comentarios?|descripci[óo]n)

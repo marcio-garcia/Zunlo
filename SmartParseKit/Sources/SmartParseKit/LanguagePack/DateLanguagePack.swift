@@ -41,22 +41,21 @@ public protocol DateLanguagePack {
     // Metadata addition detection patterns
     func metadataAdditionWithPrepositionRegex() -> NSRegularExpression
     func metadataAdditionDirectRegex() -> NSRegularExpression
-    func taskEventReferenceRegex() -> NSRegularExpression
     func eventKeywordsRegex() -> NSRegularExpression
     
     // Pivot used to prefer the rightmost time after these tokens
     func timePivotRegex() -> NSRegularExpression
 
     // Optional detectors (default nil). Packs may override.
-    func weekendRegex() -> NSRegularExpression?
-    func relativeDayRegex() -> NSRegularExpression?
-    func partOfDayRegex() -> NSRegularExpression?
-    func ordinalDayRegex() -> NSRegularExpression?
-    func timeOnlyRegex() -> NSRegularExpression?
-    func betweenTimeRegex() -> NSRegularExpression?
-    func inFromNowRegex() -> NSRegularExpression?
-    func articleFromNowRegex() -> NSRegularExpression?
-    func byOffsetRegex() -> NSRegularExpression?
+    func weekendRegex() -> NSRegularExpression
+    func relativeDayRegex() -> NSRegularExpression
+    func partOfDayRegex() -> NSRegularExpression
+    func ordinalDayRegex() -> NSRegularExpression
+    func timeOnlyRegex() -> NSRegularExpression
+    func betweenTimeRegex() -> NSRegularExpression
+    func inFromNowRegex() -> NSRegularExpression
+    func articleFromNowRegex() -> NSRegularExpression
+    func byOffsetRegex() -> NSRegularExpression
 
     // Language-aware classification helpers
     func classifyRelativeDay(_ matchedLowercased: String) -> RelativeDay?
@@ -70,19 +69,19 @@ public protocol DateLanguagePack {
     func titleTokenRegex() -> NSRegularExpression
     
     // Tag patterns: "tag work", "add tag home to", "with tag personal"
-    func tagPatternRegex() -> NSRegularExpression?
+    func tagPatternRegex() -> NSRegularExpression
 
     // Reminder patterns: "remind me 30 minutes before", "set reminder for", "alert at"
-    func reminderPatternRegex() -> NSRegularExpression?
+    func reminderPatternRegex() -> NSRegularExpression
 
     // Priority patterns: "high priority", "urgent", "low importance"
-    func priorityPatternRegex() -> NSRegularExpression?
+    func priorityPatternRegex() -> NSRegularExpression
 
     // Location patterns: "at home", "location office", "in the kitchen"
-    func locationPatternRegex() -> NSRegularExpression?
+    func locationPatternRegex() -> NSRegularExpression
 
     // Notes patterns: "note:", "notes:", "comment:", "description:"
-    func notesPatternRegex() -> NSRegularExpression?
+    func notesPatternRegex() -> NSRegularExpression
 
     // Helper to classify priority from matched text
     func classifyPriority(_ matchedLowercased: String) -> TaskPriority?

@@ -107,7 +107,7 @@ final class ActionToolsTests: XCTestCase {
         XCTAssertEqual(result.intent, .rescheduleEvent)
         XCTAssertFalse(result.needsDisambiguation)
         if case .rescheduledEvent(let eventId, let start, _) = result.action {
-            XCTAssertEqual(eventId, testEvent.id)
+            XCTAssertEqual(eventId, testEvent.eventId)
             XCTAssertEqual(calendar.component(.hour, from: start), 15) // 3pm
         } else {
             XCTFail("Expected rescheduledEvent action")
@@ -130,7 +130,7 @@ final class ActionToolsTests: XCTestCase {
         XCTAssertEqual(result.intent, .rescheduleEvent)
         XCTAssertFalse(result.needsDisambiguation)
         if case .rescheduledEvent(let eventId, let start, _) = result.action {
-            XCTAssertEqual(eventId, testEvent.id)
+            XCTAssertEqual(eventId, testEvent.eventId)
             XCTAssertEqual(calendar.component(.hour, from: start), 10)
         } else {
             XCTFail("Expected rescheduledEvent action")
@@ -527,7 +527,24 @@ class MockEventStore: EventStore {
         mockOccurrences.append(occ)
     }
 
-    func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws {}
+    func editAll(event: EventOccurrence, with input: EditEventInput, oldRule: RecurrenceRule?) async throws {
+        guard let index = mockOccurrences.firstIndex(where: { $0.id == event.id }) else {
+            return
+        }
+        
+        let newEvent = createEvent(
+            id: event.id,
+            userId: event.userId,
+            eventId: event.eventId,
+            title: input.title,
+            startDate: input.startDate,
+            endDate: input.endDate,
+            updatedAt: Date(),
+            createdAt: Date()
+        )
+        
+        mockOccurrences[index] = newEvent
+    }
 
     func editSingleOccurrence(parent: EventOccurrence, occurrence: EventOccurrence, with input: EditEventInput) async throws {}
 
@@ -544,6 +561,23 @@ class MockEventStore: EventStore {
         let startDate = calendar.date(byAdding: .hour, value: startHour, to: startOfDay)!
         let endDate = calendar.date(byAdding: .hour, value: 1, to: startDate)!
         
+        return createEvent(
+            id: UUID(),
+            userId: UUID(),
+            eventId: UUID(),
+            title: title,
+            startDate: startDate,
+            endDate: endDate,
+            updatedAt: referenceDate,
+            createdAt: referenceDate
+        )
+    }
+    
+    func createEvent(
+        id: UUID, userId: UUID, eventId: UUID, title: String, startDate: Date, endDate: Date,
+        updatedAt: Date,
+        createdAt: Date) -> EventOccurrence
+    {
         return EventOccurrence(
             id: UUID(),
             userId: UUID(),
@@ -558,8 +592,8 @@ class MockEventStore: EventStore {
             reminderTriggers: [],
             isOverride: false,
             isCancelled: false,
-            updatedAt: referenceDate,
-            createdAt: referenceDate,
+            updatedAt: updatedAt,
+            createdAt: createdAt,
             overrides: [],
             recurrence_rules: [],
             deletedAt: nil,

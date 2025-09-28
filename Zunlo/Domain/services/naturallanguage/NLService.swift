@@ -40,25 +40,16 @@ public final class NLService: NLProcessing {
         cal.locale = Locale(identifier: language.rawValue)
 
         // Build language packs based on calendar
-        var packs: [DateLanguagePack] = [
+        let packs: [DateLanguagePack] = [
             PortugueseBRPack(calendar: cal),
             SpanishPack(calendar: cal),
             EnglishPack(calendar: cal)
         ]
         
         var languagePack: DateLanguagePack = EnglishPack(calendar: cal)
-            
-        for (index, value) in packs.enumerated() {
-            let regexList = packs[index].commandPrefixRegex()
-            for regex in regexList {
-                if let match = regex.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)),
-                   match.range.location == 0, match.range.length > 0,
-                   let range = Range(match.range(at: 1), in: text) {
-                    
-                    languagePack = packs[index]
-                    
-                }
-            }
+        
+        if let pack = selectLanguagePack(text: text, packs: packs, calendar: cal) {
+            languagePack = pack
         }
         
         log("raw text: \(text), calendar: \(cal)")
@@ -98,5 +89,77 @@ public final class NLService: NLProcessing {
             results.append(parseResult)
         }
         return results
+    }
+    
+    private func selectLanguagePack(text: String, packs: [DateLanguagePack], calendar: Calendar) -> DateLanguagePack? {
+        var languagePack: DateLanguagePack?
+        var hits: [Int] = Array(repeating: 0, count: packs.count)
+        
+        if languagePack == nil {
+            for (index, _) in packs.enumerated() {
+                let list = [
+                    packs[index].taskKeywordsRegex(),
+                    packs[index].eventKeywordsRegex(),
+                    packs[index].metadataAdditionWithPrepositionRegex(),
+                    packs[index].metadataAdditionDirectRegex(),
+                    packs[index].eventKeywordsRegex(),
+                    packs[index].timePivotRegex(),
+                    packs[index].weekendRegex(),
+                    packs[index].relativeDayRegex(),
+                    packs[index].partOfDayRegex(),
+                    packs[index].ordinalDayRegex(),
+                    packs[index].timeOnlyRegex(),
+                    packs[index].betweenTimeRegex(),
+                    packs[index].inFromNowRegex(),
+                    packs[index].articleFromNowRegex(),
+                    packs[index].byOffsetRegex(),
+                    packs[index].titleTokenRegex(),
+                    packs[index].tagPatternRegex(),
+                    packs[index].reminderPatternRegex(),
+                    packs[index].priorityPatternRegex(),
+                    packs[index].locationPatternRegex(),
+                    packs[index].notesPatternRegex()
+                ]
+                let regexList = packs[index].commandPrefixRegex() + list
+                for regex in regexList {
+                    if let match = regex.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)),
+                       match.range.length > 0 {
+                        
+                        hits[index] += 1
+                    }
+                }
+            }
+        }
+        
+        guard let (max, isDraw) = greatestWithDraw(in: hits) else { return nil }
+        
+        if isDraw {
+            let lang = intentDetector.detectLanguage(text)
+            switch lang.rawValue {
+            case "pt": return PortugueseBRPack(calendar: calendar)
+            case "es": return SpanishPack(calendar: calendar)
+            default: return EnglishPack(calendar: calendar)
+            }
+        }
+        
+        guard let index = hits.firstIndex(of: max) else { return nil }
+        
+        return packs[index]
+    }
+    
+    /// - Returns: nil if empty; otherwise the max and a `isDraw` flag.
+    private func greatestWithDraw(in numbers: [Int]) -> (max: Int, isDraw: Bool)? {
+        guard var best = numbers.first else { return nil }
+        var count = 1
+
+        for n in numbers.dropFirst() {
+            if n > best {
+                best = n
+                count = 1
+            } else if n == best {
+                count += 1
+            }
+        }
+        return (best, count > 1)
     }
 }

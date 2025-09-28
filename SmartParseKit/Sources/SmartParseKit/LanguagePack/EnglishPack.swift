@@ -149,37 +149,37 @@ public struct EnglishPack: DateLanguagePack {
         BaseLanguagePack.regex(#"(?ix)\b(task|event|meeting|appointment|item)\b"#)
     }
 
-    public func weekendRegex() -> NSRegularExpression? {
+    public func weekendRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:(?:this|coming|next)\s+)?weekend\b"#)
     }
-    public func relativeDayRegex() -> NSRegularExpression? {
+    public func relativeDayRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:today|tomorrow|tonight)\b"#)
     }
-    public func partOfDayRegex() -> NSRegularExpression? {
+    public func partOfDayRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:morning|afternoon|evening|tonight|noon|midnight)\b"#)
     }
-    public func ordinalDayRegex() -> NSRegularExpression? {
-        BaseLanguagePack.regex(#"(?ix)\b(?:the\s*)?([12]?\d|3[01])(?:st|nd|rd|th)\b"#) // group 1 = day
+    public func ordinalDayRegex() -> NSRegularExpression {
+        BaseLanguagePack.regex(#"\b(?:the\s*)?([012]?\d|3[01])(?:st|nd|rd|th)\b"#)
     }
-    public func timeOnlyRegex() -> NSRegularExpression? {
+    public func timeOnlyRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"\b(?:noon|midnight|\#(BaseLanguagePack.timeToken))\b"#)
     }
     
-    public func betweenTimeRegex() -> NSRegularExpression? {
+    public func betweenTimeRegex() -> NSRegularExpression {
         let t = BaseLanguagePack.timeToken
         return BaseLanguagePack.regex(#"""
         (?ix)\b between \s+ (\#(t)) \s+ (?:and|-|to) \s+ (\#(t)) \b
         """#) // groups 1=start, 2=end
     }
 
-    public func inFromNowRegex() -> NSRegularExpression? {
+    public func inFromNowRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(?:in|within)\s+(\d+)\s+(minutes?|mins?|hours?|hrs?|days?|weeks?|months?)\b"#)
     }
 
-    public func articleFromNowRegex() -> NSRegularExpression? {
+    public func articleFromNowRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"(?ix)\b(a|an)\s+(minute|hour|day|week|month|year)s?\s+from\s+now\b"#)
     }
-    public func byOffsetRegex() -> NSRegularExpression? { BaseLanguagePack.regex(#"(?ix)\bby\s+(\d+)\s+(minutes?|mins?|hours?|hrs?|days?|weeks?|months?)\b"#) }
+    public func byOffsetRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"(?ix)\bby\s+(\d+)\s+(minutes?|mins?|hours?|hrs?|days?|weeks?|months?)\b"#) }
 
 
     // Optional helper for "next next week"
@@ -213,7 +213,7 @@ public struct EnglishPack: DateLanguagePack {
 
     public func titleTokenRegex() -> NSRegularExpression { BaseLanguagePack.regex(#"\b(title)\b"#) }
     
-    public func tagPatternRegex() -> NSRegularExpression? {
+    public func tagPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:with\s+)?tags?\s+(\S+(?:,\S+)*)(?:\s+(?:to|for))?\b
@@ -224,7 +224,7 @@ public struct EnglishPack: DateLanguagePack {
         """#) // groups 1, 2, or 3 = tag name(s)
     }
 
-    public func reminderPatternRegex() -> NSRegularExpression? {
+    public func reminderPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:remind\s+me|set\s+(?:a\s+)?reminder|with\s+(?:a\s+)?reminder|alert\s+me|add\s+reminder)
@@ -235,7 +235,7 @@ public struct EnglishPack: DateLanguagePack {
         """#) // groups: 1=number, 2=unit, 3=time, 4=offset_number, 5=offset_unit
     }
 
-    public func priorityPatternRegex() -> NSRegularExpression? {
+    public func priorityPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:(?:set\s+)?priority\s+(?:to\s+|as\s+)?
@@ -247,7 +247,7 @@ public struct EnglishPack: DateLanguagePack {
         """#) // groups 1 or 2 = priority level
     }
 
-    public func locationPatternRegex() -> NSRegularExpression? {
+    public func locationPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:at|in|location\s*[:=]?)\s+
@@ -258,7 +258,7 @@ public struct EnglishPack: DateLanguagePack {
         """#) // groups 1 or 2 = location name
     }
 
-    public func notesPatternRegex() -> NSRegularExpression? {
+    public func notesPatternRegex() -> NSRegularExpression {
         BaseLanguagePack.regex(#"""
         (?ix)
         \b(?:notes?|comments?|description)\s*[:=]\s*([^.!?;]{1,200})(?=[.!?;]|$)
