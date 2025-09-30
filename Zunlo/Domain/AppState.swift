@@ -24,6 +24,7 @@ final class AppState {
     var eventSuggestionEngine: EventSuggestionEngine?
     var taskSuggestionEngine: TaskSuggestionEngine?
     var supabaseClient: SupabaseClient?
+    var weatherProvider: WeatherService?
     
     private init() {}
 }

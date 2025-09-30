@@ -182,7 +182,7 @@ extension CalendarScheduleViewModel {
             guard let self = self else { return }
 
             do {
-                if let info = try await WeatherService.shared.fetchWeather(for: date) {
+                if let info = try await WeatherProvider.shared.fetchWeather(for: date) {
                     weatherCache.set(info, for: normalizedDate)
                     DispatchQueue.main.async {
                         completion(info)

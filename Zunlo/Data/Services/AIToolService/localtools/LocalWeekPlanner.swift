@@ -52,7 +52,7 @@ final class LocalWeekPlanner: WeekPlanning {
             policyProvider: SuggestionPolicyProvider(),
             tasks: AppState.shared.taskSuggestionEngine!,
             events: AppState.shared.eventSuggestionEngine!,
-            weather: WeatherService.shared,
+            weather: WeatherProvider.shared,
             rangeStart: start,
             rangeEnd: end
         )

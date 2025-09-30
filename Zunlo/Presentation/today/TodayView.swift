@@ -160,6 +160,7 @@ struct TodayView: View {
                                 Image(systemName: "slider.horizontal.3")
                                     .font(.system(size: 22, weight: .regular))
                             }
+                            .accessibilityLabel("Settings")
                         } center: {
                             Text("Zunlo")
                                 .themedHeadline()
@@ -174,6 +175,7 @@ struct TodayView: View {
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 )
+                                .accessibilityLabel("Add task")
                                 
                                 Button(action: { nav.showSheet(.addEvent, for: viewID) }) {
                                     Image(systemName: "calendar.badge.plus")
@@ -184,6 +186,7 @@ struct TodayView: View {
                                         .frame(width: 44, height: 44)
                                         .contentShape(Rectangle())
                                 )
+                                .accessibilityLabel("Add event")
                             }
                         }
                         
@@ -199,6 +202,7 @@ struct TodayView: View {
                                 )
                         }
                         .padding()
+                        .accessibilityLabel("Show chat")
                         
                     }
                     .toolbar(.hidden, for: .navigationBar)
@@ -284,6 +288,7 @@ struct TodayView: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     )
+                    .accessibilityLabel("Show events")
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -334,6 +339,7 @@ struct TodayView: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     )
+                    .accessibilityLabel("Show tasks")
                 }
                 
 //                Text(hasEarnedReward ? "🎉 You earned 50 coins!" : "Watch an ad to earn coins")
@@ -477,7 +483,7 @@ struct TodayView: View {
             policyProvider: policyProvider,
             tasks: appState.taskSuggestionEngine!,
             events: appState.eventSuggestionEngine!,
-            weather: WeatherService.shared,
+            weather: WeatherProvider.shared,
             on: Date()
         )
     }

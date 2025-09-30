@@ -1,5 +1,5 @@
 //
-//  WeatherService.swift
+//  WeatherProvider.swift
 //  Zunlo
 //
 //  Created by Marcio Garcia on 8/1/25.
@@ -8,8 +8,14 @@
 import WeatherKit
 import CoreLocation
 
-final class WeatherService {
-    static let shared = WeatherService()
+protocol WeatherService {
+    var location: CLLocation? { get set }
+    func fetchWeather(for date: Date) async throws -> WeatherInfo?
+    func summaryForToday() async -> (summary: String?, precipNext4h: Double?, rainingSoon: Bool)
+}
+
+final class WeatherProvider: WeatherService {
+    static let shared = WeatherProvider()
 
     var location: CLLocation?
     
@@ -27,13 +33,9 @@ final class WeatherService {
             conditionCode: current.condition.rawValue
         )
     }
-}
-
-extension WeatherService {
+    
     /// Compact slice for AI: human-ish summary + max precip chance next 4h + rain flag.
-    func fetchTodayAIContext() async throws
-        -> (summary: String, precipNext4h: Double, rainingSoon: Bool)
-    {
+    func fetchTodayAIContext() async throws -> (summary: String, precipNext4h: Double, rainingSoon: Bool) {
         guard let location else {
             return ("", 0, false)
         }
@@ -64,10 +66,7 @@ extension WeatherService {
 
         return (summary, maxPrecip, rainingSoon)
     }
-}
 
-
-extension WeatherService: WeatherProvider {
     public func summaryForToday() async -> (summary: String?, precipNext4h: Double?, rainingSoon: Bool) {
         do {
             let ctx = try await fetchTodayAIContext()
@@ -75,5 +74,19 @@ extension WeatherService: WeatherProvider {
         } catch {
             return (nil, nil, false)
         }
+    }
+}
+
+/// This mock class is mainly intended to be used in screenshot tests
+final class MockWeatherProvider: WeatherService {
+    
+    var location: CLLocation?
+    
+    func fetchWeather(for date: Date) async throws -> WeatherInfo? {
+        return WeatherInfo(temperature: 20.0, unitSymbol: "celsius", conditionCode: "clear")
+    }
+    
+    func summaryForToday() async -> (summary: String?, precipNext4h: Double?, rainingSoon: Bool) {
+        return (nil, nil, false)
     }
 }

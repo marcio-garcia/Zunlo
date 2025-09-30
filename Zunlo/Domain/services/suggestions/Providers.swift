@@ -18,10 +18,6 @@ public struct SystemTimeProvider: TimeProvider {
     public let calendar: Calendar = Calendar.appDefault
 }
 
-public protocol WeatherProvider {
-    func summaryForToday() async -> (summary: String?, precipNext4h: Double?, rainingSoon: Bool)
-}
-
 protocol TaskSuggestionEngine {
     func overdueCount(on date: Date) async -> Int
     func dueTodayCount(on date: Date) async -> Int

@@ -128,8 +128,9 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     
     func fetchWeather() async {
         do {
-            WeatherService.shared.location = locationService.location()
-            if let info = try await WeatherService.shared.fetchWeather(for: Date()) {
+            var weatherProvider = appState.weatherProvider
+            weatherProvider?.location = locationService.location()
+            if let info = try await weatherProvider?.fetchWeather(for: Date()) {
                 DispatchQueue.main.async {
                     self.weather = info
                     self.locationService.stop()

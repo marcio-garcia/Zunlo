@@ -242,6 +242,16 @@
         }
       }
     },
+    "Back" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltar"
+          }
+        }
+      }
+    },
     "before" : {
       "localizations" : {
         "pt-BR" : {
@@ -440,9 +450,6 @@
           }
         }
       }
-    },
-    "Create an account" : {
-
     },
     "Create event" : {
 
@@ -1868,10 +1875,37 @@
         }
       }
     },
-    "Sign in" : {
-
+    "Show chat" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar chat"
+          }
+        }
+      }
     },
-    "Sign In" : {
+    "Show events" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar eventos"
+          }
+        }
+      }
+    },
+    "Show tasks" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar tarefas"
+          }
+        }
+      }
+    },
+    "Sign in" : {
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

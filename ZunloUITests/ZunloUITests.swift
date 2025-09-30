@@ -7,14 +7,15 @@
 
 import XCTest
 
+@MainActor
 final class ZunloUITests: XCTestCase {
     var app: XCUIApplication!
 
-    @MainActor
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
         setupSnapshot(app)
+        app.launchArguments += ["FASTLANE_SNAPSHOT"]
         app.launch()
     }
 
@@ -22,100 +23,121 @@ final class ZunloUITests: XCTestCase {
         app = nil
     }
 
-    @MainActor
     func testSimpleScreenshot() throws {
         // Simple test that just captures the main screen
-        sleep(3)
+        sleep(5)
         snapshot("01-today-view")
     }
 
-    @MainActor
     func testGenerateScreenshots() throws {
         // Wait for app to load completely
-        sleep(3)
+        sleep(5)
 
-        // 1. Today View (Main screen) - Always capture this first
+        // Generate all screenshots
+        captureMainScreen()
+        debugPrintButtons()
+        captureSheet(buttonLabels: ["Settings", "Ajustes"], snapshotName: "02-settings") {
+            app.swipeDown(velocity: XCUIGestureVelocity.fast)
+        }
+        captureSheet(buttonLabels: ["Add task", "Nova tarefa"], snapshotName: "03-add-task") {
+            dismissSheet()
+        }
+        captureSheet(buttonLabels: ["Add event", "Novo evento"], snapshotName: "04-add-event") {
+            dismissSheet()
+        }
+        captureSheet(buttonLabels: ["Show chat", "Mostrar chat"], snapshotName: "05-chat-interface") {
+            dismissSheet()
+        }
+        captureNavigation(buttonLabels: ["Show events", "Mostrar eventos"], snapshotName: "06-all-events")
+        captureNavigation(buttonLabels: ["Show tasks", "Mostrar tasks"], snapshotName: "07-all-tasks")
+    }
+
+    // MARK: - Screenshot Capture Methods
+
+    private func captureMainScreen() {
         snapshot("01-today-view")
+    }
 
-        // For debugging: print all available buttons
+    private func debugPrintButtons() {
         print("Available buttons:")
         for button in app.buttons.allElementsBoundByIndex {
             if button.exists {
                 print("Button: \(button.identifier) - \(button.label)")
             }
         }
+    }
 
-        // 2. Settings Screen - Try different selectors
-        var settingsButton = app.buttons["slider.horizontal.3"]
-        if !settingsButton.exists {
-            // Try finding by accessibility label or other identifiers
-            settingsButton = app.buttons.matching(identifier: "slider.horizontal.3").firstMatch
-        }
-
-        if settingsButton.exists && settingsButton.isHittable {
-            settingsButton.tap()
-            sleep(2)
-            snapshot("02-settings")
-
-            // Go back - try different methods
-            if app.navigationBars.buttons.count > 0 {
-                app.navigationBars.buttons.element(boundBy: 0).tap()
-            } else if app.buttons["Back"].exists {
-                app.buttons["Back"].tap()
-            } else {
-                // Swipe back gesture
-                app.swipeRight()
-            }
-            sleep(1)
-        }
-
-        // 3. Add Task Sheet
-        let addTaskButton = app.buttons["note.text.badge.plus"]
-        if addTaskButton.exists && addTaskButton.isHittable {
-            addTaskButton.tap()
-            sleep(2)
-            snapshot("03-add-task")
-
-            // Try multiple dismiss methods
-            if app.buttons["Cancel"].exists {
-                app.buttons["Cancel"].tap()
-            } else if app.buttons["Done"].exists {
-                app.buttons["Done"].tap()
-            } else {
-                // Swipe down to dismiss
-                app.swipeDown()
-            }
-            sleep(1)
-        }
-
-        // 4. Add Event Sheet
-        let addEventButton = app.buttons["calendar.badge.plus"]
-        if addEventButton.exists && addEventButton.isHittable {
-            addEventButton.tap()
-            sleep(2)
-            snapshot("04-add-event")
-
-            // Dismiss sheet
-            if app.buttons["Cancel"].exists {
-                app.buttons["Cancel"].tap()
-            } else if app.buttons["Done"].exists {
-                app.buttons["Done"].tap()
-            } else {
-                app.swipeDown()
-            }
-            sleep(1)
-        }
-
-        // 5. Chat Interface
-        let chatButton = app.buttons["bubble.left.and.bubble.right.fill"]
-        if chatButton.exists && chatButton.isHittable {
-            chatButton.tap()
-            sleep(3)
-            snapshot("05-chat-interface")
+    private func captureNavigation(buttonLabels: [String], snapshotName: String) {
+        let button = findButton(labels: buttonLabels)
+        if navigateToScreen(button: button, snapshotName: snapshotName) {
+            navigateBack()
         }
     }
 
-    @MainActor
+    private func captureSheet(buttonLabels: [String], snapshotName: String, dismiss: () -> Void) {
+        let button = findButton(labels: buttonLabels)
+        if presentSheet(button: button, snapshotName: snapshotName) {
+            dismiss()
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    private func findButton(labels: [String]) -> XCUIElement {
+        var button = app.buttons[labels.first!]
+        for label in labels {
+            button = app.buttons[label]
+            if button.exists {
+                return button
+            }
+        }
+        return button
+    }
+
+    private func navigateToScreen(button: XCUIElement, snapshotName: String) -> Bool {
+        guard button.exists && button.isHittable else { return false }
+
+        button.tap()
+        sleep(2)
+        snapshot(snapshotName)
+        return true
+    }
+
+    private func presentSheet(button: XCUIElement, snapshotName: String) -> Bool {
+        guard button.exists && button.isHittable else { return false }
+
+        button.tap()
+        sleep(2)
+        snapshot(snapshotName)
+        return true
+    }
+
+    private func navigateBack() {
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+        } else {
+            app.swipeDown(velocity: XCUIGestureVelocity.fast)
+        }
+    }
+
+    private func dismissSheet() {
+        let dismissButtons = [
+            "Cancel", "Cancelar",
+            "Done", "Concluído",
+            "Back", "Voltar"
+        ]
+
+        for buttonName in dismissButtons {
+            if app.buttons[buttonName].exists {
+                app.buttons[buttonName].tap()
+                return
+            }
+        }
+
+        // Fallback to gesture
+        app.swipeDown(velocity: XCUIGestureVelocity.fast)
+    }
+
     func testLaunchPerformance() throws {
         if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
             measure(metrics: [XCTApplicationLaunchMetric()]) {

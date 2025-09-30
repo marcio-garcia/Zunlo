@@ -92,6 +92,8 @@ struct ZunloApp: App {
             taskFetcher: UserTaskFetcher(repo: taskRepo)
         )
         
+        let weatherProvider: WeatherService = UIApplication.shared.isRunningUITests ? MockWeatherProvider() : WeatherProvider.shared
+        
         self.appState = AppState.shared
         
         self.appState.authManager = authManager
@@ -105,6 +107,7 @@ struct ZunloApp: App {
         self.appState.eventSuggestionEngine = eventSuggestionEngine
         self.appState.taskSuggestionEngine = taskSuggestionEngine
         self.appState.supabaseClient = supabaseClient
+        self.appState.weatherProvider = weatherProvider
         
         firebase.configure()
         pushService.start()
@@ -269,5 +272,11 @@ extension UIApplication {
             .compactMap { $0 as? UIWindowScene }
             .flatMap { $0.windows }
             .first { $0.isKeyWindow }?.rootViewController
+    }
+}
+
+extension UIApplication {
+    var isRunningUITests: Bool {
+        EnvConfig.shared.environment == .dev && CommandLine.arguments.contains("FASTLANE_SNAPSHOT")
     }
 }

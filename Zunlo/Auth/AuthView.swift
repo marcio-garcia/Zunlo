@@ -71,7 +71,7 @@ struct AuthView: View {
                     }
                 
                 VStack(spacing: 20) {
-                    Button("Sign In") {
+                    Button("Sign in") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         guard validateForm() else { return }
                         Task {
@@ -161,7 +161,7 @@ struct AuthView: View {
                     }
                     .padding(.vertical, 10)
                     
-                    Button("Create an account") {
+                    Button("Create account") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         guard validateForm() else { return }
                         Task {

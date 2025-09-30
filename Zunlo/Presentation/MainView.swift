@@ -53,31 +53,9 @@ struct MainView: View {
                         }
                         .animation(.spring(response: 0.6, dampingFraction: 0.90), value: isShowingChat)
                         
-                        if !isShowingChat {
-                            VStack(spacing: 0) {
-                                Spacer()
-                                BannerAdView(
-                                    adUnitID: BannerPlacement.home.adUnitID,
-                                    size: .adaptive,
-                                    containerWidth: geo.size.width - 32,
-                                    onEvent: { event in
-                                        switch event {
-                                        case .didReceiveAd:
-                                            print("✅ Ad received")
-                                        case .didFailToReceiveAd(let error):
-                                            print("❌ Failed to load ad: \(error)")
-                                        case .didClick:
-                                            print("👆 Ad clicked")
-                                        default:
-                                            break
-                                        }
-                                    }
-                                )
-                                .frame(height: 50)
-                                .padding(.horizontal, 16)
-                            }
-                            .frame(height: 50)
-                            .onChange(of: geo.size.width) { _, newWidth in viewWidth = newWidth }
+                        if !isShowingChat && !UIApplication.shared.isRunningUITests {
+                            adBanner(containerWidth: geo.size.width)
+                                .onChange(of: geo.size.width) { _, newWidth in viewWidth = newWidth }
                         }
                     }
                     .defaultBackground()
@@ -94,5 +72,31 @@ struct MainView: View {
         .task {
             await MainActor.run { viewModel.state = .loaded }
         }
+    }
+    
+    private func adBanner(containerWidth: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            Spacer()
+            BannerAdView(
+                adUnitID: BannerPlacement.home.adUnitID,
+                size: .adaptive,
+                containerWidth: containerWidth - 32,
+                onEvent: { event in
+                    switch event {
+                    case .didReceiveAd:
+                        print("✅ Ad received")
+                    case .didFailToReceiveAd(let error):
+                        print("❌ Failed to load ad: \(error)")
+                    case .didClick:
+                        print("👆 Ad clicked")
+                    default:
+                        break
+                    }
+                }
+            )
+            .frame(height: 50)
+            .padding(.horizontal, 16)
+        }
+        .frame(height: 50)
     }
 }
