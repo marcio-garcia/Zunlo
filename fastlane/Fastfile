@@ -61,4 +61,147 @@ platform :ios do
       force: true
     )
   end
+
+  desc "Upload metadata to App Store Connect"
+  lane :upload_metadata do
+    deliver(
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      force: true
+    )
+  end
+
+  desc "Upload screenshots to App Store Connect"
+  lane :upload_screenshots do
+    deliver(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      force: true
+    )
+  end
+
+  desc "Validate metadata locally"
+  lane :validate_metadata do
+    UI.message "🔍 Validating metadata files..."
+
+    # Check required files exist
+    required_files = {
+      "en-US" => ["name.txt", "subtitle.txt", "description.txt", "keywords.txt", "release_notes.txt"],
+      "pt-BR" => ["name.txt", "subtitle.txt", "description.txt", "keywords.txt", "release_notes.txt"]
+    }
+
+    required_files.each do |locale, files|
+      files.each do |file|
+        path = "metadata/#{locale}/#{file}"
+        unless File.exist?(path)
+          UI.user_error!("❌ Missing required file: #{path}")
+        end
+
+        content = File.read(path).strip
+        if content.empty?
+          UI.user_error!("❌ Empty file: #{path}")
+        end
+
+        # Check description length (max 4000 characters)
+        if file == "description.txt" && content.length > 4000
+          UI.user_error!("❌ Description too long in #{locale}: #{content.length}/4000 characters")
+        end
+
+        # Check subtitle length (max 30 characters)
+        if file == "subtitle.txt" && content.length > 30
+          UI.user_error!("❌ Subtitle too long in #{locale}: #{content.length}/30 characters")
+        end
+
+        # Check keywords (max 100 characters)
+        if file == "keywords.txt" && content.length > 100
+          UI.user_error!("❌ Keywords too long in #{locale}: #{content.length}/100 characters")
+        end
+      end
+    end
+
+    UI.success "✅ All metadata files validated successfully!"
+  end
+
+  desc "Preview metadata without uploading"
+  lane :preview_metadata do
+    validate_metadata
+    UI.message "📋 App Configuration Preview:"
+    UI.message "   Bundle ID: #{ENV['APP_BUNDLE_ID'] || 'net.loginode.zunloapp'}"
+    UI.message "   Apple ID: marcio@loginode.net"
+    UI.message ""
+    UI.success "✅ Metadata is valid and ready for upload!"
+    UI.message "💡 To upload to App Store Connect, run: fastlane upload_metadata"
+  end
+
+  desc "Verify metadata with App Store Connect (requires authentication)"
+  lane :verify_metadata_remote do
+    validate_metadata
+
+    # Configure API key from environment variables
+    UI.message "🔑 Checking API key environment variables..."
+    if ENV["APP_STORE_CONNECT_API_KEY_ID"] && ENV["APP_STORE_CONNECT_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+      UI.message "  KEY_ID: #{ENV['APP_STORE_CONNECT_API_KEY_ID']}"
+      UI.message "  ISSUER_ID: #{ENV['APP_STORE_CONNECT_ISSUER_ID']}"
+      UI.message "  KEY_PATH: #{ENV['APP_STORE_CONNECT_API_KEY_PATH']}"
+
+      api_key = app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+        in_house: false
+      )
+
+      UI.success "✅ API key configured from environment variables"
+
+      deliver(
+        api_key: api_key,
+        skip_binary_upload: true,
+        skip_screenshots: true,
+        run_precheck_before_submit: false,
+        submit_for_review: false
+      )
+    else
+      UI.error "❌ API key environment variables not properly set"
+      UI.error "  Please run: source fastlane/scripts/set_env.sh prod"
+    end
+  end
+
+  desc "Complete App Store preparation (screenshots + metadata)"
+  lane :prepare_app_store do
+    validate_metadata
+    capture_screenshots
+    deliver(
+      skip_binary_upload: true,
+      force: true
+    )
+  end
+
+  # Environment-specific lanes
+  desc "Upload metadata for production"
+  lane :upload_metadata_prod do
+    ENV["APP_BUNDLE_ID"] = "net.loginode.zunloapp"
+    upload_metadata
+  end
+
+  desc "Upload metadata for staging"
+  lane :upload_metadata_staging do
+    ENV["APP_BUNDLE_ID"] = "net.loginode.zunloapp.stg"
+    upload_metadata
+  end
+
+  desc "Upload metadata for development"
+  lane :upload_metadata_dev do
+    ENV["APP_BUNDLE_ID"] = "net.loginode.zunloapp.dev"
+    upload_metadata
+  end
+
+  desc "Generate screenshots for specific environment"
+  lane :screenshots_env do |options|
+    bundle_id = options[:bundle_id]
+    if bundle_id
+      ENV["APP_BUNDLE_ID"] = bundle_id
+      UI.message "📱 Using bundle ID: #{bundle_id}"
+    end
+    capture_screenshots
+  end
 end

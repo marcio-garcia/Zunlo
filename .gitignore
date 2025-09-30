@@ -96,3 +96,9 @@ iOSInjectionProject/
 
 # Bundler
 vendor/
+
+# Keys
+AuthKey_*.p8
+
+# Logs
+logs/

@@ -55,6 +55,86 @@ Build for testing
 
 Generate screenshots and upload to App Store Connect
 
+### ios upload_metadata
+
+```sh
+[bundle exec] fastlane ios upload_metadata
+```
+
+Upload metadata to App Store Connect
+
+### ios upload_screenshots
+
+```sh
+[bundle exec] fastlane ios upload_screenshots
+```
+
+Upload screenshots to App Store Connect
+
+### ios validate_metadata
+
+```sh
+[bundle exec] fastlane ios validate_metadata
+```
+
+Validate metadata locally
+
+### ios preview_metadata
+
+```sh
+[bundle exec] fastlane ios preview_metadata
+```
+
+Preview metadata without uploading
+
+### ios verify_metadata_remote
+
+```sh
+[bundle exec] fastlane ios verify_metadata_remote
+```
+
+Verify metadata with App Store Connect (requires authentication)
+
+### ios prepare_app_store
+
+```sh
+[bundle exec] fastlane ios prepare_app_store
+```
+
+Complete App Store preparation (screenshots + metadata)
+
+### ios upload_metadata_prod
+
+```sh
+[bundle exec] fastlane ios upload_metadata_prod
+```
+
+Upload metadata for production
+
+### ios upload_metadata_staging
+
+```sh
+[bundle exec] fastlane ios upload_metadata_staging
+```
+
+Upload metadata for staging
+
+### ios upload_metadata_dev
+
+```sh
+[bundle exec] fastlane ios upload_metadata_dev
+```
+
+Upload metadata for development
+
+### ios screenshots_env
+
+```sh
+[bundle exec] fastlane ios screenshots_env
+```
+
+Generate screenshots for specific environment
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

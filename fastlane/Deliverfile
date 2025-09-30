@@ -1,0 +1,31 @@
+# Configuration for deliver (App Store metadata management)
+
+# App identifier (matches Appfile configuration)
+app_identifier(ENV["APP_BUNDLE_ID"] || "net.loginode.zunloapp")
+
+# App Store Connect API Key is configured in individual lanes as needed
+
+# Skip uploading the binary by default (we handle this separately)
+skip_binary_upload true
+
+# Overwrite existing metadata
+force true
+
+# Automatically submit for review (set to false for manual review)
+submit_for_review false
+
+# Skip automatic screenshot upload if no new ones exist
+skip_screenshots false
+
+# Automatic release after approval (set to false for manual release)
+automatic_release false
+
+# App rating configuration
+app_rating_config_path "fastlane/metadata/rating_config.json"
+
+# Enable App Store Connect API for metadata uploads
+use_live_version false
+
+# Note: Pricing configuration (price_tier) has been removed as it's deprecated
+# and causes errors with the App Store Connect API. Pricing should be managed
+# directly in App Store Connect.

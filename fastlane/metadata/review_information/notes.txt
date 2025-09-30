@@ -1,0 +1,10 @@
+Zunlo is a productivity app focused on intelligent task and event management.
+
+The app features:
+- AI-powered task suggestions
+- Weather-aware interface
+- Real-time synchronization
+- Integrated calendar functionality
+- Chat interface for quick interactions
+
+No special review setup required. All features work without additional configuration.

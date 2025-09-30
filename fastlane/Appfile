@@ -1,5 +1,11 @@
-# app_identifier("[[APP_IDENTIFIER]]") # The bundle identifier of your app
-# apple_id("[[APPLE_ID]]") # Your Apple email address
+# Environment-based bundle identifier configuration
+app_identifier(ENV["APP_BUNDLE_ID"] || "net.loginode.zunloapp") # The bundle identifier of your app
+apple_id("marcio@loginode.net") # Your Apple email address
+
+# Different bundle IDs for environments:
+# Production:  net.loginode.zunloapp
+# Staging:     net.loginode.zunloapp.stg
+# Development: net.loginode.zunloapp.dev
 
 # For more information about the Appfile, see:
 #     https://docs.fastlane.tools/advanced/#appfile
