@@ -209,4 +209,9 @@ fastlane upload_metadata_prod        # Direct production upload
 fastlane upload_metadata_staging     # Direct staging upload
 fastlane upload_metadata_dev         # Direct development upload
 fastlane prepare_app_store           # Screenshots + metadata
+
+fastlane screenshots # Generate screenshots with auto-fixing
+fastlane fix_screenshots # Fix existing screenshot dimensions
+fastlane upload_screenshots # Upload screenshots to App Store Connect
+fastlane prepare_app_store # Complete flow (screenshots + metadata)
 ```

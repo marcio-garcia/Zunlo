@@ -39,5 +39,7 @@ number_of_retries(1)
 # makes the iOS status bar show consistent and clean values
 override_status_bar(true)
 
+dark_mode(false)
+
 # For more information about all available options run
 # fastlane action snapshot
