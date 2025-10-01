@@ -16,9 +16,73 @@
 default_platform(:ios)
 
 platform :ios do
+  # Private helper lane to configure App Store Connect API key
+  private_lane :configure_api_key do
+    UI.message "🔑 Configuring App Store Connect API key..."
+
+    unless ENV["APP_STORE_CONNECT_API_KEY_ID"] && ENV["APP_STORE_CONNECT_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+      UI.error "❌ API key environment variables not properly set"
+      UI.error "  Required variables:"
+      UI.error "    - APP_STORE_CONNECT_API_KEY_ID"
+      UI.error "    - APP_STORE_CONNECT_ISSUER_ID"
+      UI.error "    - APP_STORE_CONNECT_API_KEY_PATH"
+      UI.user_error!("API key configuration required")
+    end
+
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+      in_house: false
+    )
+  end
+
   desc "Generate screenshots"
   lane :screenshots do
     capture_screenshots
+    fix_screenshot_dimensions
+  end
+
+  desc "Fix screenshot dimensions to match App Store requirements"
+  private_lane :fix_screenshot_dimensions do
+    UI.message "🔧 Fixing screenshot dimensions..."
+
+    # Define correct dimensions for each device type
+    # Based on https://help.apple.com/app-store-connect/#/devd274dd925
+    device_dimensions = {
+      "iPhone 15 Pro Max" => { width: 1290, height: 2796 },
+      "iPhone 15 Pro" => { width: 1179, height: 2556 },
+      "iPhone 15" => { width: 1179, height: 2556 },
+      "iPhone SE (3rd generation)" => { width: 750, height: 1334 },
+      "iPad Pro (12.9-inch) (6th generation)" => { width: 2048, height: 2732 }
+    }
+
+    ["en-US", "pt-BR"].each do |locale|
+      screenshots_dir = "./screenshots/#{locale}"
+      next unless Dir.exist?(screenshots_dir)
+
+      Dir.glob("#{screenshots_dir}/*.png").each do |screenshot|
+        filename = File.basename(screenshot)
+
+        # Extract device name from filename
+        device_name = device_dimensions.keys.find { |device| filename.start_with?(device) }
+        next unless device_name
+
+        expected = device_dimensions[device_name]
+
+        # Get current dimensions
+        current_width = `sips -g pixelWidth "#{screenshot}" | grep pixelWidth | awk '{print $2}'`.strip.to_i
+        current_height = `sips -g pixelHeight "#{screenshot}" | grep pixelHeight | awk '{print $2}'`.strip.to_i
+
+        # Resize if dimensions don't match
+        if current_width != expected[:width] || current_height != expected[:height]
+          UI.message "  Resizing #{filename}: #{current_width}x#{current_height} → #{expected[:width]}x#{expected[:height]}"
+          sh("sips", "-z", expected[:height].to_s, expected[:width].to_s, screenshot, out: File::NULL)
+        end
+      end
+    end
+
+    UI.success "✅ Screenshot dimensions fixed!"
   end
 
   desc "Run tests"
@@ -55,28 +119,42 @@ platform :ios do
   desc "Generate screenshots and upload to App Store Connect"
   lane :screenshots_and_upload do
     capture_screenshots
+    fix_screenshot_dimensions
     deliver(
+      api_key: configure_api_key,
       skip_binary_upload: true,
       skip_metadata: true,
-      force: true
+      force: true,
+      run_precheck_before_submit: false
     )
   end
 
   desc "Upload metadata to App Store Connect"
   lane :upload_metadata do
     deliver(
+      api_key: configure_api_key,
       skip_binary_upload: true,
       skip_screenshots: true,
-      force: true
+      force: true,
+      run_precheck_before_submit: false
     )
+  end
+
+  desc "Fix existing screenshot dimensions"
+  lane :fix_screenshots do
+    fix_screenshot_dimensions
   end
 
   desc "Upload screenshots to App Store Connect"
   lane :upload_screenshots do
+    fix_screenshot_dimensions
     deliver(
+      api_key: configure_api_key,
       skip_binary_upload: true,
       skip_metadata: true,
-      force: true
+      force: true,
+      run_precheck_before_submit: false,
+      screenshots_path: "./screenshots"
     )
   end
 
@@ -136,43 +214,25 @@ platform :ios do
   desc "Verify metadata with App Store Connect (requires authentication)"
   lane :verify_metadata_remote do
     validate_metadata
-
-    # Configure API key from environment variables
-    UI.message "🔑 Checking API key environment variables..."
-    if ENV["APP_STORE_CONNECT_API_KEY_ID"] && ENV["APP_STORE_CONNECT_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_PATH"]
-      UI.message "  KEY_ID: #{ENV['APP_STORE_CONNECT_API_KEY_ID']}"
-      UI.message "  ISSUER_ID: #{ENV['APP_STORE_CONNECT_ISSUER_ID']}"
-      UI.message "  KEY_PATH: #{ENV['APP_STORE_CONNECT_API_KEY_PATH']}"
-
-      api_key = app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
-        in_house: false
-      )
-
-      UI.success "✅ API key configured from environment variables"
-
-      deliver(
-        api_key: api_key,
-        skip_binary_upload: true,
-        skip_screenshots: true,
-        run_precheck_before_submit: false,
-        submit_for_review: false
-      )
-    else
-      UI.error "❌ API key environment variables not properly set"
-      UI.error "  Please run: source fastlane/scripts/set_env.sh prod"
-    end
+    deliver(
+      api_key: configure_api_key,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      run_precheck_before_submit: false,
+      submit_for_review: false
+    )
   end
 
   desc "Complete App Store preparation (screenshots + metadata)"
   lane :prepare_app_store do
     validate_metadata
     capture_screenshots
+    fix_screenshot_dimensions
     deliver(
+      api_key: configure_api_key,
       skip_binary_upload: true,
-      force: true
+      force: true,
+      run_precheck_before_submit: false
     )
   end
 

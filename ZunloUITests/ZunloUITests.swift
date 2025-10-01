@@ -35,21 +35,37 @@ final class ZunloUITests: XCTestCase {
 
         // Generate all screenshots
         captureMainScreen()
-        debugPrintButtons()
-        captureSheet(buttonLabels: ["Settings", "Ajustes"], snapshotName: "02-settings") {
+//        debugPrintButtons()
+        captureScreen(buttonLabels: ["Settings", "Ajustes"], snapshotName: "02-settings") {
             app.swipeDown(velocity: XCUIGestureVelocity.fast)
         }
-        captureSheet(buttonLabels: ["Add task", "Nova tarefa"], snapshotName: "03-add-task") {
+        captureScreen(buttonLabels: ["Add task", "Nova tarefa"], snapshotName: "03-add-task") {
             dismissSheet()
         }
-        captureSheet(buttonLabels: ["Add event", "Novo evento"], snapshotName: "04-add-event") {
+        captureScreen(buttonLabels: ["Add event", "Novo evento"], snapshotName: "04-add-event") {
             dismissSheet()
         }
-        captureSheet(buttonLabels: ["Show chat", "Mostrar chat"], snapshotName: "05-chat-interface") {
+        captureScreen(buttonLabels: ["Show chat", "Mostrar chat"], snapshotName: "05-chat-interface") {
             dismissSheet()
         }
-        captureNavigation(buttonLabels: ["Show events", "Mostrar eventos"], snapshotName: "06-all-events")
-        captureNavigation(buttonLabels: ["Show tasks", "Mostrar tasks"], snapshotName: "07-all-tasks")
+        captureScreen(buttonLabels: ["Show events", "Mostrar eventos"], snapshotName: "06-all-events") {
+            let dismissButtons = ["Close event list", "Fechar lista de eventos"]
+            for buttonName in dismissButtons {
+                if app.buttons[buttonName].exists {
+                    app.buttons[buttonName].tap()
+                    return
+                }
+            }
+        }
+        captureScreen(buttonLabels: ["Show tasks", "Mostrar tasks"], snapshotName: "07-all-tasks") {
+            let dismissButtons = ["Close task inbox", "Fechar caixa de tarefas"]
+            for buttonName in dismissButtons {
+                if app.buttons[buttonName].exists {
+                    app.buttons[buttonName].tap()
+                    return
+                }
+            }
+        }
     }
 
     // MARK: - Screenshot Capture Methods
@@ -74,7 +90,7 @@ final class ZunloUITests: XCTestCase {
         }
     }
 
-    private func captureSheet(buttonLabels: [String], snapshotName: String, dismiss: () -> Void) {
+    private func captureScreen(buttonLabels: [String], snapshotName: String, dismiss: () -> Void) {
         let button = findButton(labels: buttonLabels)
         if presentSheet(button: button, snapshotName: snapshotName) {
             dismiss()

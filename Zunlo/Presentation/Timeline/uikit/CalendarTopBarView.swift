@@ -65,6 +65,7 @@ final class CalendarTopBarView: UIView {
         closeConfig.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6)
         closeButton.configuration = closeConfig
         closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
+        closeButton.accessibilityLabel = String(localized: "Close event list")
         
         rightStack.axis = .horizontal
         rightStack.alignment = .center

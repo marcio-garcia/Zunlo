@@ -80,7 +80,7 @@ struct ChatView: View {
             Button { showChat = false } label: {
                 Image(systemName: "chevron.backward").font(.headline)
             }
-            .accessibilityLabel("Back")
+            .accessibilityLabel("Close chat")
             Spacer()
             Text("Zunlo").themedHeadline()
             Spacer()

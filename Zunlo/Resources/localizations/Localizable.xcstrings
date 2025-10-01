@@ -243,6 +243,7 @@
       }
     },
     "Back" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -378,6 +379,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Céu claro"
+          }
+        }
+      }
+    },
+    "Close chat" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar chat"
+          }
+        }
+      }
+    },
+    "Close event list" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar lista de eventos"
+          }
+        }
+      }
+    },
+    "Close task inbox" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar caixa de tarefas"
           }
         }
       }

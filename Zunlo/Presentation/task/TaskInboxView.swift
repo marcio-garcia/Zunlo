@@ -104,6 +104,7 @@ struct TaskInboxView: View {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 22, weight: .regular))
                 }
+                .accessibilityLabel("Close task inbox")
             } center: {
                 Text("Task inbox")
                     .themedHeadline()

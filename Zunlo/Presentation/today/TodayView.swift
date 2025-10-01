@@ -160,6 +160,11 @@ struct TodayView: View {
                                 Image(systemName: "slider.horizontal.3")
                                     .font(.system(size: 22, weight: .regular))
                             }
+                            .background(
+                                Color.clear
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(Rectangle())
+                            )
                             .accessibilityLabel("Settings")
                         } center: {
                             Text("Zunlo")
