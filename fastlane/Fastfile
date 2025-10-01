@@ -57,16 +57,31 @@ platform :ios do
       "iPad Pro (12.9-inch) (6th generation)" => { width: 2048, height: 2732 }
     }
 
+    # Sort device names by length (longest first) to avoid partial matching issues
+    # e.g., "iPhone 15 Pro Max" should be checked before "iPhone 15"
+    sorted_device_names = device_dimensions.keys.sort_by { |name| -name.length }
+
+    fixed_count = 0
+
     ["en-US", "pt-BR"].each do |locale|
       screenshots_dir = "./screenshots/#{locale}"
-      next unless Dir.exist?(screenshots_dir)
+      unless Dir.exist?(screenshots_dir)
+        UI.message "  Skipping #{locale} (directory not found)"
+        next
+      end
 
-      Dir.glob("#{screenshots_dir}/*.png").each do |screenshot|
+      screenshot_files = Dir.glob("#{screenshots_dir}/*.png")
+      UI.message "  Checking #{screenshot_files.count} screenshots in #{locale}..."
+
+      screenshot_files.each do |screenshot|
         filename = File.basename(screenshot)
 
-        # Extract device name from filename
-        device_name = device_dimensions.keys.find { |device| filename.start_with?(device) }
-        next unless device_name
+        # Extract device name from filename (check longest names first)
+        device_name = sorted_device_names.find { |device| filename.start_with?(device) }
+        unless device_name
+          UI.message "  ⚠️  Skipping #{filename} (no matching device)"
+          next
+        end
 
         expected = device_dimensions[device_name]
 
@@ -76,13 +91,20 @@ platform :ios do
 
         # Resize if dimensions don't match
         if current_width != expected[:width] || current_height != expected[:height]
-          UI.message "  Resizing #{filename}: #{current_width}x#{current_height} → #{expected[:width]}x#{expected[:height]}"
-          sh("sips", "-z", expected[:height].to_s, expected[:width].to_s, screenshot, out: File::NULL)
+          UI.message "  📐 Resizing #{filename}: #{current_width}x#{current_height} → #{expected[:width]}x#{expected[:height]}"
+          system("sips", "-z", expected[:height].to_s, expected[:width].to_s, screenshot, out: "/dev/null", err: "/dev/null")
+          fixed_count += 1
+        else
+          UI.verbose "  ✓ #{filename}: #{current_width}x#{current_height} (correct)"
         end
       end
     end
 
-    UI.success "✅ Screenshot dimensions fixed!"
+    if fixed_count > 0
+      UI.success "✅ Fixed #{fixed_count} screenshot(s)!"
+    else
+      UI.success "✅ All screenshots already have correct dimensions!"
+    end
   end
 
   desc "Run tests"
@@ -148,13 +170,25 @@ platform :ios do
   desc "Upload screenshots to App Store Connect"
   lane :upload_screenshots do
     fix_screenshot_dimensions
+
+    # Debug: Print what screenshots we're about to upload
+    UI.message "📸 Screenshots to upload:"
+    ["en-US", "pt-BR"].each do |locale|
+      screenshots_dir = "./screenshots/#{locale}"
+      if Dir.exist?(screenshots_dir)
+        screenshots = Dir.glob("#{screenshots_dir}/*.png")
+        UI.message "  #{locale}: #{screenshots.count} files"
+        screenshots.first(3).each { |s| UI.message "    - #{File.basename(s)}" }
+      end
+    end
+
     deliver(
       api_key: configure_api_key,
       skip_binary_upload: true,
       skip_metadata: true,
       force: true,
       run_precheck_before_submit: false,
-      screenshots_path: "./screenshots"
+      overwrite_screenshots: true
     )
   end
 

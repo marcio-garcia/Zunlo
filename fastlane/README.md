@@ -63,6 +63,14 @@ Generate screenshots and upload to App Store Connect
 
 Upload metadata to App Store Connect
 
+### ios fix_screenshots
+
+```sh
+[bundle exec] fastlane ios fix_screenshots
+```
+
+Fix existing screenshot dimensions
+
 ### ios upload_screenshots
 
 ```sh

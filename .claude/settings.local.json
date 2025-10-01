@@ -7,7 +7,11 @@
       "Bash(xcodebuild:*)",
       "Bash(swift build:*)",
       "Bash(swift test:*)",
-      "Read(//Users/marciogarcia/Library/Logs/snapshot/**)"
+      "Read(//Users/marciogarcia/Library/Logs/snapshot/**)",
+      "Bash(fastlane deliver:*)",
+      "Bash(1)",
+      "WebFetch(domain:docs.fastlane.tools)",
+      "Bash(fastlane upload_screenshots:*)"
     ],
     "deny": [],
     "ask": []

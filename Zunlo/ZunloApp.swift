@@ -78,7 +78,7 @@ struct ZunloApp: App {
             localStore: RealmUserTaskLocalStore(db: localDB)
         )
         
-        let chatRepo = DefaultChatRepository(auth: authManager, store: RealmChatLocalStore(db: localDB))
+        let chatRepo: ChatRepository = UIApplication.shared.isRunningUITests ? MockChatRepository() : DefaultChatRepository(auth: authManager, store: RealmChatLocalStore(db: localDB))
         
         let eventSuggestionEngine = DefaultEventSuggestionEngine(
             auth: authManager,
