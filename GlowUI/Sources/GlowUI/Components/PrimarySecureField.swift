@@ -12,7 +12,8 @@ public struct PrimarySecureField: View {
     let placeholder: String
     @Binding var text: String
     @FocusState private var isFocused: Bool
-    
+    @State private var isSecured: Bool = true
+
     // MARK: - Configuration Properties
     var minHeight: CGFloat = 42
     var padding: CGFloat = 10
@@ -24,7 +25,8 @@ public struct PrimarySecureField: View {
     var focusedBorderWidth: CGFloat = 1.5
     var unfocusedBorderWidth: CGFloat = 1
     var animationDuration: Double = 0.15
-    
+    var showVisibilityToggle: Bool = true
+
     // Optional external focus binding
     var focusedBinding: FocusState<Bool>.Binding?
     
@@ -41,31 +43,53 @@ public struct PrimarySecureField: View {
     
     // MARK: - Body
     public var body: some View {
-        SecureField(placeholder, text: $text)
+        HStack(spacing: 0) {
+            Group {
+                if isSecured {
+                    SecureField(placeholder, text: $text)
+                } else {
+                    TextField(placeholder, text: $text)
+                }
+            }
             .textFieldStyle(.plain)
-            .themedBody()
-            .padding(padding)
-            .frame(minHeight: minHeight)
-            .background(
-                RoundedRectangle(
-                    cornerRadius: cornerRadius,
-                    style: cornerStyle
-                )
-                .fill(backgroundColor)
-            )
-            .overlay(alignment: .center, content: {
-                RoundedRectangle(
-                    cornerRadius: cornerRadius,
-                    style: cornerStyle
-                )
-                .stroke(
-                    currentFocusState ? focusedBorderColor : unfocusedBorderColor,
-                    lineWidth: currentFocusState ? focusedBorderWidth : unfocusedBorderWidth
-                )
-
-            })
-            .animation(.easeInOut(duration: animationDuration), value: currentFocusState)
+            .padding(.leading, padding)
+            .padding(.trailing, showVisibilityToggle ? 4 : padding)
+            .padding(.vertical, padding)
             .focused(focusedBinding ?? $isFocused)
+
+            if showVisibilityToggle {
+                Button(action: {
+                    isSecured.toggle()
+                }) {
+                    Image(systemName: isSecured ? "eye" : "eye.slash")
+                        .foregroundColor(.secondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, padding - 4)
+            }
+        }
+        .frame(minHeight: minHeight)
+        .background(
+            RoundedRectangle(
+                cornerRadius: cornerRadius,
+                style: cornerStyle
+            )
+            .fill(backgroundColor)
+        )
+        .overlay(alignment: .center, content: {
+            RoundedRectangle(
+                cornerRadius: cornerRadius,
+                style: cornerStyle
+            )
+            .stroke(
+                currentFocusState ? focusedBorderColor : unfocusedBorderColor,
+                lineWidth: currentFocusState ? focusedBorderWidth : unfocusedBorderWidth
+            )
+
+        })
+        .animation(.easeInOut(duration: animationDuration), value: currentFocusState)
     }
     
     // MARK: - Computed Properties
@@ -77,60 +101,67 @@ public struct PrimarySecureField: View {
 // MARK: - Configuration Methods
 extension PrimarySecureField {
     /// Sets the minimum height
-    func minHeight(_ height: CGFloat) -> PrimarySecureField {
+    public func minHeight(_ height: CGFloat) -> PrimarySecureField {
         var copy = self
         copy.minHeight = height
         return copy
     }
-    
+
     /// Sets the internal padding
-    func padding(_ padding: CGFloat) -> PrimarySecureField {
+    public func padding(_ padding: CGFloat) -> PrimarySecureField {
         var copy = self
         copy.padding = padding
         return copy
     }
-    
+
     /// Sets the corner radius
-    func cornerRadius(_ radius: CGFloat) -> PrimarySecureField {
+    public func cornerRadius(_ radius: CGFloat) -> PrimarySecureField {
         var copy = self
         copy.cornerRadius = radius
         return copy
     }
-    
+
     /// Sets the corner style
-    func cornerStyle(_ style: RoundedCornerStyle) -> PrimarySecureField {
+    public func cornerStyle(_ style: RoundedCornerStyle) -> PrimarySecureField {
         var copy = self
         copy.cornerStyle = style
         return copy
     }
-    
+
     /// Sets the background color
-    func backgroundColor(_ color: Color) -> PrimarySecureField {
+    public func backgroundColor(_ color: Color) -> PrimarySecureField {
         var copy = self
         copy.backgroundColor = color
         return copy
     }
-    
+
     /// Sets the border colors for focused and unfocused states
-    func borderColors(focused: Color, unfocused: Color) -> PrimarySecureField {
+    public func borderColors(focused: Color, unfocused: Color) -> PrimarySecureField {
         var copy = self
         copy.focusedBorderColor = focused
         copy.unfocusedBorderColor = unfocused
         return copy
     }
-    
+
     /// Sets the border widths for focused and unfocused states
-    func borderWidths(focused: CGFloat, unfocused: CGFloat) -> PrimarySecureField {
+    public func borderWidths(focused: CGFloat, unfocused: CGFloat) -> PrimarySecureField {
         var copy = self
         copy.focusedBorderWidth = focused
         copy.unfocusedBorderWidth = unfocused
         return copy
     }
-    
+
     /// Sets the animation duration for focus state changes
-    func animationDuration(_ duration: Double) -> PrimarySecureField {
+    public func animationDuration(_ duration: Double) -> PrimarySecureField {
         var copy = self
         copy.animationDuration = duration
+        return copy
+    }
+
+    /// Sets whether the visibility toggle button is shown
+    public func showVisibilityToggle(_ show: Bool) -> PrimarySecureField {
+        var copy = self
+        copy.showVisibilityToggle = show
         return copy
     }
 }

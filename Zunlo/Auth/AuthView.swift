@@ -90,7 +90,6 @@ struct AuthView: View {
                     }
 
                 PrimarySecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
                     .themedBody()
                     .focused($focusedField, equals: .password)
                     .submitLabel(.go)
