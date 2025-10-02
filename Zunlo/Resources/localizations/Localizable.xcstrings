@@ -19,6 +19,9 @@
     "(no title)" : {
 
     },
+    "%@" : {
+
+    },
     "%@ (Device)" : {
 
     },
@@ -242,17 +245,6 @@
         }
       }
     },
-    "Back" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Voltar"
-          }
-        }
-      }
-    },
     "before" : {
       "localizations" : {
         "pt-BR" : {
@@ -345,6 +337,9 @@
 
     },
     "Cancelled task '%@'." : {
+
+    },
+    "Change password" : {
 
     },
     "Clean closure lowers stress" : {
@@ -474,17 +469,6 @@
     },
     "Create account to save data" : {
 
-    },
-    "Create Account to Save My Tasks" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crie uma conta para salvar suas tarefas"
-          }
-        }
-      }
     },
     "Create event" : {
 
@@ -840,6 +824,9 @@
         }
       }
     },
+    "Enter new password" : {
+
+    },
     "Enter your email address to sign in" : {
       "localizations" : {
         "pt-BR" : {
@@ -941,6 +928,9 @@
       }
     },
     "Events:\n" : {
+
+    },
+    "Failed to authenticate with Google Sign-In" : {
 
     },
     "Failed to cancel task: %@" : {
@@ -1135,7 +1125,14 @@
 
     },
     "Internal error. Please try again later" : {
-
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erro interno. Por favor tente mais tarde"
+          }
+        }
+      }
     },
     "Interval: %lld" : {
       "localizations" : {
@@ -1143,6 +1140,33 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Intervalo: %lld"
+          }
+        }
+      }
+    },
+    "Invalid credentials. You can sign in with a Magic Link" : {
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuário ou senha inválidos. Você pode fazer log in com um Magic Link"
+          }
+        }
+      }
+    },
+    "Invalid login credentials" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid credentials. You can sign in with a Magic Link"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Usuário ou senha inválidos. Você pode fazer log in com um Magic Link"
           }
         }
       }
@@ -1336,6 +1360,20 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover para amanhã"
+          }
+        }
+      }
+    },
+    "Network error: %@" : {
+
+    },
+    "New password should be different from the old password." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A nova senha deve ser diferente da anterior"
           }
         }
       }
@@ -1746,6 +1784,9 @@
           }
         }
       }
+    },
+    "Reset" : {
+
     },
     "Reset Upgrade Reminder" : {
       "localizations" : {
@@ -2246,6 +2287,9 @@
     "Unsupported edit mode for %@" : {
 
     },
+    "Unsupported sign-in method" : {
+
+    },
     "update" : {
 
     },
@@ -2423,6 +2467,7 @@
       }
     },
     "You're signed in" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {

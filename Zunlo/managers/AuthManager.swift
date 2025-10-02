@@ -167,6 +167,10 @@ final class AuthManager: ObservableObject, AuthProviding {
         try await businessLogic.updateUser(email: email)
     }
     
+    public func resetPassword(password: String) async throws {
+        try await businessLogic.resetPassword(password: password)
+    }
+    
     private func unauthenticated() async {
         setUnauthenticated()
     }

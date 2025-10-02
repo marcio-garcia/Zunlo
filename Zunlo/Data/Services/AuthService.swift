@@ -19,13 +19,13 @@ enum AuthServiceError: Error {
     var localizedDescription: String {
         switch self {
         case .noIdToken:
-            return "Failed to retrieve ID token from Google Sign-In"
+            return String(localized: "Failed to authenticate with Google Sign-In")
         case .invalidCredentials:
-            return "Invalid authentication credentials"
+            return String(localized: "Invalid credentials. You can sign in with a Magic Link")
         case .networkError(let message):
-            return "Network error: \(message)"
+            return String(localized: "Network error: \(message)")
         case .unsupportedSignInMethod:
-            return "Unsupported sign-in method"
+            return String(localized: "Unsupported sign-in method")
         }
     }
 }
@@ -52,6 +52,7 @@ protocol AuthServicing {
     func getOTPType(from typeString: String) -> EmailOTPType
     func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthSession
     func verifyOTP(email: String, token: String, type: EmailOTPType) async throws -> AuthSession
+    func resetPassword(password: String) async throws
 }
 
 class AuthService: AuthServicing {
@@ -159,5 +160,9 @@ class AuthService: AuthServicing {
     func verifyOTP(email: String, token: String, type: EmailOTPType) async throws -> AuthSession {
         let authResponse = try await supabaseProvider.verifyOTP(email: email, token: token, type: type)
         return authResponse.toDomain()
+    }
+    
+    func resetPassword(password: String) async throws {
+        try await supabaseProvider.resetPassword(password: password)
     }
 }

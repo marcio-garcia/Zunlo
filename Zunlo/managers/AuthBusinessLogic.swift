@@ -150,6 +150,12 @@ final class AuthBusinessLogic {
 
         return try await processAuthentication(authToken)
     }
+    
+    func resetPassword(password: String) async throws {
+        if try await isAuthorized() {
+            try await authService.resetPassword(password: password)
+        }
+    }
 
     // MARK: - Private Helpers
 

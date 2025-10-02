@@ -23,12 +23,12 @@ class ErrorHandler: ObservableObject {
             message = error.localizedDescription
         } else {
             print("Execution error: \(error)")
-            message = error.localizedDescription
+            message = String(localized: "\(error.localizedDescription)")
         }
     }
     
-    func handle(_ message: String) {
-        self.message = message
+    func message(_ text: String) {
+        self.message = text
     }
 
     func clear() {

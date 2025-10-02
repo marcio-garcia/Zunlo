@@ -6,18 +6,17 @@
 //
 
 import SwiftUI
+import GlowUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var upgradeFlowManager: UpgradeFlowManager
-    @StateObject private var viewModel: LogoutViewModel
+    @StateObject private var viewModel: SettingsViewModel
+    @State var newPassword: String = ""
     
     init(authManager: AuthManager) {
-        self.authManager = authManager
-        self._viewModel = StateObject(wrappedValue: LogoutViewModel(authManager: authManager))
+        self._viewModel = StateObject(wrappedValue: SettingsViewModel(authManager: authManager))
     }
-
-    var authManager: AuthManager
     
     var body: some View {
         NavigationStack {
@@ -44,27 +43,28 @@ struct SettingsView: View {
                     
                     RoundedSection(title: "Account") {
                         HStack {
-                            if authManager.isAnonymous {
+                            if viewModel.isAnonymous {
                                 NavigationLink("Create account to save data") {
-                                    UpgradeAccountView(authManager: authManager)
+                                    UpgradeAccountView(authManager: viewModel.authManager)
                                 }
                                 .themedBody()
                             } else {
-                                Text("You're signed in")
-                                    .themedBody()
+                                Button("Change password") {
+                                    viewModel.showChangePassword = true
+                                }
+                                .themedBody()
                             }
                             Spacer()
                         }
-                    }
-                    
-                    HStack {
-                        Spacer()
-                        Button(viewModel.isAnonymousUser ? "Sign in if you have an account" : "Log out") {
-                            viewModel.confirmLogout()
+                        
+                        HStack {
+                            Button(viewModel.isAnonymous ? "Sign in if you have an account" : "Log out") {
+                                viewModel.confirmLogout()
+                            }
+                            Spacer()
                         }
-                        Spacer()
+                        .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 30)
                 }
                 .padding()
             }
@@ -77,18 +77,16 @@ struct SettingsView: View {
                 }
             }
             .onAppear {
-                viewModel.isAnonymousUser = authManager.user?.isAnonymous ?? true
                 viewModel.onLogoutComplete = {
                     dismiss()
                 }
             }
-            .errorToast(viewModel.errorHandler)
             .confirmationDialog(
                 "You're using a guest account. Logging out will delete your tasks unless you create an account",
                 isPresented: $viewModel.showLogoutPrompt,
-                titleVisibility: viewModel.isAnonymousUser ? Visibility.visible : Visibility.hidden
+                titleVisibility: viewModel.isAnonymous ? Visibility.visible : Visibility.hidden
             ) {
-                if viewModel.isAnonymousUser {
+                if viewModel.isAnonymous {
                     Button("Create account") {
                         viewModel.showLogoutPrompt = false
                         dismiss()
@@ -97,9 +95,9 @@ struct SettingsView: View {
                     .themedSecondaryButton()
                 }
                 
-                Button(viewModel.isAnonymousUser ? "Sign in if you have an account" : "Log out") {
+                Button(viewModel.isAnonymous ? "Sign in if you have an account" : "Log out", role: .destructive) {
                     Task {
-                        await viewModel.performLogout(preserveLocalData: viewModel.isAnonymousUser)
+                        await viewModel.performLogout(preserveLocalData: viewModel.isAnonymous)
                     }
                 }
                 .themedSecondaryButton()
@@ -109,6 +107,32 @@ struct SettingsView: View {
                 }
                 .themedSecondaryButton()
             }
+            .sheet(isPresented: $viewModel.showChangePassword) {
+                VStack(spacing: 20) {
+                    Text("Enter new password")
+                        .themedHeadline()
+                    
+                    PrimarySecureField("", text: $newPassword)
+                    
+                    if let msg = viewModel.passwordErrorMessage {
+                        Text(msg)
+                            .appFont(.caption)
+                            .foregroundColor(Color.red)
+                    }
+                    
+                    Button("Reset") {
+                        Task {
+                            await viewModel.changePassword(password: newPassword)
+                            newPassword = ""
+                        }
+                    }
+                    .themedPrimaryButton()
+                }
+                .padding(20)
+                .presentationDetents([.fraction(0.3)])
+                .presentationDragIndicator(.visible)
+            }
+            .errorToast(viewModel.errorHandler)
         }
     }
 }

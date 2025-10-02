@@ -22,6 +22,7 @@ protocol AuthProvider {
     func getOTPType(from typeString: String) -> EmailOTPType
     func verifyOTP(tokenHash: String, type: EmailOTPType) async throws -> AuthResponse
     func verifyOTP(email: String, token: String, type: EmailOTPType) async throws -> AuthResponse
+    func resetPassword(password: String) async throws
 }
 
 final class SupabaseAuthProvider: AuthProvider {
@@ -72,6 +73,10 @@ final class SupabaseAuthProvider: AuthProvider {
             user: UserAttributes(email: email),
             redirectTo: URL(string: "zunloapp://auth-callback")
         )
+    }
+    
+    func resetPassword(password: String) async throws {
+        try await supabase.auth.update(user: UserAttributes(password: password))
     }
 
     func getOTPType(from typeString: String) -> EmailOTPType {

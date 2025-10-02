@@ -33,17 +33,17 @@ struct AuthView: View {
         errorHandler.clear()
 
         if email.isEmpty {
-            errorHandler.handle(String(localized: "Please enter your email address"))
+            errorHandler.message(String(localized: "Please enter your email address"))
             return false
         }
 
         if !isValidEmail(email) {
-            errorHandler.handle(String(localized: "Please enter a valid email address"))
+            errorHandler.message(String(localized: "Please enter a valid email address"))
             return false
         }
 
         if requirePassword && password.isEmpty {
-            errorHandler.handle(String(localized: "Please enter your password"))
+            errorHandler.message(String(localized: "Please enter your password"))
             return false
         }
 
@@ -148,7 +148,7 @@ struct AuthView: View {
                             currentAction = "Signing in"
                             do {
                                 guard let viewController = UIApplication.shared.rootViewController else {
-                                    errorHandler.handle(String(localized: "Could not open the sign in screen"))
+                                    errorHandler.message(String(localized: "Could not open the sign in screen"))
                                     return
                                 }
                                 try await authManager.signInWithGoogle(viewController: viewController)

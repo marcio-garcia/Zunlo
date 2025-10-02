@@ -53,7 +53,7 @@ public struct PrimarySecureField: View {
                 )
                 .fill(backgroundColor)
             )
-            .overlay(
+            .overlay(alignment: .center, content: {
                 RoundedRectangle(
                     cornerRadius: cornerRadius,
                     style: cornerStyle
@@ -62,7 +62,8 @@ public struct PrimarySecureField: View {
                     currentFocusState ? focusedBorderColor : unfocusedBorderColor,
                     lineWidth: currentFocusState ? focusedBorderWidth : unfocusedBorderWidth
                 )
-            )
+
+            })
             .animation(.easeInOut(duration: animationDuration), value: currentFocusState)
             .focused(focusedBinding ?? $isFocused)
     }
