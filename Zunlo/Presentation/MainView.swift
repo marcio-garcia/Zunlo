@@ -32,6 +32,11 @@ struct MainView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .defaultBackground()
+#if DEBUG
+                .task {
+                    await viewModel.generateDemoData()
+                }
+#endif
             case .empty, .loaded:
                 GeometryReader { geo in
                     VStack{

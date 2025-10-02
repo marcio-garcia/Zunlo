@@ -298,4 +298,180 @@ platform :ios do
     end
     capture_screenshots
   end
+
+  # MARK: - Code Signing
+
+  desc "Setup Match - Generate certificates and provisioning profiles"
+  lane :setup_match do
+    UI.message "🔐 Setting up Match code signing..."
+
+    # Get API key first (while env vars are still set)
+    api_key = configure_api_key
+
+    # Temporarily clear env var to avoid conflict with api_key parameter
+    saved_key_path = ENV.delete("APP_STORE_CONNECT_API_KEY_PATH")
+
+    match(
+      type: "appstore",
+      readonly: false,
+      app_identifier: "net.loginode.zunloapp",
+      api_key: api_key
+    )
+
+    # Restore environment variable
+    ENV["APP_STORE_CONNECT_API_KEY_PATH"] = saved_key_path
+
+    UI.success "✅ Certificates and provisioning profiles installed!"
+    UI.message "💡 Next: Disable automatic signing in Xcode"
+    UI.message "   1. Open Zunlo.xcodeproj"
+    UI.message "   2. Select 'Zunlo' target → Signing & Capabilities"
+    UI.message "   3. Uncheck 'Automatically manage signing'"
+    UI.message "   4. Select provisioning profile: match AppStore net.loginode.zunloapp"
+  end
+
+  # MARK: - TestFlight / App Store
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    # Ensure we're using production configuration
+    ENV["APP_BUNDLE_ID"] = "net.loginode.zunloapp"
+
+    UI.message "🚀 Building for TestFlight..."
+    UI.message "   Scheme: Zunlo"
+    UI.message "   Bundle ID: #{ENV['APP_BUNDLE_ID']}"
+
+    # Increment build number
+    increment_build_number(
+      xcodeproj: "Zunlo.xcodeproj"
+    )
+
+    # Get code signing from Match
+    api_key = configure_api_key
+    saved_key_path = ENV.delete("APP_STORE_CONNECT_API_KEY_PATH")
+    match(
+      type: "appstore",
+      readonly: true,
+      app_identifier: "net.loginode.zunloapp",
+      api_key: api_key
+    )
+    ENV["APP_STORE_CONNECT_API_KEY_PATH"] = saved_key_path
+
+    # Build the app
+    build_app(
+      scheme: "Zunlo",
+      export_method: "app-store",
+      configuration: "Release",
+      clean: true,
+      output_directory: "./build",
+      output_name: "Zunlo.ipa"
+    )
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      api_key: configure_api_key,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+
+    UI.success "✅ Successfully uploaded to TestFlight!"
+    UI.message "💡 Build will be available for testing once processing completes"
+  end
+
+  desc "Build and upload to TestFlight with external testing"
+  lane :beta_external do
+    # Ensure we're using production configuration
+    ENV["APP_BUNDLE_ID"] = "net.loginode.zunloapp"
+
+    UI.message "🚀 Building for TestFlight (External Testing)..."
+
+    # Increment build number
+    increment_build_number(
+      xcodeproj: "Zunlo.xcodeproj"
+    )
+
+    # Get code signing from Match
+    api_key = configure_api_key
+    saved_key_path = ENV.delete("APP_STORE_CONNECT_API_KEY_PATH")
+    match(
+      type: "appstore",
+      readonly: true,
+      app_identifier: "net.loginode.zunloapp",
+      api_key: api_key
+    )
+    ENV["APP_STORE_CONNECT_API_KEY_PATH"] = saved_key_path
+
+    # Build the app
+    build_app(
+      scheme: "Zunlo",
+      export_method: "app-store",
+      configuration: "Release",
+      clean: true,
+      output_directory: "./build",
+      output_name: "Zunlo.ipa"
+    )
+
+    # Upload to TestFlight with external distribution
+    upload_to_testflight(
+      api_key: configure_api_key,
+      skip_waiting_for_build_processing: false,
+      distribute_external: true,
+      notify_external_testers: true,
+      changelog: "Bug fixes and improvements"
+    )
+
+    UI.success "✅ Successfully uploaded to TestFlight!"
+    UI.message "📧 External testers will be notified once build is approved"
+  end
+
+  desc "Build for App Store submission"
+  lane :release do
+    # Ensure we're using production configuration
+    ENV["APP_BUNDLE_ID"] = "net.loginode.zunloapp"
+
+    UI.message "📦 Building for App Store release..."
+
+    # Validate metadata first
+    validate_metadata
+
+    # Increment build number
+    increment_build_number(
+      xcodeproj: "Zunlo.xcodeproj"
+    )
+
+    # Get code signing from Match
+    api_key = configure_api_key
+    saved_key_path = ENV.delete("APP_STORE_CONNECT_API_KEY_PATH")
+    match(
+      type: "appstore",
+      readonly: true,
+      app_identifier: "net.loginode.zunloapp",
+      api_key: api_key
+    )
+    ENV["APP_STORE_CONNECT_API_KEY_PATH"] = saved_key_path
+
+    # Build the app
+    build_app(
+      scheme: "Zunlo",
+      export_method: "app-store",
+      configuration: "Release",
+      clean: true,
+      output_directory: "./build",
+      output_name: "Zunlo.ipa"
+    )
+
+    # Upload to App Store Connect
+    deliver(
+      api_key: configure_api_key,
+      skip_metadata: false,
+      skip_screenshots: false,
+      force: true,
+      run_precheck_before_submit: false,
+      submit_for_review: false,
+      automatic_release: false
+    )
+
+    UI.success "✅ Successfully uploaded to App Store Connect!"
+    UI.message "💡 Review your build in App Store Connect before submitting for review"
+  end
 end

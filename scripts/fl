@@ -1,0 +1,136 @@
+#!/bin/bash
+
+# Unified Fastlane Script
+# Usage: ./scripts/fl <lane> [environment]
+#
+# Examples:
+#   ./scripts/fl validate_metadata prod
+#   ./scripts/fl screenshots dev
+#   ./scripts/fl beta
+#   ./scripts/fl test
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Parse arguments
+LANE="${1}"
+ENV_ARG="${2}"
+
+# Show usage if no lane specified
+if [ -z "$LANE" ]; then
+    echo "Usage: ./scripts/fl <lane> [environment]"
+    echo ""
+    echo "Available lanes:"
+    echo ""
+    echo "Metadata:"
+    echo "  validate_metadata [prod|staging|dev]     - Validate metadata locally"
+    echo "  preview_metadata [prod|staging|dev]      - Preview metadata without uploading"
+    echo "  upload_metadata [prod|staging|dev]       - Upload metadata to App Store Connect"
+    echo "  verify_metadata_remote [prod|staging|dev] - Verify metadata with App Store Connect"
+    echo ""
+    echo "  Environment-specific shortcuts:"
+    echo "    upload_metadata_prod                   - Upload metadata for production"
+    echo "    upload_metadata_staging                - Upload metadata for staging"
+    echo "    upload_metadata_dev                    - Upload metadata for development"
+    echo ""
+    echo "Screenshots:"
+    echo "  screenshots [prod|staging|dev]           - Generate screenshots"
+    echo "  upload_screenshots [prod|staging|dev]    - Upload screenshots to App Store Connect"
+    echo "  screenshots_and_upload [prod|staging|dev] - Generate and upload screenshots"
+    echo "  fix_screenshots [prod|staging|dev]       - Fix existing screenshot dimensions"
+    echo "  screenshots_env bundle_id:<id>           - Generate for specific bundle ID"
+    echo ""
+    echo "Complete Workflows:"
+    echo "  prepare_app_store [prod|staging|dev]     - Complete preparation (screenshots + metadata)"
+    echo ""
+    echo "Testing:"
+    echo "  test [dev|staging|prod]                  - Run tests on single device"
+    echo "  test_all_devices [dev|staging|prod]      - Run tests on all devices"
+    echo "  build_for_testing [dev|staging|prod]     - Build app for testing"
+    echo ""
+    echo "Code Signing:"
+    echo "  setup_match                              - Setup Match (generate certificates)"
+    echo ""
+    echo "Deployment (always production):"
+    echo "  beta                                     - Build and upload to TestFlight (internal)"
+    echo "  beta_external                            - Build and upload to TestFlight (external)"
+    echo "  release                                  - Build for App Store submission"
+    echo ""
+    exit 1
+fi
+
+# Determine default environment based on lane
+case "$LANE" in
+    test|test_all_devices|build_for_testing)
+        DEFAULT_ENV="dev"
+        NEEDS_ENV=true
+        ;;
+    validate_metadata|preview_metadata|upload_metadata|verify_metadata_remote|screenshots|upload_screenshots|screenshots_and_upload|fix_screenshots|prepare_app_store|screenshots_env)
+        DEFAULT_ENV="prod"
+        NEEDS_ENV=true
+        ;;
+    upload_metadata_prod|upload_metadata_staging|upload_metadata_dev)
+        DEFAULT_ENV=""
+        NEEDS_ENV=false
+        ;;
+    setup_match|beta|beta_external|release)
+        DEFAULT_ENV=""
+        NEEDS_ENV=false
+        ;;
+    *)
+        echo "Error: Unknown lane '$LANE'"
+        echo "Run './scripts/fl' without arguments to see available lanes"
+        exit 1
+        ;;
+esac
+
+# Use provided environment or default
+if [ "$NEEDS_ENV" = true ]; then
+    ENV_ARG="${ENV_ARG:-$DEFAULT_ENV}"
+fi
+
+# Create logs directory
+mkdir -p "$PROJECT_DIR/logs/fastlane"
+
+# Generate log filename with timestamp
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+if [ -n "$ENV_ARG" ]; then
+    LOG_FILE="$PROJECT_DIR/logs/fastlane/${LANE}_${ENV_ARG}_${TIMESTAMP}.log"
+else
+    LOG_FILE="$PROJECT_DIR/logs/fastlane/${LANE}_${TIMESTAMP}.log"
+fi
+
+# Display header
+echo "===========================================" | tee "$LOG_FILE"
+echo "Fastlane Lane: $LANE" | tee -a "$LOG_FILE"
+if [ -n "$ENV_ARG" ]; then
+    echo "Environment: $ENV_ARG" | tee -a "$LOG_FILE"
+fi
+echo "Log file: $LOG_FILE" | tee -a "$LOG_FILE"
+echo "===========================================" | tee -a "$LOG_FILE"
+echo "" | tee -a "$LOG_FILE"
+
+# Source environment configuration if needed
+if [ "$NEEDS_ENV" = true ]; then
+    source "$PROJECT_DIR/fastlane/scripts/set_env.sh" "$ENV_ARG" 2>&1 | tee -a "$LOG_FILE"
+    echo "" | tee -a "$LOG_FILE"
+fi
+
+# Run fastlane lane
+cd "$PROJECT_DIR" && fastlane "$LANE" 2>&1 | tee -a "$LOG_FILE"
+
+EXIT_CODE=${PIPESTATUS[0]}
+
+# Display footer
+echo "" | tee -a "$LOG_FILE"
+echo "===========================================" | tee -a "$LOG_FILE"
+echo "Fastlane completed with exit code: $EXIT_CODE" | tee -a "$LOG_FILE"
+echo "===========================================" | tee -a "$LOG_FILE"
+
+# Keep terminal open
+echo ""
+read -p "Press Enter to close..."
+
+exit $EXIT_CODE

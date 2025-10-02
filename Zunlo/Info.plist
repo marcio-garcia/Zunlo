@@ -71,7 +71,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>4</string>
 	<key>CFBundleDisplayName</key>
 	<string>$(PRODUCT_BUNDLE_DISPLAY_NAME)</string>
 </dict>

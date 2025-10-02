@@ -16,6 +16,13 @@ final class MainViewModel: ObservableObject {
     init(appState: AppState) {
         self.appState = appState
     }
+
+    func generateDemoData() async {
+        if let userId = await appState.authManager?.userId, let localDB = appState.localDB, userId.uuidString.lowercased() == "a555935e-f684-4d81-b1f5-2e234071e799" {
+            let dataGenerator = DemoDataGenerator(userId: userId, db: localDB)
+            try? await dataGenerator.generateDemoData()
+        }
+    }
     
     func syncDB() async {
         guard (await appState.authManager?.userId) != nil else {

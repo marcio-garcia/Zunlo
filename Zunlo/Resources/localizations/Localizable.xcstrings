@@ -472,7 +472,11 @@
         }
       }
     },
+    "Create account to save data" : {
+
+    },
     "Create Account to Save My Tasks" : {
+      "extractionState" : "stale",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
@@ -1945,6 +1949,9 @@
           }
         }
       }
+    },
+    "Sign in if you have an account" : {
+
     },
     "Sign in to perform this operation" : {
 

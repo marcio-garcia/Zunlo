@@ -34,9 +34,9 @@ struct SettingsView: View {
                         }
                     }
 #endif
-                    RoundedSection(title: "Availability") {
-                        AvailabilitySettings()
-                    }
+//                    RoundedSection(title: "Availability") {
+//                        AvailabilitySettings()
+//                    }
                     
                     RoundedSection(title: "Focus") {
                         FreeWindowSettings()
@@ -45,7 +45,7 @@ struct SettingsView: View {
                     RoundedSection(title: "Account") {
                         HStack {
                             if authManager.isAnonymous {
-                                NavigationLink("Create Account to Save My Tasks") {
+                                NavigationLink("Create account to save data") {
                                     UpgradeAccountView(authManager: authManager)
                                 }
                                 .themedBody()
@@ -59,7 +59,7 @@ struct SettingsView: View {
                     
                     HStack {
                         Spacer()
-                        Button("Log out") {
+                        Button(viewModel.isAnonymousUser ? "Sign in if you have an account" : "Log out") {
                             viewModel.confirmLogout()
                         }
                         Spacer()
@@ -97,7 +97,7 @@ struct SettingsView: View {
                     .themedSecondaryButton()
                 }
                 
-                Button("Log out") {
+                Button(viewModel.isAnonymousUser ? "Sign in if you have an account" : "Log out") {
                     Task {
                         await viewModel.performLogout(preserveLocalData: viewModel.isAnonymousUser)
                     }

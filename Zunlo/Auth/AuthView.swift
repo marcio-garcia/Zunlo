@@ -15,7 +15,13 @@ struct AuthView: View {
     @State private var isLoading = false
     @State private var currentAction: String?
     @State private var showMagicLinkSent = false
+    @FocusState private var focusedField: Field?
     let errorHandler = ErrorHandler()
+
+    enum Field {
+        case email
+        case password
+    }
 
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
@@ -43,6 +49,22 @@ struct AuthView: View {
 
         return true
     }
+
+    private func signInAction() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        guard validateForm() else { return }
+        Task {
+            isLoading = true
+            currentAction = "Signing in"
+            do {
+                try await authManager.signIn(email: email, password: password)
+            } catch {
+                errorHandler.handle(error)
+            }
+            isLoading = false
+            currentAction = nil
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -51,10 +73,16 @@ struct AuthView: View {
                     .themedTitle()
                 Spacer()
                 PrimaryTextField("Email", text: $email)
+                    .axis(.horizontal)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
                     .autocapitalization(.none)
                     .themedBody()
+                    .focused($focusedField, equals: .email)
+                    .submitLabel(.next)
+                    .onSubmit {
+                        focusedField = .password
+                    }
                     .accessibilityLabel("Email address")
                     .accessibilityHint("Enter your email address to sign in")
                     .onChange(of: email) { _, _ in
@@ -64,6 +92,11 @@ struct AuthView: View {
                 PrimarySecureField("Password", text: $password)
                     .textFieldStyle(.roundedBorder)
                     .themedBody()
+                    .focused($focusedField, equals: .password)
+                    .submitLabel(.go)
+                    .onSubmit {
+                        signInAction()
+                    }
                     .accessibilityLabel("Password")
                     .accessibilityHint("Enter your password")
                     .onChange(of: password) { _, _ in
@@ -72,19 +105,7 @@ struct AuthView: View {
                 
                 VStack(spacing: 20) {
                     Button("Sign in") {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        guard validateForm() else { return }
-                        Task {
-                            isLoading = true
-                            currentAction = "Signing in"
-                            do {
-                                try await authManager.signIn(email: email, password: password)
-                            } catch {
-                                errorHandler.handle(error)
-                            }
-                            isLoading = false
-                            currentAction = nil
-                        }
+                        signInAction()
                     }
                     .frame(minWidth: 230, minHeight: 38)
                     .background(Color.theme.accent)

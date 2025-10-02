@@ -2,7 +2,27 @@
 
 This directory contains wrapper scripts for fastlane lanes that automatically configure the environment and save output to log files.
 
-## Usage
+## ✨ New: Unified Script
+
+**We now have a single unified script that replaces all 13+ individual scripts:**
+
+```bash
+./scripts/fl <lane> [environment]
+```
+
+**Examples:**
+```bash
+./scripts/fl validate_metadata          # Uses default env (prod)
+./scripts/fl screenshots dev            # Specify environment
+./scripts/fl test                       # Uses default env (dev)
+./scripts/fl beta                       # Deployment (always prod)
+```
+
+**See `CONSOLIDATION.md` for complete migration guide and all features.**
+
+---
+
+## Usage (Individual Scripts - Legacy)
 
 Each script accepts an environment argument and saves output to a timestamped log file in `logs/fastlane/`:
 
@@ -31,6 +51,10 @@ Each script accepts an environment argument and saves output to a timestamped lo
 
 ### Complete Preparation
 - **`fl_prepare_app_store.sh`** - Complete App Store preparation (screenshots + metadata)
+
+### TestFlight & App Store
+- **`fl_beta.sh`** - Build and upload to TestFlight (internal testing)
+- **`fl_release.sh`** - Build for App Store submission with metadata
 
 ### Testing
 - **`fl_test.sh`** - Run tests on a single device

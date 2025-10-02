@@ -45,7 +45,6 @@ public struct PrimaryTextField: View {
     public var body: some View {
         TextField(placeholder, text: $text, axis: axis)
             .textFieldStyle(.plain)
-            .lineLimit(lineLimit)
             .padding(padding)
             .frame(minHeight: minHeight)
             .background(
@@ -78,28 +77,28 @@ public struct PrimaryTextField: View {
 // MARK: - Configuration Methods
 extension PrimaryTextField {
     /// Sets the text input axis
-    func axis(_ axis: Axis) -> PrimaryTextField {
+    public func axis(_ axis: Axis) -> PrimaryTextField {
         var copy = self
         copy.axis = axis
         return copy
     }
     
     /// Sets the line limit range
-    func lineLimit(_ range: ClosedRange<Int>) -> PrimaryTextField {
+    public func lineLimit(_ range: ClosedRange<Int>) -> PrimaryTextField {
         var copy = self
         copy.lineLimit = range
         return copy
     }
     
     /// Sets the minimum height
-    func minHeight(_ height: CGFloat) -> PrimaryTextField {
+    public func minHeight(_ height: CGFloat) -> PrimaryTextField {
         var copy = self
         copy.minHeight = height
         return copy
     }
     
     /// Sets the internal padding
-    func padding(_ padding: CGFloat) -> PrimaryTextField {
+    public func padding(_ padding: CGFloat) -> PrimaryTextField {
         var copy = self
         copy.padding = padding
         return copy
@@ -113,21 +112,21 @@ extension PrimaryTextField {
     }
     
     /// Sets the corner style
-    func cornerStyle(_ style: RoundedCornerStyle) -> PrimaryTextField {
+    public func cornerStyle(_ style: RoundedCornerStyle) -> PrimaryTextField {
         var copy = self
         copy.cornerStyle = style
         return copy
     }
     
     /// Sets the background color
-    func backgroundColor(_ color: Color) -> PrimaryTextField {
+    public func backgroundColor(_ color: Color) -> PrimaryTextField {
         var copy = self
         copy.backgroundColor = color
         return copy
     }
     
     /// Sets the border colors for focused and unfocused states
-    func borderColors(focused: Color, unfocused: Color) -> PrimaryTextField {
+    public func borderColors(focused: Color, unfocused: Color) -> PrimaryTextField {
         var copy = self
         copy.focusedBorderColor = focused
         copy.unfocusedBorderColor = unfocused
@@ -135,7 +134,7 @@ extension PrimaryTextField {
     }
     
     /// Sets the border widths for focused and unfocused states
-    func borderWidths(focused: CGFloat, unfocused: CGFloat) -> PrimaryTextField {
+    public func borderWidths(focused: CGFloat, unfocused: CGFloat) -> PrimaryTextField {
         var copy = self
         copy.focusedBorderWidth = focused
         copy.unfocusedBorderWidth = unfocused
@@ -143,7 +142,7 @@ extension PrimaryTextField {
     }
     
     /// Sets the animation duration for focus state changes
-    func animationDuration(_ duration: Double) -> PrimaryTextField {
+    public func animationDuration(_ duration: Double) -> PrimaryTextField {
         var copy = self
         copy.animationDuration = duration
         return copy

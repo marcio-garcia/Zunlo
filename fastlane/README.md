@@ -143,6 +143,38 @@ Upload metadata for development
 
 Generate screenshots for specific environment
 
+### ios setup_match
+
+```sh
+[bundle exec] fastlane ios setup_match
+```
+
+Setup Match - Generate certificates and provisioning profiles
+
+### ios beta
+
+```sh
+[bundle exec] fastlane ios beta
+```
+
+Build and upload to TestFlight
+
+### ios beta_external
+
+```sh
+[bundle exec] fastlane ios beta_external
+```
+
+Build and upload to TestFlight with external testing
+
+### ios release
+
+```sh
+[bundle exec] fastlane ios release
+```
+
+Build for App Store submission
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
