@@ -161,6 +161,12 @@ public struct UserTask: Identifiable, Codable, Hashable {
 }
 
 extension UserTask: SchedulableReminderItem {
+    var bodyDescription: String? {
+        return dueDate?.formattedDate(dateFormat: .time,
+                                      calendar: Calendar.appDefault,
+                                      timeZone: Calendar.appDefault.timeZone)
+    }
+    
     var dueDateForReminder: Date? { dueDate }
 }
 

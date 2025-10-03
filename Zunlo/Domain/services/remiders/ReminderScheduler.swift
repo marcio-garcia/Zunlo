@@ -12,6 +12,7 @@ protocol SchedulableReminderItem {
     var id: UUID { get }
     var title: String { get }
     var dueDateForReminder: Date? { get } // abstract due/reminder time
+    var bodyDescription: String? { get }
     var reminderTriggers: [ReminderTrigger]? { get }
 }
 
@@ -67,8 +68,8 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
 
         for (index, trigger) in triggers.enumerated() {
             let content = UNMutableNotificationContent()
-            content.title = "Reminder"
-            content.body = trigger.message ?? item.title
+            content.title = item.title
+            content.body = trigger.message ?? item.bodyDescription ?? ""
             content.sound = .default
             content.userInfo = ["id": item.id.uuidString]
 

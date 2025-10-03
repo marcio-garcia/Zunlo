@@ -26,6 +26,12 @@ public struct Event: Identifiable, Codable, Hashable {
 }
 
 extension Event: SchedulableReminderItem {
+    var bodyDescription: String? {
+        let startTime = startDate.formattedDate(dateFormat: .time, calendar: Calendar.appDefault, timeZone: Calendar.appDefault.timeZone)
+        let endTime = endDate.formattedDate(dateFormat: .time, calendar: Calendar.appDefault, timeZone: Calendar.appDefault.timeZone)
+        return "\(startTime) - \(endTime)"
+    }
+    
     var dueDateForReminder: Date? { startDate } // or endDate?
 }
 
