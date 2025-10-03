@@ -178,7 +178,7 @@ extension CalendarScheduleViewModel {
             return
         }
 
-        Task { [weak self] in
+        Task(priority: .utility) { [weak self] in
             guard let self = self else { return }
 
             do {

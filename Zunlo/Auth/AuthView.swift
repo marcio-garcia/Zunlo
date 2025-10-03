@@ -53,7 +53,7 @@ struct AuthView: View {
     private func signInAction() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         guard validateForm() else { return }
-        Task {
+        Task(priority: .userInitiated) {
             isLoading = true
             currentAction = "Signing in"
             do {
@@ -118,7 +118,7 @@ struct AuthView: View {
                     Button("Sign in with Magic Link") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         guard validateForm(requirePassword: false) else { return }
-                        Task {
+                        Task(priority: .userInitiated) {
                             isLoading = true
                             currentAction = "Sending magic link"
                             do {
@@ -142,7 +142,7 @@ struct AuthView: View {
 
                     Button("Sign in with Google") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        Task {
+                        Task(priority: .userInitiated) {
                             isLoading = true
                             currentAction = "Signing in"
                             do {
@@ -184,7 +184,7 @@ struct AuthView: View {
                     Button("Create account") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         guard validateForm() else { return }
-                        Task {
+                        Task(priority: .userInitiated) {
                             isLoading = true
                             currentAction = "Creating account"
                             do {

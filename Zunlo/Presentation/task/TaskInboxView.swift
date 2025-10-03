@@ -127,7 +127,7 @@ struct TaskInboxView: View {
         .defaultBackground()
         .toolbar(.hidden, for: .navigationBar)
         .navigationTitle("")
-        .task {
+        .task(priority: .userInitiated) {
             await viewModel.fetchTasks()
         }
     }

@@ -41,7 +41,7 @@ struct RootView: View {
         .defaultBackground()
         .animation(.easeInOut, value: authManager.state)
         .transition(.opacity)
-        .task {
+        .task(priority: .userInitiated) {
             await authManager.bootstrap(hasCompletedOnboarding: appSettings.hasCompletedOnboarding)
             locationService.checkStatus()
             upgradeReminderManager.recordSessionIfNeeded()

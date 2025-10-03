@@ -68,7 +68,7 @@ struct ChatView: View {
                     )
                 }
             })
-        .task { await viewModel.loadHistory() }
+        .task(priority: .userInitiated) { await viewModel.loadHistory() }
         .onTapGesture {
             focused = false
         }

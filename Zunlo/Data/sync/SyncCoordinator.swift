@@ -81,8 +81,8 @@ final class SyncCoordinator {
         self.rules = RecurrenceRuleSyncEngine(db: db, api: syncApi, center: center)
         self.overrides = EventOverrideSyncEngine(db: db, api: syncApi, center: center)
         self.userTasks = UserTaskSyncEngine(db: db, api: syncApi, center: center)
-        
-        Task {
+
+        Task(priority: .utility) {
             await supabase.auth.onAuthStateChange { event, session in
                 print("Auth event:", event)
                 if let token = session?.accessToken {

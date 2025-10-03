@@ -82,7 +82,7 @@ final class AuthManager: ObservableObject, AuthProviding {
             object: nil,
             queue: .main
         ) { _ in
-            Task {
+            Task(priority: .userInitiated) {
                 await self.unauthenticated()
             }
         }
@@ -92,7 +92,7 @@ final class AuthManager: ObservableObject, AuthProviding {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            Task { await self?.handleNotification(notification) }
+            Task(priority: .userInitiated) { await self?.handleNotification(notification) }
         }
     }
     
@@ -177,7 +177,7 @@ final class AuthManager: ObservableObject, AuthProviding {
     
     private func handleNotification(_ notification: Notification) {
         if let url = notification.object as? URL {
-            Task {
+            Task(priority: .userInitiated) {
                 do {
                     try await self.createSession(with: url)
                 } catch {

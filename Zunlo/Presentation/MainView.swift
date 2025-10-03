@@ -33,7 +33,7 @@ struct MainView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .defaultBackground()
 #if DEBUG
-                .task {
+                .task(priority: .utility) {
                     await viewModel.generateDemoData()
                 }
 #endif
@@ -74,7 +74,7 @@ struct MainView: View {
                 .defaultBackground()
             }
         }
-        .task {
+        .task(priority: .userInitiated) {
             await MainActor.run { viewModel.state = .loaded }
         }
     }

@@ -100,7 +100,7 @@ final class AddEditTaskViewModel: ObservableObject, Identifiable {
             tags = task.tags
             reminderTriggers = task.reminderTriggers ?? []
         }
-        Task {
+        Task(priority: .userInitiated) {
             await fetchAllUniqueTags()
         }
     }

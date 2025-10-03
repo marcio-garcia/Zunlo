@@ -77,8 +77,8 @@ class UserTaskInboxViewModel: ObservableObject {
     func toggleCompletion(for task: UserTask) {
         var updated = task
         updated.isCompleted.toggle()
-        
-        Task {
+
+        Task(priority: .userInitiated) {
             let taskEditor = TaskEditor(repo: taskRepo)
             try? await taskEditor.upsert(input: makeInput(task: updated))
             await fetchTasks()

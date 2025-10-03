@@ -87,14 +87,14 @@ struct TodayView: View {
                                     .shimmer(active: viewModel.todayEvents.isEmpty)
                                 
                                 tasksTodaySection
-//                                    .redacted(reason: viewModel.todayTasks.isEmpty ? .placeholder : [])
-//                                    .shimmer(active: viewModel.todayTasks.isEmpty)
+                                    .redacted(reason: viewModel.todayTasks.isEmpty ? .placeholder : [])
+                                    .shimmer(active: viewModel.todayTasks.isEmpty)
                             }
                             .padding(.top, 88)
                             .padding()
                         }
                         .refreshable {
-                            Task {
+                            Task(priority: .userInitiated) {
                                 try? await fetchInfo()
                                 await viewModel.syncDB()
                             }
@@ -245,7 +245,7 @@ struct TodayView: View {
                 setFirstLaunchDate(Date())
             }
         }
-        .task {
+        .task(priority: .userInitiated) {
             factory = try? await getNavViewFactory()
             try? await fetchInfo()
             await viewModel.syncDB()

@@ -109,7 +109,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
     func toggleTaskCompletion(for task: UserTask) {
         var updated = task
         updated.isCompleted.toggle()
-        Task {
+        Task(priority: .userInitiated) {
             let taskEditor = TaskEditor(repo: taskRepo)
             try? await taskEditor.upsert(input: makeInput(task: updated))
             await fetchData()
@@ -131,7 +131,7 @@ final class TodayViewModel: ObservableObject, @unchecked Sendable {
             var weatherProvider = appState.weatherProvider
             weatherProvider?.location = locationService.location()
             if let info = try await weatherProvider?.fetchWeather(for: Date()) {
-                DispatchQueue.main.async {
+                await MainActor.run {
                     self.weather = info
                     self.locationService.stop()
                 }
