@@ -102,6 +102,19 @@ extension EventOccurrence {
         self.version = occ.version
     }
 }
+
+extension EventOccurrence: SchedulableReminderItem {
+    var bodyDescription: String? {
+        let startTime = startDate.formattedDate(dateFormat: .time, calendar: Calendar.appDefault, timeZone: Calendar.appDefault.timeZone)
+        let endTime = endDate.formattedDate(dateFormat: .time, calendar: Calendar.appDefault, timeZone: Calendar.appDefault.timeZone)
+        return "\(startTime) - \(endTime)"
+    }
+
+    var dueDateForReminder: Date? { startDate }
+
+    var notificationCategoryIdentifier: String { "EVENT_REMINDER" }
+}
+
 //
 //extension EventOccurrence: EventType {
 //    public var recurrenceType: String? {

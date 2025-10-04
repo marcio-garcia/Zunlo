@@ -56,8 +56,8 @@ final class UserTaskRepository: TaskStore {
     func upsert(_ task: UserTask) async throws {
         guard try await auth.isAuthorized() else { return }
         try await localStore.upsert(task)
-        reminderScheduler.cancelReminders(for: task)
-        reminderScheduler.scheduleReminders(for: task)
+        await reminderScheduler.cancelReminders(for: task)
+        try? await reminderScheduler.scheduleReminders(for: task)
     }
     
     func update(
@@ -91,14 +91,14 @@ final class UserTaskRepository: TaskStore {
     func delete(_ task: UserTask) async throws {
         guard try await auth.isAuthorized(), let userId = await auth.userId else { return }
         try await localStore.delete(id: task.id, userId: userId)
-        reminderScheduler.cancelReminders(for: task)
+        await reminderScheduler.cancelReminders(for: task)
     }
-    
+
     func delete(taskId: UUID) async throws {
         guard try await auth.isAuthorized(), let userId = await auth.userId else { return }
         if let task = try await localStore.fetch(id: taskId) {
             if let reminderTriggers = UserTask(local: task).reminderTriggers, !reminderTriggers.isEmpty {
-                reminderScheduler.cancelReminders(itemId: taskId, reminderTriggers: reminderTriggers)
+                await reminderScheduler.cancelReminders(itemId: taskId, reminderTriggers: reminderTriggers, itemTitle: task.title)
             }
             try await localStore.delete(id: taskId, userId: userId)
         }

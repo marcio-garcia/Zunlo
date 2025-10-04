@@ -31,8 +31,10 @@ extension Event: SchedulableReminderItem {
         let endTime = endDate.formattedDate(dateFormat: .time, calendar: Calendar.appDefault, timeZone: Calendar.appDefault.timeZone)
         return "\(startTime) - \(endTime)"
     }
-    
-    var dueDateForReminder: Date? { startDate } // or endDate?
+
+    var dueDateForReminder: Date? { startDate }
+
+    var notificationCategoryIdentifier: String { "EVENT_REMINDER" }
 }
 
 extension Event {

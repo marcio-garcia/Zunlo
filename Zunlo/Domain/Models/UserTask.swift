@@ -166,8 +166,10 @@ extension UserTask: SchedulableReminderItem {
                                       calendar: Calendar.appDefault,
                                       timeZone: Calendar.appDefault.timeZone)
     }
-    
+
     var dueDateForReminder: Date? { dueDate }
+
+    var notificationCategoryIdentifier: String { "TASK_REMINDER" }
 }
 
 extension UserTask: TaskType {}

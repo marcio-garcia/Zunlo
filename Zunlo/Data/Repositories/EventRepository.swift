@@ -80,8 +80,8 @@ final public class EventRepository: EventStore {
     public func upsert(_ event: Event) async throws {
         guard try await auth.isAuthorized() else { return }
         try await eventLocalStore.upsert(EventLocal(domain: event))
-        reminderScheduler.cancelReminders(for: event)
-        reminderScheduler.scheduleReminders(for: event)
+        await reminderScheduler.cancelReminders(for: event)
+        try? await reminderScheduler.scheduleReminders(for: event)
     }
     
     func upsert(event: Event, rule: RecurrenceRule) async throws {
@@ -105,13 +105,13 @@ final public class EventRepository: EventStore {
         guard try await auth.isAuthorized() else { return }
         if let event = try await eventLocalStore.fetch(id: id) {
             if let reminderTriggers = Event(local: event).reminderTriggers, !reminderTriggers.isEmpty {
-                reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminderTriggers)
+                await reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminderTriggers, itemTitle: event.title)
             }
         }
         // TODO: Add reminders to overrides
 //        if let override = try await eventOverrideLocalStore.fetch(for: id) {
 //            if let reminderTriggers = Event(local: event).reminderTriggers, !reminderTriggers.isEmpty {
-//                reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminderTriggers)
+//                await reminderScheduler.cancelReminders(itemId: id, reminderTriggers: reminderTriggers, itemTitle: event.title)
 //            }
 //        }
         try await eventLocalStore.delete(id: id)
