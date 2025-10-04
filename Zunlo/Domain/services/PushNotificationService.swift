@@ -44,8 +44,6 @@ final class PushNotificationService: NSObject {
     }
     
     func start() {
-        UNUserNotificationCenter.current().delegate = self
-        
         firebaseService.onDidReceiveRegistrationToken = { [weak self] token in
             Task {
                 guard let self else { return }
@@ -139,25 +137,149 @@ final class PushNotificationService: NSObject {
         return authManager.user?.id
     }
 }
-
-extension PushNotificationService: UNUserNotificationCenterDelegate {
-    // to respond to incoming notifications while app is in foreground
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification,
-        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-    ) {
-        completionHandler([.banner, .sound, .badge])
-    }
-
-    // Handle tapping notification
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse,
-        withCompletionHandler completionHandler: @escaping () -> Void
-    ) {
-        let userInfo = response.notification.request.content.userInfo
-        print("payload: \(userInfo)")
-        completionHandler()
-    }
-}
+//
+//Architecture Overview
+//
+//┌────────────────────────────────────────────────────────────────┐
+//│                        iOS App Launch                           │
+//└────────────────────────────────────────────────────────────────┘
+//                              │
+//                              ▼
+//┌────────────────────────────────────────────────────────────────┐
+//│                     AppDelegate.swift                           │
+//│                                                                  │
+//│  • Registers notification categories (TASK_REMINDER, EVENT)    │
+//│  • Sets UNUserNotificationCenterDelegate                       │
+//│  • Initializes PushNotificationService                         │
+//│  • Initializes NotificationActionHandler                       │
+//└────────────────────────────────────────────────────────────────┘
+//                              │
+//                 ┌────────────┴────────────┐
+//                 ▼                         ▼
+//┌──────────────────────────┐  ┌──────────────────────────┐
+//│  Local Notifications      │  │ Remote Notifications      │
+//│  (ReminderScheduler)     │  │ (PushNotificationService)│
+//│                          │  │                          │
+//│ • Scheduled reminders    │  │ • Server-triggered push  │
+//│ • Uses TASK_REMINDER     │  │ • Uses TASK_REMINDER     │
+//│ • Uses EVENT_REMINDER    │  │ • Uses EVENT_REMINDER    │
+//└──────────────────────────┘  └──────────────────────────┘
+//                 │                         │
+//                 └────────────┬────────────┘
+//                              ▼
+//          ┌─────────────────────────────────────┐
+//          │   Same Categories & Actions          │
+//          │                                      │
+//          │   TASK_REMINDER:                    │
+//          │   • ✓ Mark Complete                 │
+//          │   • ⏰ Snooze 1 hour                │
+//          │                                      │
+//          │   EVENT_REMINDER:                   │
+//          │   • 📅 View Details                 │
+//          └─────────────────────────────────────┘
+//                              │
+//                              ▼
+//          ┌─────────────────────────────────────┐
+//          │  NotificationActionHandler          │
+//          │                                      │
+//          │  Handles actions from BOTH:         │
+//          │  • Local reminders                  │
+//          │  • Remote push                      │
+//          └─────────────────────────────────────┘
+//
+//---
+//How Both Systems Work Together
+//
+//1. Shared Categories
+//
+//Both local and remote notifications use the same category identifiers:
+//
+//// Registered once, used by both systems
+//enum NotificationCategory: String {
+//    case taskReminder = "TASK_REMINDER"
+//    case eventReminder = "EVENT_REMINDER"
+//}
+//
+//Local notification:
+//content.categoryIdentifier = NotificationCategory.taskReminder.rawValue
+//
+//Remote notification (from server):
+//{
+//  "aps": {
+//    "category": "TASK_REMINDER"  // ← Same identifier!
+//  }
+//}
+//
+//---
+//2. Unified Action Handling
+//
+//The NotificationActionHandler processes actions regardless of source:
+//
+//func userNotificationCenter(
+//    _ center: UNUserNotificationCenter,
+//    didReceive response: UNNotificationResponse,
+//    withCompletionHandler completionHandler: @escaping () -> Void
+//) {
+//    // Works for BOTH local and remote
+//    notificationActionHandler?.handleNotificationAction(
+//        response: response,
+//        completionHandler: completionHandler
+//    )
+//}
+//
+//---
+//Real-World Scenarios
+//
+//Scenario 1: Local Reminder
+//
+//User creates task "Buy milk" with reminder at 3pm
+//    ↓
+//ReminderScheduler schedules local notification
+//    ↓
+//3pm - Local notification fires
+//    ↓
+//User sees: [✓ Mark Complete] [⏰ Snooze]
+//    ↓
+//User taps "✓ Mark Complete"
+//    ↓
+//NotificationActionHandler → marks task complete
+//    ↓
+//Feedback: "✓ Task Completed - Buy milk"
+//
+//---
+//Scenario 2: Remote Push Notification
+//
+//Server detects task "Submit report" is due soon
+//    ↓
+//Server sends FCM push with category: "TASK_REMINDER"
+//    ↓
+//PushNotificationService receives notification
+//    ↓
+//User sees: [✓ Mark Complete] [⏰ Snooze]  ← Same actions!
+//    ↓
+//User taps "⏰ Snooze"
+//    ↓
+//NotificationActionHandler → snoozes task (+1 hour)
+//    ↓
+//Feedback: "⏰ Task Snoozed - Reminder at 4:00 PM"
+//
+//---
+//Scenario 3: Mixed Notifications
+//
+//User has:
+//- Local reminder for "Team Meeting" at 2pm (scheduled on device)
+//- Remote push for "Call client" (triggered by server)
+//
+//Both show up with same actions:
+//┌─────────────────────────────────┐
+//│ 📅 Team Meeting (local)         │
+//│ 2:00 PM - 3:00 PM               │
+//│ [📅 View Details]               │
+//└─────────────────────────────────┘
+//
+//┌─────────────────────────────────┐
+//│ 📋 Call client (remote)         │
+//│ Due at 2:30 PM                  │
+//│ [✓ Complete] [⏰ Snooze]        │
+//└─────────────────────────────────┘
+//

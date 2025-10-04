@@ -112,7 +112,7 @@ extension EventOccurrence: SchedulableReminderItem {
 
     var dueDateForReminder: Date? { startDate }
 
-    var notificationCategoryIdentifier: String { "EVENT_REMINDER" }
+    var notificationCategoryIdentifier: String { NotificationCategory.eventReminder.rawValue }
 }
 
 //

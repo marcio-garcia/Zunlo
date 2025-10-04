@@ -169,7 +169,7 @@ extension UserTask: SchedulableReminderItem {
 
     var dueDateForReminder: Date? { dueDate }
 
-    var notificationCategoryIdentifier: String { "TASK_REMINDER" }
+    var notificationCategoryIdentifier: String { NotificationCategory.taskReminder.rawValue }
 }
 
 extension UserTask: TaskType {}

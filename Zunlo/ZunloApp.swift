@@ -79,23 +79,29 @@ struct ZunloApp: App {
         )
         
         let chatRepo: ChatRepository = UIApplication.shared.isRunningUITests ? MockChatRepository() : DefaultChatRepository(auth: authManager, store: RealmChatLocalStore(db: localDB))
-        
+
         let eventSuggestionEngine = DefaultEventSuggestionEngine(
             auth: authManager,
             calendar: Calendar.appDefault,
             eventRepo: eventRepo,
             policy: SuggestionPolicyProvider().policy
         )
-        
+
         let taskSuggestionEngine = DefaultTaskSuggestionEngine(
             calendar: Calendar.appDefault,
             taskFetcher: UserTaskFetcher(repo: taskRepo)
         )
-        
+
         let weatherProvider: WeatherService = UIApplication.shared.isRunningUITests ? MockWeatherProvider() : WeatherProvider.shared
-        
+
+        // Create notification action handler
+        let notificationActionHandler = NotificationActionHandler(
+            taskRepository: taskRepo,
+            eventRepository: eventRepo
+        )
+
         self.appState = AppState.shared
-        
+
         self.appState.authManager = authManager
         self.appState.localDB = localDB
         self.appState.locationService = locationService
@@ -108,10 +114,11 @@ struct ZunloApp: App {
         self.appState.taskSuggestionEngine = taskSuggestionEngine
         self.appState.supabaseClient = supabaseClient
         self.appState.weatherProvider = weatherProvider
-        
+
         firebase.configure()
         pushService.start()
         appDelegate.pushNotificationService = pushService
+        appDelegate.notificationActionHandler = notificationActionHandler
     }
 
     var body: some Scene {
