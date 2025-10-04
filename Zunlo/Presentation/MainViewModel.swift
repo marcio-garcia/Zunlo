@@ -32,7 +32,7 @@ final class MainViewModel: ObservableObject {
         
         guard let localDB = appState.localDB else { return }
                 
-        let sync = SyncCoordinator(db: localDB, supabase: appState.supabaseClient!)
+        let sync = SyncCoordinator(db: localDB, auth: appState.authManager!, supabase: appState.supabaseClient!)
         
         do {
             let _ = try await sync.syncAllOnLaunch()

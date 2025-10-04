@@ -50,6 +50,7 @@ struct SyncSummary {
 
 final class SyncCoordinator {
     private let db: DatabaseActor
+    private let auth: AuthProviding
     private let supabase: SupabaseClient
     
     private let events: EventSyncEngine
@@ -65,8 +66,9 @@ final class SyncCoordinator {
     var overridesPulled: Int = 0
     var taskReport: SyncReport = .zero
     
-    init(db: DatabaseActor, supabase: SupabaseClient) {
+    init(db: DatabaseActor, auth: AuthProviding, supabase: SupabaseClient) {
         self.db = db
+        self.auth = auth
         self.supabase = supabase
         let syncApi = SupabaseSyncAPI(client: supabase)
         
@@ -126,100 +128,19 @@ final class SyncCoordinator {
             taskReport: taskReport
         )
 
+        let reminderScheduler = ReminderScheduler()
+        
         // Reschedule reminders if:
         // 1. Data was pulled from server (could be reinstall/new device), OR
         // 2. First sync since app launch (detected via UserDefaults)
-        let shouldRescheduleReminders = summary.totalRowsAffected > 0 || !hasScheduledRemindersThisSession()
+        let shouldRescheduleReminders = summary.totalRowsAffected > 0 || !reminderScheduler.hasScheduledRemindersThisSession()
 
         if shouldRescheduleReminders {
             log("Sync affected \(summary.totalRowsAffected) rows, rescheduling reminders...", level: .info, category: "Sync")
-            await rescheduleRemindersAfterSync(db: db)
-            markRemindersScheduledThisSession()
+            try await reminderScheduler.rescheduleRemindersAfterSync(db: db, auth: auth)
+            reminderScheduler.markRemindersScheduledThisSession()
         }
 
         return summary
-    }
-
-    /// Reschedule all future reminders after sync
-    /// Called when data is pulled from server (reinstall, new device, etc.)
-    private func rescheduleRemindersAfterSync(db: DatabaseActor) async {
-        log("Rescheduling reminders after sync", level: .info, category: "Sync")
-
-        let now = Date()
-
-        // Fetch all tasks and events with future due dates
-        do {
-            // Fetch tasks
-            let allTasks = try await db.fetchAllUserTasks(userId: try await supabase.auth.session.user.id)
-            let futureTasks = allTasks.filter {
-                guard let dueDate = $0.dueDate else { return false }
-                return dueDate > now && $0.reminderTriggers?.isEmpty == false
-            }
-
-            // Fetch events
-            let allEvents = try await db.fetchOccurrences(userId: try await supabase.auth.session.user.id)
-            let futureEvents = allEvents
-                .map { EventOccurrence(occ: $0) }
-                .filter {
-                    $0.startDate > now && $0.reminderTriggers?.isEmpty == false
-                }
-
-            // Batch reschedule
-            let taskScheduler = ReminderScheduler<UserTask>()
-            let eventScheduler = ReminderScheduler<EventOccurrence>()
-            
-            // Clear ALL pending reminders first for clean slate
-            // This is more efficient than iOS replacing each one individually
-//            await clearAllReminders()
-            await eventScheduler.clearAllReminders()
-
-            try? await taskScheduler.scheduleReminders(for: futureTasks)
-            try? await eventScheduler.scheduleReminders(for: futureEvents)
-
-            log("Rescheduled \(futureTasks.count) task reminders and \(futureEvents.count) event reminders",
-                level: .info, category: "Sync")
-        } catch {
-            log("Failed to reschedule reminders: \(error.localizedDescription)", level: .error, category: "Sync")
-        }
-    }
-
-//    /// Remove all pending notifications for this app
-//    /// Used before full reschedule to ensure clean slate
-//    private func clearAllReminders() async {
-//        let center = UNUserNotificationCenter.current()
-//        let pending = await center.pendingNotificationRequests()
-//
-//        log("Clearing \(pending.count) pending notifications before reschedule", level: .debug, category: "Sync")
-//
-//        await center.removeAllPendingNotificationRequests()
-//    }
-
-    // MARK: - Reminder Scheduling Tracking
-
-    private static let lastReminderScheduleKey = "sync.reminders.last.schedule.date"
-
-    private func hasScheduledRemindersThisSession() -> Bool {
-        // Check if last schedule was recent (within 12 hours)
-        // This prevents rescheduling on every sync while still catching reinstalls
-        guard let lastSchedule = UserDefaults.standard.object(forKey: Self.lastReminderScheduleKey) as? Date else {
-            log("No previous reminder schedule found, will reschedule", level: .debug, category: "Sync")
-            return false
-        }
-
-        let hoursSinceLastSchedule = Date().timeIntervalSince(lastSchedule) / 3600
-
-        if hoursSinceLastSchedule < 12 {
-            log("Reminders were scheduled \(Int(hoursSinceLastSchedule)) hours ago, skipping reschedule",
-                level: .debug, category: "Sync")
-            return true
-        } else {
-            log("Last schedule was \(Int(hoursSinceLastSchedule)) hours ago (>12h), will reschedule",
-                level: .debug, category: "Sync")
-            return false
-        }
-    }
-
-    private func markRemindersScheduledThisSession() {
-        UserDefaults.standard.set(Date(), forKey: Self.lastReminderScheduleKey)
     }
 }

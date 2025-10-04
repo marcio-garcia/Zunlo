@@ -59,11 +59,11 @@ public struct ReminderTrigger: Equatable, Hashable, Codable {
     }
 }
 
-final class ReminderScheduler<T: SchedulableReminderItem> {
+final class ReminderScheduler {
 
     init() {}
 
-    func scheduleReminders(for item: T) async throws {
+    func scheduleReminders(for item: SchedulableReminderItem) async throws {
         guard let dueDate = item.dueDateForReminder,
               let triggers = item.reminderTriggers, !triggers.isEmpty else {
             log("No reminders to schedule for \(item.title)", level: .debug, category: "Reminders")
@@ -115,7 +115,7 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
     }
 
     /// Schedule reminders for multiple items in batch
-    func scheduleReminders(for items: [T]) async throws {
+    func scheduleReminders(for items: [SchedulableReminderItem]) async throws {
         log("Batch scheduling reminders for \(items.count) item(s)", level: .info, category: "Reminders")
 
         var successCount = 0
@@ -134,18 +134,7 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
         log("Batch scheduling completed: \(successCount) succeeded, \(failureCount) failed", level: .info, category: "Reminders")
     }
 
-    /// Remove all pending notifications for this app
-    /// Used before full reschedule to ensure clean slate
-    func clearAllReminders() async {
-        let center = UNUserNotificationCenter.current()
-        let pending = await center.pendingNotificationRequests()
-
-        log("Clearing \(pending.count) pending notifications before reschedule", level: .debug, category: "Sync")
-
-        center.removeAllPendingNotificationRequests()
-    }
-    
-    func cancelReminders(for item: T) async {
+    func cancelReminders(for item: SchedulableReminderItem) async {
         guard let triggers = item.reminderTriggers, !triggers.isEmpty else {
             log("No reminders to cancel for \(item.title)", level: .debug, category: "Reminders")
             return
@@ -166,7 +155,7 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
     }
 
     /// Cancel reminders for multiple items in batch
-    func cancelReminders(for items: [T]) async {
+    func cancelReminders(for items: [SchedulableReminderItem]) async {
         log("Batch cancelling reminders for \(items.count) item(s)", level: .info, category: "Reminders")
 
         for item in items {
@@ -178,5 +167,92 @@ final class ReminderScheduler<T: SchedulableReminderItem> {
 
     private func makeNotificationId(_ id: UUID, _ index: Int) -> String {
         return "reminder_\(id.uuidString)_\(index)"
+    }
+}
+
+// MARK: Rescheduling
+
+extension ReminderScheduler {
+    
+    private static let lastReminderScheduleKey = "sync.reminders.last.schedule.date"
+    
+    /// Remove all pending notifications for this app
+    /// Used before full reschedule to ensure clean slate
+    func clearAllReminders() async {
+        let center = UNUserNotificationCenter.current()
+        let pending = await center.pendingNotificationRequests()
+
+        log("Clearing \(pending.count) pending notifications before reschedule", level: .debug, category: "Sync")
+
+        center.removeAllPendingNotificationRequests()
+    }
+    
+    /// Reschedule all future reminders after sync
+    /// Called when data is pulled from server (reinstall, new device, etc.)
+    func rescheduleRemindersAfterSync(db: DatabaseActor, auth: AuthProviding) async throws {
+        log("Rescheduling reminders after sync", level: .info, category: "Sync")
+
+        guard try await auth.isAuthorized(), let userId = await auth.userId else {
+            return
+        }
+        
+        let now = Date()
+
+        // Fetch all tasks and events with future due dates
+        do {
+            // Fetch tasks
+            let allTasks = try await db.fetchAllUserTasks(userId: userId)
+            let futureTasks = allTasks.filter {
+                guard let dueDate = $0.dueDate else { return false }
+                return dueDate > now && $0.reminderTriggers?.isEmpty == false
+            }
+
+            // Fetch events
+            let allEvents = try await db.fetchOccurrences(userId: userId)
+            let futureEvents = allEvents
+                .map { EventOccurrence(occ: $0) }
+                .filter {
+                    $0.startDate > now && $0.reminderTriggers?.isEmpty == false
+                }
+            
+            // Clear ALL pending reminders first for clean slate
+            // This is more efficient than iOS replacing each one individually
+            await clearAllReminders()
+
+            try? await scheduleReminders(for: futureTasks)
+            try? await scheduleReminders(for: futureEvents)
+
+            log("Rescheduled \(futureTasks.count) task reminders and \(futureEvents.count) event reminders",
+                level: .info, category: "Sync")
+        } catch {
+            log("Failed to reschedule reminders: \(error.localizedDescription)", level: .error, category: "Sync")
+        }
+    }
+
+    // MARK: - Reminder Scheduling Tracking
+
+    func hasScheduledRemindersThisSession() -> Bool {
+        // Check if last schedule was recent (within 12 hours)
+        // This prevents rescheduling on every sync while still catching reinstalls
+        guard let lastSchedule = UserDefaults.standard.object(forKey: Self.lastReminderScheduleKey) as? Date else {
+            log("No previous reminder schedule found, will reschedule", level: .debug, category: "Sync")
+            return false
+        }
+
+        let hoursSinceLastSchedule = Date().timeIntervalSince(lastSchedule) / 3600
+
+        if hoursSinceLastSchedule < 12 {
+            log("Reminders were scheduled \(Int(hoursSinceLastSchedule)) hours ago, skipping reschedule",
+                level: .debug, category: "Sync")
+            return true
+        } else {
+            log("Last schedule was \(Int(hoursSinceLastSchedule)) hours ago (>12h), will reschedule",
+                level: .debug, category: "Sync")
+            return false
+        }
+    }
+
+    func markRemindersScheduledThisSession() {
+        UserDefaults.standard.set(Date(), forKey: Self.lastReminderScheduleKey)
     }
 }

@@ -202,7 +202,7 @@ extension TodayViewModel {
         
         await MainActor.run { self.isSyncingDB = true }
         
-        let sync = SyncCoordinator(db: localDB, supabase: appState.supabaseClient!)
+        let sync = SyncCoordinator(db: localDB, auth: appState.authManager!, supabase: appState.supabaseClient!)
         
         do {
             let report = try await sync.syncAllOnLaunch()

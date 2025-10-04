@@ -28,7 +28,7 @@ final public class EventRepository: EventStore {
     private let eventOverrideLocalStore: EventOverrideLocalStore
     private let auth: AuthProviding
     
-    private let reminderScheduler: ReminderScheduler<Event>
+    private let reminderScheduler: ReminderScheduler
     private let calendar = Calendar.appDefault
     
     init(

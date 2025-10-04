@@ -41,7 +41,7 @@ extension TaskStore {
 final class UserTaskRepository: TaskStore {
     private let auth: AuthProviding
     private let localStore: UserTaskLocalStore
-    private let reminderScheduler: ReminderScheduler<UserTask>
+    private let reminderScheduler: ReminderScheduler
     private let calendar = Calendar.appDefault
     
     init(
