@@ -14,17 +14,20 @@ struct SyncSummary {
     let overrideReport: SyncReport
     let ruleReport: SyncReport
     let taskReport: SyncReport
-    
+    let chatReport: ChatSyncReport
+
     internal init(
         eventReport: SyncReport = .zero,
         ruleReport: SyncReport = .zero,
         overrideReport: SyncReport = .zero,
-        taskReport: SyncReport = .zero
+        taskReport: SyncReport = .zero,
+        chatReport: ChatSyncReport = ChatSyncReport(pushed: 0, pulled: 0, failed: 0, abandoned: 0)
     ) {
         self.eventReport = eventReport
         self.ruleReport = ruleReport
         self.overrideReport = overrideReport
         self.taskReport = taskReport
+        self.chatReport = chatReport
     }
     
     var eventRowsAffected: Int {
@@ -42,9 +45,13 @@ struct SyncSummary {
     var taskRowsAffected: Int {
         taskReport.pulled + taskReport.pushed + taskReport.conflicts
     }
-    
+
+    var chatRowsAffected: Int {
+        chatReport.pushed + chatReport.pulled
+    }
+
     var totalRowsAffected: Int {
-        eventRowsAffected + overrideRowsAffected + ruleRowsAffected + taskRowsAffected
+        eventRowsAffected + overrideRowsAffected + ruleRowsAffected + taskRowsAffected + chatRowsAffected
     }
 }
 
@@ -52,11 +59,12 @@ final class SyncCoordinator {
     private let db: DatabaseActor
     private let auth: AuthProviding
     private let supabase: SupabaseClient
-    
+
     private let events: EventSyncEngine
     private let rules: RecurrenceRuleSyncEngine
     private let overrides: EventOverrideSyncEngine
     private let userTasks: UserTaskSyncEngine
+    private let chatMessages: ChatSyncEngine
     
     var eventsPushed: Int = 0
     var eventsPulled: Int = 0
@@ -66,12 +74,16 @@ final class SyncCoordinator {
     var overridesPulled: Int = 0
     var taskReport: SyncReport = .zero
     
-    init(db: DatabaseActor, auth: AuthProviding, supabase: SupabaseClient) {
+    init(
+        db: DatabaseActor,
+        syncApi: SyncAPI,
+        auth: AuthProviding,
+        supabase: SupabaseClient
+    ) {
         self.db = db
         self.auth = auth
         self.supabase = supabase
-        let syncApi = SupabaseSyncAPI(client: supabase)
-        
+
         let center = ConflictResolutionCenter(
             db: db,
             resolvers: [
@@ -81,11 +93,12 @@ final class SyncCoordinator {
                 EventOverrideConflictResolver(api: syncApi)
             ]
         )
-        
+
         self.events = EventSyncEngine(db: db, api: syncApi, center: center)
         self.rules = RecurrenceRuleSyncEngine(db: db, api: syncApi, center: center)
         self.overrides = EventOverrideSyncEngine(db: db, api: syncApi, center: center)
         self.userTasks = UserTaskSyncEngine(db: db, api: syncApi, center: center)
+        self.chatMessages = ChatSyncEngine(db: db, api: syncApi)
 
         Task(priority: .utility) {
             await supabase.auth.onAuthStateChange { event, session in
@@ -120,12 +133,14 @@ final class SyncCoordinator {
         let ruleReport  = try await ruleRunner.syncNow()
         let overrideReport = try await overrideRunner.syncNow()
         let taskReport = try await taskRunner.syncNow()
+        let chatReport = try await chatMessages.sync()
 
         let summary = SyncSummary(
             eventReport: eventReport,
             ruleReport: ruleReport,
             overrideReport: overrideReport,
-            taskReport: taskReport
+            taskReport: taskReport,
+            chatReport: chatReport
         )
 
         let reminderScheduler = ReminderScheduler()
@@ -142,5 +157,10 @@ final class SyncCoordinator {
         }
 
         return summary
+    }
+
+    /// Get the chat sync engine for injection into ChatRepository
+    func getChatSyncEngine() -> ChatSyncEngine {
+        return chatMessages
     }
 }

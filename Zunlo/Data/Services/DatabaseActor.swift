@@ -992,10 +992,11 @@ extension DatabaseActor {
 
 extension DatabaseActor {
     /// Fetch messages for the (single) conversation, ascending by time. Optional limit.
+    /// Excludes soft-deleted messages.
     public func fetchChatMessages(conversationId: UUID, userId: UUID, limit: Int? = nil) throws -> [ChatMessageLocal] {
         let realm = try openRealm()
         let results = realm.objects(ChatMessageLocal.self)
-            .where { $0.conversationId == conversationId && $0.userId == userId }
+            .where { $0.conversationId == conversationId && $0.userId == userId && $0.deletedAt == nil }
             .sorted(byKeyPath: "createdAt", ascending: true)
         if let limit, limit > 0, results.count > limit {
             let slice = results.suffix(limit)
@@ -1066,6 +1067,19 @@ extension DatabaseActor {
         try realm.write { realm.delete(obj) }
         // You can choose to backfill preview by reading last message; omitted for simplicity.
     }
+
+    /// Soft-delete a message - marks it deleted and queues for sync
+    public func softDeleteChatMessage(messageId: UUID, userId: UUID) throws {
+        let realm = try openRealm()
+        guard let obj = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId),
+              obj.userId == userId else { return }
+        try realm.write {
+            obj.deletedAt = Date()
+            obj.updatedAt = Date()
+            obj.syncStatus = .pending  // Will sync the deletion
+            obj.syncAttempts = 0       // Reset retry counter
+        }
+    }
     
     /// Delete all messages (updates conversation id).
     public func deleteAllChatMessages(_ conversationId: UUID, userId: UUID) throws {
@@ -1116,6 +1130,8 @@ extension DatabaseActor {
         obj.userId = temp.userId
         obj.parentId = temp.parentId
         obj.errorDescription = temp.errorDescription
+        obj.deletedAt = temp.deletedAt
+        obj.syncStatus = temp.syncStatus
         obj.attachments.removeAll()
         obj.attachments = temp.attachments
         obj.actions = temp.actions
@@ -1396,6 +1412,90 @@ extension DatabaseActor {
         try realm.write {
             guard let c = realm.object(ofType: SyncConflictLocal.self, forPrimaryKey: conflictId) else { return }
             c.attempts += 1
+        }
+    }
+}
+
+// MARK: - DatabaseActor Extensions
+
+extension DatabaseActor {
+    func fetchChatMessageLocal(_ id: UUID) async throws -> ChatMessageLocal? {
+        let realm = try openRealm()
+        return realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: id)
+    }
+
+    func readUnsyncedChatMessages() async throws -> [ChatMessageLocal] {
+        let realm = try openRealm()
+        let messages = realm.objects(ChatMessageLocal.self)
+            .where { $0.syncStatusRaw.in([ChatSyncStatus.pending.rawValue, ChatSyncStatus.failed.rawValue]) }
+            .where { $0.syncAttempts < 5 }
+        return Array(messages)
+    }
+
+    func updateChatMessageSyncStatus(
+        messageId: UUID,
+        status: ChatSyncStatus,
+        attempts: Int,
+        error: String?
+    ) async throws {
+        let realm = try openRealm()
+        guard let message = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: messageId) else {
+            throw ChatDBError.messageNotFound(messageId)
+        }
+
+        try realm.write {
+            message.syncStatus = status
+            message.syncAttempts = attempts
+            message.lastSyncError = error
+            message.updatedAt = Date()
+        }
+    }
+
+    func applyChatMessagesPage(_ messages: [ChatMessageRemote]) async throws {
+        let realm = try openRealm()
+
+        try realm.write {
+            for remote in messages {
+                // Handle deleted messages
+                if remote.deletedAt != nil {
+                    // Remove from local DB if exists
+                    if let existing = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: remote.id) {
+                        realm.delete(existing)
+                    }
+                    continue
+                }
+
+                // Check if message already exists
+                let existing = realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: remote.id)
+
+                if existing == nil {
+                    // Insert new message from server
+                    let local = ChatMessageLocal()
+                    local.id = remote.id
+                    local.conversationId = remote.conversationId
+                    local.userId = remote.userId
+                    local.roleRaw = remote.role
+                    local.rawText = remote.rawText
+                    local.formatRaw = remote.format
+                    local.createdAt = remote.createdAt
+                    local.updatedAt = remote.updatedAt
+                    local.parentId = remote.parentId
+                    local.syncStatus = .synced  // From server, already synced
+                    local.syncAttempts = 0
+                    local.deletedAt = nil
+
+                    realm.add(local, update: .modified)
+                }
+                // If exists, skip (messages are immutable)
+            }
+
+            // Update cursor
+            if let last = messages.last {
+                let cursor = try! ensureCursor(for: "chat_messages", in: realm)
+                cursor.lastTs = last.updatedAt
+                cursor.lastTsRaw = last.updatedAtRaw
+                cursor.lastId = last.id
+            }
         }
     }
 }

@@ -33,7 +33,11 @@ final class RealmChatLocalStore: ChatLocalStore {
     func delete(messageId: UUID, userId: UUID) async throws {
         try await db.deleteChatMessage(messageId: messageId, userId: userId)
     }
-    
+
+    func softDelete(messageId: UUID, userId: UUID) async throws {
+        try await db.softDeleteChatMessage(messageId: messageId, userId: userId)
+    }
+
     func deleteAll(_ conversationId: UUID, userId: UUID) async throws {
         try await db.deleteAllChatMessages(conversationId, userId: userId)
     }

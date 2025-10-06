@@ -39,6 +39,8 @@ struct ChatMessage: Identifiable, Hashable {
     var actions: [ChatMessageActionAlternative]
     var parentId: UUID?
     var errorDescription: String?
+    var deletedAt: Date?
+    var syncStatus: ChatSyncStatus
 }
 
 extension ChatMessage {
@@ -53,7 +55,9 @@ extension ChatMessage {
         attachments: [ChatAttachment] = [],
         actions: [ChatMessageActionAlternative] = [],
         parentId: UUID? = nil,
-        errorDescription: String? = nil
+        errorDescription: String? = nil,
+        deletedAt: Date? = nil,
+        syncStatus: ChatSyncStatus = .pending
     ) {
         self.id = id
         self.conversationId = conversationId
@@ -68,6 +72,8 @@ extension ChatMessage {
         self.actions = actions
         self.parentId = parentId
         self.errorDescription = errorDescription
+        self.deletedAt = deletedAt
+        self.syncStatus = syncStatus
     }
     
     public init(
@@ -82,7 +88,9 @@ extension ChatMessage {
         attachments: [ChatAttachment] = [],
         actions: [ChatMessageActionAlternative] = [],
         parentId: UUID? = nil,
-        errorDescription: String? = nil
+        errorDescription: String? = nil,
+        deletedAt: Date? = nil,
+        syncStatus: ChatSyncStatus = .pending
     ) {
         self.id = id
         self.conversationId = conversationId
@@ -97,6 +105,8 @@ extension ChatMessage {
         self.actions = actions
         self.parentId = parentId
         self.errorDescription = errorDescription
+        self.deletedAt = deletedAt
+        self.syncStatus = syncStatus
     }
     
     public init(
@@ -110,7 +120,9 @@ extension ChatMessage {
         attachments: [ChatAttachment] = [],
         actions: [ChatMessageActionAlternative] = [],
         parentId: UUID? = nil,
-        errorDescription: String? = nil
+        errorDescription: String? = nil,
+        deletedAt: Date? = nil,
+        syncStatus: ChatSyncStatus = .pending
     ) {
         self.id = id
         self.conversationId = conversationId
@@ -125,6 +137,8 @@ extension ChatMessage {
         self.actions = actions
         self.parentId = parentId
         self.errorDescription = errorDescription
+        self.deletedAt = deletedAt
+        self.syncStatus = syncStatus
     }
 }
 
@@ -143,6 +157,8 @@ extension ChatMessage {
         self.userId = local.userId
         self.parentId = local.parentId
         self.errorDescription = local.errorDescription
+        self.deletedAt = local.deletedAt
+        self.syncStatus = local.syncStatus
 
         self.attachments = local.attachments.map { ChatAttachment(local: $0) }
         self.actions = local.actions.compactMap { ChatMessageActionAlternative(label: AttributedString($0)) }

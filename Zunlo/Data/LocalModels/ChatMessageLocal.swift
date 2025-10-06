@@ -8,6 +8,14 @@
 import Foundation
 import RealmSwift
 
+public enum ChatSyncStatus: String, Codable {
+    case pending    // Never tried
+    case syncing    // Currently uploading
+    case synced     // Successfully uploaded
+    case failed     // Failed, will retry
+    case abandoned  // Too many failures, give up
+}
+
 public final class ChatMessageLocal: Object {
     @Persisted(primaryKey: true) var id: UUID
     @Persisted(indexed: true) var conversationId: UUID
@@ -22,10 +30,22 @@ public final class ChatMessageLocal: Object {
     @Persisted var actions: List<String>
     @Persisted var parentId: UUID?
     @Persisted var errorDescription: String?
-    
+
+    // Sync fields
+    @Persisted var syncStatusRaw: String = ChatSyncStatus.pending.rawValue
+    @Persisted var syncAttempts: Int = 0
+    @Persisted var lastSyncError: String?
+    @Persisted var updatedAt: Date = Date()
+    @Persisted var deletedAt: Date?
+
     var format: ChatMessageFormat {
         get { ChatMessageFormat(rawValue: formatRaw) ?? .plain }
         set { formatRaw = newValue.rawValue }
+    }
+
+    var syncStatus: ChatSyncStatus {
+        get { ChatSyncStatus(rawValue: syncStatusRaw) ?? .pending }
+        set { syncStatusRaw = newValue.rawValue }
     }
     
     var attributedText: NSAttributedString? {
@@ -65,6 +85,8 @@ extension ChatMessageLocal {
         self.userId = domain.userId
         self.parentId = domain.parentId
         self.errorDescription = domain.errorDescription
+        self.deletedAt = domain.deletedAt
+        self.syncStatus = domain.syncStatus
 
         let atts = domain.attachments.map { ChatAttachmentLocal(domain: $0) }
         self.attachments.append(objectsIn: atts)

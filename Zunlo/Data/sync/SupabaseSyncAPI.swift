@@ -302,4 +302,30 @@ public extension SupabaseSyncAPI {
         let rows: [RecurrenceRuleRemote] = try r.data.decodeSupabase()
         return rows.first
     }
+
+    // MARK: - Chat Messages
+
+    func insertChatMessagesPayloadReturning(_ batch: [ChatMessageInsertPayload]) async throws -> [ChatMessageRemote] {
+        let r = try await client
+            .from("chat_messages")
+            .insert(batch)
+            .select()
+            .executeTransformWithStatus()
+        return try r.data.decodeSupabase()
+    }
+
+    func fetchChatMessagesToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [ChatMessageRemote] {
+        let data = try await client
+            .from("chat_messages")
+            .select()
+            .or("updated_at.gt.\(sinceTimestamp),and(updated_at.eq.\(sinceTimestamp),id.gt.\(sinceID?.uuidString ?? "00000000-0000-0000-0000-000000000000"))")
+            .order("updated_at", ascending: true)
+            .order("id", ascending: true)
+            .limit(pageSize)
+            .execute()
+            .data
+
+        let rows: [ChatMessageRemote] = try data.decodeSupabase()
+        return rows
+    }
 }

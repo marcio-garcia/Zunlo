@@ -84,6 +84,16 @@ final class MockSyncAPI: SyncAPI {
             return s
         }
     }
+    
+    // ===== Chat Messages =====
+    func insertChatMessagesPayloadReturning(_ batch: [Zunlo.ChatMessageInsertPayload]) async throws -> [Zunlo.ChatMessageRemote] {
+        return []
+    }
+    
+    func fetchChatMessagesToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [Zunlo.ChatMessageRemote] {
+        return []
+    }
+
 
     func insertEventsReturning(_ batch: [Zunlo.EventRemote]) async throws -> [Zunlo.EventRemote] {
         return []

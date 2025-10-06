@@ -78,7 +78,11 @@ struct ZunloApp: App {
             localStore: RealmUserTaskLocalStore(db: localDB)
         )
         
-        let chatRepo: ChatRepository = UIApplication.shared.isRunningUITests ? MockChatRepository() : DefaultChatRepository(auth: authManager, store: RealmChatLocalStore(db: localDB))
+        let syncApi = SupabaseSyncAPI(client: supabaseClient)
+        let chatSyncEngine = ChatSyncEngine(db: localDB, api: syncApi)
+        let chatRepo: ChatRepository = UIApplication.shared.isRunningUITests ?
+        MockChatRepository() :
+        DefaultChatRepository(auth: authManager, store: RealmChatLocalStore(db: localDB), syncEngine: chatSyncEngine)
 
         let eventSuggestionEngine = DefaultEventSuggestionEngine(
             auth: authManager,
@@ -104,6 +108,7 @@ struct ZunloApp: App {
 
         self.appState.authManager = authManager
         self.appState.localDB = localDB
+        self.appState.syncApi = syncApi
         self.appState.locationService = locationService
         self.appState.pushNotificationService = pushService
         self.appState.adManager = adManager
@@ -153,7 +158,7 @@ struct ZunloApp: App {
 
 func setupRealm() {
     let config = Realm.Configuration(
-        schemaVersion: 25, // <- increment this every time you change schema!
+        schemaVersion: 26, // <- increment this every time you change schema!
         migrationBlock: { migration, oldSchemaVersion in
             if oldSchemaVersion < 10 {
                 // For new 'color' property on EventLocal/EventOverrideLocal,
@@ -266,6 +271,11 @@ func setupRealm() {
                     // if actionType == "disambiguateIntent" {
                     //     newObj?["intentAlternatives"] = "" // or some seed value
                     // }
+                }
+            }
+            if oldSchemaVersion < 26 {
+                migration.enumerateObjects(ofType: ChatMessageLocal.className()) { oldObj, newObj in
+                    // New fields have default values, no explicit migration needed
                 }
             }
         }

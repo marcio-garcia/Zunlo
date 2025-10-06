@@ -325,6 +325,10 @@ private struct MessageBubble: View {
             } else if message.status == .streaming {
                 TypingIndicator().accessibilityLabel("Assistant is typing")
             }
+            
+            if message.syncStatus == .failed {
+                Image(systemName: "exclamationmark.triangle")
+            }
         }
         .padding(12)
         .background(

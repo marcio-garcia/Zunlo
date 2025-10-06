@@ -39,4 +39,8 @@ public protocol SyncAPI: Sendable {
     func fetchUserTasksToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [UserTaskRemote]
     func insertUserTasksPayloadReturning(_ batch: [TaskInsertPayload]) async throws -> [UserTaskRemote]
     func updateUserTaskIfVersionMatchesPatch(id: UUID, expectedVersion: Int, patch: TaskUpdatePayload) async throws -> UserTaskRemote?
+
+    // CHAT MESSAGES
+    func insertChatMessagesPayloadReturning(_ batch: [ChatMessageInsertPayload]) async throws -> [ChatMessageRemote]
+    func fetchChatMessagesToSync(sinceTimestamp: String, sinceID: UUID?, pageSize: Int) async throws -> [ChatMessageRemote]
 }

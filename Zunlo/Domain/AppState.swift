@@ -17,7 +17,7 @@ final class AppState {
     var eventRepository: EventRepository?
     var userTaskRepository: UserTaskRepository?
     var chatRepository: ChatRepository?
-//    var supabase: SupabaseSDK?
+    var syncApi: SyncAPI?
     var locationService: LocationService?
     var pushNotificationService: PushNotificationService?
     var adManager: AdMobManager?
