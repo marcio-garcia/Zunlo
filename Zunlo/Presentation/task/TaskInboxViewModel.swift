@@ -67,6 +67,7 @@ class UserTaskInboxViewModel: ObservableObject {
             let taskFilter = TaskFilter(tags: filter)
             let tasks = try await taskFetcher.fetchTasks(filteredBy: taskFilter)
             handleTasks(tasks)
+            await MainActor.run { state = .loaded }
         } catch {
             await MainActor.run {
                 state = .error(error.localizedDescription)

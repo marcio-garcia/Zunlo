@@ -1000,9 +1000,9 @@ extension DatabaseActor {
             .sorted(byKeyPath: "createdAt", ascending: true)
         if let limit, limit > 0, results.count > limit {
             let slice = results.suffix(limit)
-            return slice.map { $0 }
+            return slice.map { $0.freeze() }
         } else {
-            return results.map { $0 }
+            return results.map { $0.freeze() }
         }
     }
 
@@ -1421,7 +1421,7 @@ extension DatabaseActor {
 extension DatabaseActor {
     func fetchChatMessageLocal(_ id: UUID) async throws -> ChatMessageLocal? {
         let realm = try openRealm()
-        return realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: id)
+        return realm.object(ofType: ChatMessageLocal.self, forPrimaryKey: id)?.freeze()
     }
 
     func readUnsyncedChatMessages() async throws -> [ChatMessageLocal] {
@@ -1429,7 +1429,7 @@ extension DatabaseActor {
         let messages = realm.objects(ChatMessageLocal.self)
             .where { $0.syncStatusRaw.in([ChatSyncStatus.pending.rawValue, ChatSyncStatus.failed.rawValue]) }
             .where { $0.syncAttempts < 5 }
-        return Array(messages)
+        return messages.map { $0.freeze() }
     }
 
     func updateChatMessageSyncStatus(

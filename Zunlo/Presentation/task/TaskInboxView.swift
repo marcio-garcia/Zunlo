@@ -42,7 +42,7 @@ struct TaskInboxView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .defaultBackground()
-                
+
             case .empty:
                 EmptyInboxView {
                     nav.showSheet(.addTask, for: viewID)
@@ -50,13 +50,13 @@ struct TaskInboxView: View {
                 .sheet(item: nav.sheetBinding(for: viewID)) { route in
                     ViewRouter.sheetView(for: route, navigationManager: nav, factory: factory)
                 }
-                
+
             case .error(let message):
                 Text("Error: \(message)")
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
                     .padding()
-                
+
             case .loaded:
                 VStack {
                     TagChipListView(
@@ -64,7 +64,8 @@ struct TaskInboxView: View {
                         mode: .readonly(selectable: true),
                         onTagsChanged: { _ in await viewModel.filter() }
                     )
-                    
+                    .padding(.top, 40)
+
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 16) {
                             ForEach(viewModel.incompleteTasks) { task in
@@ -75,9 +76,9 @@ struct TaskInboxView: View {
                                     nav.showSheet(.editTask(task), for: viewID)
                                 }
                             }
-                            
+
                             Divider()
-                            
+
                             ForEach(viewModel.completeTasks) { task in
                                 TaskRow(task: task, chipType: .small) {
                                     viewModel.toggleCompletion(for: task)
@@ -94,7 +95,7 @@ struct TaskInboxView: View {
                     }
                 }
             }
-            
+
             ToolbarView(blurStyle: .systemUltraThinMaterial) {
                 Button(action: {
                     onDismiss?()
