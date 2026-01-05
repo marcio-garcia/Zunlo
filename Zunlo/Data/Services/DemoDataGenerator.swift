@@ -521,8 +521,8 @@ extension DemoDataGenerator {
     /// Demo account credentials for Apple reviewers
     static var demoCredentials: (email: String, password: String) {
         return (
-            email: "demo@zunlo.app",
-            password: "AppleReview2025!"
+            email: "",
+            password: ""
         )
     }
 
