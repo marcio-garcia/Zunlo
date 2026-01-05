@@ -41,11 +41,31 @@ class EnvConfig: AdEnvironmentProvider {
         let apiUrl =  Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? ""
         return "\(apiProtocol)://\(apiUrl)"
     }
+
+    var apiBaseURL: URL? {
+        let urlString = apiBaseUrl
+        guard !urlString.isEmpty,
+              let url = URL(string: urlString),
+              url.scheme != nil,
+              url.host != nil
+        else { return nil }
+        return url
+    }
     
     var apiFunctionsBaseUrl: String {
         let apiProtocol = Bundle.main.infoDictionary?["API_PROTOCOL"] as? String ?? ""
         let apiUrl =  Bundle.main.infoDictionary?["API_FUNCTIONS_BASE_URL"] as? String ?? ""
         return "\(apiProtocol)://\(apiUrl)"
+    }
+
+    var apiFunctionsBaseURL: URL? {
+        let urlString = apiFunctionsBaseUrl
+        guard !urlString.isEmpty else { return nil }
+        guard let url = URL(string: urlString),
+              url.scheme != nil,
+              url.host != nil
+        else { return nil }
+        return url
     }
     
     var apiKey: String {

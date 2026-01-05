@@ -30,10 +30,25 @@ struct ZunloApp: App {
     @StateObject private var policyProvider = SuggestionPolicyProvider()
     @StateObject private var toolStore = ToolExecutionStore()
     @State private var deepLinkHandler: DeepLinkHandler?
+    @State private var configError: String?
     
     private let appState: AppState
     
     init() {
+        self._configError = State(initialValue: nil)
+        self.appState = AppState.shared
+
+        guard let apiBaseURL = EnvConfig.shared.apiBaseURL else {
+            self._configError = State(initialValue: "Missing API base URL. Check Info.plist keys API_PROTOCOL and API_BASE_URL.")
+            return
+        }
+
+        let apiKey = EnvConfig.shared.apiKey
+        guard !apiKey.isEmpty else {
+            self._configError = State(initialValue: "Missing API key. Check Info.plist key API_KEY.")
+            return
+        }
+
         if !EnvConfig.shared.googleOauthClientId.isEmpty {
             GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: EnvConfig.shared.googleOauthClientId)
         }
@@ -41,17 +56,17 @@ struct ZunloApp: App {
         setupRealm()
         
         let supabaseClient = SupabaseClient(
-            supabaseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
-            supabaseKey: EnvConfig.shared.apiKey
+            supabaseURL: apiBaseURL,
+            supabaseKey: apiKey
         )
         
         let authManager = AuthManager(authService: AuthService(supabase: supabaseClient))
         let locationService = LocationService()
         
         let supabaseConfig = SupabaseConfig(
-            anonKey: EnvConfig.shared.apiKey,
-            baseURL: URL(string: EnvConfig.shared.apiBaseUrl)!,
-            functionsBaseURL: URL(string: EnvConfig.shared.apiFunctionsBaseUrl)
+            anonKey: apiKey,
+            baseURL: apiBaseURL,
+            functionsBaseURL: EnvConfig.shared.apiFunctionsBaseURL
         )
         let supabase = SupabaseSDK(config: supabaseConfig)
                 
@@ -104,8 +119,6 @@ struct ZunloApp: App {
             eventRepository: eventRepo
         )
 
-        self.appState = AppState.shared
-
         self.appState.authManager = authManager
         self.appState.localDB = localDB
         self.appState.syncApi = syncApi
@@ -128,30 +141,34 @@ struct ZunloApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(appState: appState)
-                .environmentObject(appNavigationManager)
-                .environmentObject(appSettings)
-                .environmentObject(appState.authManager!)
-                .environmentObject(appState.locationService!)
-                .environmentObject(upgradeFlowManager)
-                .environmentObject(upgradeReminderManager)
-                .environmentObject(policyProvider)
-                .environmentObject(toolStore)
-                .onAppear(perform: {
-                    if deepLinkHandler == nil {
-                        deepLinkHandler = DeepLinkHandler(appState: appState, nav: appNavigationManager)
+            if let configError {
+                ConfigErrorView(message: configError)
+            } else {
+                RootView(appState: appState)
+                    .environmentObject(appNavigationManager)
+                    .environmentObject(appSettings)
+                    .environmentObject(appState.authManager!)
+                    .environmentObject(appState.locationService!)
+                    .environmentObject(upgradeFlowManager)
+                    .environmentObject(upgradeReminderManager)
+                    .environmentObject(policyProvider)
+                    .environmentObject(toolStore)
+                    .onAppear(perform: {
+                        if deepLinkHandler == nil {
+                            deepLinkHandler = DeepLinkHandler(appState: appState, nav: appNavigationManager)
+                        }
+                    })
+                    .onOpenURL { url in
+                        // Handle Google Sign-In URL
+                        if GIDSignIn.sharedInstance.handle(url) {
+                            return
+                        }
+                        
+                        if let deepLink = DeepLinkParser.parse(url: url) {
+                            deepLinkHandler?.handleDeepLink(deepLink)
+                        }
                     }
-                })
-                .onOpenURL { url in
-                    // Handle Google Sign-In URL
-                    if GIDSignIn.sharedInstance.handle(url) {
-                        return
-                    }
-                    
-                    if let deepLink = DeepLinkParser.parse(url: url) {
-                        deepLinkHandler?.handleDeepLink(deepLink)
-                    }
-                }
+            }
         }
     }
 }
@@ -295,5 +312,23 @@ extension UIApplication {
 extension UIApplication {
     var isRunningUITests: Bool {
         EnvConfig.shared.environment == .dev && CommandLine.arguments.contains("FASTLANE_SNAPSHOT")
+    }
+}
+
+private struct ConfigErrorView: View {
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Text("Configuration Error")
+                .font(.title2)
+                .fontWeight(.semibold)
+            Text(message)
+                .font(.body)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(24)
+        .defaultBackground()
     }
 }

@@ -25,8 +25,14 @@ final class FirebaseService: NSObject {
             filePath = Bundle.main.path(forResource: "GoogleService-Info-stg", ofType: "plist")
         }
 
-        guard let fileopts = FirebaseOptions(contentsOfFile: filePath!) else {
-            fatalError("Couldn't load Firebase config file")
+        guard let filePath else {
+            print("Firebase config missing: no plist for environment \(EnvConfig.shared.current).")
+            return
+        }
+
+        guard let fileopts = FirebaseOptions(contentsOfFile: filePath) else {
+            print("Firebase config missing: couldn't load plist at \(filePath).")
+            return
         }
         print("***** Will configure Firebase")
         FirebaseApp.configure(options: fileopts)
